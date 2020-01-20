@@ -1,7 +1,11 @@
 """
 Tests for utils module
 
-@author: Andrew R. McCluskey (andrew.mccluskey@diamond.ac.uk)
+Copyright (c) Andrew R. McCluskey and Benjamin J. Morgan
+
+Distributed under the terms of the MIT License
+
+@author: Andrew R. McCluskey
 """
 
 import numpy as np
