@@ -1,5 +1,5 @@
 """
-Simple utility functions 
+Simple utility functions
 
 Copyright (c) Andrew R. McCluskey and Benjamin J. Morgan
 
@@ -8,16 +8,17 @@ Distributed under the terms of the MIT License
 @author: Andrew R. McCluskey
 """
 
-def straight_line(x, m, c):
+
+def straight_line(abscissa, gradient, intercept):
     """
-    Calculate ordinate of straight line 
+    Calculate ordinate of straight line
 
-    args: 
-        x (array_like): abscissa
-        m (float): gradient
-        c (float): intercept 
+    args:
+        abscissa (array_like): abscissa
+        gradient (float): gradient
+        intercept (float): intercept
 
-    returns: 
+    returns:
         array_like: ordinate
     """
-    return m * x + c
+    return gradient * abscissa + intercept
