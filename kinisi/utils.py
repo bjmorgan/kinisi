@@ -1,6 +1,10 @@
 """
 Simple utility functions 
 
+Copyright (c) Andrew R. McCluskey and Benjamin J. Morgan
+
+Distributed under the terms of the MIT License
+
 @author: Andrew R. McCluskey
 """
 
