@@ -7,3 +7,9 @@ Uncertainty nalysis and model comparison for atomistic molecular dynamics.
 - Estimate uncertainties in diffusion coefficients and ionic conductivities.
 - Estimate uncertainties in activation energies (via Arrhenius relation).
 - Model comparison between Arrhenius and super-Arrhenius diffusion.
+
+```
+python setup.py build
+python setup.py install
+python setup.py test
+```
