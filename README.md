@@ -1,6 +1,6 @@
 # kinisi
 
-Uncertainty nalysis and model comparison for atomistic molecular dynamics.
+Uncertainty analysis and model comparison for atomistic molecular dynamics.
 
 ## Goals
 - Estimate uncertainties in mean-squared displacements and squared mean-displacements.
