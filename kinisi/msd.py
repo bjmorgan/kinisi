@@ -11,7 +11,9 @@ Distributed under the terms of the MIT License
 # pylint: disable=R0913
 
 from scipy.stats import linregress
-from kinisi import utils
+from uncertainties import ufloat
+from kinisi import utils, straight_line
+from kinisi.distribution_array import DistributionArray
 
 
 class MSD:
@@ -33,6 +35,7 @@ class MSD:
         """
         self.sq_displacements = sq_displacements[::step_freq]
         self.data = None
+        self.diffusion_coefficient = None
 
     def resample(self, **kwargs):
         """
@@ -69,3 +72,29 @@ class MSD:
         """
         result = linregress(delta_t, self.data.medians)
         return result.slope, result.intercept
+
+    def sample_diffusion(self, x_data):
+        """
+        Use MCMC sampling to evaluate diffusion coefficient.
+
+        Args:
+            x_data (array_like): Abscissa data.
+
+        Returns:
+        """
+        dy_data = self.data.confidence_intervals[:, 1] - self.data.medians
+        samples = straight_line.run_sampling(
+            self.estimate_straight_line(x_data),
+            self.data.medians,
+            dy_data,
+            x_data
+        )
+        straight_line_distro = DistributionArray(2, [2.5, 97.5])
+        straight_line_distro.set_distribution(samples[:, 0], 0)
+        straight_line_distro.set_distribution(samples[:, 1], 1)
+        gradient = ufloat(
+            straight_line_distro.medians[0],
+            (straight_line_distro.confidence_intervals[
+                0, 1] - straight_line_distro.medians[0])
+        )
+        self.diffusion_coefficient = gradient / 6

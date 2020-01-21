@@ -10,6 +10,7 @@ Distributed under the terms of the MIT License
 
 import numpy as np
 from scipy.stats import shapiro
+from uncertainties import ufloat
 
 
 class DistributionArray:
@@ -32,6 +33,17 @@ class DistributionArray:
         self.confidence_intervals = np.zeros(
             (self.length, len(confidence_interval_points))
         )
+
+    def __str__(self):
+        out = ""
+        for i in range(self.length):
+            out += "{}\n".format(
+                ufloat(
+                    self.medians[i],
+                    self.confidence_intervals[i, 1] - self.medians[i]
+                )
+            )
+        return out
 
     def set_distribution(self, samples, i):
         """

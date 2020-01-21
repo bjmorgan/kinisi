@@ -77,7 +77,7 @@ def run_sampling(init_guesses, y_data, dy_data, x_data, walkers=100,
     args = (y_data, dy_data, x_data)
     sampler = emcee.EnsembleSampler(walkers, ndims, comparision, args=args)
 
-    sampler.run_mcmc(initial_prior, n_samples + n_burn)
+    sampler.run_mcmc(initial_prior, n_samples + n_burn, progress=True)
 
     post_samples = sampler.chain[:, n_burn:, :].reshape((-1, ndims))
 
