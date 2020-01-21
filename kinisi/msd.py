@@ -1,5 +1,5 @@
 """
-Bootstrap resampler functions
+Class for MSD investigation.
 
 Copyright (c) Andrew R. McCluskey and Benjamin J. Morgan
 
@@ -32,27 +32,30 @@ class MSD:
                 distribution.
         """
         self.sq_displacements = sq_displacements[::step_freq]
-        self.distribution = None
+        self.data = None
 
-    def resample(self, resamples=2000, samples_freq=1,
-                 confidence_interval=None):
+    def resample(self, **kwargs):
         """
         Resample the square-displacement data to obtain a description of
         the distribution as a function of delta_t.
 
         Args:
-            resamples (int, optional): The number of resamples to be performed.
+            data (list of array_like): A list of arrays, where
+                each array has the axes [atom, squared displacement
+                observation]. There is one array in the list for each
+                delta_t value.
+            ensure_normality (bool, optional): Use a Shapiro Wilks test to
+                ensure that the distribution is normal for each element of the
+                array.
+            alpha (float, optional): Test metric for Shapiro-Wilks.
+            n_resamples (int, optional): The number of resamples to be
+                performed.
             samples_freq (int. optional): The frequency in observations to be
                 sampled.
             confidence_interval (array_like): The percentile points of the
                 distribution that should be stored.
         """
-        self.distribution = utils.bootstrap(
-            self.sq_displacements,
-            resamples,
-            samples_freq,
-            confidence_interval
-        )
+        self.data = utils.bootstrap(self.sq_displacements, **kwargs)
 
     def estimate_straight_line(self, delta_t):
         """
@@ -64,5 +67,5 @@ class MSD:
         Returns:
             (array_like) Length of 2, gradient and intercept.
         """
-        result = linregress(delta_t, self.distribution.median)
+        result = linregress(delta_t, self.data.medians)
         return result.slope, result.intercept

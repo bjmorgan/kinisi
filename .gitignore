@@ -3,3 +3,4 @@ build
 dist
 kinisi.egg-info
 **/__pycache__
+.eggs

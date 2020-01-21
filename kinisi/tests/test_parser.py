@@ -20,7 +20,7 @@ Distributed under the terms of the MIT License
 #
 # In fact, we love pymatgen!
 
-import unittest
-import numpy as np
-from numpy.testing import assert_almost_equal, assert_equal
-from kinisi import parser
+# import unittest
+# import numpy as np
+# from numpy.testing import assert_almost_equal, assert_equal
+# from kinisi import parser
