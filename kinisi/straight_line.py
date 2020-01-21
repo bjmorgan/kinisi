@@ -8,7 +8,11 @@ Distributed under the terms of the MIT License
 @author: Andrew R. McCluskey
 """
 
+# pylint: disable=R0913
+
 import numpy as np
+import emcee
+from kinisi import utils
 
 
 def prior(initial_guess, size):
@@ -20,9 +24,61 @@ def prior(initial_guess, size):
         size (int): Number of walkers from MCMC.
 
     Returns:
-        (array_like): Uniform prior centred on initial_guess.
+        (array_like) Uniform prior centred on initial_guess.
     """
     minimum = initial_guess - 10. * initial_guess
     maximum = initial_guess + 10. * initial_guess
 
     return np.random.uniform(minimum, maximum, size)
+
+
+def comparision(theta, y_data, dy_data, x_data):
+    """
+    Generate model data and get logl.
+
+    Args:
+        theta (tuple): Values for variables.
+        y_data (array_like): Experimental ordinate data.
+        dy_data (array_like): Experimental ordinate-uncertainty data.
+        x_data(array_like): Experimental abscissa data.
+    Returns:
+        (float) ln-likelihood between model and data.
+    """
+    gradient, intercept = theta
+
+    model = utils.straight_line(x_data, gradient, intercept)
+
+    return utils.lnl(model, y_data, dy_data)
+
+
+def run_sampling(init_guesses, y_data, dy_data, x_data, walkers=100,
+                 n_samples=500, n_burn=500):
+    """
+    Perform MCMC to get gradient and intercept.
+
+    Args:
+        init_guesses (tuple): initial guesses for gradient and intercept
+            respectivily.
+        y_data (array_like): Experimental ordinate data.
+        dy_data (array_like): Experimental ordinate-uncertainty data.
+        x_data(array_like): Experimental abscissa data.
+        walkers (int, optional): Number of MCMC walkers.
+        n_samples (int, optional): Number of sample points.
+        n_burn (int, optional): Number of burn in samples.
+
+    Returns:
+        (array_like) Samples for the variables from MCMC
+    """
+    gradient_prior = prior(init_guesses[0], walkers)
+    intercept_prior = prior(init_guesses[1], walkers)
+    initial_prior = np.array([gradient_prior, intercept_prior]).T
+    ndims = initial_prior.shape[1]
+
+    args = (y_data, dy_data, x_data)
+    sampler = emcee.EnsembleSampler(walkers, ndims, comparision, args=args)
+
+    sampler.run_mcmc(initial_prior, n_samples + n_burn)
+
+    post_samples = sampler.chain[:, n_burn:, :].reshape((-1, ndims))
+
+    return post_samples

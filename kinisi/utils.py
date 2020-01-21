@@ -8,7 +8,7 @@ Distributed under the terms of the MIT License
 @author: Andrew R. McCluskey
 """
 
-# pylint: disable=W0127
+# pylint: disable=R0913
 
 import numpy as np
 from tqdm import tqdm
@@ -32,7 +32,7 @@ def straight_line(abscissa, gradient, intercept):
     return gradient * abscissa + intercept
 
 
-def logl(model, y_data, dy_data):
+def lnl(model, y_data, dy_data):
     """
     The natural logarithm of the joint likelihood, equation from
     DOI: 10.1107/S1600576718017296.
@@ -47,7 +47,8 @@ def logl(model, y_data, dy_data):
     )
 
 
-def bootstrap(data, **kwargs):
+def bootstrap(data, ensure_normality=True, samples_freq=1,
+              confidence_interval=None, alpha=0.05, n_resamples=1000):
     """
     Perform a bootstrap resampling.
 
@@ -70,22 +71,8 @@ def bootstrap(data, **kwargs):
         (kinisi.distribution.Distribution) The bootstrap determined
             distribution.
     """
-    ensure_normality = True
-    samples_freq = 1
-    confidence_interval = [2.5, 97.5]
-    alpha = 0.05
-    n_resamples = 1000
-    for key, value in kwargs.items():
-        if key == 'ensure_normality':
-            ensure_normality = value
-        if key == 'samples_freq':
-            samples_freq = value
-        if key == 'confidence_interval':
-            confidence_interval = value
-        if key == 'alpha':
-            alpha = value
-        if key == 'n_samples':
-            n_resamples = value
+    if confidence_interval is None:
+        confidence_interval = [2.5, 97.5]
     max_obs = data[0].shape[1]
     distro = DistributionArray(len(data), confidence_interval)
     for i in tqdm(range(len(data))):

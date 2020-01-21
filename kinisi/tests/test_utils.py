@@ -40,13 +40,13 @@ class TestUtils(unittest.TestCase):
         assert_equal(result_y.shape, expected_y.shape)
         assert_almost_equal(result_y, expected_y)
 
-    def test_logl(self):
+    def test_lnl(self):
         """
-        Test logl function.
+        Test lnl function.
         """
         y_data = np.ones(10)
         dy_data = np.ones(10) * 0.1
         model = np.ones(10) * 1.1
-        expected_logl = 8.8364655979
-        actual_logl = utils.logl(model, y_data, dy_data)
-        assert_almost_equal(actual_logl, expected_logl)
+        expected_lnl = 8.8364655979
+        actual_lnl = utils.lnl(model, y_data, dy_data)
+        assert_almost_equal(actual_lnl, expected_lnl)
