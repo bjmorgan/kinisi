@@ -12,6 +12,7 @@ Distributed under the terms of the MIT License
 
 import numpy as np
 from scipy.stats import shapiro
+from uncertainties import ufloat
 
 
 class Distribution:
@@ -81,7 +82,9 @@ class Distribution:
             representation += 'Reporting Value: '
             if self.check_normality():
                 uncertainty = self.con_int[1] - self.median
-                representation += "{}+/-{}\n".format(self.median, uncertainty)
+                representation += "{}\n".format(
+                    ufloat(self.median, uncertainty)
+                )
             else:
                 representation += "{}+{}-{}\n".format(
                     self.median,
