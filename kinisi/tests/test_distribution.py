@@ -40,7 +40,7 @@ class TestDistribution(unittest.TestCase):
         assert_equal(distro.con_int, None)
         assert_almost_equal(distro.ci_points, [5., 95.])
 
-    def test_check_normality_less_than_5000(self):
+    def test_check_normality_true_less_than_5000(self):
         """
         Test check_normality with less than 5000 samples.
         """
@@ -48,8 +48,9 @@ class TestDistribution(unittest.TestCase):
         np.random.seed(1)
         distro.add_samples(np.random.randn(1000))
         assert_equal(distro.normal, True)
+        assert_equal(distro.check_normality(), True)
 
-    def test_check_normality_more_than_5000(self):
+    def test_check_normality_true_more_than_5000(self):
         """
         Test check_normality with more than 5000 samples.
         """
@@ -57,3 +58,47 @@ class TestDistribution(unittest.TestCase):
         np.random.seed(1)
         distro.add_samples(np.random.randn(10000))
         assert_equal(distro.normal, True)
+        assert_equal(distro.check_normality(), True)
+
+    def test_check_normality_false_more_than_5000(self):
+        """
+        Test check_normality with more than 5000 samples.
+        """
+        distro = Distribution()
+        np.random.seed(1)
+        distro.add_samples(np.random.rand(10000))
+        assert_equal(distro.normal, False)
+        assert_equal(distro.check_normality(), False)
+
+    def test_check_normality_false_less_than_5000(self):
+        """
+        Test check_normality with less than 5000 samples.
+        """
+        distro = Distribution()
+        np.random.seed(1)
+        distro.add_samples(np.random.rand(1000))
+        assert_equal(distro.normal, False)
+        assert_equal(distro.check_normality(), False)
+
+    def test_check_normality_less_than_3(self):
+        """
+        Test check_normality with more than 5000 samples.
+        """
+        distro = Distribution()
+        np.random.seed(1)
+        distro.add_samples(np.random.randn(2))
+        assert_equal(distro.normal, False)
+        assert_equal(distro.check_normality(), False)
+
+    def test_add_samples_single(self):
+        """
+        Test add_samples with a single value.
+        """
+        distro = Distribution()
+        distro.add_samples(1)
+        assert_equal(distro.size, 1)
+        assert_almost_equal(distro.samples, np.array([1]))
+        assert_almost_equal(distro.median, 1)
+        assert_equal(distro.error, None)
+        assert_equal(distro.con_int, np.array([]))
+        assert_equal(distro.normal, False)
