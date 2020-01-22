@@ -69,8 +69,8 @@ def run_sampling(init_guesses, y_data, dy_data, x_data, walkers=100,
     Returns:
         (array_like) Samples for the variables from MCMC
     """
-    gradient_prior = prior(init_guesses[0], walkers)
-    intercept_prior = prior(init_guesses[1], walkers)
+    gradient_prior = prior(init_guesses[0].n, walkers)
+    intercept_prior = prior(init_guesses[1].n, walkers)
     initial_prior = np.array([gradient_prior, intercept_prior]).T
     ndims = initial_prior.shape[1]
 
