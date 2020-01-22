@@ -33,8 +33,10 @@ INFO = {
                         'and b.j.morgan@bath.ac.uk',
         'packages': PACKAGES,
         'include_package_data': True,
-        'setup_requires': ['cython', 'numpy', 'matplotlib', 'scikit-learn', 'scipy', 'emcee', 'tqdm'],
-        'install_requires': ['cython', 'numpy', 'matplotlib', 'scikit-learn', 'scipy', 'emcee', 'tqdm'],
+        'setup_requires': ['cython', 'numpy', 'matplotlib', 'scikit-learn',
+                           'scipy', 'emcee', 'tqdm'],
+        'install_requires': ['cython', 'numpy', 'matplotlib', 'scikit-learn',
+                             'scipy', 'emcee', 'tqdm'],
         'version': VERSION,
         'license': 'MIT',
         'long_description': LONG_DESCRIPTION,
@@ -64,6 +66,7 @@ def setup_package():
     Runs package setup
     """
     setup(**INFO)
+
 
 if __name__ == '__main__':
     setup_package()

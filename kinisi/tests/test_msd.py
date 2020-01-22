@@ -28,7 +28,8 @@ class TestMsd(unittest.TestCase):
         msd = MSD(sq_disp)
         for i, disp in enumerate(sq_disp):
             assert_almost_equal(msd.sq_displacements[i], disp)
-        assert_equal(msd.data, None)
+        assert_equal(msd.mean, None)
+        assert_equal(msd.err, None)
 
     def test_msd_init_b(self):
         """
@@ -39,4 +40,5 @@ class TestMsd(unittest.TestCase):
         expected_sq_disp = sq_disp[::2]
         for i, disp in enumerate(expected_sq_disp):
             assert_almost_equal(msd.sq_displacements[i], disp)
-        assert_equal(msd.data, None)
+        assert_equal(msd.mean, None)
+        assert_equal(msd.err, None)

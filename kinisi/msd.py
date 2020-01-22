@@ -11,9 +11,8 @@ Distributed under the terms of the MIT License
 # pylint: disable=R0913
 
 from scipy.stats import linregress
-from uncertainties import ufloat
 from kinisi import utils, straight_line
-from kinisi.distribution_array import DistributionArray
+from kinisi.distribution import Distribution
 
 
 class MSD:
@@ -34,8 +33,11 @@ class MSD:
                 distribution.
         """
         self.sq_displacements = sq_displacements[::step_freq]
-        self.data = None
+        self.mean = None
+        self.err = None
         self.diffusion_coefficient = None
+        self.gradient = None
+        self.intercept = None
 
     def resample(self, **kwargs):
         """
@@ -47,10 +49,6 @@ class MSD:
                 each array has the axes [atom, squared displacement
                 observation]. There is one array in the list for each
                 delta_t value.
-            ensure_normality (bool, optional): Use a Shapiro Wilks test to
-                ensure that the distribution is normal for each element of the
-                array.
-            alpha (float, optional): Test metric for Shapiro-Wilks.
             n_resamples (int, optional): The number of resamples to be
                 performed.
             samples_freq (int. optional): The frequency in observations to be
@@ -58,7 +56,7 @@ class MSD:
             confidence_interval (array_like): The percentile points of the
                 distribution that should be stored.
         """
-        self.data = utils.bootstrap(self.sq_displacements, **kwargs)
+        self.mean, self.err = utils.bootstrap(self.sq_displacements, **kwargs)
 
     def estimate_straight_line(self, delta_t):
         """
@@ -70,7 +68,7 @@ class MSD:
         Returns:
             (array_like) Length of 2, gradient and intercept.
         """
-        result = linregress(delta_t, self.data.medians)
+        result = linregress(delta_t, self.mean)
         return result.slope, result.intercept
 
     def sample_diffusion(self, x_data):
@@ -82,19 +80,15 @@ class MSD:
 
         Returns:
         """
-        dy_data = self.data.confidence_intervals[:, 1] - self.data.medians
         samples = straight_line.run_sampling(
             self.estimate_straight_line(x_data),
-            self.data.medians,
-            dy_data,
+            self.mean,
+            self.err,
             x_data
         )
-        straight_line_distro = DistributionArray(2, [2.5, 97.5])
-        straight_line_distro.set_distribution(samples[:, 0], 0)
-        straight_line_distro.set_distribution(samples[:, 1], 1)
-        gradient = ufloat(
-            straight_line_distro.medians[0],
-            (straight_line_distro.confidence_intervals[
-                0, 1] - straight_line_distro.medians[0])
-        )
-        self.diffusion_coefficient = gradient / 6
+        self.gradient = Distribution(name='gradient')
+        self.gradient.add_samples(samples[:, 0])
+        self.intercept = Distribution(name='intercept')
+        self.intercept.add_samples(samples[:, 1])
+        self.diffusion_coefficient = Distribution(name='diffusion coefficient')
+        self.diffusion_coefficient.add_samples(self.gradient.samples / 6)

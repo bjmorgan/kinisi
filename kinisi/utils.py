@@ -13,8 +13,7 @@ Distributed under the terms of the MIT License
 import numpy as np
 from tqdm import tqdm
 from sklearn.utils import resample
-from scipy.stats import shapiro
-from kinisi.distribution_array import DistributionArray
+from kinisi.distribution import Distribution
 
 
 def straight_line(abscissa, gradient, intercept):
@@ -47,8 +46,8 @@ def lnl(model, y_data, dy_data):
     )
 
 
-def bootstrap(data, ensure_normality=True, samples_freq=1,
-              confidence_interval=None, alpha=0.05, n_resamples=1000):
+def bootstrap(data, n_resamples=1000, samples_freq=1,
+              confidence_interval=None):
     """
     Perform a bootstrap resampling.
 
@@ -57,47 +56,42 @@ def bootstrap(data, ensure_normality=True, samples_freq=1,
             each array has the axes [atom, squared displacement
             observation]. There is one array in the list for each
             delta_t value.
-        ensure_normality (bool, optional): Use a Shapiro Wilks test to
-            ensure that the distribution is normal for each element of the
-            array.
-        alpha (float, optional): Test metric for Shapiro-Wilks.
-        n_resamples (int, optional): The number of resamples to be performed.
+        n_resamples (int, optional): The initial number of resamples to
+            be performed.
         samples_freq (int. optional): The frequency in observations to be
             sampled.
         confidence_interval (array_like): The percentile points of the
             distribution that should be stored.
 
     Returns:
-        (kinisi.distribution.Distribution) The bootstrap determined
-            distribution.
+        (tuple of array_like) A tuple of two arrays, the first is the
+            resampled mean data and the second is the uncertainty on that
+            data.
     """
     if confidence_interval is None:
         confidence_interval = [2.5, 97.5]
     max_obs = data[0].shape[1]
-    distro = DistributionArray(len(data), confidence_interval)
+    mean_data = np.zeros((len(data)))
+    err_data = np.zeros((len(data)))
     for i in tqdm(range(len(data))):
-        disp = data[i]
-        n_obs = disp.shape[1]
-        n_atoms = disp.shape[0]
+        n_obs = data[i].shape[1]
+        n_atoms = data[i].shape[0]
         dt_int = max_obs - n_obs + 1
         # approximate number of "non-overlapping" observations, allowing
         # for partial overlap
         n_samples = int(max_obs / dt_int * n_atoms / samples_freq)
-        sampled_means = [
-            np.mean(
-                resample(disp.flatten(), n_samples=n_samples)
-            ) for j in range(n_resamples)
-        ]
-        if ensure_normality:
-            while shapiro(
-                    np.random.choice(
-                        sampled_means,
-                        size=n_resamples,
-                        replace=False
-                    )
-            )[1] > alpha:
-                sampled_means.append(
-                    np.mean(resample(disp.flatten(), n_samples=n_samples))
-                )
-        distro.set_distribution(sampled_means, i)
-    return distro
+        distro = Distribution(confidence_interval)
+        distro.add_samples(
+            [
+                np.mean(
+                    resample(data[i].flatten(), n_samples=n_samples)
+                ) for j in range(n_resamples)
+            ]
+        )
+        while not distro.normal:
+            distro.add_samples(
+                [np.mean(resample(data[i].flatten(), n_samples=n_samples))]
+            )
+        mean_data[i] = distro.median
+        err_data[i] = distro.error
+    return mean_data, err_data
