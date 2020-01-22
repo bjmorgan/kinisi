@@ -51,7 +51,13 @@ class Distribution:
 
     def __repr__(self):
         """
-        Custom representation.
+        Custom repr.
+        """
+        return self.__str__()
+
+    def __str__(self):
+        """
+        Custom string.
         """
         representation = 'Distribution: {}\nSize: {}\n'.format(
             self.name,
