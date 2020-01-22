@@ -147,6 +147,7 @@ class MSD:
         Make a nice plot depending on what has been done.
         """
         fig, axes = plt.subplots(figsize=figsize)
+        axes.plot(self.abscissa, self.mean)
         axes.set_xlabel(r'$\delta t$/${:~L}$'.format(self.abscissa_units))
         axes.set_ylabel(
             r'$\langle \delta \mathbf{r} ^ 2 \rangle$/' + '${:~L}$'.format(
