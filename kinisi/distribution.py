@@ -8,6 +8,8 @@ Distributed under the terms of the MIT License
 @author: Andrew R. McCluskey
 """
 
+# pylint: disable=R0902
+
 import numpy as np
 from scipy.stats import shapiro
 
@@ -95,6 +97,10 @@ class Distribution:
         test.
         """
         samples = np.copy(self.samples)
+        if self.size <= 3:
+            self.normal = False
+            self.error = None
+            return False
         if self.size >= 5000:
             samples = np.random.choice(self.samples, size=2500, replace=False)
         alpha = 0.05
@@ -117,7 +123,8 @@ class Distribution:
         self.samples = np.append(self.samples, np.array(samples).flatten())
         self.size = self.samples.size
         self.median = np.percentile(self.samples, 50.)
-        self.con_int = np.array(
-            [np.percentile(self.samples, i) for i in self.ci_points]
-        )
+        if self.size > 1:
+            self.con_int = np.array(
+                [np.percentile(self.samples, i) for i in self.ci_points]
+            )
         self.check_normality()
