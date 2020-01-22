@@ -1,5 +1,7 @@
 # kinisi
 
+kee-nee-si
+
 Uncertainty analysis and model comparison for atomistic molecular dynamics.
 
 ## Goals
