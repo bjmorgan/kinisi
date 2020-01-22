@@ -25,7 +25,7 @@ class TestMsd(unittest.TestCase):
         Test the initialisation of the MSD class with defaults.
         """
         sq_disp = [np.ones((i, i+1)) for i in range(1, 6)[::-1]]
-        msd = MSD(sq_disp)
+        msd = MSD(sq_disp, np.linspace(1, 100, len(sq_disp)))
         for i, disp in enumerate(sq_disp):
             assert_almost_equal(msd.sq_displacements[i], disp)
         assert_equal(msd.mean, None)
@@ -36,7 +36,7 @@ class TestMsd(unittest.TestCase):
         Test the initialisation of the MSD class without defaults.
         """
         sq_disp = [np.ones((i, i+1)) for i in range(1, 6)[::-1]]
-        msd = MSD(sq_disp, step_freq=2)
+        msd = MSD(sq_disp, np.linspace(1, 100, len(sq_disp)), step_freq=2)
         expected_sq_disp = sq_disp[::2]
         for i, disp in enumerate(expected_sq_disp):
             assert_almost_equal(msd.sq_displacements[i], disp)
