@@ -157,7 +157,8 @@ class Distribution:
         Plot the probability density function for the distribution.
 
         Args:
-            fig_size (tuple): Horizontal and veritcal size for figure (in inches).
+            fig_size (tuple): Horizontal and veritcal size for figure
+                (in inches).
 
         Returns:
             (matplotlib.figure.Figure)
@@ -166,9 +167,10 @@ class Distribution:
         fig, axes = plt.subplots(figsize=figsize)
         kde = gaussian_kde(self.samples)
         abscissa = np.linspace(self.samples.min(), self.samples.max(), 100)
+        ordinate = kde.evaluate(abscissa)
         axes.plot(
             abscissa,
-            kde.evaluate(abscissa),
+            ordinate,
             color=list(_fig_params.TABLEAU)[0],
         )
         axes.hist(
@@ -178,9 +180,16 @@ class Distribution:
             color=list(_fig_params.TABLEAU)[0],
             alpha=0.5,
         )
+        axes.fill_betweenx(
+            np.linspace(0, ordinate.max() + ordinate.max() * 0.1),
+            self.con_int[0],
+            self.con_int[1],
+            alpha=0.2,
+        )
         x_label = '{}'.format(self.name)
         if self.units:
             x_label += '/${:~L}$'.format(self.units)
         axes.set_xlabel(x_label)
         axes.set_ylabel('$p(${}$)$'.format(self.name))
+        axes.set_ylim((0, ordinate.max() + ordinate.max() * 0.1))
         return fig, axes

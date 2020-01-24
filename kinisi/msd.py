@@ -140,7 +140,10 @@ class MSD:
         self.gradient.add_samples(samples[:, 0])
         self.intercept = Distribution(name='$c$')
         self.intercept.add_samples(samples[:, 1])
-        self.diffusion_coefficient = Distribution(name='$D$', units=self.ordinate_units / self.abscissa_units)
+        self.diffusion_coefficient = Distribution(
+            name='$D$',
+            units=self.ordinate_units / self.abscissa_units
+        )
         self.diffusion_coefficient.add_samples(self.gradient.samples / 6)
 
     def plot(self, figsize=(10, 6)):  # pragma: no cover
@@ -148,7 +151,8 @@ class MSD:
         Make a nice plot depending on what has been done.
 
         Args:
-            fig_size (tuple): Horizontal and veritcal size for figure (in inches).
+            fig_size (tuple): Horizontal and veritcal size for figure
+                (in inches).
 
         Returns:
             (matplotlib.figure.Figure)
