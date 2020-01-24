@@ -20,7 +20,7 @@ class Distribution:
     The Distribution class.
 
     Attributes:
-        name (str):
+        name (str): A name for the distrition.
         size (int): Number of samples in distribution.
         samples (array_like): Samples in the distribution.
         median (float): Median of distribution.
@@ -31,9 +31,10 @@ class Distribution:
         con_int (array_like): Confidence interval values.
         normal (bool): Distribution normally distributed.
     """
-    def __init__(self, ci_points=None, name='Distribution'):
+    def __init__(self, name='Distribution', ci_points=None):
         """
         Args:
+            name (str, optional): A name to identify the distribution.
             ci_points (array_like, optional): The percentiles at which
                 confidence intervals should be found.
         """
