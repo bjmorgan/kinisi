@@ -11,7 +11,6 @@ Distributed under the terms of the MIT License
 # pylint: disable=R0201
 
 import unittest
-from unittest.mock import patch
 import numpy as np
 from numpy.testing import assert_almost_equal, assert_equal
 from kinisi import utils

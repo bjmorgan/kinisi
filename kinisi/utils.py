@@ -85,7 +85,7 @@ def bootstrap(data, n_resamples=1000, samples_freq=1,
         # approximate number of "non-overlapping" observations, allowing
         # for partial overlap
         n_samples = int(max_obs / dt_int * n_atoms / samples_freq)
-        distro = Distribution(confidence_interval, name='delta_t_{}'.format(i))
+        distro = Distribution('delta_t_{}'.format(i), confidence_interval)
         distro.add_samples(
             [
                 np.mean(

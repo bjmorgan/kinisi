@@ -45,7 +45,7 @@ class TestDistribution(unittest.TestCase):
         Test initialisation with bad ci_points.
         """
         with self.assertRaises(ValueError):
-            distro = Distribution([5., 95., 102.])
+            Distribution([5., 95., 102.])
 
     def test_check_normality_true_less_than_5000(self):
         """

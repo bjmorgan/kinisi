@@ -136,19 +136,26 @@ class MSD:
             **kwargs,
         )
         self.mcmced = True
-        self.gradient = Distribution(name='gradient')
+        self.gradient = Distribution(name='$m$')
         self.gradient.add_samples(samples[:, 0])
-        self.intercept = Distribution(name='intercept')
+        self.intercept = Distribution(name='$c$')
         self.intercept.add_samples(samples[:, 1])
-        self.diffusion_coefficient = Distribution(name='diffusion coefficient')
+        self.diffusion_coefficient = Distribution(name='$D$', units=self.ordinate_units / self.abscissa_units)
         self.diffusion_coefficient.add_samples(self.gradient.samples / 6)
 
     def plot(self, figsize=(10, 6)):  # pragma: no cover
         """
         Make a nice plot depending on what has been done.
+
+        Args:
+            fig_size (tuple): Horizontal and veritcal size for figure (in inches).
+
+        Returns:
+            (matplotlib.figure.Figure)
+            (matplotlib.axes.Axes)
         """
         fig, axes = plt.subplots(figsize=figsize)
-        axes.plot(self.abscissa, self.mean)
+        axes.plot(self.abscissa, self.mean, c=list(_fig_params.TABLEAU)[0])
         axes.set_xlabel(r'$\delta t$/${:~L}$'.format(self.abscissa_units))
         axes.set_ylabel(
             r'$\langle \delta \mathbf{r} ^ 2 \rangle$/' + '${:~L}$'.format(
@@ -161,6 +168,7 @@ class MSD:
                 self.mean - self.err,
                 self.mean + self.err,
                 alpha=0.5,
+                color=list(_fig_params.TABLEAU)[0]
             )
         else:
             axes.fill_between(
@@ -168,12 +176,14 @@ class MSD:
                 self.mean - self.err,
                 self.mean + self.err,
                 alpha=0.5,
+                color=list(_fig_params.TABLEAU)[0]
             )
         if not self.mcmced:
             gradient, intercept = self.estimate_straight_line()
             axes.plot(
                 self.abscissa,
                 utils.straight_line(self.abscissa, gradient.n, intercept.n),
+                color=list(_fig_params.TABLEAU)[1]
             )
         else:
             plot_samples = np.random.randint(
@@ -189,7 +199,7 @@ class MSD:
                         self.gradient.samples[i],
                         self.intercept.samples[i],
                     ),
-                    c=list(_fig_params.TABLEAU)[2],
-                    alpha=0.01,
+                    color=list(_fig_params.TABLEAU)[1],
+                    alpha=0.05,
                 )
         return fig, axes

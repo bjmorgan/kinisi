@@ -1,18 +1,22 @@
 """
-DistributionArray class
-
-Copyright (c) Andrew R. McCluskey and Benjamin J. Morgan
-
-Distributed under the terms of the MIT License
-
-@author: Andrew R. McCluskey
+The Distribution class enables easier handling in probability distributions
+in kinisi.
+In addition to a helpful storage container for information about the
+probability distribution, there is also helper functions to check the
+normality of the distribution and create publication quality plots.
 """
+
+# Copyright (c) Andrew R. McCluskey and Benjamin J. Morgan
+# Distributed under the terms of the MIT License
+# author: Andrew R. McCluskey
 
 # pylint: disable=R0902
 
 import numpy as np
-from scipy.stats import shapiro
+import matplotlib.pyplot as plt
+from scipy.stats import shapiro, gaussian_kde
 from uncertainties import ufloat
+from kinisi import _fig_params
 
 
 class Distribution:
@@ -26,17 +30,19 @@ class Distribution:
         median (float): Median of distribution.
         error (float): Symetrical uncertainty on value, taken as 95 %
             confidence interval. `None` if distribution is not normal.
-        ci_points (tuple): A tuple of two. The percentiles to be stored as confidence
-            interval.
+        ci_points (tuple): A tuple of two. The percentiles to be stored as
+            confidence interval.
         con_int (array_like): Confidence interval values.
         normal (bool): Distribution normally distributed.
     """
-    def __init__(self, name='Distribution', ci_points=None):
+    def __init__(self, name='Distribution', ci_points=None, units=None):
         """
         Args:
             name (str, optional): A name to identify the distribution.
             ci_points (array_like, optional): The percentiles at which
                 confidence intervals should be found.
+            units (pint.UnitRegistry(), optional) The units for the
+                distribution. Default is `None`.
         """
         self.name = name
         self.size = 0
@@ -52,6 +58,7 @@ class Distribution:
             self.ci_points = ci_points
         self.con_int = np.array([])
         self.normal = False
+        self.units = units
 
     def __repr__(self):  # pragma: no cover
         """
@@ -120,7 +127,10 @@ class Distribution:
         p_value = shapiro(samples)[1]
         if p_value > alpha:
             self.normal = True
-            self.error = np.percentile(self.samples, self.ci_points[1]) - self.median
+            self.error = np.percentile(
+                self.samples,
+                self.ci_points[1],
+            ) - self.median
             return True
         self.normal = False
         self.error = None
@@ -141,3 +151,36 @@ class Distribution:
                 [np.percentile(self.samples, i) for i in self.ci_points]
             )
         self.check_normality()
+
+    def plot(self, figsize=(10, 6)):  # pragma: no cover
+        """
+        Plot the probability density function for the distribution.
+
+        Args:
+            fig_size (tuple): Horizontal and veritcal size for figure (in inches).
+
+        Returns:
+            (matplotlib.figure.Figure)
+            (matplotlib.axes.Axes)
+        """
+        fig, axes = plt.subplots(figsize=figsize)
+        kde = gaussian_kde(self.samples)
+        abscissa = np.linspace(self.samples.min(), self.samples.max(), 100)
+        axes.plot(
+            abscissa,
+            kde.evaluate(abscissa),
+            color=list(_fig_params.TABLEAU)[0],
+        )
+        axes.hist(
+            self.samples,
+            bins=25,
+            density=True,
+            color=list(_fig_params.TABLEAU)[0],
+            alpha=0.5,
+        )
+        x_label = '{}'.format(self.name)
+        if self.units:
+            x_label += '/${:~L}$'.format(self.units)
+        axes.set_xlabel(x_label)
+        axes.set_ylabel('$p(${}$)$'.format(self.name))
+        return fig, axes
