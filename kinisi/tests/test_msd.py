@@ -14,6 +14,7 @@ import unittest
 import numpy as np
 from numpy.testing import assert_almost_equal, assert_equal
 from kinisi.msd import MSD
+from kinisi.distribution import Distribution
 
 
 class TestMsd(unittest.TestCase):
@@ -47,11 +48,30 @@ class TestMsd(unittest.TestCase):
 
     def test_resample(self):
         """
-        Test bootstrap with default confidence intervals.
+        Test resample with default confidence intervals.
         """
         data = [np.ones((5, 5))] * 5
         msd = MSD(data, np.linspace(1, 10, 5))
-        msd.resample()
+        msd.resample(progress=False)
         assert_equal(msd.mean.size, 5)
         assert_equal(msd.err.size, 5)
         assert_equal(msd.resampled, True)
+
+    def test_sample_diffusion(self):
+        """
+        Test sample_diffusion.
+        """
+        data = [np.ones((5, 5))] * 5
+        msd = MSD(data, np.linspace(1, 10, 5))
+        msd.sample_diffusion(
+            n_samples=5,
+            n_burn=5,
+            progress=False,
+        )
+        assert_equal(msd.mcmced, True)
+        assert_equal(isinstance(msd.gradient, Distribution), True)
+        assert_equal(msd.gradient.size, 500)
+        assert_equal(isinstance(msd.intercept, Distribution), True)
+        assert_equal(msd.intercept.size, 500)
+        assert_equal(isinstance(msd.diffusion_coefficient, Distribution), True)
+        assert_equal(msd.diffusion_coefficient.size, 500)

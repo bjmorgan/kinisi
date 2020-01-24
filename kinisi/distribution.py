@@ -52,13 +52,13 @@ class Distribution:
         self.con_int = np.array([])
         self.normal = False
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: no cover
         """
         Custom repr.
         """
         return self.__str__()
 
-    def __str__(self):
+    def __str__(self):  # pragma: no cover
         """
         Custom string.
         """

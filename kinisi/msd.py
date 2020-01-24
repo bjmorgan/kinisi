@@ -124,7 +124,7 @@ class MSD:
         intercept = ufloat(popt[1], perr[1])
         return gradient, intercept
 
-    def sample_diffusion(self):
+    def sample_diffusion(self, **kwargs):
         """
         Use MCMC sampling to evaluate diffusion coefficient.
         """
@@ -133,6 +133,7 @@ class MSD:
             self.mean,
             self.err,
             self.abscissa,
+            **kwargs,
         )
         self.mcmced = True
         self.gradient = Distribution(name='gradient')
@@ -142,7 +143,7 @@ class MSD:
         self.diffusion_coefficient = Distribution(name='diffusion coefficient')
         self.diffusion_coefficient.add_samples(self.gradient.samples / 6)
 
-    def plot(self, figsize=(10, 6)):
+    def plot(self, figsize=(10, 6)):  # pragma: no cover
         """
         Make a nice plot depending on what has been done.
         """
