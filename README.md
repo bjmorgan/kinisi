@@ -5,10 +5,12 @@ kee-nee-si
 Uncertainty analysis and model comparison for atomistic molecular dynamics.
 
 ## Goals
-- Estimate uncertainties in mean-squared displacements and squared mean-displacements.
-- Estimate uncertainties in diffusion coefficients and ionic conductivities.
-- Estimate uncertainties in activation energies (via Arrhenius relation).
-- Model comparison between Arrhenius and super-Arrhenius diffusion.
+- [x] Estimate uncertainties in mean-squared displacements
+- [ ] Estimate uncertainties in squared mean-displacements 
+- [x] Estimate uncertainties in diffusion coefficients
+- [ ] Estimate uncertainties in ionic conductivities
+- [ ] Estimate uncertainties in activation energies (via Arrhenius relation).
+- [ ] Model comparison between Arrhenius and super-Arrhenius diffusion.
 
 ```
 python setup.py build
