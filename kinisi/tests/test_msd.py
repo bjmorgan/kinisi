@@ -28,8 +28,9 @@ class TestMsd(unittest.TestCase):
         msd = MSD(sq_disp, np.linspace(1, 100, len(sq_disp)))
         for i, disp in enumerate(sq_disp):
             assert_almost_equal(msd.sq_displacements[i], disp)
-        assert_equal(msd.mean, None)
-        assert_equal(msd.err, None)
+        assert_equal(msd.mean, np.ones((5)))
+        num_part = np.array([(i * (i+1)) for i in range(1, 6)[::-1]])
+        assert_equal(msd.err, np.sqrt(6 / num_part))
 
     def test_msd_init_b(self):
         """
@@ -40,5 +41,17 @@ class TestMsd(unittest.TestCase):
         expected_sq_disp = sq_disp[::2]
         for i, disp in enumerate(expected_sq_disp):
             assert_almost_equal(msd.sq_displacements[i], disp)
-        assert_equal(msd.mean, None)
-        assert_equal(msd.err, None)
+        assert_equal(msd.mean, np.ones((3)))
+        num_part = np.array([(i * (i+1)) for i in range(1, 6)[::-2]])
+        assert_equal(msd.err, np.sqrt(6 / num_part))
+
+    def test_resample(self):
+        """
+        Test bootstrap with default confidence intervals.
+        """
+        data = [np.ones((5, 5))] * 5
+        msd = MSD(data, np.linspace(1, 10, 5))
+        msd.resample()
+        assert_equal(msd.mean.size, 5)
+        assert_equal(msd.err.size, 5)
+        assert_equal(msd.resampled, True)

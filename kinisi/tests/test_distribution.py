@@ -40,6 +40,13 @@ class TestDistribution(unittest.TestCase):
         assert_equal(distro.con_int, None)
         assert_almost_equal(distro.ci_points, [5., 95.])
 
+    def test_init_c(self):
+        """
+        Test initialisation with bad ci_points.
+        """
+        with self.assertRaises(ValueError):
+            distro = Distribution([5., 95., 102.])
+
     def test_check_normality_true_less_than_5000(self):
         """
         Test check_normality with less than 5000 samples.

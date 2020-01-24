@@ -52,7 +52,7 @@ def comparision(theta, y_data, dy_data, x_data):
 
 
 def run_sampling(init_guesses, y_data, dy_data, x_data, walkers=100,
-                 n_samples=500, n_burn=500):
+                 n_samples=500, n_burn=500, progress=True):
     """
     Perform MCMC to get gradient and intercept.
 
@@ -65,6 +65,7 @@ def run_sampling(init_guesses, y_data, dy_data, x_data, walkers=100,
         walkers (int, optional): Number of MCMC walkers.
         n_samples (int, optional): Number of sample points.
         n_burn (int, optional): Number of burn in samples.
+        progress (bool, optional): Show tqdm progress for sampling.
 
     Returns:
         (array_like) Samples for the variables from MCMC
@@ -77,8 +78,8 @@ def run_sampling(init_guesses, y_data, dy_data, x_data, walkers=100,
     args = (y_data, dy_data, x_data)
     sampler = emcee.EnsembleSampler(walkers, ndims, comparision, args=args)
 
-    sampler.run_mcmc(initial_prior, n_samples + n_burn, progress=True)
+    sampler.run_mcmc(initial_prior, n_samples + n_burn, progress=progress)
 
-    post_samples = sampler.chain[:, n_burn:, :].reshape((-1, ndims))
+    post_samples = sampler.get_chain(discard=n_burn).reshape((-1, ndims))
 
     return post_samples

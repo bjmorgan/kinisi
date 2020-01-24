@@ -26,7 +26,7 @@ class Distribution:
         median (float): Median of distribution.
         error (float): Symetrical uncertainty on value, taken as 95 %
             confidence interval. `None` if distribution is not normal.
-        ci_points (array_like): Percentiles to be stored as confidence
+        ci_points (tuple): A tuple of two. The percentiles to be stored as confidence
             interval.
         con_int (array_like): Confidence interval values.
         normal (bool): Distribution normally distributed.
@@ -45,6 +45,9 @@ class Distribution:
         if ci_points is None:
             self.ci_points = [2.5, 97.5]
         else:
+            if len(ci_points) != 2:
+                raise ValueError("The ci_points must be an array or tuple "
+                                 "of length two.")
             self.ci_points = ci_points
         self.con_int = np.array([])
         self.normal = False
@@ -116,7 +119,7 @@ class Distribution:
         p_value = shapiro(samples)[1]
         if p_value > alpha:
             self.normal = True
-            self.error = np.percentile(self.samples, 97.5) - self.median
+            self.error = np.percentile(self.samples, self.ci_points[1]) - self.median
             return True
         self.normal = False
         self.error = None

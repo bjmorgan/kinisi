@@ -84,7 +84,7 @@ class MSD:
         self.abscissa = abscissa[::step_freq]
         self.gradient = self.estimate_straight_line()[0]
         self.intercept = self.estimate_straight_line()[1]
-        self.diffusion_coefficient = self.gradient / 6 
+        self.diffusion_coefficient = self.gradient / 6
         self.ordinate_units = ordinate_units
         self.abscissa_units = abscissa_units
         self.resampled = False

@@ -11,6 +11,7 @@ Distributed under the terms of the MIT License
 # pylint: disable=R0201
 
 import unittest
+from unittest.mock import patch
 import numpy as np
 from numpy.testing import assert_almost_equal, assert_equal
 from kinisi import utils
@@ -22,7 +23,7 @@ class TestUtils(unittest.TestCase):
     """
     def test_straight_line_int(self):
         """
-        Test straight line for int input
+        Test straight line for int input.
         """
         expected_y = np.linspace(3, 21, 10, dtype=int)
         abscissa = np.linspace(1, 10, 10, dtype=int)
@@ -32,7 +33,7 @@ class TestUtils(unittest.TestCase):
 
     def test_straight_line_float(self):
         """
-        Test straight line for float input
+        Test straight line for float input.
         """
         expected_y = np.linspace(3.5, 21.5, 10, dtype=float)
         abscissa = np.linspace(1.0, 10.0, 10, dtype=float)
@@ -50,3 +51,12 @@ class TestUtils(unittest.TestCase):
         expected_lnl = 8.8364655979
         actual_lnl = utils.lnl(model, y_data, dy_data)
         assert_almost_equal(actual_lnl, expected_lnl)
+
+    def test_bootstrap(self):
+        """
+        Test bootstrap with default confidence intervals.
+        """
+        data = [np.ones((5, 5))] * 5
+        mean, error = utils.bootstrap(data, progress=False)
+        assert_equal(mean.size, 5)
+        assert_equal(error.size, 5)

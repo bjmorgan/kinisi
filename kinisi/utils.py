@@ -47,7 +47,7 @@ def lnl(model, y_data, dy_data):
 
 
 def bootstrap(data, n_resamples=1000, samples_freq=1,
-              confidence_interval=None):
+              confidence_interval=None, progress=True):
     """
     Perform a bootstrap resampling.
 
@@ -62,6 +62,7 @@ def bootstrap(data, n_resamples=1000, samples_freq=1,
             sampled.
         confidence_interval (array_like): The percentile points of the
             distribution that should be stored.
+        progress (bool, optional): Show tqdm progress for sampling.
 
     Returns:
         (tuple of array_like) A tuple of two arrays, the first is the
@@ -73,14 +74,18 @@ def bootstrap(data, n_resamples=1000, samples_freq=1,
     max_obs = data[0].shape[1]
     mean_data = np.zeros((len(data)))
     err_data = np.zeros((len(data)))
-    for i in tqdm(range(len(data))):
+    if progress:
+        iterator = tqdm(range(len(data)))
+    else:
+        iterator = range(len(data))
+    for i in iterator:
         n_obs = data[i].shape[1]
         n_atoms = data[i].shape[0]
         dt_int = max_obs - n_obs + 1
         # approximate number of "non-overlapping" observations, allowing
         # for partial overlap
         n_samples = int(max_obs / dt_int * n_atoms / samples_freq)
-        distro = Distribution(confidence_interval)
+        distro = Distribution(confidence_interval, name='delta_t_{}'.format(i))
         distro.add_samples(
             [
                 np.mean(
