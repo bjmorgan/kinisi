@@ -4,3 +4,6 @@ dist
 kinisi.egg-info
 **/__pycache__
 .eggs
+.coverage
+htmlcov
+**/.ipynb_checkpoints
