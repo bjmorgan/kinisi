@@ -8,7 +8,7 @@ Uncertainty analysis and model comparison for atomistic molecular dynamics.
 - [x] Estimate uncertainties in mean-squared displacements
 - [x] Estimate uncertainties in squared mean-displacements 
 - [x] Estimate uncertainties in diffusion coefficients
-- [x] Estimate uncertainties in ionic conductivities
+- [ ] Estimate uncertainties in ionic conductivities
 - [ ] Estimate uncertainties in activation energies (via Arrhenius relation).
 - [ ] Model comparison between Arrhenius and super-Arrhenius diffusion.
 
