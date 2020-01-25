@@ -62,8 +62,7 @@ class Conductivity(Motion):
         # https://pdfs.semanticscholar.org/
         # 5249/8c4c355c13b19093d897a78b11a44be4211d.pdf
         self.ordinate_error = 2 * np.sqrt(
-            self.ordinate) * np.sqrt(6 / self.num_part) * np.sqrt(
-                self.ordinate_error)
+                self.ordinate) * np.sqrt(6 / self.num_part)
         self.equ_straight_line()
         self.conductivity = self.gradient / 6
 
@@ -88,7 +87,7 @@ class Conductivity(Motion):
         self.ordinate = self.ordinate ** 2
         self.ordinate_error = 2 * self.ordinate * self.ordinate_error
 
-    def sample_conductivty(self, **kwargs):
+    def sample_conductivity(self, **kwargs):
         """
         Use MCMC sampling to evaluate conductivity.
 
