@@ -13,7 +13,7 @@ Distributed under the terms of the MIT License
 import unittest
 import numpy as np
 from numpy.testing import assert_almost_equal, assert_equal
-from kinisi.msd import MSD
+from kinisi.diffusion import Diffusion
 from kinisi.distribution import Distribution
 
 
@@ -26,52 +26,59 @@ class TestMsd(unittest.TestCase):
         Test the initialisation of the MSD class with defaults.
         """
         sq_disp = [np.ones((i, i+1)) for i in range(1, 6)[::-1]]
-        msd = MSD(sq_disp, np.linspace(1, 100, len(sq_disp)))
+        diff = Diffusion(sq_disp, np.linspace(1, 100, len(sq_disp)))
         for i, disp in enumerate(sq_disp):
-            assert_almost_equal(msd.sq_displacements[i], disp)
-        assert_equal(msd.mean, np.ones((5)))
+            assert_almost_equal(diff.displacements[i], disp)
+        assert_equal(diff.ordinate, np.ones((5)))
         num_part = np.array([(i * (i+1)) for i in range(1, 6)[::-1]])
-        assert_equal(msd.err, np.sqrt(6 / num_part))
+        assert_equal(diff.ordinate_error, np.sqrt(6 / num_part))
 
     def test_msd_init_b(self):
         """
         Test the initialisation of the MSD class without defaults.
         """
         sq_disp = [np.ones((i, i+1)) for i in range(1, 6)[::-1]]
-        msd = MSD(sq_disp, np.linspace(1, 100, len(sq_disp)), step_freq=2)
+        diff = Diffusion(
+            sq_disp,
+            np.linspace(1, 100, len(sq_disp)),
+            step_freq=2,
+        )
         expected_sq_disp = sq_disp[::2]
         for i, disp in enumerate(expected_sq_disp):
-            assert_almost_equal(msd.sq_displacements[i], disp)
-        assert_equal(msd.mean, np.ones((3)))
+            assert_almost_equal(diff.displacements[i], disp)
+        assert_equal(diff.ordinate, np.ones((3)))
         num_part = np.array([(i * (i+1)) for i in range(1, 6)[::-2]])
-        assert_equal(msd.err, np.sqrt(6 / num_part))
+        assert_equal(diff.ordinate_error, np.sqrt(6 / num_part))
 
     def test_resample(self):
         """
         Test resample with default confidence intervals.
         """
         data = [np.ones((5, 5))] * 5
-        msd = MSD(data, np.linspace(1, 10, 5))
-        msd.resample(progress=False)
-        assert_equal(msd.mean.size, 5)
-        assert_equal(msd.err.size, 5)
-        assert_equal(msd.resampled, True)
+        diff = Diffusion(data, np.linspace(1, 10, 5))
+        diff.resample(progress=False)
+        assert_equal(diff.ordinate.size, 5)
+        assert_equal(diff.ordinate_error.size, 5)
+        assert_equal(diff.resampled, True)
 
     def test_sample_diffusion(self):
         """
         Test sample_diffusion.
         """
         data = [np.ones((5, 5))] * 5
-        msd = MSD(data, np.linspace(1, 10, 5))
-        msd.sample_diffusion(
+        diff = Diffusion(data, np.linspace(1, 10, 5))
+        diff.sample_diffusion(
             n_samples=5,
             n_burn=5,
             progress=False,
         )
-        assert_equal(msd.mcmced, True)
-        assert_equal(isinstance(msd.gradient, Distribution), True)
-        assert_equal(msd.gradient.size, 500)
-        assert_equal(isinstance(msd.intercept, Distribution), True)
-        assert_equal(msd.intercept.size, 500)
-        assert_equal(isinstance(msd.diffusion_coefficient, Distribution), True)
-        assert_equal(msd.diffusion_coefficient.size, 500)
+        assert_equal(diff.mcmced, True)
+        assert_equal(isinstance(diff.gradient, Distribution), True)
+        assert_equal(diff.gradient.size, 500)
+        assert_equal(isinstance(diff.intercept, Distribution), True)
+        assert_equal(diff.intercept.size, 500)
+        assert_equal(
+            isinstance(diff.diffusion_coefficient, Distribution),
+            True,
+        )
+        assert_equal(diff.diffusion_coefficient.size, 500)

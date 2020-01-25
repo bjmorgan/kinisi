@@ -1,18 +1,51 @@
 """
-MCMC evaluation for straightline.
-
-Copyright (c) Andrew R. McCluskey and Benjamin J. Morgan
-
-Distributed under the terms of the MIT License
-
-@author: Andrew R. McCluskey
+Functions related to the fitting and sampling of a straight line.
 """
+# Copyright (c) Andrew R. McCluskey and Benjamin J. Morgan
+# Distributed under the terms of the MIT License
+# author: Andrew R. McCluskey
 
 # pylint: disable=R0913
 
 import numpy as np
 import emcee
+from scipy.optimize import curve_fit
+from uncertainties import ufloat
 from kinisi import utils
+
+
+def straight_line(abscissa, gradient, intercept):
+    """
+    Calculate ordinate of straight line
+
+    Args:
+        abscissa (array_like): abscissa
+        gradient (float): gradient
+        intercept (float): intercept
+
+    Returns:
+        (array_like) ordinate
+    """
+    return gradient * abscissa + intercept
+
+
+def equation(abscissa, ordinate, uncertainty):
+    """
+    Estimate the straight line gradient and intercept
+
+    Returns:
+        (tuple) Length of 2, gradient and intercept.
+    """
+    popt, pcov = curve_fit(
+        straight_line,
+        abscissa,
+        ordinate,
+        sigma=uncertainty,
+    )
+    perr = np.sqrt(np.diag(pcov))
+    gradient = ufloat(popt[0], perr[0])
+    intercept = ufloat(popt[1], perr[1])
+    return gradient, intercept
 
 
 def prior(initial_guess, size):
@@ -46,7 +79,7 @@ def comparision(theta, y_data, dy_data, x_data):
     """
     gradient, intercept = theta
 
-    model = utils.straight_line(x_data, gradient, intercept)
+    model = straight_line(x_data, gradient, intercept)
 
     return utils.lnl(model, y_data, dy_data)
 

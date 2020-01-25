@@ -4,7 +4,8 @@ kinisi modules
 .. toctree::
    :maxdepth: 4
 
+   conductivity
+   diffusion
    distribution
-   msd
    straight_line
    utils

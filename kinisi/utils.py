@@ -1,12 +1,9 @@
 """
 Simple utility functions
-
-Copyright (c) Andrew R. McCluskey and Benjamin J. Morgan
-
-Distributed under the terms of the MIT License
-
-@author: Andrew R. McCluskey
 """
+# Copyright (c) Andrew R. McCluskey and Benjamin J. Morgan
+# Distributed under the terms of the MIT License
+# author: Andrew R. McCluskey
 
 # pylint: disable=R0913
 
@@ -14,21 +11,6 @@ import numpy as np
 from tqdm import tqdm
 from sklearn.utils import resample
 from kinisi.distribution import Distribution
-
-
-def straight_line(abscissa, gradient, intercept):
-    """
-    Calculate ordinate of straight line
-
-    Args:
-        abscissa (array_like): abscissa
-        gradient (float): gradient
-        intercept (float): intercept
-
-    Returns:
-        (array_like) ordinate
-    """
-    return gradient * abscissa + intercept
 
 
 def lnl(model, y_data, dy_data):

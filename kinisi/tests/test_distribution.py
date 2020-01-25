@@ -34,7 +34,7 @@ class TestDistribution(unittest.TestCase):
         """
         Test initialisation without defaults.
         """
-        distro = Distribution([5., 95.])
+        distro = Distribution(ci_points=[5., 95.])
         assert_equal(distro.samples, np.array([]))
         assert_equal(distro.median, None)
         assert_equal(distro.con_int, None)
@@ -45,7 +45,7 @@ class TestDistribution(unittest.TestCase):
         Test initialisation with bad ci_points.
         """
         with self.assertRaises(ValueError):
-            Distribution([5., 95., 102.])
+            Distribution(ci_points=[5., 95., 102.])
 
     def test_check_normality_true_less_than_5000(self):
         """
