@@ -8,7 +8,7 @@ Distributed under the terms of the MIT License
 @author: Andrew R. McCluskey
 """
 
-# pylint: disable=R0913
+# pylint: disable=R0902,R0913
 
 # This parser borrows heavily from the
 # pymatgen.analysis.diffusion_analyzer.DiffusionAnalyzer
@@ -21,13 +21,14 @@ Distributed under the terms of the MIT License
 # In fact, we love pymatgen!
 
 import numpy as np
+from pymatgen.analysis.diffusion_analyzer import get_conversion_factor
 
 
 class PymatgenParser:
     """
     A parser for pymatgen Xdatcar style files.
     """
-    def __init__(self, structures, specie, time_step, step_skip,
+    def __init__(self, structures, specie, time_step, step_skip, temperature,
                  min_obs=30):
         """
         Args:
@@ -53,13 +54,24 @@ class PymatgenParser:
 
         structure, disp = _get_structure_and_disp(structures)
 
+        self.conversion_factor = get_conversion_factor(
+            structure,
+            specie,
+            temperature,
+        )
+
         drift_corrected = self.correct_for_drift(structure, disp, specie)
 
         nsteps = drift_corrected.shape[1]
 
         timesteps = self.smoothed_timesteps(nsteps, min_obs)
 
-        self.delta_t, self.msd, self.sq_disp_store, self.disp_store = self.get_disps(
+        (
+            self.delta_t,
+            self.msd,
+            self.sq_disp_store,
+            self.disp_store,
+        ) = self.get_disps(
             timesteps,
             drift_corrected
         )

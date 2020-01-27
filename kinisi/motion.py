@@ -32,6 +32,8 @@ class Motion:
             displacements at each dt value.
         abscissa (array_like): The abscissa values that match with the
             delta_t values.
+        conversion_factor (float): The value to convert from diffusion to
+                conductivity.
         ordinate_units (pint.UnitRegistry(), optional) The units of the
             displacement data. Default is square ångström.
         abscissa_units (pint.UnitRegistry(), optional) The units of the
@@ -54,13 +56,14 @@ class Motion:
         resampled (bool): `True` if the resampling has been performed.
         mcmced (bool): `True` if the MCMC sampling has been performed,
     """
-    def __init__(self, displacements, abscissa,
+    def __init__(self, displacements, abscissa, conversion_factor,
                  ordinate_units=UREG.angstrom**2,
-                 abscissa_units=UREG.picosecond, step_freq=1):
+                 abscissa_units=UREG.femtosecond, step_freq=1):
         """
         """
         self.displacements = displacements[::step_freq]
         self.abscissa = abscissa[::step_freq]
+        self.conversion_factor = conversion_factor
         self.ordinate_units = ordinate_units
         self.abscissa_units = abscissa_units
         self.step_freq = step_freq

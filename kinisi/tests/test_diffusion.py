@@ -26,7 +26,7 @@ class TestMsd(unittest.TestCase):
         Test the initialisation of the MSD class with defaults.
         """
         sq_disp = [np.ones((i, i+1)) for i in range(1, 6)[::-1]]
-        diff = Diffusion(sq_disp, np.linspace(1, 100, len(sq_disp)))
+        diff = Diffusion(sq_disp, np.linspace(1, 100, len(sq_disp)), 1)
         for i, disp in enumerate(sq_disp):
             assert_almost_equal(diff.displacements[i], disp)
         assert_equal(diff.ordinate, np.ones((5)))
@@ -41,6 +41,7 @@ class TestMsd(unittest.TestCase):
         diff = Diffusion(
             sq_disp,
             np.linspace(1, 100, len(sq_disp)),
+            1,
             step_freq=2,
         )
         expected_sq_disp = sq_disp[::2]
@@ -55,7 +56,7 @@ class TestMsd(unittest.TestCase):
         Test resample with default confidence intervals.
         """
         data = [np.ones((5, 5))] * 5
-        diff = Diffusion(data, np.linspace(1, 10, 5))
+        diff = Diffusion(data, np.linspace(1, 10, 5), 1)
         diff.resample(progress=False)
         assert_equal(diff.ordinate.size, 5)
         assert_equal(diff.ordinate_error.size, 5)
@@ -66,7 +67,7 @@ class TestMsd(unittest.TestCase):
         Test sample_diffusion.
         """
         data = [np.ones((5, 5))] * 5
-        diff = Diffusion(data, np.linspace(1, 10, 5))
+        diff = Diffusion(data, np.linspace(1, 10, 5), 1)
         diff.sample_diffusion(
             n_samples=5,
             n_burn=5,
