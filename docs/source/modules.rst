@@ -4,7 +4,7 @@ kinisi modules
 .. toctree::
    :maxdepth: 4
 
-   conductivity
+   charge
    diffusion
    distribution
    straight_line
