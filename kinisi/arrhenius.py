@@ -21,7 +21,7 @@ from . import UREG
 
 
 class StandardArrhenius(Arrhenius):
-    """
+    r"""
     Evaluate the data with a standard Arrhenius relationship.
 
     Attributes:
