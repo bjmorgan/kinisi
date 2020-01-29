@@ -83,7 +83,7 @@ class Distribution:
         )
         representation += "Samples: "
         if self.size > 5:
-            representation += "[{} {} ... {} {}]\n".format(
+            representation += "[{:.2e} {:.2e} ... {:.2e} {:.2e}]\n".format(
                 self.samples[0],
                 self.samples[1],
                 self.samples[-2],
@@ -91,13 +91,13 @@ class Distribution:
             )
         else:
             representation += "["
-            representation += " ".join(["{}".format(i) for i in self.samples])
+            representation += " ".join(["{:.2e}".format(i) for i in self.samples])
             representation += "]\n"
-        representation += "Median: {}\n".format(self.median)
+        representation += "Median: {:.2e}\n".format(self.median)
         if self.check_normality():
-            representation += "Symetrical Error: {}\n".format(self.error)
+            representation += "Symetrical Error: {:.2e}\n".format(self.error)
         representation += "Confidence intervals: ["
-        representation += " ".join(["{}".format(i) for i in self.con_int])
+        representation += " ".join(["{:.2e}".format(i) for i in self.con_int])
         representation += "]\n"
         representation += "Confidence interval points: ["
         representation += " ".join(["{}".format(i) for i in self.ci_points])
@@ -110,7 +110,7 @@ class Distribution:
                     ufloat(self.median, uncertainty)
                 )
             else:
-                representation += "{}+{}-{}\n".format(
+                representation += "{:.2e}+{:.2e}-{:.2e}\n".format(
                     self.median, self.con_int[1], self.con_int[0]
                 )
         representation += "Units: {}\n".format(self.units)
