@@ -1,7 +1,7 @@
-kinisi\.straight_line
+kinisi\.relationships
 =====================
 
-.. automodule:: kinisi.straight_line
+.. automodule:: kinisi.relationships
     :members:
     :undoc-members:
     :show-inheritance:

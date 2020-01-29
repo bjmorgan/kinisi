@@ -77,14 +77,14 @@ class Diffusion(StraightLine):
     The mean squared displacement (MSD).
     """
     def __init__(self, delta_t, msd, msd_error,
-                 delta_t_units=UREG.femtoseconds, msd_units=UREG.angstrom**2,
+                 delta_t_unit=UREG.femtoseconds, msd_unit=UREG.angstrom**2,
                  delta_t_names=r'$\delta t$',
                  msd_names=r'$\langle r ^ 2 \rangle$'):
         super().__init__(
-            delta_t, msd, msd_error, delta_t_units, msd_units, None,
+            delta_t, msd, msd_error, delta_t_unit, msd_unit, None,
             delta_t_names, msd_names)
         self.diffusion_coefficient = self.variables[0] / 6 * (
-            self.ordinate_units / self.abscissa_units)
+            self.ordinate_unit / self.abscissa_unit)
         self.diffusion_coefficient = self.diffusion_coefficient.to(
             UREG.centimeter ** 2 / UREG.second)
 
@@ -93,8 +93,8 @@ class Diffusion(StraightLine):
         MCMC sampling
         """
         self.mcmc(**kwargs)
-        unit_conversion = 1 * self.ordinate_units / self.abscissa_units
+        unit_conversion = 1 * self.ordinate_unit / self.abscissa_unit
         self.diffusion_coefficient = Distribution(
             self.variables[0].samples * unit_conversion.to(
                 UREG.centimeter ** 2 / UREG.second).magnitude / 6,
-            name="$D$", units=UREG.centimeter ** 2 / UREG.second)
+            name="$D$", unit=UREG.centimeter ** 2 / UREG.second)

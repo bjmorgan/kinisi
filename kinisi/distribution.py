@@ -38,14 +38,14 @@ class Distribution:
     """
 
     def __init__(self, samples, name="Distribution", ci_points=None,
-                 units=None):
+                 unit=None):
         """
         Args:
             samples (array_like): Sample for the distribution.
             name (str, optional): A name to identify the distribution.
             ci_points (array_like, optional): The percentiles at which
                 confidence intervals should be found.
-            units (pint.UnitRegistry(), optional) The units for the
+            unit (pint.UnitRegistry(), optional) The unit for the
                 distribution. Default is `None`.
         """
         self.name = name
@@ -65,7 +65,7 @@ class Distribution:
             self.ci_points = ci_points
         self.con_int = np.array([])
         self.normal = False
-        self.units = units
+        self.unit = unit
         self.add_samples(np.array(samples))
 
     def __repr__(self):  # pragma: no cover
@@ -114,7 +114,7 @@ class Distribution:
                 representation += "{:.2e}+{:.2e}-{:.2e}\n".format(
                     self.median, self.con_int[1], self.con_int[0]
                 )
-        representation += "Units: {}\n".format(self.units)
+        representation += "Unit: {}\n".format(self.unit)
         representation += "Normal: {}\n".format(self.normal)
         return representation
 
@@ -193,8 +193,8 @@ class Distribution:
             alpha=0.2,
         )
         x_label = "{}".format(self.name)
-        if self.units != UREG.dimensionless:
-            x_label += "/${:~L}$".format(self.units)
+        if self.unit != UREG.dimensionless:
+            x_label += "/${:~L}$".format(self.unit)
         axes.set_xlabel(x_label)
         axes.set_ylabel("$p(${}$)$".format(self.name))
         axes.set_ylim((0, ordinate.max() + ordinate.max() * 0.1))

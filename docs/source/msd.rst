@@ -1,7 +1,7 @@
-kinisi\.utils
-=============
+kinisi\.msd
+===========
 
-.. automodule:: kinisi.utils
+.. automodule:: kinisi.msd
     :members:
     :undoc-members:
     :show-inheritance:

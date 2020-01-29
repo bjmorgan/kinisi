@@ -1,10 +1,15 @@
 """
-The StraightLine class serves to enable the analysis of straight line
-relationships. Allowing for the estimation of the activation_energy and
-prefactor by linear regression, the determination of uncertainties in
-these values by Markov-chain Monte Carlo, and the determination of the
-evidence of a linear model for a given dataset.
+This module contains a (small) library of relationships between the abscissa
+and ordinate.
+This includes the `StraightLine`, `Arrhenius`, and `VTFEquation`; all of which
+are important in the study of diffusion in materials.
+The `kinisi.relationships.Relationship` class is subclasses by these
+relationships and enables the simple fitting of variables, the evalulation of
+variable probability distributions by Markov-chain Monte Carlo (MCMC) and the
+determination for the Bayesian evidence between a relationship and some data,
+using nested sampling.
 """
+
 # Copyright (c) Andrew R. McCluskey and Benjamin J. Morgan
 # Distributed under the terms of the MIT License
 # author: Andrew R. McCluskey
@@ -26,8 +31,9 @@ from . import UREG
 
 class Relationship:
     """
-    The Arrhenius class facilitates the investigation and analysis of
-    Arrhenius models.
+    The `Relationship` class enables the investigation of variable
+    distributions in mathematical models.
+    This is achieved by implementing simple fitting, MCMC
 
     Attributes:
         equation (function): A function outlining the relationship.
@@ -35,64 +41,68 @@ class Relationship:
         ordinate (array_like): The ordinate data.
         ordinate_error (array_like): The uncertainty in the ordinate
             data.
-        activation_energy (uncertainties.ufloat or
-            kinisi.distribution.Distribution): The activation_energy of the
-            straight line.
-        prefactor (uncertainties.ufloat or
-            kinisi.distribution.Distribution): The prefactor of the straight
-            line.
-        evidence (float or uncertainties.ufloat): The evidence for a linear
-            model for the given dataset.
+        abscissa_unit (pint.UnitRegistry()): The unit for the
+            abscissa.
+        ordinate_unit (pint.UnitRegistry()): The unit for the
+            ordinate.
+        abscissa_name (str): The label for the abscissa.
+        ordinate_name (str): The label for the ordinate.
+        variables (lsit of uncertainties.ufloat or
+            kinisi.distribution.Distribution): The variables associated
+            with the mathematical relationship.
+        variables_unit (list of pint.UnitRegistry()): The unit for the
+            ordinate.
+        variables_name (list of str): The label for the abscissa.
+        evidence (float): The Bayesian evidence for the relationship with
+        the data.
     """
-
     def __init__(self, equation, abscissa, ordinate, ordinate_error,
-                 abscissa_units=UREG.dimensionless,
-                 ordinate_units=UREG.dimensionless, abscissa_label="$x$",
-                 ordinate_label="$y$"):
+                 abscissa_unit=UREG.dimensionless,
+                 ordinate_unit=UREG.dimensionless, abscissa_name="$x$",
+                 ordinate_name="$y$"):
         """
         Args:
             abscissa (array_like): The abscissa data.
             ordinate (array_like): The ordinate data.
             ordinate_error (array_like): The uncertainty in the ordinate
                 data.
-            abscissa_units (pint.UnitRegistry(), optional): The units for the
+            abscissa_unit (pint.UnitRegistry(), optional): The unit for the
                 abscissa. Default is dimensionless.
-            ordinate_units (pint.UnitRegistry(), optional): The units for the
+            ordinate_unit (pint.UnitRegistry(), optional): The unit for the
                 ordinate. Default is dimensionless.
-            abscissa_label (str): The label for the abscissa. Default is
-                `$x$`.
-            ordinate_label (str): The label for the ordinate. Default is
-                `$y$`.
+            abscissa_name (str, optional): The label for the abscissa. Default
+                is `$x$`.
+            ordinate_name (str, optional): The label for the ordinate. Default
+                is `$y$`.
         """
         self.equation = equation
         self.abscissa = abscissa
         self.ordinate = ordinate
         self.ordinate_error = ordinate_error
-        self.abscissa_units = abscissa_units
-        self.ordinate_units = ordinate_units
-        self.abscissa_name = abscissa_label
-        self.ordinate_name = ordinate_label
-
-        self.variables_units = [None]
-        self.variables_names = [None]
+        self.abscissa_unit = abscissa_unit
+        self.ordinate_unit = ordinate_unit
+        self.abscissa_name = abscissa_name
+        self.ordinate_name = ordinate_name
 
         self.variables = [None]
+        self.variables_unit = [None]
+        self.variables_name = [None]
 
         self.evidence = None
 
     def fit(self, init_values, with_uncertainty=True):
         """
-        Perform a straight line fitting.
+        Perform a simple least squares fitting of the relationship to the
+        data.
 
         Args:
             with_uncertainty (bool, optional): Should a weighted least
                 squares be performed? Default is `True`.
 
         Returns:
-            array of uncertainties.ufloat: The activation_energy and prefactor
-                for the straight line.
+            list of uncertainties.ufloat: The variables associated with the
+                relationship.
         """
-
         if with_uncertainty:
             uncertainty = self.ordinate_error
         else:
@@ -108,8 +118,10 @@ class Relationship:
 
     def mcmc(self, walkers=100, n_samples=500, n_burn=500, progress=True):
         """
-        Perform MCMC to get activation_energy and prefactor with associated
-        uncertainty.
+        Perform MCMC to get the probability distributions for the variables
+        of the relationship. Note running this method will populate the
+        `self.variables` attribute with `kinisi.distribution.Distribution`
+        objects.
 
         Args:
             walkers (int, optional): Number of MCMC walkers. Default is `100`.
@@ -119,9 +131,6 @@ class Relationship:
                 `500`.
             progress (bool, optional): Show tqdm progress for sampling.
                 Default is `True`.
-
-        Returns:
-            (array_like) Samples for the variables from MCMC
         """
         uniform = np.random.uniform(size=(len(self.variables), walkers))
         initial_prior = self.prior_uniform(uniform).T
@@ -136,7 +145,7 @@ class Relationship:
         for i in range(len(self.variables)):
             self.variables[i] = Distribution(
                 post_samples[:, i],
-                name=self.variables_names[i], units=self.variables_units[i])
+                name=self.variables_name[i], unit=self.variables_unit[i])
 
     def nested_sampling(self, progress=True, **kwargs):
         """
@@ -146,6 +155,9 @@ class Relationship:
         Args:
             progress (bool, optional): Show tqdm progress for sampling.
                 Default is `True`.
+
+        Keyword Args:
+            See the `dynesty.run_nested()` documentation.
         """
         sampler = dynesty.NestedSampler(
             self.comparison, self.prior_uniform, len(self.variables))
@@ -189,12 +201,12 @@ class Relationship:
         fig, axes = plt.subplots(figsize=figsize)
         axes.plot(self.abscissa, self.ordinate, c=list(_fig_params.TABLEAU)[0])
         x_label = "{}".format(self.abscissa_name)
-        if self.abscissa_units != UREG.dimensionless:
-            x_label += "/${:~L}$".format(self.abscissa_units)
+        if self.abscissa_unit != UREG.dimensionless:
+            x_label += "/${:~L}$".format(self.abscissa_unit)
         axes.set_xlabel(x_label)
         y_label = "{}".format(self.ordinate_name)
-        if self.ordinate_units != UREG.dimensionless:
-            y_label += "/${:~L}$".format(self.ordinate_units)
+        if self.ordinate_unit != UREG.dimensionless:
+            y_label += "/${:~L}$".format(self.ordinate_unit)
         axes.set_ylabel(y_label)
         axes.fill_between(
             self.abscissa,
@@ -224,13 +236,9 @@ class Relationship:
 
         Args:
             theta (tuple): Values for variables.
-            ordinate (array_like): Experimental ordinate data.
-            ordinate_error (array_like): Experimental ordinate-uncertainty
-                data.
-            abscissa (array_like): Experimental abscissa data.
 
         Returns:
-            (float) ln-likelihood between model and data.
+            (float): ln-likelihood between model and data.
         """
         model = self.equation(self.abscissa, *theta)
 
@@ -239,47 +247,50 @@ class Relationship:
 
 class StraightLine(Relationship):
     """
-    A linear relationship.
+    A linear relationship defined by variables for the gradient (m) and
+    intercept (c). Where y is the ordinate and x the abscissa.
 
-    y = mx + c
+    .. math::
+       
+       y = mx + c
     """
     def __init__(self, abscissa, ordinate, ordinate_error,
-                 abscissa_units=UREG.dimensionless,
-                 ordinate_units=UREG.dimensionless, variable_units=None,
-                 abscissa_names="$x$", ordinate_names="$y$",
-                 variable_names=None):
+                 abscissa_unit=UREG.dimensionless,
+                 ordinate_unit=UREG.dimensionless, variable_unit=None,
+                 abscissa_name="$x$", ordinate_name="$y$",
+                 variable_name=None):
         """
         Args:
             abscissa (array_like): The abscissa data.
             ordinate (array_like): The ordinate data.
             ordinate_error (array_like): The uncertainty in the ordinate
                 data.
-            abscissa_units (pint.UnitRegistry(), optional): The units for the
+            abscissa_unit (pint.UnitRegistry(), optional): The unit for the
                 abscissa. Default is dimensionless.
-            ordinate_units (pint.UnitRegistry(), optional): The units for the
+            ordinate_unit (pint.UnitRegistry(), optional): The unit for the
                 ordinate. Default is dimensionless.
-            variables_units (list of pint.UnitRegistry(), optional): The
-                units for the variables. Default is
-                `[ordinate_units/abscissa_units, ordinate_units`].
-            abscissa_names (str): The label for the abscissa. Default is
+            variables_unit (list of pint.UnitRegistry(), optional): The
+                unit for the variables. Default is
+                `[ordinate_unit/abscissa_unit, ordinate_unit]`.
+            abscissa_name (str): The label for the abscissa. Default is
                 `$x$`.
-            ordinate_names (str): The label for the ordinate. Default is
+            ordinate_name (str): The label for the ordinate. Default is
                 `$y$`.
-            variable_names (list of str): The label for the variables. Default
+            variable_name (list of str): The label for the variables. Default
                 is `[r'$m$', r'$c$']`.
         """
         super().__init__(
             straight_line, abscissa, ordinate, ordinate_error,
-            abscissa_units, ordinate_units, abscissa_names, ordinate_names)
-        if variable_units is not None:
-            self.variables_units = variable_units
+            abscissa_unit, ordinate_unit, abscissa_name, ordinate_name)
+        if variable_unit is not None:
+            self.variables_unit = variable_unit
         else:
-            self.variables_units = [
-                ordinate_units / abscissa_units, ordinate_units]
-        if variable_names is not None:
-            self.variables_names = variable_names
+            self.variables_unit = [
+                ordinate_unit / abscissa_unit, ordinate_unit]
+        if variable_name is not None:
+            self.variables_name = variable_name
         else:
-            self.variables_names = [r'$m$', r'$c$']
+            self.variables_name = [r'$m$', r'$c$']
 
         results = linregress(self.abscissa, self.ordinate)
         init = [results.slope, results.intercept]
@@ -303,47 +314,55 @@ def straight_line(abscissa, gradient, intercept):
 
 
 class Arrhenius(Relationship):
-    """
-    A Arrhenius relationship.
+    r"""
+    A relationship defined by the Arrhenius equation, with the variables of
+    activation energy (E_a) and prefactor (A). Where D is the ordinate and
+    T the abscissa.
 
-    k = A\frac{-E_a}{kT}
+    .. math::
+
+       D = A\exp\bigg(\frac{-E_a}{kT}\bigg)
+
+    Attributes:
+        activation_energy (ufloat or kinisi.distribution.Distribution): The
+            distribution of the activation energy.
     """
     def __init__(self, abscissa, ordinate, ordinate_error,
-                 abscissa_units=UREG.dimensionless,
-                 ordinate_units=UREG.dimensionless, variable_units=None,
-                 abscissa_names="$T$", ordinate_names="$k$",
-                 variable_names=None):
+                 abscissa_unit=UREG.dimensionless,
+                 ordinate_unit=UREG.dimensionless, variable_unit=None,
+                 abscissa_name="$T$", ordinate_name="$k$",
+                 variable_name=None):
         """
         Args:
             abscissa (array_like): The abscissa data.
             ordinate (array_like): The ordinate data.
             ordinate_error (array_like): The uncertainty in the ordinate
                 data.
-            abscissa_units (pint.UnitRegistry(), optional): The units for the
+            abscissa_unit (pint.UnitRegistry(), optional): The unit for the
                 abscissa. Default is dimensionless.
-            ordinate_units (pint.UnitRegistry(), optional): The units for the
+            ordinate_unit (pint.UnitRegistry(), optional): The unit for the
                 ordinate. Default is dimensionless.
-            variables_units (list of pint.UnitRegistry(), optional): The
-                units for the variables. Default is `[dimensionless,
-                ordinate_units`].
-            abscissa_names (str): The label for the abscissa. Default is
+            variables_unit (list of pint.UnitRegistry(), optional): The
+                unit for the variables. Default is `[dimensionless,
+                ordinate_unit`].
+            abscissa_name (str): The label for the abscissa. Default is
                 `$T$`.
-            ordinate_names (str): The label for the ordinate. Default is
+            ordinate_name (str): The label for the ordinate. Default is
                 `$k$`.
-            variable_names (list of str): The label for the variables. Default
+            variable_name (list of str): The label for the variables. Default
                 is `[r'$E_a$', r'$A$']`.
         """
         super().__init__(
-            arrhenius, abscissa, ordinate, ordinate_error, abscissa_units,
-            ordinate_units, abscissa_names, ordinate_names)
-        if variable_units is not None:
-            self.variables_units = variable_units
+            arrhenius, abscissa, ordinate, ordinate_error, abscissa_unit,
+            ordinate_unit, abscissa_name, ordinate_name)
+        if variable_unit is not None:
+            self.variables_unit = variable_unit
         else:
-            self.variables_units = [UREG.dimensionless, ordinate_units]
-        if variable_names is not None:
-            self.variables_names = variable_names
+            self.variables_unit = [UREG.dimensionless, ordinate_unit]
+        if variable_name is not None:
+            self.variables_name = variable_name
         else:
-            self.variables_names = [r'$E_a$', r'$A$']
+            self.variables_name = [r'$E_a$', r'$A$']
 
         results = linregress(1/self.abscissa, np.log(self.ordinate))
         init = [results.slope * k * -1, np.exp(results.intercept)]
@@ -352,64 +371,71 @@ class Arrhenius(Relationship):
 
 def arrhenius(abscissa, activation_energy, prefactor):
     """
-    Determine the rate constant for a given activation energy, and
+    Determine the diffusion coefficient for a given activation energy, and
     prefactor according to the Arrhenius equation.
 
     Args:
         abscissa (array_like): The abscissa data.
-        activation_energy (float): The activation_energy.
-        prefactor (float): The prefactor.
+        activation_energy (float): The activation_energy value.
+        prefactor (float): The prefactor value.
 
     Returns:
-        array_line: The ordinate data.
+        array_line: The diffusion coefficient data.
     """
     return prefactor * np.exp(-1 * activation_energy / (k * abscissa))
 
 
 class VTFEquation(Relationship):
-    """
-    A super-Arrhenius relationship following the Vogel–Tammann–Fulcher
-    equation.
+    r"""
+    A relationship defined by the Vogel–Tammann–Fulcher equation, with the
+    variables of activation energy (E_a), prefactor (A), and temperature
+    offset (T_0). Where D is the ordinate and T the abscissa.
 
-    k = A\frac{-E_a}{k(T - T_0)}
+    .. math::
+
+       D = A \exp\bigg(\frac{-E_a}{k(T-T_0)}\bigg)
+
+    Attributes:
+        activation_energy (ufloat or kinisi.distribution.Distribution): The
+            distribution of the activation energy.
     """
     def __init__(self, abscissa, ordinate, ordinate_error,
-                 abscissa_units=UREG.dimensionless,
-                 ordinate_units=UREG.dimensionless, variable_units=None,
-                 abscissa_names="$T$", ordinate_names="$k$",
-                 variable_names=None):
+                 abscissa_unit=UREG.dimensionless,
+                 ordinate_unit=UREG.dimensionless, variable_unit=None,
+                 abscissa_name="$T$", ordinate_name="$k$",
+                 variable_name=None):
         """
         Args:
             abscissa (array_like): The abscissa data.
             ordinate (array_like): The ordinate data.
             ordinate_error (array_like): The uncertainty in the ordinate
                 data.
-            abscissa_units (pint.UnitRegistry(), optional): The units for the
+            abscissa_unit (pint.UnitRegistry(), optional): The unit for the
                 abscissa. Default is dimensionless.
-            ordinate_units (pint.UnitRegistry(), optional): The units for the
+            ordinate_unit (pint.UnitRegistry(), optional): The unit for the
                 ordinate. Default is dimensionless.
-            variables_units (list of pint.UnitRegistry(), optional): The
-                units for the variables. Default is `[dimensionless,
-                ordinate_units, abscissa_units`].
-            abscissa_names (str): The label for the abscissa. Default is
+            variables_unit (list of pint.UnitRegistry(), optional): The
+                unit for the variables. Default is `[dimensionless,
+                ordinate_unit, abscissa_unit`].
+            abscissa_name (str): The label for the abscissa. Default is
                 `$T$`.
-            ordinate_names (str): The label for the ordinate. Default is
+            ordinate_name (str): The label for the ordinate. Default is
                 `$k$`.
-            variable_names (list of str): The label for the variables. Default
+            variable_name (list of str): The label for the variables. Default
                 is `[r'$E_a$', r'$A$', r'$T_0$']`.
         """
         super().__init__(
             super_arrhenius, abscissa, ordinate, ordinate_error,
-            abscissa_units, ordinate_units, abscissa_names, ordinate_names)
-        if variable_units is not None:
-            self.variables_units = variable_units
+            abscissa_unit, ordinate_unit, abscissa_name, ordinate_name)
+        if variable_unit is not None:
+            self.variables_unit = variable_unit
         else:
-            self.variables_units = [
-                UREG.dimensionless, ordinate_units, abscissa_units]
-        if variable_names is not None:
-            self.variables_names = variable_names
+            self.variables_unit = [
+                UREG.dimensionless, ordinate_unit, abscissa_unit]
+        if variable_name is not None:
+            self.variables_name = variable_name
         else:
-            self.variables_names = [r'$E_a$', r'$A$', r'$T_0$']
+            self.variables_name = [r'$E_a$', r'$A$', r'$T_0$']
 
         results = linregress(1/self.abscissa, np.log(self.ordinate))
         init = [results.slope * k * -1, np.exp(results.intercept), 0]
@@ -443,6 +469,9 @@ def lnl(model, y_data, dy_data):
         model (array_like): Model ordinate data.
         y_data (array_like): Experimental ordinate data.
         dy_data (array_like): Experimental ordinate-uncertainty data.
+    
+    Returns: 
+        (float): ln-likelihood between model and data.
     """
     return -0.5 * np.sum(
         ((model - y_data) / dy_data) ** 2 + np.log(2 * np.pi * dy_data ** 2))

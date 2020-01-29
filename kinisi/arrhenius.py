@@ -30,11 +30,11 @@ class StandardArrhenius(Arrhenius):
             uncertainty for the activation energy from the standard
             Arrhenius relationship. The uncertainty is initial obtained
             from a weighted least squares fit, the accuracy of this can
-            be improved by using this `sample()` method. The units are eV.
+            be improved by using this `sample()` method. The unit is eV.
     """
     def __init__(self, temperature, diffusion, diffusion_error,
-                 temperature_units=UREG.kelvin,
-                 diffusion_units=UREG.centimeter**2 / UREG.second,
+                 temperature_unit=UREG.kelvin,
+                 diffusion_unit=UREG.centimeter**2 / UREG.second,
                  temperature_names=r'$T$',
                  diffusion_names=r'$D$'):
         """
@@ -43,9 +43,9 @@ class StandardArrhenius(Arrhenius):
             diffusion (array_like): The diffusion coefficient data.
             diffusion_error (array_like): The uncertainty in the diffusion
                 coefficient data.
-            temperature_units (pint.UnitRegistry(), optional): The units for
+            temperature_unit (pint.UnitRegistry(), optional): The unit for
                 the temperature. Default is kelvin.
-            diffusion_units (pint.UnitRegistry(), optional): The units for
+            diffusion_unit (pint.UnitRegistry(), optional): The unit for
                 the diffusion coefficient. Default is centimetre**2 per
                 second.
             temperature_names (str): The label for the temperature. Default is
@@ -54,8 +54,8 @@ class StandardArrhenius(Arrhenius):
                 Default is `$D$`.
         """
         super().__init__(
-            temperature, diffusion, diffusion_error, temperature_units,
-            diffusion_units, None, temperature_names, diffusion_names)
+            temperature, diffusion, diffusion_error, temperature_unit,
+            diffusion_unit, None, temperature_names, diffusion_names)
 
         self.activation_energy = self.variables[0] * UREG.joules
         self.activation_energy = self.activation_energy.to(UREG.electron_volt)
@@ -64,13 +64,22 @@ class StandardArrhenius(Arrhenius):
         """
         Perform the MCMC sampling to obtain a more accurate description of the
         activation energy as a probability distribution.
+
+        Keyword Args:
+            walkers (int, optional): Number of MCMC walkers. Default is `100`.
+            n_samples (int, optional): Number of sample points. Default is
+                `500`.
+            n_burn (int, optional): Number of burn in samples. Default is
+                `500`.
+            progress (bool, optional): Show tqdm progress for sampling.
+                Default is `True`.
         """
         self.mcmc(**kwargs)
         unit_conversion = 1 * UREG.joule
         self.activation_energy = Distribution(
             self.variables[0].samples * unit_conversion.to(
                 UREG.electron_volt).magnitude,
-            name="$D$", units=UREG.electron_volt)
+            name="$D$", unit=UREG.electron_volt)
 
 
 class SuperArrhenius(VTFEquation):
@@ -83,11 +92,11 @@ class SuperArrhenius(VTFEquation):
             uncertainty for the activation energy from the
             Super-Arrhenius relationship. The uncertainty is initial obtained
             from a weighted least squares fit, the accuracy of this can
-            be improved by using this `sample()` method. The units are eV.
+            be improved by using this `sample()` method. The unit is eV.
     """
     def __init__(self, temperature, diffusion, diffusion_error,
-                 temperature_units=UREG.kelvin,
-                 diffusion_units=UREG.centimeter**2 / UREG.second,
+                 temperature_unit=UREG.kelvin,
+                 diffusion_unit=UREG.centimeter**2 / UREG.second,
                  temperature_names=r'$T$',
                  diffusion_names=r'$D$'):
         """
@@ -96,9 +105,9 @@ class SuperArrhenius(VTFEquation):
             diffusion (array_like): The diffusion coefficient data.
             diffusion_error (array_like): The uncertainty in the diffusion
                 coefficient data.
-            temperature_units (pint.UnitRegistry(), optional): The units for
+            temperature_unit (pint.UnitRegistry(), optional): The unit for
                 the temperature. Default is kelvin.
-            diffusion_units (pint.UnitRegistry(), optional): The units for
+            diffusion_unit (pint.UnitRegistry(), optional): The unit for
                 the diffusion coefficient. Default is centimetre**2 per
                 second.
             temperature_names (str): The label for the temperature. Default is
@@ -107,8 +116,8 @@ class SuperArrhenius(VTFEquation):
                 Default is `$D$`.
         """
         super().__init__(
-            temperature, diffusion, diffusion_error, temperature_units,
-            diffusion_units, None, temperature_names, diffusion_names)
+            temperature, diffusion, diffusion_error, temperature_unit,
+            diffusion_unit, None, temperature_names, diffusion_names)
 
         self.activation_energy = self.variables[0] * UREG.joules
         self.activation_energy = self.activation_energy.to(UREG.electron_volt)
@@ -117,10 +126,19 @@ class SuperArrhenius(VTFEquation):
         """
         Perform the MCMC sampling to obtain a more accurate description of the
         activation energy as a probability distribution.
+
+        Keyword Args:
+            walkers (int, optional): Number of MCMC walkers. Default is `100`.
+            n_samples (int, optional): Number of sample points. Default is
+                `500`.
+            n_burn (int, optional): Number of burn in samples. Default is
+                `500`.
+            progress (bool, optional): Show tqdm progress for sampling.
+                Default is `True`.
         """
         self.mcmc(**kwargs)
         unit_conversion = 1 * UREG.joule
         self.activation_energy = Distribution(
             self.variables[0].samples * unit_conversion.to(
                 UREG.electron_volt).magnitude,
-            name="$D$", units=UREG.electron_volt)
+            name="$D$", unit=UREG.electron_volt)

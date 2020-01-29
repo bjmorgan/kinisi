@@ -1,7 +1,7 @@
-kinisi\.diffusion
+kinisi\.arrhenius
 =================
 
-.. automodule:: kinisi.diffusion
+.. automodule:: kinisi.arrhenius
     :members:
     :undoc-members:
     :show-inheritance:

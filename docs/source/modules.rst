@@ -4,8 +4,7 @@ kinisi modules
 .. toctree::
    :maxdepth: 4
 
-   charge
-   diffusion
+   arrhenius
    distribution
-   straight_line
-   utils
+   msd
+   relationships
