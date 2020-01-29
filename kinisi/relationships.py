@@ -251,7 +251,7 @@ class StraightLine(Relationship):
     intercept (c). Where y is the ordinate and x the abscissa.
 
     .. math::
-       
+
        y = mx + c
     """
     def __init__(self, abscissa, ordinate, ordinate_error,
@@ -469,8 +469,8 @@ def lnl(model, y_data, dy_data):
         model (array_like): Model ordinate data.
         y_data (array_like): Experimental ordinate data.
         dy_data (array_like): Experimental ordinate-uncertainty data.
-    
-    Returns: 
+
+    Returns:
         (float): ln-likelihood between model and data.
     """
     return -0.5 * np.sum(
