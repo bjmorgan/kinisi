@@ -28,9 +28,9 @@ class StandardArrhenius(Arrhenius):
         activation_energy (uncertainties.ufloat or
             kinisi.distribution.Distribution): The value and associated
             uncertainty for the activation energy from the standard
-            Arrhenius relationship. The uncertainty is initial obtained
+            Arrhenius relationship. The uncertainty is initially obtained
             from a weighted least squares fit, the accuracy of this can
-            be improved by using this `sample()` method. The unit is eV.
+            be improved by using the `sample()` method. The unit is eV.
     """
     def __init__(self, temperature, diffusion, diffusion_error,
                  temperature_unit=UREG.kelvin,
@@ -90,9 +90,9 @@ class SuperArrhenius(VTFEquation):
         activation_energy (uncertainties.ufloat or
             kinisi.distribution.Distribution): The value and associated
             uncertainty for the activation energy from the
-            Super-Arrhenius relationship. The uncertainty is initial obtained
-            from a weighted least squares fit, the accuracy of this can
-            be improved by using this `sample()` method. The unit is eV.
+            Super-Arrhenius relationship. The uncertainty is initially
+            obtained from a weighted least squares fit, the accuracy of this
+            can be improved by using the `sample()` method. The unit is eV.
     """
     def __init__(self, temperature, diffusion, diffusion_error,
                  temperature_unit=UREG.kelvin,

@@ -1,7 +1,8 @@
 """
-Functions to enable the determination of the mean squared displacement of a
-collection of atoms.
+The modules is focused on tools for the evaluation of the mean squared
+displacement and resulting diffusion coefficient from a material. 
 """
+
 # Copyright (c) Andrew R. McCluskey and Benjamin J. Morgan
 # Distributed under the terms of the MIT License
 # author: Andrew R. McCluskey
@@ -16,42 +17,48 @@ from kinisi.relationships import StraightLine
 from . import UREG
 
 
-def bootstrap(data, n_resamples=1000, samples_freq=1,
+def bootstrap(displacements, n_resamples=1000, samples_freq=1,
               confidence_interval=None, progress=True):
     """
-    Perform a bootstrap resampling.
+    Perform a bootstrap resampling to obtain accurate estimates for the mean
+    and uncertainty for the squared displacments. This resampling method is
+    applied until the MSD distribution is normal and therefore may be
+    described with a median and confidence interval.
 
     Args:
-        data (list of array_like): A list of arrays, where
+        displacements (list of array_like): A list of arrays, where
             each array has the axes [atom, displacement
             observation]. There is one array in the list for each
-            delta_t value.
+            delta_t value. Note: it is necessary to use a list of arrays
+            as the number of observations is not necessary the same at
+            each data point.
         n_resamples (int, optional): The initial number of resamples to
-            be performed.
+            be performed. Default is `1000`.
         samples_freq (int. optional): The frequency in observations to be
-            sampled.
+            sampled. Default is `1` (every observation).
         confidence_interval (array_like): The percentile points of the
-            distribution that should be stored.
-        progress (bool, optional): Show tqdm progress for sampling.
+            distribution that should be stored. Default is `[2.5, 97.5]` (a
+            95 % confidence interval).
+        progress (bool, optional): Show tqdm progress for sampling. Default
+            is `True`.
 
     Returns:
         (tuple of array_like) A tuple of two arrays, the first is the
-            resampled mean data and the second is the uncertainty on that
-            data.
+            resampled mean data and the second is the uncertainty in the mean.
     """
     if confidence_interval is None:
         confidence_interval = [2.5, 97.5]
-    max_obs = data[0].shape[1]
-    mean_data = np.zeros((len(data)))
-    err_data = np.zeros((len(data)))
+    max_obs = displacements[0].shape[1]
+    mean_data = np.zeros((len(displacements)))
+    err_data = np.zeros((len(displacements)))
     if progress:
-        iterator = tqdm(range(len(data)))
+        iterator = tqdm(range(len(displacements)))
     else:
-        iterator = range(len(data))
+        iterator = range(len(displacements))
     for i in iterator:
-        d_squared = data[i] ** 2
-        n_obs = data[i].shape[1]
-        n_atoms = data[i].shape[0]
+        d_squared = displacements[i] ** 2
+        n_obs = displacements[i].shape[1]
+        n_atoms = displacements[i].shape[0]
         dt_int = max_obs - n_obs + 1
         # approximate number of "non-overlapping" observations, allowing
         # for partial overlap
@@ -74,7 +81,17 @@ def bootstrap(data, n_resamples=1000, samples_freq=1,
 
 class Diffusion(StraightLine):
     """
-    The mean squared displacement (MSD).
+    Evaluate the diffusion coefficient from a set of (idelly) resampled MSD
+    data and delta_t values.
+
+    Attributes:
+        diffusion_coefficient (uncertainties.ufloat or
+            kinisi.distribution.Distribution): The value and associated
+            uncertainty for the diffusion coeffcient for the MSD relationship
+            with delta_t. The uncertainty is initially obtained from a
+            weighted least squares fit, the accuracy of this can be improved
+            by using the `sample()` method. The unit is
+            centimeter ** 2 / second.
     """
     def __init__(self, delta_t, msd, msd_error,
                  delta_t_unit=UREG.femtoseconds, msd_unit=UREG.angstrom**2,
@@ -90,7 +107,17 @@ class Diffusion(StraightLine):
 
     def sample(self, **kwargs):
         """
-        MCMC sampling
+        Perform the MCMC sampling to obtain a more accurate description of the
+        diffusion coefficient as a probability distribution.
+
+        Keyword Args:
+            walkers (int, optional): Number of MCMC walkers. Default is `100`.
+            n_samples (int, optional): Number of sample points. Default is
+                `500`.
+            n_burn (int, optional): Number of burn in samples. Default is
+                `500`.
+            progress (bool, optional): Show tqdm progress for sampling.
+                Default is `True`.
         """
         self.mcmc(**kwargs)
         unit_conversion = 1 * self.ordinate_unit / self.abscissa_unit
