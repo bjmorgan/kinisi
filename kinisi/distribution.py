@@ -91,7 +91,8 @@ class Distribution:
             )
         else:
             representation += "["
-            representation += " ".join(["{:.2e}".format(i) for i in self.samples])
+            representation += " ".join(
+                ["{:.2e}".format(i) for i in self.samples])
             representation += "]\n"
         representation += "Median: {:.2e}\n".format(self.median)
         if self.check_normality():
