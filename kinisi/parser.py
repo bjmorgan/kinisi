@@ -66,15 +66,8 @@ class PymatgenParser:
 
         timesteps = self.smoothed_timesteps(nsteps, min_obs)
 
-        (
-            self.delta_t,
-            self.msd,
-            self.sq_disp_store,
-            self.disp_store,
-        ) = self.get_disps(
-            timesteps,
-            drift_corrected
-        )
+        self.delta_t, self.disp_store = self.get_disps(
+            timesteps, drift_corrected)
 
     def correct_for_drift(self, structure, disp, specie):
         """
@@ -160,7 +153,7 @@ class PymatgenParser:
             sq_disp_ions[:, i] = np.average(np.sum(sq_disp, axis=2), axis=1)
             msd[i] = np.average(sq_disp_ions[:, i][self.indices])
 
-        return delta_t, msd, sq_disp_store, disp_store
+        return delta_t, disp_store
 
 
 def _get_structure_and_disp(structures):
