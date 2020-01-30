@@ -1,6 +1,6 @@
 """
 The modules is focused on tools for the evaluation of the mean squared
-displacement and resulting diffusion coefficient from a material. 
+displacement and resulting diffusion coefficient from a material.
 """
 
 # Copyright (c) Andrew R. McCluskey and Benjamin J. Morgan
@@ -74,8 +74,8 @@ def bootstrap(displacements, n_resamples=1000, samples_freq=1,
             distro.add_samples(
                 [np.mean(resample(d_squared.flatten(), n_samples=n_samples))]
             )
-        mean_data[i] = distro.median
-        err_data[i] = distro.error
+        mean_data[i] = distro.n
+        err_data[i] = distro.s
     return mean_data, err_data
 
 

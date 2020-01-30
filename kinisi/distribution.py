@@ -1,9 +1,8 @@
 """
-The Distribution class enables easier handling in probability distributions
-in kinisi.
-In addition to a helpful storage container for information about the
-probability distribution, there is also helper functions to check the
-normality of the distribution and create publication quality plots.
+The Distribution class enables easier handling of probability distributions
+by kinisi.
+In addition to a helpful storage container, there are also helper functions
+to check normality and create publication quality plots.
 """
 
 # Copyright (c) Andrew R. McCluskey and Benjamin J. Morgan
@@ -22,15 +21,19 @@ from . import UREG
 
 class Distribution:
     """
-    The Distribution class.
+    The container for probability distribution information.
 
     Attributes:
-        name (str): A name for the distrition.
+        name (str): A name for the distribution.
+        unit (pint.UnitRegistry(), optional): The unit for the
+            abscissa.
         size (int): Number of samples in distribution.
         samples (array_like): Samples in the distribution.
-        median (float): Median of distribution.
-        error (float): Symetrical uncertainty on value, taken as 95 %
-            confidence interval. `None` if distribution is not normal.
+        n (float): Median of distribution (using the vocabulary of the
+            `uncertainties` package).
+        s (float): Symetrical uncertainty on value, taken as 95 %
+            confidence interval (using the vocabulary of the `uncertainties`
+            package). `None` if distribution is not normal.
         ci_points (tuple): A tuple of two. The percentiles to be stored as
             confidence interval.
         con_int (array_like): Confidence interval values.
@@ -38,22 +41,23 @@ class Distribution:
     """
 
     def __init__(self, samples, name="Distribution", ci_points=None,
-                 unit=None):
+                 unit=UREG.dimensionless):
         """
         Args:
             samples (array_like): Sample for the distribution.
             name (str, optional): A name to identify the distribution.
+                Default is `Distribution`.
             ci_points (array_like, optional): The percentiles at which
-                confidence intervals should be found.
+                confidence intervals should be found. Default is
+                `[2.5, 97.5]` (a 95 % confidence interval).
             unit (pint.UnitRegistry(), optional) The unit for the
-                distribution. Default is `None`.
+                distribution. Default is dimensionless.
         """
         self.name = name
+        self.unit = unit
         self.size = 0
         self.samples = np.array([])
-        self.median = None
         self.n = None
-        self.error = None
         self.s = None
         if ci_points is None:
             self.ci_points = [2.5, 97.5]
@@ -65,18 +69,24 @@ class Distribution:
             self.ci_points = ci_points
         self.con_int = np.array([])
         self.normal = False
-        self.unit = unit
         self.add_samples(np.array(samples))
 
     def __repr__(self):  # pragma: no cover
         """
-        Custom repr.
+        A custom representation, which is the same as the custom string
+        representation.
+
+        Returns:
+            (str): String representation.
         """
         return self.__str__()
 
     def __str__(self):  # pragma: no cover
         """
-        Custom string.
+        A custom string.
+
+        Returns:
+            (str): Detailed string representation.
         """
         representation = "Distribution: {}\nSize: {}\n".format(
             self.name, self.size
@@ -94,68 +104,71 @@ class Distribution:
             representation += " ".join(
                 ["{:.2e}".format(i) for i in self.samples])
             representation += "]\n"
-        representation += "Median: {:.2e}\n".format(self.median)
+        representation += "Median: {:.2e}\n".format(self.n)
         if self.check_normality():
-            representation += "Symetrical Error: {:.2e}\n".format(self.error)
+            representation += "Symetrical Error: {:.2e}\n".format(self.s)
         representation += "Confidence intervals: ["
         representation += " ".join(["{:.2e}".format(i) for i in self.con_int])
         representation += "]\n"
         representation += "Confidence interval points: ["
         representation += " ".join(["{}".format(i) for i in self.ci_points])
         representation += "]\n"
-        if self.median is not None:
+        if self.n is not None:
             representation += "Reporting Value: "
             if self.check_normality():
-                uncertainty = self.con_int[1] - self.median
+                uncertainty = self.con_int[1] - self.n
                 representation += "{}\n".format(
-                    ufloat(self.median, uncertainty)
+                    ufloat(self.n, uncertainty)
                 )
             else:
                 representation += "{:.2e}+{:.2e}-{:.2e}\n".format(
-                    self.median, self.con_int[1], self.con_int[0]
+                    self.n, self.con_int[1], self.con_int[0]
                 )
         representation += "Unit: {}\n".format(self.unit)
         representation += "Normal: {}\n".format(self.normal)
         return representation
 
-    def check_normality(self):
+    def check_normality(self, alpha=0.05):
         """
-        Assess if the samples are normally distributed using a Shapiro-Wilks
-        test.
+        Uses a Shapiro-Wilks statistical test to evaluate if samples are
+        normally distributed.
+
+        Args:
+            alpha (float): Threshold value for the statistical test. Default
+                is `0.05` (5 %).
+
+        Returns:
+            (bool): If the distribution is normal.
         """
         samples = np.copy(self.samples)
         if self.size <= 3:
             self.normal = False
-            self.error = None
             self.s = None
             return False
         if self.size >= 5000:
             samples = np.random.choice(self.samples, size=2500, replace=False)
-        alpha = 0.05
         p_value = shapiro(samples)[1]
         if p_value > alpha:
             self.normal = True
-            self.error = (
-                np.percentile(self.samples, self.ci_points[1]) - self.median
+            self.s = (
+                np.percentile(self.samples, self.ci_points[1]) - self.n
             )
-            self.s = self.error
             return True
         self.normal = False
-        self.error = None
         self.s = None
         return False
 
     def add_samples(self, samples):
         """
-        Add samples to the distribution.
+        Add samples to the distribution and update values such as median and
+        uncertainties as appropriate.
 
         Args:
             samples (array_like): Samples to be added to the distribution.
         """
         self.samples = np.append(self.samples, np.array(samples).flatten())
         self.size = self.samples.size
-        self.median = np.percentile(self.samples, 50.0)
-        self.n = self.median
+        self.n = np.percentile(self.samples, 50.0)
         if self.size > 1:
             self.con_int = np.array(
                 [np.percentile(self.samples, i) for i in self.ci_points]
@@ -171,8 +184,8 @@ class Distribution:
                 (in inches).
 
         Returns:
-            (matplotlib.figure.Figure)
-            (matplotlib.axes.Axes)
+            (matplotlib.figure.Figure, matplotlib.axes.Axes): Figure and axes
+                for the plot.
         """
         fig, axes = plt.subplots(figsize=figsize)
         kde = gaussian_kde(self.samples)

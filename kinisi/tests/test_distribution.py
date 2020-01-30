@@ -27,7 +27,7 @@ class TestDistribution(unittest.TestCase):
         """
         distro = Distribution([1])
         assert_equal(distro.samples, np.array([1]))
-        assert_equal(distro.median, 1)
+        assert_equal(distro.n, 1)
         assert_equal(distro.con_int, None)
         assert_almost_equal(distro.ci_points, [2.5, 97.5])
 
@@ -37,7 +37,7 @@ class TestDistribution(unittest.TestCase):
         """
         distro = Distribution([1], ci_points=[5.0, 95.0])
         assert_equal(distro.samples, np.array([1]))
-        assert_equal(distro.median, 1)
+        assert_equal(distro.n, 1)
         assert_equal(distro.con_int, None)
         assert_almost_equal(distro.ci_points, [5.0, 95.0])
 
@@ -100,7 +100,7 @@ class TestDistribution(unittest.TestCase):
         distro = Distribution(1)
         assert_equal(distro.size, 1)
         assert_almost_equal(distro.samples, np.array([1]))
-        assert_almost_equal(distro.median, 1)
-        assert_equal(distro.error, None)
+        assert_almost_equal(distro.n, 1)
+        assert_equal(distro.s, None)
         assert_equal(distro.con_int, np.array([]))
         assert_equal(distro.normal, False)
