@@ -12,8 +12,9 @@ Distributed under the terms of the MIT License
 
 import unittest
 import numpy as np
-from numpy.testing import assert_equal
-from kinisi import msd
+from numpy.testing import assert_equal, assert_almost_equal
+from kinisi import msd, UREG
+from kinisi.distribution import Distribution
 
 
 class TestMsd(unittest.TestCase):
@@ -32,3 +33,36 @@ class TestMsd(unittest.TestCase):
         mean, err = msd.bootstrap(to_resample, progress=False, n_resamples=10)
         assert_equal(mean.size, 5)
         assert_equal(err.size, 5)
+
+    def test_diffusion_init(self):
+        """
+        Test for the initialisation of the Diffusion class.
+        """
+        mean = np.linspace(1, 10, 5)
+        err = mean * 0.1
+        abscissa = np.linspace(1, 10, 5)
+        diff = msd.Diffusion(abscissa, mean, err)
+        assert_almost_equal(diff.diffusion_coefficient.magnitude.n, 1 / 60)
+        assert_almost_equal(diff.diffusion_coefficient.magnitude.s, 0)
+        assert_equal(diff.diffusion_coefficient.units, UREG.centimeter ** 2 / UREG.second)
+        assert_almost_equal(diff.abscissa, abscissa)
+        assert_almost_equal(diff.ordinate, mean)
+        assert_almost_equal(diff.ordinate_error, err)
+        assert_equal(diff.abscissa_unit, UREG.femtosecond)
+        assert_equal(diff.ordinate_unit, UREG.angstrom**2)
+        assert_equal(diff.abscissa_name, r'$\delta t$')
+        assert_equal(diff.ordinate_name, r'$\langle r ^ 2 \rangle$')
+
+    def test_diffusion_mcmc(self):
+        """
+        Test the mcmc methd for the Diffusion class
+        """
+        mean = np.linspace(1, 10, 5) * np.random.randn(5)
+        err = mean * 0.1
+        abscissa = np.linspace(1, 10, 5)
+        diff = msd.Diffusion(abscissa, mean, err)
+        #diff.mcmc({'progress':False, 'n_burn':10, 'n_samples':10})
+        diff.sample(progress=False, n_burn=10, n_samples=10)
+        assert_equal(diff.diffusion_coefficient.size, 1000)
+        assert_equal(isinstance(diff.diffusion_coefficient, Distribution), True)
+        assert_equal(diff.diffusion_coefficient.unit, UREG.centimeter ** 2 / UREG.second)
