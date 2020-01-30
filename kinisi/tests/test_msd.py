@@ -44,7 +44,9 @@ class TestMsd(unittest.TestCase):
         diff = msd.Diffusion(abscissa, mean, err)
         assert_almost_equal(diff.diffusion_coefficient.magnitude.n, 1 / 60)
         assert_almost_equal(diff.diffusion_coefficient.magnitude.s, 0)
-        assert_equal(diff.diffusion_coefficient.units, UREG.centimeter ** 2 / UREG.second)
+        assert_equal(
+            diff.diffusion_coefficient.units,
+            UREG.centimeter ** 2 / UREG.second)
         assert_almost_equal(diff.abscissa, abscissa)
         assert_almost_equal(diff.ordinate, mean)
         assert_almost_equal(diff.ordinate_error, err)
@@ -61,8 +63,11 @@ class TestMsd(unittest.TestCase):
         err = mean * 0.1
         abscissa = np.linspace(1, 10, 5)
         diff = msd.Diffusion(abscissa, mean, err)
-        #diff.mcmc({'progress':False, 'n_burn':10, 'n_samples':10})
         diff.sample(progress=False, n_burn=10, n_samples=10)
         assert_equal(diff.diffusion_coefficient.size, 1000)
-        assert_equal(isinstance(diff.diffusion_coefficient, Distribution), True)
-        assert_equal(diff.diffusion_coefficient.unit, UREG.centimeter ** 2 / UREG.second)
+        assert_equal(
+            isinstance(
+                diff.diffusion_coefficient, Distribution), True)
+        assert_equal(
+            diff.diffusion_coefficient.unit,
+            UREG.centimeter ** 2 / UREG.second)
