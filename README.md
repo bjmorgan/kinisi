@@ -6,9 +6,9 @@ Uncertainty analysis and model comparison for atomistic molecular dynamics.
 
 ## Goals
 - [x] Estimate uncertainties in mean-squared displacements
-- [ ] Estimate uncertainties in squared mean-displacements 
+- [x] Estimate uncertainties in mean-squared charge displacements 
 - [x] Estimate uncertainties in diffusion coefficients
-- [ ] Estimate uncertainties in ionic conductivities
+- [x] Estimate uncertainties in charge diffusion coefficients
 - [x] Estimate uncertainties in activation energies (via Arrhenius relation).
 - [x] Model comparison between Arrhenius and super-Arrhenius diffusion.
 
