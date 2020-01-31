@@ -64,7 +64,7 @@ class Distribution:
         else:
             if len(ci_points) != 2:
                 raise ValueError(
-                    "The ci_points must be an array or tuple " "of length two."
+                    "The ci_points must be an array or tuple of length two."
                 )
             self.ci_points = ci_points
         self.con_int = np.array([])
@@ -145,8 +145,8 @@ class Distribution:
             self.normal = False
             self.s = None
             return False
-        if self.size >= 5000:
-            samples = np.random.choice(self.samples, size=2500, replace=False)
+        if self.size >= 500:
+            samples = np.random.choice(self.samples, size=500, replace=False)
         p_value = shapiro(samples)[1]
         if p_value > alpha:
             self.normal = True

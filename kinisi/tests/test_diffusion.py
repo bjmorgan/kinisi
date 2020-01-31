@@ -13,7 +13,7 @@ Distributed under the terms of the MIT License
 import unittest
 import numpy as np
 from numpy.testing import assert_equal, assert_almost_equal
-from kinisi import msd, UREG
+from kinisi import diffusion, UREG
 from kinisi.distribution import Distribution
 
 
@@ -22,18 +22,52 @@ class TestMsd(unittest.TestCase):
     Unit tests for msd module
     """
 
-    def test_bootstrap_a(self):
+    def test_msd_bootstrap(self):
         """
-        Test bootstrap for initial normal.
+        Test msd_bootstrap for initial normal.
         """
         ordinate = np.random.randn((10))
         to_resample = [
-            np.array([ordinate[:-i], ordinate[:-i]]) for i in range(1, 6)
+            [
+                [ordinate, ordinate],
+                [ordinate, ordinate]
+            ],
+            [
+                [ordinate, ordinate],
+                [ordinate, ordinate]
+            ]
         ]
-        mean, err = msd.bootstrap(to_resample, progress=False, n_resamples=10)
+        to_resample = [
+            np.array(to_resample) for i in range(1, 6)
+        ]
+        mean, err = diffusion.msd_bootstrap(
+            to_resample, progress=False, n_resamples=10)
         assert_equal(mean.size, 5)
         assert_equal(err.size, 5)
-  
+
+    def test_mscd_bootstrap(self):
+        """
+        Test mscd_bootstrap for initial normal.
+        """
+        ordinate = np.random.randn((10))
+        to_resample = [
+            [
+                [ordinate, ordinate],
+                [ordinate, ordinate]
+            ],
+            [
+                [ordinate, ordinate],
+                [ordinate, ordinate]
+            ]
+        ]
+        to_resample = [
+            np.array(to_resample) for i in range(1, 6)
+        ]
+        mean, err = diffusion.mscd_bootstrap(
+            to_resample, [1], progress=False, n_resamples=10)
+        assert_equal(mean.size, 5)
+        assert_equal(err.size, 5)
+
     def test_diffusion_init(self):
         """
         Test for the initialisation of the Diffusion class.
@@ -41,7 +75,7 @@ class TestMsd(unittest.TestCase):
         mean = np.linspace(1, 10, 5)
         err = mean * 0.1
         abscissa = np.linspace(1, 10, 5)
-        diff = msd.Diffusion(abscissa, mean, err)
+        diff = diffusion.Diffusion(abscissa, mean, err)
         assert_almost_equal(diff.diffusion_coefficient.magnitude.n, 1 / 60)
         assert_almost_equal(diff.diffusion_coefficient.magnitude.s, 0)
         assert_equal(
@@ -62,7 +96,7 @@ class TestMsd(unittest.TestCase):
         mean = np.linspace(1, 10, 5) * np.random.randn(5)
         err = mean * 0.1
         abscissa = np.linspace(1, 10, 5)
-        diff = msd.Diffusion(abscissa, mean, err)
+        diff = diffusion.Diffusion(abscissa, mean, err)
         diff.sample(progress=False, n_burn=10, n_samples=10)
         assert_equal(diff.diffusion_coefficient.size, 1000)
         assert_equal(

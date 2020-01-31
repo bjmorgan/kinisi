@@ -66,7 +66,7 @@ class PymatgenParser:
 
         timesteps = self.smoothed_timesteps(nsteps, min_obs)
 
-        self.delta_t, self.disp_store = self.get_disps(
+        self.delta_t, self.disp_store, self.disp_3d = self.get_disps(
             timesteps, drift_corrected)
 
     def correct_for_drift(self, structure, disp, specie):
@@ -135,25 +135,17 @@ class PymatgenParser:
                 mean-squared displacement, and raw squared displacement.
         """
         delta_t = timesteps * self.time_step * self.step_skip
-
-        msd = np.zeros_like(delta_t, dtype=np.double)
-        sq_disp_ions = np.zeros(
-            (len(drift_corrected), len(delta_t)),
-            dtype=np.double)
-        sq_disp_store = []
         disp_store = []
-        for i, timestep in enumerate(timesteps):
+        disp_3d = []
+        for timestep in timesteps:
             disp = np.subtract(
                 drift_corrected[:, timestep:, :],
                 drift_corrected[:, :-timestep, :]
             )
-            sq_disp = disp ** 2
+            disp_3d.append(disp)
             disp_store.append(np.sum(disp, axis=2)[self.indices])
-            sq_disp_store.append(np.sum(sq_disp, axis=2)[self.indices])
-            sq_disp_ions[:, i] = np.average(np.sum(sq_disp, axis=2), axis=1)
-            msd[i] = np.average(sq_disp_ions[:, i][self.indices])
 
-        return delta_t, disp_store
+        return delta_t, disp_store, disp_3d
 
 
 def _get_structure_and_disp(structures):

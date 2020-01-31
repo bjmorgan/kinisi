@@ -322,7 +322,7 @@ class Arrhenius(Relationship):
     """
     def __init__(self, abscissa, ordinate, ordinate_error,
                  abscissa_unit=UREG.dimensionless,
-                 ordinate_unit=UREG.dimensionless, abscissa_name="$T$", 
+                 ordinate_unit=UREG.dimensionless, abscissa_name="$T$",
                  ordinate_name="$k$", variable_name=None):
         """
         Args:
