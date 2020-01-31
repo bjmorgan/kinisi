@@ -7,3 +7,4 @@ kinisi.egg-info
 .coverage
 htmlcov
 **/.ipynb_checkpoints
+abstracts
