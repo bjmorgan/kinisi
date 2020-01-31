@@ -98,8 +98,8 @@ class Diffusion(StraightLine):
                  delta_t_names=r'$\delta t$',
                  msd_names=r'$\langle r ^ 2 \rangle$'):
         super().__init__(
-            delta_t, msd, msd_error, delta_t_unit, msd_unit, None,
-            delta_t_names, msd_names)
+            delta_t, msd, msd_error, delta_t_unit, msd_unit, delta_t_names,
+            msd_names)
         self.diffusion_coefficient = self.variables[0] / 6 * (
             self.ordinate_unit / self.abscissa_unit)
         self.diffusion_coefficient = self.diffusion_coefficient.to(

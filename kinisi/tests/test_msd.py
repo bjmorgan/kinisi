@@ -33,7 +33,7 @@ class TestMsd(unittest.TestCase):
         mean, err = msd.bootstrap(to_resample, progress=False, n_resamples=10)
         assert_equal(mean.size, 5)
         assert_equal(err.size, 5)
-
+  
     def test_diffusion_init(self):
         """
         Test for the initialisation of the Diffusion class.

@@ -184,7 +184,7 @@ class Relationship:
             broad[i] = norm.ppf(broad[i], loc=variable.n, scale=variable.s)
         return broad
 
-    def plot(self, figsize=(10, 6)):
+    def plot(self, figsize=(10, 6)):  # pragma: no cover
         """
         Plot the relationship. Additional plots will be included on this if
         the MCMC sampling has been used to find the activation_energy
@@ -256,9 +256,8 @@ class StraightLine(Relationship):
     """
     def __init__(self, abscissa, ordinate, ordinate_error,
                  abscissa_unit=UREG.dimensionless,
-                 ordinate_unit=UREG.dimensionless, variable_unit=None,
-                 abscissa_name="$x$", ordinate_name="$y$",
-                 variable_name=None):
+                 ordinate_unit=UREG.dimensionless, abscissa_name="$x$",
+                 ordinate_name="$y$", variable_name=None):
         """
         Args:
             abscissa (array_like): The abscissa data.
@@ -269,9 +268,6 @@ class StraightLine(Relationship):
                 abscissa. Default is dimensionless.
             ordinate_unit (pint.UnitRegistry(), optional): The unit for the
                 ordinate. Default is dimensionless.
-            variables_unit (list of pint.UnitRegistry(), optional): The
-                unit for the variables. Default is
-                `[ordinate_unit/abscissa_unit, ordinate_unit]`.
             abscissa_name (str): The label for the abscissa. Default is
                 `$x$`.
             ordinate_name (str): The label for the ordinate. Default is
@@ -282,10 +278,7 @@ class StraightLine(Relationship):
         super().__init__(
             straight_line, abscissa, ordinate, ordinate_error,
             abscissa_unit, ordinate_unit, abscissa_name, ordinate_name)
-        if variable_unit is not None:
-            self.variables_unit = variable_unit
-        else:
-            self.variables_unit = [
+        self.variables_unit = [
                 ordinate_unit / abscissa_unit, ordinate_unit]
         if variable_name is not None:
             self.variables_name = variable_name
@@ -329,9 +322,8 @@ class Arrhenius(Relationship):
     """
     def __init__(self, abscissa, ordinate, ordinate_error,
                  abscissa_unit=UREG.dimensionless,
-                 ordinate_unit=UREG.dimensionless, variable_unit=None,
-                 abscissa_name="$T$", ordinate_name="$k$",
-                 variable_name=None):
+                 ordinate_unit=UREG.dimensionless, abscissa_name="$T$", 
+                 ordinate_name="$k$", variable_name=None):
         """
         Args:
             abscissa (array_like): The abscissa data.
@@ -342,9 +334,6 @@ class Arrhenius(Relationship):
                 abscissa. Default is dimensionless.
             ordinate_unit (pint.UnitRegistry(), optional): The unit for the
                 ordinate. Default is dimensionless.
-            variables_unit (list of pint.UnitRegistry(), optional): The
-                unit for the variables. Default is `[dimensionless,
-                ordinate_unit`].
             abscissa_name (str): The label for the abscissa. Default is
                 `$T$`.
             ordinate_name (str): The label for the ordinate. Default is
@@ -355,10 +344,7 @@ class Arrhenius(Relationship):
         super().__init__(
             arrhenius, abscissa, ordinate, ordinate_error, abscissa_unit,
             ordinate_unit, abscissa_name, ordinate_name)
-        if variable_unit is not None:
-            self.variables_unit = variable_unit
-        else:
-            self.variables_unit = [UREG.dimensionless, ordinate_unit]
+        self.variables_unit = [UREG.dimensionless, ordinate_unit]
         if variable_name is not None:
             self.variables_name = variable_name
         else:
@@ -401,9 +387,8 @@ class VTFEquation(Relationship):
     """
     def __init__(self, abscissa, ordinate, ordinate_error,
                  abscissa_unit=UREG.dimensionless,
-                 ordinate_unit=UREG.dimensionless, variable_unit=None,
-                 abscissa_name="$T$", ordinate_name="$k$",
-                 variable_name=None):
+                 ordinate_unit=UREG.dimensionless, abscissa_name="$T$",
+                 ordinate_name="$k$", variable_name=None):
         """
         Args:
             abscissa (array_like): The abscissa data.
@@ -414,9 +399,6 @@ class VTFEquation(Relationship):
                 abscissa. Default is dimensionless.
             ordinate_unit (pint.UnitRegistry(), optional): The unit for the
                 ordinate. Default is dimensionless.
-            variables_unit (list of pint.UnitRegistry(), optional): The
-                unit for the variables. Default is `[dimensionless,
-                ordinate_unit, abscissa_unit`].
             abscissa_name (str): The label for the abscissa. Default is
                 `$T$`.
             ordinate_name (str): The label for the ordinate. Default is
@@ -427,10 +409,7 @@ class VTFEquation(Relationship):
         super().__init__(
             super_arrhenius, abscissa, ordinate, ordinate_error,
             abscissa_unit, ordinate_unit, abscissa_name, ordinate_name)
-        if variable_unit is not None:
-            self.variables_unit = variable_unit
-        else:
-            self.variables_unit = [
+        self.variables_unit = [
                 UREG.dimensionless, ordinate_unit, abscissa_unit]
         if variable_name is not None:
             self.variables_name = variable_name
