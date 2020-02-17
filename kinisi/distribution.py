@@ -140,14 +140,13 @@ class Distribution:
         Returns:
             (bool): If the distribution is normal.
         """
-        samples = np.copy(self.samples)
         if self.size <= 3:
             self.normal = False
             self.s = None
             return False
-        if self.size >= 500:
-            samples = np.random.choice(self.samples, size=500, replace=False)
-        p_value = shapiro(samples)[1]
+        kde = gaussian_kde(self.samples)
+        sampled_kde = kde.resample(size=500)
+        p_value = shapiro(sampled_kde)[1]
         if p_value > alpha:
             self.normal = True
             self.s = (

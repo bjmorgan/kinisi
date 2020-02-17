@@ -9,6 +9,7 @@ displacement and resulting diffusion coefficient from a material.
 
 # pylint: disable=R0913,R0914
 
+import warnings
 import numpy as np
 from sklearn.utils import resample
 from tqdm import tqdm
@@ -17,9 +18,9 @@ from kinisi.relationships import StraightLine
 from . import UREG
 
 
-def msd_bootstrap(displacements, n_resamples=1000, samples_freq=1,
-                  confidence_interval=None, max_resamples=10000,
-                  progress=True):
+def msd_bootstrap(delta_t, displacements, n_resamples=1000, samples_freq=1,
+                  confidence_interval=None, max_resamples=100000,
+                  bootstrap_multiplier=1, progress=True):
     """
     Perform a bootstrap resampling to obtain accurate estimates for the mean
     and uncertainty for the squared displacements. This resampling method is
@@ -28,6 +29,7 @@ def msd_bootstrap(displacements, n_resamples=1000, samples_freq=1,
     interval.
 
     Args:
+        delta_t (array_like): An array of the timestep values.
         displacements (list of array_like): A list of arrays, where
             each array has the axes [atom, displacement
             observation, dimension]. There is one array in the list for each
@@ -43,8 +45,14 @@ def msd_bootstrap(displacements, n_resamples=1000, samples_freq=1,
             95 % confidence interval).
         max_resamples (int, optional): The max number of resamples to be
             performed by the distribution is assumed to be normal. This is
-            necessary as for large numbers the Shapiro-Wilks test can be
-            unstable. Default is `10000`.
+            present to allow user control over the time taken for the
+            resampling to occur. Default is `100000`.
+        bootstrap_multiplier (int, optional): The factor by which the number
+            of bootstrap samples should be multiplied. The default is `1`,
+            which is the maximum number of truely independent samples in a
+            given timestep. This can be increase, however it is importance
+            to note that when greater than 1 the sampling is no longer
+            independent.
         progress (bool, optional): Show tqdm progress for sampling. Default
             is `True`.
 
@@ -56,21 +64,25 @@ def msd_bootstrap(displacements, n_resamples=1000, samples_freq=1,
     if confidence_interval is None:
         confidence_interval = [2.5, 97.5]
     max_obs = displacements[0].shape[1]
-    mean_msd = np.zeros((len(displacements)))
-    err_msd = np.zeros((len(displacements)))
+    output_delta_t = np.array([])
+    mean_msd = np.array([])
+    err_msd = np.array([])
     if progress:
         iterator = tqdm(range(len(displacements)))
     else:
         iterator = range(len(displacements))
     for i in iterator:
-        d_squared = np.sum(displacements[i], axis=2) ** 2
+        d_squared = np.sum(displacements[i] ** 2, axis=2)
         n_obs = displacements[i].shape[1]
         n_atoms = displacements[i].shape[0]
         dt_int = max_obs - n_obs + 1
         # approximate number of "non-overlapping" observations, allowing
         # for partial overlap
         # Evaluate MSD first
-        n_samples_msd = int(max_obs / dt_int * n_atoms / samples_freq)
+        n_samples_msd = int(
+            max_obs / dt_int * n_atoms / samples_freq) * bootstrap_multiplier
+        if n_samples_msd <= 1:
+            continue
         resampled = [
             np.mean(resample(d_squared.flatten(), n_samples=n_samples_msd))
             for j in range(n_resamples)
@@ -88,15 +100,22 @@ def msd_bootstrap(displacements, n_resamples=1000, samples_freq=1,
                             d_squared.flatten(),
                             n_samples=n_samples_msd)) for j in range(100)]
             )
-        mean_msd[i] = distro.n
-        err_msd[i] = (
-            np.percentile(distro.samples, distro.ci_points[1]) - distro.n)
-    return mean_msd, err_msd
+        if distro.size >= (max_resamples-n_resamples):
+            warnings.warn("The maximum number of resamples has been reached, "
+                          "and the distribution is not yet normal. The "
+                          "distribution will be treated as normal.")
+        output_delta_t = np.append(output_delta_t, delta_t[i])
+        mean_msd = np.append(mean_msd, distro.n)
+        err_msd = np.append(
+            err_msd, np.percentile(
+                distro.samples, distro.ci_points[1]) - distro.n)
+    return output_delta_t, mean_msd, err_msd
 
 
-def mscd_bootstrap(displacements, indices=None, n_resamples=1000,
+def mscd_bootstrap(delta_t, displacements, indices=None, n_resamples=1000,
                    samples_freq=1, confidence_interval=None,
-                   max_resamples=10000, progress=True):
+                   max_resamples=100000, bootstrap_multiplier=1,
+                   progress=True):
     """
     Perform a bootstrap resampling to obtain accurate estimates for the mean
     and uncertainty for the squared charge displacements. This
@@ -105,6 +124,7 @@ def mscd_bootstrap(displacements, indices=None, n_resamples=1000,
     median and confidence interval.
 
     Args:
+        delta_t (array_like): An array of the timestep values.
         displacements (list of array_like): A list of arrays, where
             each array has the axes [atom, displacement
             observation, dimension]. There is one array in the list for each
@@ -122,8 +142,14 @@ def mscd_bootstrap(displacements, indices=None, n_resamples=1000,
             95 % confidence interval).
         max_resamples (int, optional): The max number of resamples to be
             performed by the distribution is assumed to be normal. This is
-            necessary as for large numbers the Shapiro-Wilks test can be
-            unstable. Default is `10000`.
+            present to allow user control over the time taken for the
+            resampling to occur. Default is `100000`.
+        bootstrap_multiplier (int, optional): The factor by which the number
+            of bootstrap samples should be multiplied. The default is `1`,
+            which is the maximum number of truely independent samples in a
+            given timestep. This can be increase, however it is importance
+            to note that when greater than 1 the sampling is no longer
+            independent.
         progress (bool, optional): Show tqdm progress for sampling. Default
             is `True`.
 
@@ -135,21 +161,25 @@ def mscd_bootstrap(displacements, indices=None, n_resamples=1000,
     if confidence_interval is None:
         confidence_interval = [2.5, 97.5]
     max_obs = displacements[0].shape[1]
-    mean_mscd = np.zeros((len(displacements)))
-    err_mscd = np.zeros((len(displacements)))
+    output_delta_t = np.array([])
+    mean_mscd = np.array([])
+    err_mscd = np.array([])
     if progress:
         iterator = tqdm(range(len(displacements)))
     else:
         iterator = range(len(displacements))
     for i in iterator:
-        sq_chg_disp = np.sum(
-            np.sum(displacements[i][indices, :, :], axis=0) ** 2, axis=1)
+        sq_com_motion = np.sum(displacements[i][indices, :, :], axis=0) ** 2
+        sq_chg_disp = np.sum(sq_com_motion, axis=1)
         n_obs = displacements[i].shape[1]
         dt_int = max_obs - n_obs + 1
         # approximate number of "non-overlapping" observations, allowing
         # for partial overlap
         # Then evaluate MSCD
-        n_samples_mscd = int(max_obs / dt_int / samples_freq)
+        n_samples_mscd = int(
+            max_obs / dt_int / samples_freq) * bootstrap_multiplier
+        if n_samples_mscd <= 1:
+            continue
         resampled = [
             np.mean(resample(sq_chg_disp.flatten(), n_samples=n_samples_mscd))
             for j in range(n_resamples)
@@ -167,12 +197,18 @@ def mscd_bootstrap(displacements, indices=None, n_resamples=1000,
                             sq_chg_disp.flatten(),
                             n_samples=n_samples_mscd)) for j in range(100)]
             )
-        mean_mscd[i] = distro.n / len(indices)
-        err_mscd[i] = (
-            np.percentile(
-                distro.samples,
-                distro.ci_points[1]) - distro.n) / len(indices)
-    return mean_mscd, err_mscd
+        if distro.size >= (max_resamples-n_resamples):
+            warnings.warn("The maximum number of resamples has been reached, "
+                          "and the distribution is not yet normal. The "
+                          "distribution will be treated as normal.")
+        output_delta_t = np.append(output_delta_t, delta_t[i])
+        mean_mscd = np.append(mean_mscd, distro.n / len(indices))
+        err_mscd = np.append(
+            err_mscd, (
+                np.percentile(
+                    distro.samples,
+                    distro.ci_points[1]) - distro.n) / len(indices))
+    return output_delta_t, mean_mscd, err_mscd
 
 
 class Diffusion(StraightLine):

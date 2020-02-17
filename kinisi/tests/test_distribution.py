@@ -53,7 +53,7 @@ class TestDistribution(unittest.TestCase):
         Test check_normality with less than 5000 samples.
         """
         np.random.seed(1)
-        distro = Distribution(np.random.randn(1000))
+        distro = Distribution(np.random.randn(4999))
         assert_equal(distro.normal, True)
         assert_equal(distro.check_normality(), True)
 

@@ -40,8 +40,13 @@ class TestMsd(unittest.TestCase):
         to_resample = [
             np.array(to_resample) for i in range(1, 6)
         ]
-        mean, err = diffusion.msd_bootstrap(
-            to_resample, progress=False, n_resamples=10)
+        delta_t, mean, err = diffusion.msd_bootstrap(
+            np.arange(1, 6),
+            to_resample,
+            progress=False,
+            n_resamples=10,
+            max_resamples=10)
+        assert_equal(delta_t.size, 5)
         assert_equal(mean.size, 5)
         assert_equal(err.size, 5)
 
@@ -63,8 +68,14 @@ class TestMsd(unittest.TestCase):
         to_resample = [
             np.array(to_resample) for i in range(1, 6)
         ]
-        mean, err = diffusion.mscd_bootstrap(
-            to_resample, [1], progress=False, n_resamples=10)
+        delta_t, mean, err = diffusion.mscd_bootstrap(
+            np.arange(1, 6),
+            to_resample,
+            [1],
+            progress=False,
+            n_resamples=10,
+            max_resamples=10)
+        assert_equal(delta_t.size, 5)
         assert_equal(mean.size, 5)
         assert_equal(err.size, 5)
 
