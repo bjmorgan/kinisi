@@ -212,7 +212,7 @@ class Relationship:
             self.abscissa,
             self.ordinate - self.ordinate_error,
             self.ordinate + self.ordinate_error,
-            alpha=0.5, color=list(_fig_params.TABLEAU)[0])
+            alpha=0.5, color=list(_fig_params.TABLEAU)[0], lw=0)
         if not isinstance(self.variables[0], Distribution):
             variables = [var.n for var in self.variables]
             axes.plot(
