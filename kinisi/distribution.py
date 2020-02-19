@@ -149,9 +149,7 @@ class Distribution:
         p_value = shapiro(sampled_kde)[1]
         if p_value > alpha:
             self.normal = True
-            self.s = (
-                np.percentile(self.samples, self.ci_points[1]) - self.n
-            )
+            self.s = np.std(self.samples)
             return True
         self.normal = False
         self.s = None

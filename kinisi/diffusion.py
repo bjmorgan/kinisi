@@ -67,6 +67,7 @@ def msd_bootstrap(delta_t, displacements, n_resamples=1000, samples_freq=1,
     output_delta_t = np.array([])
     mean_msd = np.array([])
     err_msd = np.array([])
+    con_int_msd = np.array([])
     if progress:
         iterator = tqdm(range(len(displacements)))
     else:
@@ -107,9 +108,10 @@ def msd_bootstrap(delta_t, displacements, n_resamples=1000, samples_freq=1,
         output_delta_t = np.append(output_delta_t, delta_t[i])
         mean_msd = np.append(mean_msd, distro.n)
         err_msd = np.append(
-            err_msd, np.percentile(
+            err_msd, np.std(distro.samples))
+        con_int_msd = np.append(con_int_msd, np.percentile(
                 distro.samples, distro.ci_points[1]) - distro.n)
-    return output_delta_t, mean_msd, err_msd
+    return output_delta_t, mean_msd, err_msd, con_int_msd
 
 
 def mscd_bootstrap(delta_t, displacements, indices=None, n_resamples=1000,
@@ -164,6 +166,7 @@ def mscd_bootstrap(delta_t, displacements, indices=None, n_resamples=1000,
     output_delta_t = np.array([])
     mean_mscd = np.array([])
     err_mscd = np.array([])
+    con_int_mscd = np.array([])
     if progress:
         iterator = tqdm(range(len(displacements)))
     else:
@@ -203,12 +206,13 @@ def mscd_bootstrap(delta_t, displacements, indices=None, n_resamples=1000,
                           "distribution will be treated as normal.")
         output_delta_t = np.append(output_delta_t, delta_t[i])
         mean_mscd = np.append(mean_mscd, distro.n / len(indices))
-        err_mscd = np.append(
-            err_mscd, (
+        err_mscd = np.append(err_mscd, np.std(distro.samples))
+        con_int_mscd = np.append(
+            con_int_mscd, (
                 np.percentile(
                     distro.samples,
                     distro.ci_points[1]) - distro.n) / len(indices))
-    return output_delta_t, mean_mscd, err_mscd
+    return output_delta_t, mean_mscd, err_mscd, con_int_mscd
 
 
 class Diffusion(StraightLine):
