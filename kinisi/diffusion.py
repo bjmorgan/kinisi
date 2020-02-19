@@ -57,9 +57,12 @@ def msd_bootstrap(delta_t, displacements, n_resamples=1000, samples_freq=1,
             is `True`.
 
     Returns:
-        (tuple of array_like) A tuple of two arrays, the first is the
-            resampled mean squared displacement data, the second is the
-            uncertainty in the mean squared displacement.
+        (tuple of array_like) A tuple of five arrays, the first is the delta_t
+            values that were resampled, the second is the resampled mean
+            squared displacement data, the third is the standard deviation in
+            the mean squared displacement, the fourth is the lower bound on
+            the confidence interval, and the fifth is the upper bound on the
+            confidence interval.
     """
     if confidence_interval is None:
         confidence_interval = [2.5, 97.5]
@@ -67,7 +70,8 @@ def msd_bootstrap(delta_t, displacements, n_resamples=1000, samples_freq=1,
     output_delta_t = np.array([])
     mean_msd = np.array([])
     err_msd = np.array([])
-    con_int_msd = np.array([])
+    con_int_msd_lower = np.array([])
+    con_int_msd_upper = np.array([])
     if progress:
         iterator = tqdm(range(len(displacements)))
     else:
@@ -109,9 +113,11 @@ def msd_bootstrap(delta_t, displacements, n_resamples=1000, samples_freq=1,
         mean_msd = np.append(mean_msd, distro.n)
         err_msd = np.append(
             err_msd, np.std(distro.samples))
-        con_int_msd = np.append(con_int_msd, np.percentile(
-                distro.samples, distro.ci_points[1]) - distro.n)
-    return output_delta_t, mean_msd, err_msd, con_int_msd
+        con_int_msd_lower = np.append(con_int_msd_lower, distro.con_int[0])
+        con_int_msd_upper = np.append(con_int_msd_upper, distro.con_int[0])
+    return (
+        output_delta_t, mean_msd, err_msd, con_int_msd_lower,
+        con_int_msd_upper)
 
 
 def mscd_bootstrap(delta_t, displacements, indices=None, n_resamples=1000,
@@ -156,9 +162,12 @@ def mscd_bootstrap(delta_t, displacements, indices=None, n_resamples=1000,
             is `True`.
 
     Returns:
-        (tuple of array_like) A tuple of two arrays, the first is the
-            resampled mean squared charge displacement data, the second is the
-            uncertainty in the mean squared charge displacement.
+        (tuple of array_like) A tuple of five arrays, the first is the delta_t
+            values that were resampled, the second is the resampled mean
+            squared charge displacement data, the third is the standard
+            deviation in the mean squared charge displacement, the fourth is
+            the lower bound on the confidence interval, and the fifth is the
+            upper bound on the confidence interval.
     """
     if confidence_interval is None:
         confidence_interval = [2.5, 97.5]
@@ -166,7 +175,8 @@ def mscd_bootstrap(delta_t, displacements, indices=None, n_resamples=1000,
     output_delta_t = np.array([])
     mean_mscd = np.array([])
     err_mscd = np.array([])
-    con_int_mscd = np.array([])
+    con_int_mscd_lower = np.array([])
+    con_int_mscd_upper = np.array([])
     if progress:
         iterator = tqdm(range(len(displacements)))
     else:
@@ -207,12 +217,13 @@ def mscd_bootstrap(delta_t, displacements, indices=None, n_resamples=1000,
         output_delta_t = np.append(output_delta_t, delta_t[i])
         mean_mscd = np.append(mean_mscd, distro.n / len(indices))
         err_mscd = np.append(err_mscd, np.std(distro.samples))
-        con_int_mscd = np.append(
-            con_int_mscd, (
-                np.percentile(
-                    distro.samples,
-                    distro.ci_points[1]) - distro.n) / len(indices))
-    return output_delta_t, mean_mscd, err_mscd, con_int_mscd
+        con_int_mscd_lower = np.append(
+            con_int_mscd_lower, distro.con_int[0])
+        con_int_mscd_upper = np.append(
+            con_int_mscd_upper, distro.con_int[0])
+    return (
+        output_delta_t, mean_mscd, err_mscd, con_int_mscd_lower,
+        con_int_mscd_upper)
 
 
 class Diffusion(StraightLine):
