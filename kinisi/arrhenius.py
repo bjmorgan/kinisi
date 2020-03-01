@@ -15,12 +15,14 @@ diffusion.
 
 # pylint: disable=R0913
 
-from kinisi.distribution import Distribution
-from kinisi.relationships import Arrhenius, VTFEquation
-from . import UREG
+import numpy as np
+from uravu.distribution import Distribution
+from uravu.relationship import Relationship
+from scipy.constants import k
+from uravu import UREG
 
 
-class StandardArrhenius(Arrhenius):
+class StandardArrhenius(Relationship):
     r"""
     Evaluate the data with a standard Arrhenius relationship.
 
@@ -36,7 +38,7 @@ class StandardArrhenius(Arrhenius):
                  temperature_unit=UREG.kelvin,
                  diffusion_unit=UREG.centimeter**2 / UREG.second,
                  temperature_names=r'$T$',
-                 diffusion_names=r'$D$'):
+                 diffusion_names=r'$D$', unaccounted_uncertainty=False):
         """
         Args:
             temperature (array_like): The temperature data.
@@ -54,35 +56,27 @@ class StandardArrhenius(Arrhenius):
                 Default is `$D$`.
         """
         super().__init__(
-            temperature, diffusion, diffusion_error, temperature_unit,
-            diffusion_unit, None, temperature_names, diffusion_names)
-
-        self.activation_energy = self.variables[0] * UREG.joules
-        self.activation_energy = self.activation_energy.to(UREG.electron_volt)
-
-    def sample(self, **kwargs):
-        """
-        Perform the MCMC sampling to obtain a more accurate description of the
-        activation energy as a probability distribution.
-
-        Keyword Args:
-            walkers (int, optional): Number of MCMC walkers. Default is `100`.
-            n_samples (int, optional): Number of sample points. Default is
-                `500`.
-            n_burn (int, optional): Number of burn in samples. Default is
-                `500`.
-            progress (bool, optional): Show tqdm progress for sampling.
-                Default is `True`.
-        """
-        self.mcmc(**kwargs)
-        unit_conversion = 1 * UREG.joule
-        self.activation_energy = Distribution(
-            self.variables[0].samples * unit_conversion.to(
-                UREG.electron_volt).magnitude,
-            name="$D$", unit=UREG.electron_volt)
+            arrhenius, temperature, diffusion, diffusion_error, None, temperature_unit,
+            diffusion_unit, temperature_names, diffusion_names, [r'$E_a$', r'$A$'], [UREG.joules / UREG.mole, UREG.dimensionless], unaccounted_uncertainty=False)
 
 
-class SuperArrhenius(VTFEquation):
+def arrhenius(abscissa, activation_energy, prefactor):
+    """
+    Determine the diffusion coefficient for a given activation energy, and
+    prefactor according to the Arrhenius equation.
+
+    Args:
+        abscissa (array_like): The abscissa data.
+        activation_energy (float): The activation_energy value.
+        prefactor (float): The prefactor value.
+
+    Returns:
+        array_line: The diffusion coefficient data.
+    """
+    return prefactor * np.exp(-1 * activation_energy / (k * abscissa))
+
+
+class SuperArrhenius(Relationship):
     """
     Evaluate the data with a Super-Arrhenius relationship.
 
@@ -98,7 +92,7 @@ class SuperArrhenius(VTFEquation):
                  temperature_unit=UREG.kelvin,
                  diffusion_unit=UREG.centimeter**2 / UREG.second,
                  temperature_names=r'$T$',
-                 diffusion_names=r'$D$'):
+                 diffusion_names=r'$D$', unaccounted_uncertainty=False):
         """
         Args:
             temperature (array_like): The temperature data.
@@ -116,29 +110,23 @@ class SuperArrhenius(VTFEquation):
                 Default is `$D$`.
         """
         super().__init__(
-            temperature, diffusion, diffusion_error, temperature_unit,
-            diffusion_unit, None, temperature_names, diffusion_names)
+            super_arrhenius, temperature, diffusion, diffusion_error, None, temperature_unit,
+            diffusion_unit, temperature_names, diffusion_names, [r'$E_a$', r'$A$', r'$T_0$'], [UREG.joules / UREG.mole, UREG.dimensionless, UREG.kelvin], unaccounted_uncertainty=False)
 
-        self.activation_energy = self.variables[0] * UREG.joules
-        self.activation_energy = self.activation_energy.to(UREG.electron_volt)
 
-    def sample(self, **kwargs):
-        """
-        Perform the MCMC sampling to obtain a more accurate description of the
-        activation energy as a probability distribution.
+def super_arrhenius(abscissa, activation_energy, prefactor, t_zero):
+    """
+    Determine the rate constant for a given activation energy, prefactor,
+    and t_zero according to the Vogel–Tammann–Fulcher equation.
 
-        Keyword Args:
-            walkers (int, optional): Number of MCMC walkers. Default is `100`.
-            n_samples (int, optional): Number of sample points. Default is
-                `500`.
-            n_burn (int, optional): Number of burn in samples. Default is
-                `500`.
-            progress (bool, optional): Show tqdm progress for sampling.
-                Default is `True`.
-        """
-        self.mcmc(**kwargs)
-        unit_conversion = 1 * UREG.joule
-        self.activation_energy = Distribution(
-            self.variables[0].samples * unit_conversion.to(
-                UREG.electron_volt).magnitude,
-            name="$D$", unit=UREG.electron_volt)
+    Args:
+        abscissa (array_like): The abscissa data.
+        activation_energy (float): The activation_energy.
+        prefactor (float): The prefactor.
+        t_zero (float): The T_0 value.
+
+    Returns:
+        array_line: The ordinate data.
+    """
+    return prefactor * np.exp(
+        -1 * activation_energy / (k * (abscissa - t_zero)))
