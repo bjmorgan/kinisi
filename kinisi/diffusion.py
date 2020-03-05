@@ -13,9 +13,9 @@ import warnings
 import numpy as np
 from sklearn.utils import resample
 from tqdm import tqdm
-from kinisi.distribution import Distribution
-from kinisi.relationships import StraightLine
-from . import UREG
+from uravu.distribution import Distribution
+from uravu.relationship import Relationship
+from uravu import UREG, utils
 
 
 def msd_bootstrap(delta_t, displacements, n_resamples=1000, samples_freq=1,
@@ -218,15 +218,15 @@ def mscd_bootstrap(delta_t, displacements, indices=None, n_resamples=1000,
         mean_mscd = np.append(mean_mscd, distro.n / len(indices))
         err_mscd = np.append(err_mscd, np.std(distro.samples))
         con_int_mscd_lower = np.append(
-            con_int_mscd_lower, distro.con_int[0])
+            con_int_mscd_lower, distro.con_int[0] / len(indices))
         con_int_mscd_upper = np.append(
-            con_int_mscd_upper, distro.con_int[0])
+            con_int_mscd_upper, distro.con_int[1] / len(indices))
     return (
         output_delta_t, mean_mscd, err_mscd, con_int_mscd_lower,
         con_int_mscd_upper)
 
 
-class Diffusion(StraightLine):
+class Diffusion(Relationship):
     """
     Evaluate the diffusion coefficient from a set of (idelly) resampled MSD
     data and delta_t values.
@@ -243,32 +243,20 @@ class Diffusion(StraightLine):
     def __init__(self, delta_t, msd, msd_error,
                  delta_t_unit=UREG.femtoseconds, msd_unit=UREG.angstrom**2,
                  delta_t_names=r'$\delta t$',
-                 msd_names=r'$\langle r ^ 2 \rangle$'):
+                 msd_names=r'$\langle r ^ 2 \rangle$', unaccounted_uncertainty=False):
         super().__init__(
-            delta_t, msd, msd_error, delta_t_unit, msd_unit, delta_t_names,
-            msd_names)
-        self.diffusion_coefficient = self.variables[0] / 6 * (
-            self.ordinate_unit / self.abscissa_unit)
-        self.diffusion_coefficient = self.diffusion_coefficient.to(
-            UREG.centimeter ** 2 / UREG.second)
+            utils.straight_line, delta_t, msd, msd_error, None, delta_t_unit, msd_unit, delta_t_names,
+            msd_names, ['m', r'$D_0$'], [delta_t_unit / msd_unit, delta_t_unit], unaccounted_uncertainty)
 
-    def sample(self, **kwargs):
+    @property
+    def diffusion_coefficient(self):
         """
-        Perform the MCMC sampling to obtain a more accurate description of the
-        diffusion coefficient as a probability distribution.
+        Get the diffusion coefficient. 
 
-        Keyword Args:
-            walkers (int, optional): Number of MCMC walkers. Default is `100`.
-            n_samples (int, optional): Number of sample points. Default is
-                `500`.
-            n_burn (int, optional): Number of burn in samples. Default is
-                `500`.
-            progress (bool, optional): Show tqdm progress for sampling.
-                Default is `True`.
+        Returns:
+            (float or Distribution): The diffusion coefficient in the input units.
         """
-        self.mcmc(**kwargs)
-        unit_conversion = 1 * self.ordinate_unit / self.abscissa_unit
-        self.diffusion_coefficient = Distribution(
-            self.variables[0].samples * unit_conversion.to(
-                UREG.centimeter ** 2 / UREG.second).magnitude / 6,
-            name="$D$", unit=UREG.centimeter ** 2 / UREG.second)
+        if isinstance(self.variables[0], Distribution):
+            return Distribution(self.variables[0].samples / 6, r'$D$', None, self.variable_units[0])
+        else:
+            return self.variables[0] * self.variable_units[0]

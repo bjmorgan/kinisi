@@ -22,7 +22,9 @@ Distributed under the terms of the MIT License
 
 import numpy as np
 from pymatgen.analysis.diffusion_analyzer import get_conversion_factor
-
+from pymatgen.core.lattice import Lattice
+from pymatgen.core import Structure
+from tqdm import tqdm
 
 class PymatgenParser:
     """
@@ -42,6 +44,7 @@ class PymatgenParser:
             step_skip (int): Sampling freqency of the displacements
                 (time_step is multiplied by this number to get the real
                 time between measurements).
+            temperature (float): Temperature of simulation (K).
             min_obs (int): Minimum number of observations to have before
                 including in the MSD vs dt calculation. E.g. If a structure
                 has 10 diffusing atoms, and min_obs = 30, the MSD vs dt will
@@ -53,12 +56,6 @@ class PymatgenParser:
         self.indices = []
 
         structure, disp = _get_structure_and_disp(structures)
-
-        self.conversion_factor = get_conversion_factor(
-            structure,
-            specie,
-            temperature,
-        )
 
         drift_corrected = self.correct_for_drift(structure, disp, specie)
 
@@ -91,8 +88,11 @@ class PymatgenParser:
                 framework_indices.append(i)
 
         # drift corrected position
-        framework_disp = disp[framework_indices]
-        drift_corrected = disp - np.average(framework_disp, axis=0)[None, :, :]
+        if len(framework_indices) > 0:
+            framework_disp = disp[framework_indices]
+            drift_corrected = disp - np.average(framework_disp, axis=0)[None, :, :]
+        else:
+            drift_corrected = disp
 
         return drift_corrected
 
@@ -113,6 +113,8 @@ class PymatgenParser:
         """
         min_dt = int(1000 / (self.step_skip * self.time_step))
         max_dt = min(len(self.indices) * nsteps // min_obs, nsteps)
+        if min_dt == 0:
+            min_dt = 1
         if min_dt >= max_dt:
             raise ValueError('Not enough data to calculate diffusivity')
         timesteps = np.arange(
@@ -137,7 +139,7 @@ class PymatgenParser:
         delta_t = timesteps * self.time_step * self.step_skip
         disp_store = []
         disp_3d = []
-        for timestep in timesteps:
+        for timestep in tqdm(timesteps, desc='Getting Displacements'):
             disp = np.subtract(
                 drift_corrected[:, timestep:, :],
                 drift_corrected[:, :-timestep, :]
@@ -148,15 +150,58 @@ class PymatgenParser:
         return delta_t, disp_store, disp_3d
 
 
+class MDAnalysisParser(PymatgenParser):
+    """
+    A parser that consumes an MDAnalysis.Universe object.
+    """
+    def __init__(self, universe, specie, time_step, step_skip, temperature,
+                 min_obs=30, sub_sample=1):
+        """
+        Args:
+            universe (MDAnalysis.Universe): The MDAnalysis object of interest.
+            structures ([pymatgen.core.structure.Structure]): list of
+                pymatgen.core.structure.Structure objects (must be
+                ordered in sequence of run). E.g., you may have performed
+                sequential VASP runs to obtain sufficient statistics.
+            specie (Element/Specie): Specie to calculate diffusivity for
+                as a String, e.g. "Li".
+            time_step (int): Time step between measurements.
+            step_skip (int): Sampling freqency of the displacements
+                (time_step is multiplied by this number to get the real
+                time between measurements).
+            temperature (float): Temperature of simulation (K).
+            min_obs (int, optional): Minimum number of observations to have
+                before including in the MSD vs dt calculation. E.g. If a
+                structure has 10 diffusing atoms, and min_obs = 30, the MSD
+                vs dt will be calculated up to dt = total_run_time / 3, so
+                that each diffusing atom is measured at least 3 uncorrelated
+                times. Default is `30`.
+            sub_sample (int, optional): The frequency (in the timestep) by
+                which to sample the trajectory. This is important as the full
+                trajectory is read into memory by kinisi so large trajectories
+                may lead to the memory being overrun.
+        """
+        self.universe = universe
+        structures = []
+        for t in tqdm(self.universe.trajectory[::sub_sample],desc='Reading Trajectory'):
+            structures.append(
+                Structure(Lattice.from_parameters(*t.dimensions),
+                        self.universe.atoms.types,
+                        self.universe.atoms.positions)
+            )
+        super().__init__(structures, specie, time_step, step_skip, temperature, min_obs=30)
+
+
+
 def _get_structure_and_disp(structures):
     """
     Obtain the initial structure and displacement from a Xdatcar file
 
     Args:
         structures ([pymatgen.core.structure.Structure]): list of
-                pymatgen.core.structure.Structure objects (must be
-                ordered in sequence of run). E.g., you may have performed
-                sequential VASP runs to obtain sufficient statistics.
+            pymatgen.core.structure.Structure objects (must be
+            ordered in sequence of run). E.g., you may have performed
+            sequential VASP runs to obtain sufficient statistics.
 
     Returns:
         (pymatgen.core.structure.Structure) Initial structure.
