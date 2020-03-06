@@ -57,7 +57,7 @@ class StandardArrhenius(Relationship):
         """
         super().__init__(
             arrhenius, temperature, diffusion, diffusion_error, None, temperature_unit,
-            diffusion_unit, temperature_names, diffusion_names, [r'$E_a$', r'$A$'], [UREG.joules / UREG.mole, UREG.dimensionless], unaccounted_uncertainty=False)
+            diffusion_unit, temperature_names, diffusion_names, [r'$E_a$', r'$A$'], [UREG.joules / UREG.mole, UREG.dimensionless], unaccounted_uncertainty)
 
 
 def arrhenius(abscissa, activation_energy, prefactor):
@@ -111,7 +111,7 @@ class SuperArrhenius(Relationship):
         """
         super().__init__(
             super_arrhenius, temperature, diffusion, diffusion_error, None, temperature_unit,
-            diffusion_unit, temperature_names, diffusion_names, [r'$E_a$', r'$A$', r'$T_0$'], [UREG.joules / UREG.mole, UREG.dimensionless, UREG.kelvin], unaccounted_uncertainty=False)
+            diffusion_unit, temperature_names, diffusion_names, [r'$E_a$', r'$A$', r'$T_0$'], [UREG.joules / UREG.mole, UREG.dimensionless, UREG.kelvin], unaccounted_uncertainty)
 
 
 def super_arrhenius(abscissa, activation_energy, prefactor, t_zero):

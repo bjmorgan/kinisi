@@ -9,8 +9,10 @@ displacement and resulting diffusion coefficient from a material.
 
 # pylint: disable=R0913,R0914
 
+import sys
 import warnings
 import numpy as np
+from scipy.stats import uniform
 from sklearn.utils import resample
 from tqdm import tqdm
 from uravu.distribution import Distribution
@@ -73,7 +75,7 @@ def msd_bootstrap(delta_t, displacements, n_resamples=1000, samples_freq=1,
     con_int_msd_lower = np.array([])
     con_int_msd_upper = np.array([])
     if progress:
-        iterator = tqdm(range(len(displacements)))
+        iterator = tqdm(range(len(displacements)), desc='Bootstrapping displacements')
     else:
         iterator = range(len(displacements))
     for i in iterator:
@@ -178,7 +180,7 @@ def mscd_bootstrap(delta_t, displacements, indices=None, n_resamples=1000,
     con_int_mscd_lower = np.array([])
     con_int_mscd_upper = np.array([])
     if progress:
-        iterator = tqdm(range(len(displacements)))
+        iterator = tqdm(range(len(displacements)), desc='Bootstrapping displacements'))
     else:
         iterator = range(len(displacements))
     for i in iterator:
@@ -244,9 +246,14 @@ class Diffusion(Relationship):
                  delta_t_unit=UREG.femtoseconds, msd_unit=UREG.angstrom**2,
                  delta_t_names=r'$\delta t$',
                  msd_names=r'$\langle r ^ 2 \rangle$', unaccounted_uncertainty=False):
+        variable_names = ['m', r'$D_0$']
+        variable_units = [msd_unit / delta_t_unit, msd_unit]
+        if unaccounted_uncertainty:
+            variable_names.append(r'$f$')
+            variable_units.append([msd_unit])
         super().__init__(
             utils.straight_line, delta_t, msd, msd_error, None, delta_t_unit, msd_unit, delta_t_names,
-            msd_names, ['m', r'$D_0$'], [delta_t_unit / msd_unit, delta_t_unit], unaccounted_uncertainty)
+            msd_names, variable_names, variable_units, unaccounted_uncertainty)
 
     @property
     def diffusion_coefficient(self):
@@ -260,3 +267,21 @@ class Diffusion(Relationship):
             return Distribution(self.variables[0].samples / 6, r'$D$', None, self.variable_units[0])
         else:
             return self.variables[0] * self.variable_units[0]
+
+    def sample(self, **kwargs):
+        """
+        Use MCMC to sample the posterior distribution of the linear diffusion relationship.
+        """
+        def all_positive_prior():
+            """
+            This creates an all positive prior.
+            """
+            priors = []
+            for var in self.variable_medians:
+                loc = sys.float_info.min
+                scale = (var + np.abs(var) * 10) - loc
+                priors.append(uniform(loc=loc, scale=scale))
+            if self.unaccounted_uncertainty:
+                priors[-1] = uniform(loc=-10, scale=11)
+            return priors
+        self.mcmc(prior_function=all_positive_prior, **kwargs)

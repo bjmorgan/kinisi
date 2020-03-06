@@ -6,3 +6,7 @@ scipy
 emcee
 tqdm
 dynesty
+uravu
+pymatgen
+pint
+uncertainties
