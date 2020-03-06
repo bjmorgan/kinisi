@@ -180,7 +180,7 @@ def mscd_bootstrap(delta_t, displacements, indices=None, n_resamples=1000,
     con_int_mscd_lower = np.array([])
     con_int_mscd_upper = np.array([])
     if progress:
-        iterator = tqdm(range(len(displacements)), desc='Bootstrapping displacements'))
+        iterator = tqdm(range(len(displacements)), desc='Bootstrapping displacements')
     else:
         iterator = range(len(displacements))
     for i in iterator:
