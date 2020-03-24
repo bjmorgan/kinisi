@@ -18,7 +18,7 @@ diffusion.
 import numpy as np
 from uravu.distribution import Distribution
 from uravu.relationship import Relationship
-from scipy.constants import k
+from scipy.constants import R
 from uravu import UREG
 
 
@@ -56,7 +56,7 @@ class StandardArrhenius(Relationship):
                 Default is `$D$`.
         """
         super().__init__(
-            arrhenius, temperature, diffusion, diffusion_error, None, temperature_unit,
+            arrhenius, temperature, diffusion, diffusion_error, temperature_unit,
             diffusion_unit, temperature_names, diffusion_names, [r'$E_a$', r'$A$'], [UREG.joules / UREG.mole, UREG.dimensionless], unaccounted_uncertainty)
 
 
@@ -73,7 +73,7 @@ def arrhenius(abscissa, activation_energy, prefactor):
     Returns:
         array_line: The diffusion coefficient data.
     """
-    return prefactor * np.exp(-1 * activation_energy / (k * abscissa))
+    return prefactor * np.exp(-1 * activation_energy / (R * abscissa))
 
 
 class SuperArrhenius(Relationship):
@@ -110,7 +110,7 @@ class SuperArrhenius(Relationship):
                 Default is `$D$`.
         """
         super().__init__(
-            super_arrhenius, temperature, diffusion, diffusion_error, None, temperature_unit,
+            super_arrhenius, temperature, diffusion, diffusion_error, temperature_unit,
             diffusion_unit, temperature_names, diffusion_names, [r'$E_a$', r'$A$', r'$T_0$'], [UREG.joules / UREG.mole, UREG.dimensionless, UREG.kelvin], unaccounted_uncertainty)
 
 
@@ -129,4 +129,4 @@ def super_arrhenius(abscissa, activation_energy, prefactor, t_zero):
         array_line: The ordinate data.
     """
     return prefactor * np.exp(
-        -1 * activation_energy / (k * (abscissa - t_zero)))
+        -1 * activation_energy / (R * (abscissa - t_zero)))

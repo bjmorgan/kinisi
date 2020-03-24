@@ -10,3 +10,4 @@ uravu
 pymatgen
 pint
 uncertainties
+MDAnalysis

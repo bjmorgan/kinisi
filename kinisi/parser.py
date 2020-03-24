@@ -187,9 +187,10 @@ class MDAnalysisParser(PymatgenParser):
             structures.append(
                 Structure(Lattice.from_parameters(*t.dimensions),
                         self.universe.atoms.types,
-                        self.universe.atoms.positions)
+                        self.universe.atoms.positions,
+                        coords_are_cartesian=True)
             )
-        super().__init__(structures, specie, time_step, step_skip, temperature, min_obs=30)
+        super().__init__(structures, specie, time_step, step_skip*sub_sample, temperature, min_obs=min_obs)
 
 
 

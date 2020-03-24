@@ -1,10 +1,9 @@
-kinisi modules
-==============
+API
+===
 
 .. toctree::
    :maxdepth: 4
 
    arrhenius
-   distribution
-   msd
-   relationships
+   diffusion
+   parser

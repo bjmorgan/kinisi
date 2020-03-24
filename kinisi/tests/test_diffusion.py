@@ -1,5 +1,5 @@
 """
-Tests for msd module
+Tests for diffusion module
 
 Copyright (c) Andrew R. McCluskey and Benjamin J. Morgan
 
@@ -20,7 +20,7 @@ from uravu.utils import straight_line
 
 class TestMsd(unittest.TestCase):
     """
-    Unit tests for msd module
+    Unit tests for diffusion module
     """
 
     def test_msd_bootstrap_a(self):
@@ -94,7 +94,7 @@ class TestMsd(unittest.TestCase):
 
     def test_mscd_bootstrap_a(self):
         """
-        Test msd_bootstrap for initial normal.
+        Test mscd_bootstrap for initial normal.
         """
         ordinate = np.random.randn(100, 50, 3)
         to_resample = [
@@ -115,7 +115,7 @@ class TestMsd(unittest.TestCase):
 
     def test_mscd_bootstrap_b(self):
         """
-        Test msd_bootstrap for initial uniform with progress.
+        Test mscd_bootstrap for initial uniform with progress.
         """
         ordinate = np.random.uniform(size=(100, 50, 3))
         to_resample = [
@@ -136,7 +136,7 @@ class TestMsd(unittest.TestCase):
 
     def test_mscd_bootstrap_c(self):
         """
-        Test msd_bootstrap for to go over the limit point.
+        Test mscd_bootstrap for to go over the limit point.
         """
         ordinate1 = np.random.randn(5, 500, 3)
         ordinate2 = np.random.randn(5, 450, 3)
@@ -181,7 +181,7 @@ class TestMsd(unittest.TestCase):
  
     def test_diffusion_D_max_likelihood(self):
         """
-        Test the initialisation of diffusion
+        Test the max likelihood of diffusion
         """
         dt = np.linspace(5, 50, 10)
         msd = np.linspace(5, 50, 10)
@@ -192,7 +192,7 @@ class TestMsd(unittest.TestCase):
 
     def test_diffusion_D_mcmc_a(self):
         """
-        Test the initialisation of diffusion
+        Test the mcmc of diffusion
         """
         dt = np.linspace(5, 50, 10)
         msd = np.linspace(5, 50, 10)
@@ -207,7 +207,7 @@ class TestMsd(unittest.TestCase):
     
     def test_diffusion_D_mcmc_b(self):
         """
-        Test the initialisation of diffusion
+        Test the mcmc of diffusion with unaccounted uncertainty
         """
         dt = np.linspace(5, 50, 10)
         msd = np.linspace(5, 50, 10)

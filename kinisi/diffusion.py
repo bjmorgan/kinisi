@@ -116,7 +116,7 @@ def msd_bootstrap(delta_t, displacements, n_resamples=1000, samples_freq=1,
         err_msd = np.append(
             err_msd, np.std(distro.samples))
         con_int_msd_lower = np.append(con_int_msd_lower, distro.con_int[0])
-        con_int_msd_upper = np.append(con_int_msd_upper, distro.con_int[0])
+        con_int_msd_upper = np.append(con_int_msd_upper, distro.con_int[1])
     return (
         output_delta_t, mean_msd, err_msd, con_int_msd_lower,
         con_int_msd_upper)
@@ -252,7 +252,7 @@ class Diffusion(Relationship):
             variable_names.append(r'$f$')
             variable_units.append([msd_unit])
         super().__init__(
-            utils.straight_line, delta_t, msd, msd_error, None, delta_t_unit, msd_unit, delta_t_names,
+            utils.straight_line, delta_t, msd, msd_error, delta_t_unit, msd_unit, delta_t_names,
             msd_names, variable_names, variable_units, unaccounted_uncertainty)
 
     @property
