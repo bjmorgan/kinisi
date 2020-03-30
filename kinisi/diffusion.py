@@ -20,7 +20,7 @@ from uravu.relationship import Relationship
 from uravu import UREG, utils
 
 
-def msd_bootstrap(delta_t, displacements, n_resamples=1000, samples_freq=1,
+def msd_bootstrap(delta_t, disp_3d, n_resamples=1000, samples_freq=1,
                   confidence_interval=None, max_resamples=100000,
                   bootstrap_multiplier=1, progress=True):
     """
@@ -68,6 +68,8 @@ def msd_bootstrap(delta_t, displacements, n_resamples=1000, samples_freq=1,
     """
     if confidence_interval is None:
         confidence_interval = [2.5, 97.5]
+    displacements = disp_3d[::samples_freq]
+    delta_t = delta_t[::samples_freq]
     max_obs = displacements[0].shape[1]
     output_delta_t = np.array([])
     mean_msd = np.array([])
@@ -87,7 +89,7 @@ def msd_bootstrap(delta_t, displacements, n_resamples=1000, samples_freq=1,
         # for partial overlap
         # Evaluate MSD first
         n_samples_msd = int(
-            max_obs / dt_int * n_atoms / samples_freq) * bootstrap_multiplier
+            max_obs / dt_int * n_atoms) * bootstrap_multiplier
         if n_samples_msd <= 1:
             continue
         resampled = [
@@ -266,7 +268,7 @@ class Diffusion(Relationship):
         if isinstance(self.variables[0], Distribution):
             return Distribution(self.variables[0].samples / 6, r'$D$', None, self.variable_units[0])
         else:
-            return self.variables[0] * self.variable_units[0]
+            return self.variables[0] / 6 * self.variable_units[0]
 
     def sample(self, **kwargs):
         """
@@ -278,8 +280,8 @@ class Diffusion(Relationship):
             """
             priors = []
             for var in self.variable_medians:
-                loc = sys.float_info.min
-                scale = (var + np.abs(var) * 10) - loc
+                loc = (var - np.abs(var) * 5)
+                scale = (var + np.abs(var) * 5) - loc
                 priors.append(uniform(loc=loc, scale=scale))
             if self.unaccounted_uncertainty:
                 priors[-1] = uniform(loc=-10, scale=11)

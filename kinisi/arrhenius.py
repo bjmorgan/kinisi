@@ -15,10 +15,12 @@ diffusion.
 
 # pylint: disable=R0913
 
+import sys
 import numpy as np
 from uravu.distribution import Distribution
 from uravu.relationship import Relationship
 from scipy.constants import R
+from scipy.stats import uniform
 from uravu import UREG
 
 
@@ -55,9 +57,39 @@ class StandardArrhenius(Relationship):
             diffusion_names (str): The label for the diffusion coefficient.
                 Default is `$D$`.
         """
+        variable_names = [r'$E_a$', r'$A$']
+        variable_units = [UREG.joules / UREG.mole, UREG.dimensionless]
+        if unaccounted_uncertainty:
+            variable_names.append('unaccounted uncertainty')
+            variable_units.append(UREG.dimensionless)
         super().__init__(
             arrhenius, temperature, diffusion, diffusion_error, temperature_unit,
-            diffusion_unit, temperature_names, diffusion_names, [r'$E_a$', r'$A$'], [UREG.joules / UREG.mole, UREG.dimensionless], unaccounted_uncertainty)
+            diffusion_unit, temperature_names, diffusion_names, variable_names, variable_units, unaccounted_uncertainty)
+
+    def all_positive_prior(self):
+        """
+        This creates an all positive prior.
+        """
+        priors = []
+        for var in self.variable_medians:
+            loc = sys.float_info.min
+            scale = (var + np.abs(var) * 2) - loc
+            priors.append(uniform(loc=loc, scale=scale))
+        if self.unaccounted_uncertainty:
+            priors[-1] = uniform(loc=-10, scale=11)
+        return priors
+
+    def sample(self, **kwargs):
+        """
+        Use MCMC to sample the posterior distribution of the relationship.
+        """
+        self.mcmc(prior_function=self.all_positive_prior, **kwargs)
+
+    def nested(self, **kwargs):
+        """
+        Use nested sampling with all positive prior
+        """
+        self.nested_sampling(prior_function=self.all_positive_prior, **kwargs)
 
 
 def arrhenius(abscissa, activation_energy, prefactor):
@@ -109,10 +141,46 @@ class SuperArrhenius(Relationship):
             diffusion_names (str): The label for the diffusion coefficient.
                 Default is `$D$`.
         """
+        variable_names = [r'$E_a$', r'$A$', r'$T_0$']
+        variable_units = [UREG.joules / UREG.mole, UREG.dimensionless, UREG.kelvin]
+        if unaccounted_uncertainty:
+            variable_names.append('unaccounted uncertainty')
+            variable_units.append(UREG.dimensionless)
         super().__init__(
             super_arrhenius, temperature, diffusion, diffusion_error, temperature_unit,
-            diffusion_unit, temperature_names, diffusion_names, [r'$E_a$', r'$A$', r'$T_0$'], [UREG.joules / UREG.mole, UREG.dimensionless, UREG.kelvin], unaccounted_uncertainty)
+            diffusion_unit, temperature_names, diffusion_names, variable_names, variable_units, unaccounted_uncertainty)
 
+    def all_positive_prior(self):
+        """
+        This creates an all positive prior.
+        """
+        priors = []
+        loc = sys.float_info.min
+        for var in self.variable_medians:
+            scale = (var + np.abs(var) * 4) - loc
+            priors.append(uniform(loc=loc, scale=scale))
+        if self.unaccounted_uncertainty:
+            if self.variable_medians[-2] == 0:
+                self.variable_medians[-2] = 1
+            priors[-2] = uniform(loc=loc, scale=np.sort(self.abscissa.m)[0] - 0.1)
+            priors[-1] = uniform(loc=-10, scale=11)
+        else:
+            if self.variable_medians[-1] == 0:
+                self.variable_medians[-1] = 1
+            priors[-1] = uniform(loc=loc, scale=np.sort(self.abscissa.m)[0] - 0.1)
+        return priors
+
+    def sample(self, **kwargs):
+        """
+        Use MCMC to sample the posterior distribution of the relationship.
+        """
+        self.mcmc(prior_function=self.all_positive_prior, **kwargs)
+
+    def nested(self, **kwargs):
+        """
+        Use nested sampling with all positive prior
+        """
+        self.nested_sampling(prior_function=self.all_positive_prior, **kwargs)
 
 def super_arrhenius(abscissa, activation_energy, prefactor, t_zero):
     """

@@ -24,6 +24,7 @@ import numpy as np
 from pymatgen.analysis.diffusion_analyzer import get_conversion_factor
 from pymatgen.core.lattice import Lattice
 from pymatgen.core import Structure
+import periodictable as pt
 from tqdm import tqdm
 
 class PymatgenParser:
@@ -155,7 +156,7 @@ class MDAnalysisParser(PymatgenParser):
     A parser that consumes an MDAnalysis.Universe object.
     """
     def __init__(self, universe, specie, time_step, step_skip, temperature,
-                 min_obs=30, sub_sample=1):
+                 min_obs=30, sub_sample_atoms=1):
         """
         Args:
             universe (MDAnalysis.Universe): The MDAnalysis object of interest.
@@ -176,21 +177,21 @@ class MDAnalysisParser(PymatgenParser):
                 vs dt will be calculated up to dt = total_run_time / 3, so
                 that each diffusing atom is measured at least 3 uncorrelated
                 times. Default is `30`.
-            sub_sample (int, optional): The frequency (in the timestep) by
-                which to sample the trajectory. This is important as the full
-                trajectory is read into memory by kinisi so large trajectories
-                may lead to the memory being overrun.
+            sub_sample_atoms (int, optional): Fraction of atoms to be used. Default 
+                is `1` where all atoms are used.  
         """
         self.universe = universe
         structures = []
-        for t in tqdm(self.universe.trajectory[::sub_sample],desc='Reading Trajectory'):
+        potential_indices = np.where(self.universe.atoms.types == str(pt.elements.symbol(specie).number))[0]
+        atoms_indices = np.random.choice(potential_indices, size=int(potential_indices.size*sub_sample_atoms), replace=False)
+        for t in tqdm(self.universe.trajectory, desc='Reading Trajectory'):
             structures.append(
                 Structure(Lattice.from_parameters(*t.dimensions),
-                        self.universe.atoms.types,
-                        self.universe.atoms.positions,
+                        self.universe.atoms.types[atoms_indices],
+                        self.universe.atoms.positions[atoms_indices],
                         coords_are_cartesian=True)
             )
-        super().__init__(structures, specie, time_step, step_skip*sub_sample, temperature, min_obs=min_obs)
+        super().__init__(structures, specie, time_step, step_skip, temperature, min_obs=min_obs)
 
 
 
