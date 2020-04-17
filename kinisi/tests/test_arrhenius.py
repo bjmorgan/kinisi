@@ -110,6 +110,51 @@ class TestArrhenius(unittest.TestCase):
         assert_almost_equal(arr.y_s, dea)
         assert_equal(arr.ordinate.u, UREG.centimeter**2 / UREG.second) 
 
+    def test_all_positive_priors_super(self):
+        """
+        Test the creation of an all positive prior.
+        """
+        temp = np.linspace(5, 50, 10)
+        ea = np.linspace(5, 50, 10)
+        dea = ea * 0.1
+        arr = arrhenius.SuperArrhenius(temp, ea, dea)
+        arr.max_likelihood()
+        priors = arr.all_positive_prior()
+        assert_equal(len(priors), 3)
+        assert_equal(priors[0].pdf(-1), 0)
+        assert_equal(priors[0].pdf(100000), 0)
+        assert_equal(priors[0].pdf(arr.variable_medians[0]), 1 / (arr.variable_medians[0] * 4 + arr.variable_medians[0]))
+        assert_equal(priors[1].pdf(-1), 0)
+        assert_equal(priors[1].pdf(100000), 0)
+        assert_equal(priors[1].pdf(arr.variable_medians[1]), 1 / (arr.variable_medians[1] * 4 + arr.variable_medians[1]))
+        assert_equal(priors[2].pdf(-1), 0)
+        assert_equal(priors[2].pdf(5), 0)
+        assert_equal(priors[2].pdf(2.5), 1 / (4.9))
+
+    def test_all_positive_priors_super_with_uu(self):
+        """
+        Test the creation of an all positive prior.
+        """
+        temp = np.linspace(5, 50, 10)
+        ea = np.linspace(5, 50, 10)
+        dea = ea * 0.1
+        arr = arrhenius.SuperArrhenius(temp, ea, dea, unaccounted_uncertainty=True)
+        arr.max_likelihood()
+        priors = arr.all_positive_prior()
+        assert_equal(len(priors), 4)
+        assert_equal(priors[0].pdf(-1), 0)
+        assert_equal(priors[0].pdf(100000), 0)
+        assert_equal(priors[0].pdf(arr.variable_medians[0]), 1 / (arr.variable_medians[0] * 4 + arr.variable_medians[0]))
+        assert_equal(priors[1].pdf(-1), 0)
+        assert_equal(priors[1].pdf(100000), 0)
+        assert_equal(priors[1].pdf(arr.variable_medians[1]), 1 / (arr.variable_medians[1] * 4 + arr.variable_medians[1]))
+        assert_equal(priors[2].pdf(-1), 0)
+        assert_equal(priors[2].pdf(5), 0)
+        assert_equal(priors[2].pdf(2.5), 1 / (4.9))
+        assert_equal(priors[3].pdf(-100), 0)
+        assert_equal(priors[3].pdf(1000), 0)
+        assert_equal(priors[3].pdf(-1), 1 / (11))
+
     def test_standard_arrhenius(self):
         """
         Test the arrhenius function
