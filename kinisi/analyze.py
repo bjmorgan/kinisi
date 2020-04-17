@@ -18,7 +18,7 @@ class DiffAnalyzer:
 
     Args:
     """
-    def __init__(self, file, params, format='Xdatcar', uncertainty='con_int', chg_diff=False):
+    def __init__(self, file, params, format='Xdatcar', uncertainty='con_int', chg_diff=False):  # pragma: no cover
         if format is 'Xdatcar':
             xd = Xdatcar(file)
             u = PymatgenParser(xd.structures, **params)
