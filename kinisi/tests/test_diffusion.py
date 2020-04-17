@@ -56,7 +56,7 @@ class TestMsd(unittest.TestCase):
             to_resample,
             progress=True,
             n_resamples=1,
-            max_resamples=10)
+            max_resamples=1000)
         assert_equal(delta_t.size, 5)
         assert_equal(mean.size, 5)
         assert_equal(err.size, 5)
@@ -85,7 +85,7 @@ class TestMsd(unittest.TestCase):
             progress=False,
             n_resamples=1,
             max_resamples=10, 
-            samples_freq=10)
+            samples_freq=2)
         assert_equal(delta_t.size, 3)
         assert_equal(mean.size, 3)
         assert_equal(err.size, 3)
@@ -127,7 +127,7 @@ class TestMsd(unittest.TestCase):
             [1],
             progress=True,
             n_resamples=1,
-            max_resamples=10)
+            max_resamples=1000)
         assert_equal(delta_t.size, 5)
         assert_equal(mean.size, 5)
         assert_equal(err.size, 5)
@@ -157,12 +157,12 @@ class TestMsd(unittest.TestCase):
             progress=False,
             n_resamples=1,
             max_resamples=10, 
-            samples_freq=10)
-        assert_equal(delta_t.size, 1)
-        assert_equal(mean.size, 1)
-        assert_equal(err.size, 1)
-        assert_equal(con_int_l.size, 1)
-        assert_equal(con_int_u.size, 1)
+            samples_freq=2)
+        assert_equal(delta_t.size, 2)
+        assert_equal(mean.size, 2)
+        assert_equal(err.size, 2)
+        assert_equal(con_int_l.size, 2)
+        assert_equal(con_int_u.size, 2)
 
     def test_diffusion_init(self):
         """
@@ -188,7 +188,7 @@ class TestMsd(unittest.TestCase):
         dmsd = msd * 0.1
         diff = diffusion.Diffusion(dt, msd, dmsd)
         diff.max_likelihood()
-        assert_almost_equal(diff.diffusion_coefficient.m, 1)
+        assert_almost_equal(diff.diffusion_coefficient.m, 1 / 6)
 
     def test_diffusion_D_mcmc_a(self):
         """

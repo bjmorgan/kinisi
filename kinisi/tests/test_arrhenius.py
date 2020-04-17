@@ -36,6 +36,25 @@ class TestArrhenius(unittest.TestCase):
         assert_almost_equal(arr.y_n, ea)
         assert_almost_equal(arr.y_s, dea)
         assert_equal(arr.ordinate.u, UREG.centimeter**2 / UREG.second)
+        assert_equal(len(arr.variable_names), 2)
+        assert_equal(len(arr.variable_units), 2)
+
+    def test_standard_arrhenius_init_with_uu(self):
+        """
+        Test the initialisation of standard arrhenius with unaccounted uncertainty
+        """
+        temp = np.linspace(5, 50, 10)
+        ea = np.linspace(5, 50, 10)
+        dea = ea * 0.1
+        arr = arrhenius.StandardArrhenius(temp, ea, dea, unaccounted_uncertainty=True)
+        assert_equal(arr.function, arrhenius.arrhenius)
+        assert_almost_equal(arr.abscissa.m, temp)
+        assert_equal(arr.abscissa.u, UREG.kelvin)
+        assert_almost_equal(arr.y_n, ea)
+        assert_almost_equal(arr.y_s, dea)
+        assert_equal(arr.ordinate.u, UREG.centimeter**2 / UREG.second)
+        assert_equal(len(arr.variable_names), 3)
+        assert_equal(len(arr.variable_units), 3)
 
     def test_super_arrhenius_init(self):
         """
@@ -56,10 +75,10 @@ class TestArrhenius(unittest.TestCase):
         """
         Test the arrhenius function
         """
-        assert_almost_equal(9.9667221605, arrhenius.arrhenius(300, 1.380649E-23, 10))
+        assert_almost_equal(1.353352832, arrhenius.arrhenius(300, 4988.67588, 10))
 
     def test_super_arrhenius(self):
         """
         Test the super arrhenius function
         """
-        assert_almost_equal(9.9655766261, arrhenius.super_arrhenius(300, 1.380649E-23, 10, 10))
+        assert_almost_equal(1.353352832, arrhenius.super_arrhenius(300, 4822.386684, 10, 10))

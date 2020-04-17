@@ -124,7 +124,7 @@ def msd_bootstrap(delta_t, disp_3d, n_resamples=1000, samples_freq=1,
         con_int_msd_upper)
 
 
-def mscd_bootstrap(delta_t, displacements, indices=None, n_resamples=1000,
+def mscd_bootstrap(delta_t, disp_3d, indices=None, n_resamples=1000,
                    samples_freq=1, confidence_interval=None,
                    max_resamples=100000, bootstrap_multiplier=1,
                    progress=True):
@@ -175,6 +175,8 @@ def mscd_bootstrap(delta_t, displacements, indices=None, n_resamples=1000,
     """
     if confidence_interval is None:
         confidence_interval = [2.5, 97.5]
+    displacements = disp_3d[::samples_freq]
+    delta_t = delta_t[::samples_freq]
     max_obs = displacements[0].shape[1]
     output_delta_t = np.array([])
     mean_mscd = np.array([])
@@ -279,8 +281,10 @@ class Diffusion(Relationship):
             This creates an all positive prior.
             """
             priors = []
-            for var in self.variable_medians:
+            for i, var in enumerate(self.variable_medians):
                 loc = (var - np.abs(var) * 5)
+                if i == 0:
+                    loc = 0
                 scale = (var + np.abs(var) * 5) - loc
                 priors.append(uniform(loc=loc, scale=scale))
             if self.unaccounted_uncertainty:
