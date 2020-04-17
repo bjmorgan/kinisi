@@ -8,7 +8,8 @@ python:
   - 3.8-dev
 install:
   - pip install -r requirements.txt
-script:
-  - coverage run --source=kinisi setup.py test
+# command to run tests
+script: 
+  - coverage run --rcfile=.coveragerc -m unittest discover
 after_success:
-  - coveralls
+  - codeclimate-test-reporter --token $CODECLIMATE_REPO_TOKEN

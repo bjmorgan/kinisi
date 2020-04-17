@@ -13,4 +13,4 @@ uncertainties
 periodictable
 MDAnalysis
 coverage
-coveralls
+codeclimate-test-reporter
