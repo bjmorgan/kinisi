@@ -114,10 +114,11 @@ class TestArrhenius(unittest.TestCase):
         """
         Test the arrhenius function
         """
-        assert_almost_equal(1.353352832, arrhenius.arrhenius(300, 4988.67588, 10))
+        assert_almost_equal(1.353352832, arrhenius.arrhenius(300, 4988.67588, 10), decimal=5)
 
     def test_super_arrhenius(self):
         """
         Test the super arrhenius function
         """
-        assert_almost_equal(1.353352832, arrhenius.super_arrhenius(300, 4822.386684, 10, 10))
+        assert_almost_equal(1.353352832, arrhenius.super_arrhenius(300, 4822.386684, 10, 10), decimal=5)
+

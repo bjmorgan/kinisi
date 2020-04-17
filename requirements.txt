@@ -10,6 +10,7 @@ uravu
 pymatgen
 pint
 uncertainties
+periodictable
 MDAnalysis
 coverage
 coveralls
