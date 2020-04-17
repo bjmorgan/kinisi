@@ -14,7 +14,7 @@ Uncertainty quantification in diffusion
 - the `uravu.relationship.Relationship`_ class is leveraged to propagate these uncertainties using Bayesian inference and enable the determination of the uncertainty in the diffusion coefficient and activation energy,
 - finally, Bayesian model selection can be used to determine between an Arrhenius and a `super-Arrhenius relationship`_ in the temperature-dependent behaviour.
 
-Brief tutorials showing how ``kinisi`` may be used in the study of an `VASP Xdatcar`_ file and a `MDAnalysis.core.Universe`_ object can be found in the `tutorials`_, along with an example of `kinisi` being used to distinguish between Arrhenius and super-Arrhenius behaviour.
+Brief tutorials showing how ``kinisi`` may be used in the study of an `VASP Xdatcar`_ file and a `MDAnalysis.core.Universe`_ object can be found in the `tutorials`_, along with an example of ``kinisi`` being used to distinguish between Arrhenius and super-Arrhenius behaviour.
 
 
 Contributors
