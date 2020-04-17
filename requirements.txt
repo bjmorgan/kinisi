@@ -11,3 +11,5 @@ pymatgen
 pint
 uncertainties
 MDAnalysis
+coverage
+coveralls
