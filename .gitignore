@@ -3,6 +3,7 @@ build
 dist
 kinisi.egg-info
 **/__pycache__
+**/.DS_Store
 .eggs
 .coverage
 htmlcov

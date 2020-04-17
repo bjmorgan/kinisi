@@ -160,13 +160,9 @@ class SuperArrhenius(Relationship):
             scale = (var + np.abs(var) * 4) - loc
             priors.append(uniform(loc=loc, scale=scale))
         if self.unaccounted_uncertainty:
-            if self.variable_medians[-2] == 0:
-                self.variable_medians[-2] = 1
             priors[-2] = uniform(loc=loc, scale=np.sort(self.abscissa.m)[0] - 0.1)
             priors[-1] = uniform(loc=-10, scale=11)
         else:
-            if self.variable_medians[-1] == 0:
-                self.variable_medians[-1] = 1
             priors[-1] = uniform(loc=loc, scale=np.sort(self.abscissa.m)[0] - 0.1)
         return priors
 
