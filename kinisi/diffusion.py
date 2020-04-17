@@ -272,22 +272,29 @@ class Diffusion(Relationship):
         else:
             return self.variables[0] / 6 * self.variable_units[0]
 
+    def all_positive_prior(self):
+        """
+        This creates an all positive prior.
+        """
+        priors = []
+        for i, var in enumerate(self.variable_medians):
+            loc = (var - np.abs(var) * 5)
+            if i == 0:
+                loc = 0
+            scale = (var + np.abs(var) * 5) - loc
+            priors.append(uniform(loc=loc, scale=scale))
+        if self.unaccounted_uncertainty:
+            priors[-1] = uniform(loc=-10, scale=11)
+        return priors
+
     def sample(self, **kwargs):
         """
         Use MCMC to sample the posterior distribution of the linear diffusion relationship.
         """
-        def all_positive_prior():
-            """
-            This creates an all positive prior.
-            """
-            priors = []
-            for i, var in enumerate(self.variable_medians):
-                loc = (var - np.abs(var) * 5)
-                if i == 0:
-                    loc = 0
-                scale = (var + np.abs(var) * 5) - loc
-                priors.append(uniform(loc=loc, scale=scale))
-            if self.unaccounted_uncertainty:
-                priors[-1] = uniform(loc=-10, scale=11)
-            return priors
-        self.mcmc(prior_function=all_positive_prior, **kwargs)
+        self.mcmc(prior_function=self.all_positive_prior, **kwargs)
+
+    def nested(self, **kwargs):
+        """
+        Use nested sampling with all positive prior
+        """
+        self.nested_sampling(prior_function=self.all_positive_prior, **kwargs)

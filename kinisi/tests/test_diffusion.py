@@ -12,6 +12,7 @@ Distributed under the terms of the MIT License
 
 import unittest
 import numpy as np
+import uncertainties
 from numpy.testing import assert_equal, assert_almost_equal
 from kinisi import diffusion, UREG
 from uravu.distribution import Distribution
@@ -91,6 +92,35 @@ class TestMsd(unittest.TestCase):
         assert_equal(err.size, 3)
         assert_equal(con_int_l.size, 3)
         assert_equal(con_int_u.size, 3)
+    
+    def test_msd_bootstrap_d(self):
+        """
+        Test msd_bootstrap very few particles.
+        """
+        ordinate1 = np.random.randn(10, 10, 3)
+        ordinate2 = np.random.randn(1, 1, 3)
+        ordinate3 = np.random.randn(1, 1, 3)
+        ordinate4 = np.random.randn(1, 1, 3)
+        ordinate5 = np.random.randn(1, 1, 3)
+        to_resample = [
+            ordinate1,
+            ordinate2,
+            ordinate3,
+            ordinate4,
+            ordinate5,
+        ]
+        delta_t, mean, err, con_int_l, con_int_u = diffusion.msd_bootstrap(
+            np.linspace(100, 600, 5, dtype=int),
+            to_resample,
+            progress=False,
+            n_resamples=1,
+            max_resamples=10, 
+            samples_freq=2)
+        assert_equal(delta_t.size, 1)
+        assert_equal(mean.size, 1)
+        assert_equal(err.size, 1)
+        assert_equal(con_int_l.size, 1)
+        assert_equal(con_int_u.size, 1)
 
     def test_mscd_bootstrap_a(self):
         """
@@ -219,3 +249,16 @@ class TestMsd(unittest.TestCase):
         assert_equal(diff.diffusion_coefficient.size, 1000)
         assert_equal(diff.variables[0].samples.min() > 0, True)
         assert_equal(len(diff.variables), 3)
+
+    def test_diffusion_nested(self):
+        """
+        Test the nested method
+        """
+        dt = np.linspace(5, 50, 10)
+        msd = np.linspace(5, 50, 10)
+        dmsd = msd * 0.1
+        diff = diffusion.Diffusion(dt, msd, dmsd, unaccounted_uncertainty=True)
+        diff.max_likelihood()
+        diff.nested(maxiter=10)
+        assert_equal(diff.ln_evidence != None, True)
+        assert_equal(isinstance(diff.ln_evidence, uncertainties.core.Variable), True)
