@@ -45,7 +45,10 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
-    'sphinx.ext.imgmath'
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.imgmath',
+    'nbsphinx',
+    'jupyter_sphinx.execute
 ]
 
 # Add any paths that contain templates here, relative to this directory.
