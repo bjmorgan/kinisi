@@ -1,4 +1,4 @@
-# kinisi
+[![kinisi Logo](https://github.com/bjmorgan/kinisi/raw/master/docs/source/logo/kinisi_logo.png)](https://kinisi.readthedocs.io)
 
 kee-nee-si
 
