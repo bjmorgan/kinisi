@@ -9,7 +9,6 @@ Here are some simple tutorials, showing how ``kinisi`` may be used to analysis a
 
 
 .. toctree::
-   :hidden:
    :maxdepth: 2
 
    vasp 

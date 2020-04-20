@@ -1,3 +1,7 @@
 .wy-side-nav-search, .wy-nav-top {
-    background: #cccccc;
+    background: #ffffff;
+}
+
+.wy-side-nav-search>div.version{
+    color: #000000;
 }
