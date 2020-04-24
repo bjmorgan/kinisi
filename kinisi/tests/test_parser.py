@@ -42,7 +42,6 @@ class TestParser(unittest.TestCase):
         da_params = { 'specie': 'Li',
                       'time_step': 2.0,
                       'step_skip': 50,
-                      'temperature': 400,
                       'min_obs': 50}
         data = parser.PymatgenParser(xd.structures, **da_params)
         assert_almost_equal(data.time_step, 2.0)
@@ -55,7 +54,6 @@ class TestParser(unittest.TestCase):
         da_params = { 'specie': 'Li',
                       'time_step': 20.0,
                       'step_skip': 100,
-                      'temperature': 400,
                       'min_obs': 50}
         data = parser.PymatgenParser(xd.structures, **da_params)
         assert_almost_equal(data.time_step, 20.0)
