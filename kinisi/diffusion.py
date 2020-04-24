@@ -1,6 +1,5 @@
 """
-The modules is focused on tools for the evaluation of the mean squared
-displacement and resulting diffusion coefficient from a material.
+The modules is focused on tools for the evaluation of the mean squared displacement and resulting diffusion coefficient from a material.
 """
 
 # Copyright (c) Andrew R. McCluskey and Benjamin J. Morgan
@@ -24,47 +23,26 @@ def msd_bootstrap(delta_t, disp_3d, n_resamples=1000, samples_freq=1,
                   confidence_interval=None, max_resamples=100000,
                   bootstrap_multiplier=1, progress=True):
     """
-    Perform a bootstrap resampling to obtain accurate estimates for the mean
-    and uncertainty for the squared displacements. This resampling method is
-    applied until the MSD distribution is normal(or the `max_resamples` has
-    been reached) and therefore may be described with a median and confidence
-    interval.
+    Perform a bootstrap resampling to obtain accurate estimates for the mean and uncertainty for the squared displacements. 
+    This resampling method is applied until the MSD distribution is normal(or the `max_resamples` has been reached) and therefore may be described with a median and confidence interval.
 
     Args:
-        delta_t (array_like): An array of the timestep values.
-        displacements (list of array_like): A list of arrays, where
-            each array has the axes [atom, displacement
-            observation, dimension]. There is one array in the list for each
-            delta_t value. Note: it is necessary to use a list of arrays
-            as the number of observations is not necessary the same at
-            each data point.
-        n_resamples (int, optional): The initial number of resamples to
-            be performed. Default is `1000`.
-        samples_freq (int. optional): The frequency in observations to be
-            sampled. Default is `1` (every observation).
-        confidence_interval (array_like): The percentile points of the
-            distribution that should be stored. Default is `[2.5, 97.5]` (a
-            95 % confidence interval).
-        max_resamples (int, optional): The max number of resamples to be
-            performed by the distribution is assumed to be normal. This is
-            present to allow user control over the time taken for the
-            resampling to occur. Default is `100000`.
-        bootstrap_multiplier (int, optional): The factor by which the number
-            of bootstrap samples should be multiplied. The default is `1`,
-            which is the maximum number of truely independent samples in a
-            given timestep. This can be increase, however it is importance
-            to note that when greater than 1 the sampling is no longer
-            independent.
-        progress (bool, optional): Show tqdm progress for sampling. Default
-            is `True`.
+        delta_t (:py:attr:`array_like`): An array of the timestep values.
+        displacements (:py:attr:`list` of :py:attr:`array_like`): A list of arrays, where each array has the axes [atom, displacement observation, dimension]. There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as the number of observations is not necessary the same at each data point.
+        n_resamples (:py:attr:`int`, optional): The initial number of resamples to be performed. Default is :py:attr:`1000`.
+        samples_freq (:py:attr:`int`. optional): The frequency in observations to be sampled. Default is :py:attr:`1` (every observation).
+        confidence_interval (:py:attr:`array_like`, optional): The percentile points of the distribution that should be stored. Default is :py:attr:`[2.5, 97.5]` (a 95 % confidence interval).
+        max_resamples (:py:attr:`int`, optional): The max number of resamples to be performed by the distribution is assumed to be normal. This is present to allow user control over the time taken for the resampling to occur. Default is :py:attr:`100000`.
+        bootstrap_multiplier (:py:attr:`int`, optional): The factor by which the number of bootstrap samples should be multiplied. The default is :py:attr:`1`, which is the maximum number of truely independent samples in a given timestep. This can be increase, however it is importance to note that when greater than 1 the sampling is no longer independent.
+        progress (:py:attr:`bool`, optional): Show tqdm progress for sampling. Default is :py:attr:`True`.
 
     Returns:
-        (tuple of array_like) A tuple of five arrays, the first is the delta_t
-            values that were resampled, the second is the resampled mean
-            squared displacement data, the third is the standard deviation in
-            the mean squared displacement, the fourth is the lower bound on
-            the confidence interval, and the fifth is the upper bound on the
-            confidence interval.
+        :py:attr:`tuple`: Containing:
+            - :py:attr:`array_like`: Timestep values that were resampled.
+            - :py:attr:`array_like`: Resampled mean squared displacement.
+            - :py:attr:`array_like`: Standard deviation in mean squared displacement.
+            - :py:attr:`array_like`: Lower bound in confidence interval for mean squared displacement.
+            - :py:attr:`array_like`: Upper bound in confidence interval for mean squared displacement.
     """
     if confidence_interval is None:
         confidence_interval = [2.5, 97.5]
@@ -129,49 +107,25 @@ def mscd_bootstrap(delta_t, disp_3d, indices=None, n_resamples=1000,
                    max_resamples=100000, bootstrap_multiplier=1,
                    progress=True):
     """
-    Perform a bootstrap resampling to obtain accurate estimates for the mean
-    and uncertainty for the squared charge displacements. This
-    resampling method is applied until the MSCD distribution is normal(or the
-    `max_resamples` has been reached) and therefore may be described with a
-    median and confidence interval.
+    Perform a bootstrap resampling to obtain accurate estimates for the mean and uncertainty for the squared charge displacements. This resampling method is applied until the MSCD distribution is normal (or the `max_resamples` has been reached) and therefore may be described with a median and confidence interval.
 
     Args:
-        delta_t (array_like): An array of the timestep values.
-        displacements (list of array_like): A list of arrays, where
-            each array has the axes [atom, displacement
-            observation, dimension]. There is one array in the list for each
-            delta_t value. Note: it is necessary to use a list of arrays
-            as the number of observations is not necessary the same at
-            each data point.
-        indices (array_like, optional): The indices of the particles of
-            interest for charge displacement. Default to all particles.
-        n_resamples (int, optional): The initial number of resamples to
-            be performed. Default is `1000`.
-        samples_freq (int. optional): The frequency in observations to be
-            sampled. Default is `1` (every observation).
-        confidence_interval (array_like): The percentile points of the
-            distribution that should be stored. Default is `[2.5, 97.5]` (a
-            95 % confidence interval).
-        max_resamples (int, optional): The max number of resamples to be
-            performed by the distribution is assumed to be normal. This is
-            present to allow user control over the time taken for the
-            resampling to occur. Default is `100000`.
-        bootstrap_multiplier (int, optional): The factor by which the number
-            of bootstrap samples should be multiplied. The default is `1`,
-            which is the maximum number of truely independent samples in a
-            given timestep. This can be increase, however it is importance
-            to note that when greater than 1 the sampling is no longer
-            independent.
-        progress (bool, optional): Show tqdm progress for sampling. Default
-            is `True`.
+        delta_t (:py:attr:`array_like`): An array of the timestep values.
+        displacements (:py:attr:`list` of :py:attr:`array_like`): A list of arrays, where each array has the axes [atom, displacement observation, dimension]. There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as the number of observations is not necessary the same at each data point.
+        n_resamples (:py:attr:`int`, optional): The initial number of resamples to be performed. Default is :py:attr:`1000`.
+        samples_freq (:py:attr:`int`. optional): The frequency in observations to be sampled. Default is :py:attr:`1` (every observation).
+        confidence_interval (:py:attr:`array_like`, optional): The percentile points of the distribution that should be stored. Default is :py:attr:`[2.5, 97.5]` (a 95 % confidence interval).
+        max_resamples (:py:attr:`int`, optional): The max number of resamples to be performed by the distribution is assumed to be normal. This is present to allow user control over the time taken for the resampling to occur. Default is :py:attr:`100000`.
+        bootstrap_multiplier (:py:attr:`int`, optional): The factor by which the number of bootstrap samples should be multiplied. The default is :py:attr:`1`, which is the maximum number of truely independent samples in a given timestep. This can be increase, however it is importance to note that when greater than 1 the sampling is no longer independent.
+        progress (:py:attr:`bool`, optional): Show tqdm progress for sampling. Default is :py:attr:`True`.
 
     Returns:
-        (tuple of array_like) A tuple of five arrays, the first is the delta_t
-            values that were resampled, the second is the resampled mean
-            squared charge displacement data, the third is the standard
-            deviation in the mean squared charge displacement, the fourth is
-            the lower bound on the confidence interval, and the fifth is the
-            upper bound on the confidence interval.
+        :py:attr:`tuple`: Containing:
+            - :py:attr:`array_like`: Timestep values that were resampled.
+            - :py:attr:`array_like`: Resampled mean squared displacement.
+            - :py:attr:`array_like`: Standard deviation in mean squared displacement.
+            - :py:attr:`array_like`: Lower bound in confidence interval for mean squared displacement.
+            - :py:attr:`array_like`: Upper bound in confidence interval for mean squared displacement.
     """
     if confidence_interval is None:
         confidence_interval = [2.5, 97.5]
@@ -233,18 +187,19 @@ def mscd_bootstrap(delta_t, disp_3d, indices=None, n_resamples=1000,
 
 
 class Diffusion(Relationship):
-    """
-    Evaluate the diffusion coefficient from a set of (idelly) resampled MSD
-    data and delta_t values.
+    r"""
+    Evaluate the data with a Einstein diffusion relationship. For attributes associated with the :py:class:`uravu.relationship.Relationship` class see that documentation.
+    This :py:attr:`uravu.relationship.Relationship.variables` for this model is a :py:attr:`list` of length 2, where :py:attr:`~uravu.relationship.Relationship.variables[0]` is the gradient of the straight line and :py:attr:`~uravu.relationship.Relationship.variables[1]` is the offset of the ordinate. 
 
-    Attributes:
-        diffusion_coefficient (uncertainties.ufloat or
-            kinisi.distribution.Distribution): The value and associated
-            uncertainty for the diffusion coeffcient for the MSD relationship
-            with delta_t. The uncertainty is initially obtained from a
-            weighted least squares fit, the accuracy of this can be improved
-            by using the `sample()` method. The unit is
-            centimeter ** 2 / second.
+    Args:       
+        delta_t (:py:attr:`array_like`): Timestep data.
+        msd (:py:attr:`array_like`): Mean squared displacement data.
+        msd_error (:py:attr:`array_like`): Uncertainty in the mean squared displacement data.
+        delta_t_unit (:py:class:`pint.unit.Unit`, optional): The unit for the timesteps. Default is :py:attr:`kelvin`.
+        msd_unit (:py:class:`pint.unit.Unit`, optional): The unit for the mean squared displacement. Default is :py:attr:`angstrom**2`.
+        delta_t_names (:py:attr:`str`, optional): The label for the timesteps. Default is :py:attr:`'$\delta t$'`.
+        msd_names (:py:attr:`str`, optional): The label for the mean squared displacement. Default is :py:attr:`'$\langle r ^ 2 \rangle$'`.
+        unaccounted_uncertainty (:py:attr:`bool`, optional): Should an unaccounted uncertainty in the ordinate be added? Defaults to :py:attr:`False`.
     """
     def __init__(self, delta_t, msd, msd_error,
                  delta_t_unit=UREG.femtoseconds, msd_unit=UREG.angstrom**2,
@@ -262,10 +217,10 @@ class Diffusion(Relationship):
     @property
     def diffusion_coefficient(self):
         """
-        Get the diffusion coefficient. 
+        Get the diffusion coefficient found as the gradient divide by 6 (twice the number of dimensions). 
 
         Returns:
-            (float or Distribution): The diffusion coefficient in the input units.
+            (:py:class:`uncertainties.core.Variable` or :py:class:`uravu.distribution.Distribution`): The diffusion coefficient in the input units.
         """
         if isinstance(self.variables[0], Distribution):
             return Distribution(self.variables[0].samples / 6, r'$D$', None, self.variable_units[0])
@@ -274,13 +229,16 @@ class Diffusion(Relationship):
 
     def all_positive_prior(self):
         """
-        This creates an all positive prior.
+        The standard prior probability distributions for the Einstein relationship.
+
+        Returns:
+            :py:attr:`list` of :py:class:`scipy.stats.rv_continuous`: Uniform probability distributions that describe the prior probabilities.
         """
         priors = []
         for i, var in enumerate(self.variable_medians):
             loc = (var - np.abs(var) * 5)
             if i == 0:
-                loc = 0
+                loc = sys.float_info.min
             scale = (var + np.abs(var) * 5) - loc
             priors.append(uniform(loc=loc, scale=scale))
         if self.unaccounted_uncertainty:
@@ -289,12 +247,12 @@ class Diffusion(Relationship):
 
     def sample(self, **kwargs):
         """
-        Use MCMC to sample the posterior distribution of the linear diffusion relationship.
+        Use MCMC to sample the posterior distribution of the relationship. For keyword arguments see the :func:`uravu.relationship.Relationship.mcmc` docs. 
         """
         self.mcmc(prior_function=self.all_positive_prior, **kwargs)
 
     def nested(self, **kwargs):
         """
-        Use nested sampling with all positive prior
+        Use nested sampling to determine natural log-evidence for the model. For keyword arguments see the :func:`uravu.relationship.Relationship.nested_sampling` docs.
         """
         self.nested_sampling(prior_function=self.all_positive_prior, **kwargs)

@@ -196,3 +196,11 @@ html_theme_options = {"logo_only": True}
 
 def setup(app):
     app.add_css_file('custom.css')
+
+intersphinx_mapping = {
+    'uravu': ('https://uravu.readthedocs.io/en/latest/', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
+    'MDAnalysis': ('https://www.mdanalysis.org/docs/', None),
+    'pymatgen': ('https://pymatgen.org/index.html', None),
+    'uncertainties': ('https://uncertainties-python-package.readthedocs.io/en/latest/', None),
+}

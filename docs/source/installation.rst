@@ -1,7 +1,7 @@
 Installation
 ============
 
-``kinisi`` can be installed from the PyPI package manager with ``pip``:
+:py:mod:`kinisi` can be installed from the PyPI package manager with :py:mod:`pip`:
 
 .. code-block:: bash 
 

@@ -1,12 +1,10 @@
 """
-Parser functions
-
-Copyright (c) Andrew R. McCluskey and Benjamin J. Morgan
-
-Distributed under the terms of the MIT License
-
-@author: Andrew R. McCluskey
+Parser functions, including implementation for :py:mod:`pymatgen` compatible VASP files and :py:mod:`MDAnalysis` compatible trajectories.
 """
+
+# Copyright (c) Andrew R. McCluskey and Benjamin J. Morgan
+# Distributed under the terms of the MIT License
+# author: Andrew R. McCluskey
 
 # pylint: disable=R0902,R0913
 
@@ -29,29 +27,24 @@ from tqdm import tqdm
 
 class PymatgenParser:
     """
-    A parser for pymatgen Xdatcar style files.
+    A parser for pymatgen Xdatcar files.
+    
+    Attributes:
+        time_step (:py:attr:`float`): Time step between measurements.
+        step_step (:py:attr:`int`): Sampling freqency of the displacements (time_step is multiplied by this number to get the real time between measurements).
+        indices (:py:attr:`array_like`): Indices for the atoms in the trajectory used in the calculation of the diffusion.
+        delta_t (:py:attr:`array_like`):  Timestep values.
+        disp_3d (:py:attr:`list` of :py:attr:`array_like`): Each element in the :py:attr:`list` has the axes [atom, displacement observation, dimension] and there is one element for each delta_t value. *Note: it is necessary to use a :py:attr:`list` of :py:attr:`array_like` as the number of observations is not necessary the same at each timestep point*.
+        disp_store (:py:attr:`list` of :py:attr:`array_like`): The :py:attr:`disp_3d` object, with the dimension axes removed by summation through this.
+    
+    Args:
+        structures (:py:attr:`list` or :py:class`pymatgen.core.structure.Structure`): Structures ordered in sequence of run. 
+        specie (:py:class:`pymatgen.core.periodic_table.Element` or :py:class:`pymatgen.core.periodic_table.Specie`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
+        time_step (:py:attr:`float`): Time step between measurements.
+        step_step (:py:attr:`int`): Sampling freqency of the displacements (time_step is multiplied by this number to get the real time between measurements).
+        min_obs (:py:attr:`int`, optional): Minimum number of observations to have before including in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times. Defaults to :py:attr:`30`.    
     """
-    def __init__(self, structures, specie, time_step, step_skip, temperature,
-                 min_obs=30):
-        """
-        Args:
-            structures ([pymatgen.core.structure.Structure]): list of
-                pymatgen.core.structure.Structure objects (must be
-                ordered in sequence of run). E.g., you may have performed
-                sequential VASP runs to obtain sufficient statistics.
-            specie (Element/Specie): Specie to calculate diffusivity for
-                as a String, e.g. "Li".
-            time_step (int): Time step between measurements.
-            step_skip (int): Sampling freqency of the displacements
-                (time_step is multiplied by this number to get the real
-                time between measurements).
-            temperature (float): Temperature of simulation (K).
-            min_obs (int): Minimum number of observations to have before
-                including in the MSD vs dt calculation. E.g. If a structure
-                has 10 diffusing atoms, and min_obs = 30, the MSD vs dt will
-                be calculated up to dt = total_run_time / 3, so that each
-                diffusing atom is measured at least 3 uncorrelated times.
-        """
+    def __init__(self, structures, specie, time_step, step_skip, min_obs=30):
         self.time_step = time_step
         self.step_skip = step_skip
         self.indices = []
@@ -72,14 +65,12 @@ class PymatgenParser:
         Perform drift correction
 
         Args:
-            structure (pymatgen.core.structure.Structure): Initial structure.
-            disp (array_like): Numpy array of with shape
-                [site, time step, axis]
-            specie (Element/Specie): Specie to calculate diffusivity for
-                as a String, e.g. "Li".
+            structure (:py:class:`pymatgen.core.structure.Structure`): Initial structure.
+            disp (:py:attr:`array_like`): Numpy array of with shape [site, time step, axis].
+            specie (:py:class:`pymatgen.core.periodic_table.Element` or :py:class:`pymatgen.core.periodic_table.Specie`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
 
         Returns:
-            (array_like) Drift of framework corrected disp.
+            :py:attr:`array_like`: Drift of framework corrected disp.
         """
         framework_indices = []
         for i, site in enumerate(structure):
@@ -102,15 +93,14 @@ class PymatgenParser:
         Calculate the smoothed timesteps to be used.
 
         Args:
-            nsteps (int): Number of time steps.
-            min_obs (int): Minimum number of observations to have before
-                including in the MSD vs dt calculation. E.g. If a structure
+            nsteps (:py:attr:`int`): Number of time steps.
+        min_obs (:py:attr:`int`): Minimum number of observations to have before including in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times.
                 has 10 diffusing atoms, and min_obs = 30, the MSD vs dt will
                 be calculated up to dt = total_run_time / 3, so that each
                 diffusing atom is measured at least 3 uncorrelated times.
 
         Returns:
-            (array_like) Smoothed timesteps.
+            :py:attr:`array_like`: Smoothed timesteps.
         """
         min_dt = int(1000 / (self.step_skip * self.time_step))
         max_dt = min(len(self.indices) * nsteps // min_obs, nsteps)
@@ -130,12 +120,14 @@ class PymatgenParser:
         Calculate the mean-squared displacement
 
         Args:
-            timesteps (array_like): Smoothed timesteps.
-            drift_corrected (array_like): Drift of framework corrected disp.
+            timesteps (:py:attr:`array_like`): Smoothed timesteps.
+            drift_corrected (:py:attr:`array_like`): Drift of framework corrected disp.
 
         Returns:
-            (array_like, array_like, array_like) Time step intervals,
-                mean-squared displacement, and raw squared displacement.
+            :py:attr:`tuple`: Containing:
+                - :py:attr:`array_like`: Time step intervals.
+                - :py:attr:`array_like`: Mean-squared displacement.
+                - :py:attr:`array_like`: Raw squared displacement.
         """
         delta_t = timesteps * self.time_step * self.step_skip
         disp_store = []
@@ -154,32 +146,20 @@ class PymatgenParser:
 class MDAnalysisParser(PymatgenParser):
     """
     A parser that consumes an MDAnalysis.Universe object.
+
+    Attributes:
+        universe (:py:class:`MDAnalysis.core.universe.Universe`): The MDAnalysis object of interest.
+
+    Args:
+        universe (:py:class:`MDAnalysis.core.universe.Universe`): The MDAnalysis object of interest.
+        specie (:py:attr:`str`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
+        time_step (:py:attr:`float`): Time step between measurements.
+        step_step (:py:attr:`int`): Sampling freqency of the displacements (time_step is multiplied by this number to get the real time between measurements).
+        min_obs (:py:attr:`int`, optional): Minimum number of observations to have before including in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times. Defaults to :py:attr:`30`.
+        sub_sample_atoms (:py:attr:`int`, optional): Fraction of atoms to be used. Defaults to :py:attr:`1` where all atoms are used.  
     """
-    def __init__(self, universe, specie, time_step, step_skip, temperature,
-                 min_obs=30, sub_sample_atoms=1):
-        """
-        Args:
-            universe (MDAnalysis.Universe): The MDAnalysis object of interest.
-            structures ([pymatgen.core.structure.Structure]): list of
-                pymatgen.core.structure.Structure objects (must be
-                ordered in sequence of run). E.g., you may have performed
-                sequential VASP runs to obtain sufficient statistics.
-            specie (Element/Specie): Specie to calculate diffusivity for
-                as a String, e.g. "Li".
-            time_step (int): Time step between measurements.
-            step_skip (int): Sampling freqency of the displacements
-                (time_step is multiplied by this number to get the real
-                time between measurements).
-            temperature (float): Temperature of simulation (K).
-            min_obs (int, optional): Minimum number of observations to have
-                before including in the MSD vs dt calculation. E.g. If a
-                structure has 10 diffusing atoms, and min_obs = 30, the MSD
-                vs dt will be calculated up to dt = total_run_time / 3, so
-                that each diffusing atom is measured at least 3 uncorrelated
-                times. Default is `30`.
-            sub_sample_atoms (int, optional): Fraction of atoms to be used. Default 
-                is `1` where all atoms are used.  
-        """
+    def __init__(self, universe, specie, time_step, step_skip, min_obs=30, sub_sample_atoms=1):
+        
         self.universe = universe
         structures = []
         potential_indices = np.where(self.universe.atoms.types == str(pt.elements.symbol(specie).number))[0]
@@ -191,7 +171,7 @@ class MDAnalysisParser(PymatgenParser):
                         self.universe.atoms.positions[atoms_indices],
                         coords_are_cartesian=True)
             )
-        super().__init__(structures, specie, time_step, step_skip, temperature, min_obs=min_obs)
+        super().__init__(structures, specie, time_step, step_skip, min_obs=min_obs)
 
 
 
@@ -200,14 +180,11 @@ def _get_structure_and_disp(structures):
     Obtain the initial structure and displacement from a Xdatcar file
 
     Args:
-        structures ([pymatgen.core.structure.Structure]): list of
-            pymatgen.core.structure.Structure objects (must be
-            ordered in sequence of run). E.g., you may have performed
-            sequential VASP runs to obtain sufficient statistics.
-
+        structures (:py:attr:`list` or :py:class`pymatgen.core.structure.Structure`): Structures ordered in sequence of run. 
+            
     Returns:
-        (pymatgen.core.structure.Structure) Initial structure.
-        (array_like) Numpy array of with shape [site, time step, axis]
+        :py:class`pymatgen.core.structure.Structure`: Initial structure.
+        :py:attr:`array_like`: Numpy array of with shape [site, time step, axis].
     """
     coords, latt = [], []
     for i, struct in enumerate(structures):
