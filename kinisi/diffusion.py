@@ -11,7 +11,7 @@ The modules is focused on tools for the evaluation of the mean squared displacem
 import sys
 import warnings
 import numpy as np
-from scipy.stats import uniform
+from scipy.stats import uniform, norm
 from sklearn.utils import resample
 from tqdm import tqdm
 from uravu.distribution import Distribution
@@ -94,7 +94,7 @@ def msd_bootstrap(delta_t, disp_3d, n_resamples=1000, samples_freq=1,
         output_delta_t = np.append(output_delta_t, delta_t[i])
         mean_msd = np.append(mean_msd, distro.n)
         err_msd = np.append(
-            err_msd, np.std(distro.samples))
+            err_msd, np.var(distro.samples, ddof=1))
         con_int_msd_lower = np.append(con_int_msd_lower, distro.con_int[0])
         con_int_msd_upper = np.append(con_int_msd_upper, distro.con_int[1])
     return (
@@ -176,7 +176,7 @@ def mscd_bootstrap(delta_t, disp_3d, indices=None, n_resamples=1000,
                           "distribution will be treated as normal.")
         output_delta_t = np.append(output_delta_t, delta_t[i])
         mean_mscd = np.append(mean_mscd, distro.n / len(indices))
-        err_mscd = np.append(err_mscd, np.std(distro.samples))
+        err_mscd = np.append(err_mscd, np.var(distro.samples, ddof=1))
         con_int_mscd_lower = np.append(
             con_int_mscd_lower, distro.con_int[0] / len(indices))
         con_int_mscd_upper = np.append(
