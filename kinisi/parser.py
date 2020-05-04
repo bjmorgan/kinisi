@@ -156,7 +156,7 @@ class MDAnalysisParser(PymatgenParser):
         time_step (:py:attr:`float`): Time step between measurements.
         step_step (:py:attr:`int`): Sampling freqency of the displacements (time_step is multiplied by this number to get the real time between measurements).
         min_obs (:py:attr:`int`, optional): Minimum number of observations to have before including in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times. Defaults to :py:attr:`30`.
-        sub_sample_atoms (:py:attr:`int`, optional): Fraction of atoms to be used. Defaults to :py:attr:`1` where all atoms are used.  
+        sub_sample_atoms (:py:attr:`float`, optional): Fraction of atoms to be used. Defaults to :py:attr:`1` where all atoms are used.  
     """
     def __init__(self, universe, specie, time_step, step_skip, min_obs=30, sub_sample_atoms=1):
         
