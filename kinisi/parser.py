@@ -156,22 +156,20 @@ class MDAnalysisParser(PymatgenParser):
         time_step (:py:attr:`float`): Time step between measurements.
         step_step (:py:attr:`int`): Sampling freqency of the displacements (time_step is multiplied by this number to get the real time between measurements).
         min_obs (:py:attr:`int`, optional): Minimum number of observations to have before including in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times. Defaults to :py:attr:`30`.
-        sub_sample_atoms (:py:attr:`float`, optional): Fraction of atoms to be used. Defaults to :py:attr:`1` where all atoms are used.  
+        sub_sample_time (:py:attr:`float`, optional): Multiple of the :py:attr:`time_step` to sub sample at. Defaults to :py:attr:`1` where all timesteps are used.  
     """
-    def __init__(self, universe, specie, time_step, step_skip, min_obs=30, sub_sample_atoms=1):
+    def __init__(self, universe, specie, time_step, step_skip, min_obs=30, sub_sample_time=1):
         
         self.universe = universe
         structures = []
-        potential_indices = np.where(self.universe.atoms.types == str(pt.elements.symbol(specie).number))[0]
-        atoms_indices = np.random.choice(potential_indices, size=int(potential_indices.size*sub_sample_atoms), replace=False)
-        for t in tqdm(self.universe.trajectory, desc='Reading Trajectory'):
+        for t in tqdm(self.universe.trajectory[::sub_sample_time], desc='Reading Trajectory'):
             structures.append(
                 Structure(Lattice.from_parameters(*t.dimensions),
-                        self.universe.atoms.types[atoms_indices],
-                        self.universe.atoms.positions[atoms_indices],
+                        self.universe.atoms.types,
+                        self.universe.atoms.positions,
                         coords_are_cartesian=True)
             )
-        super().__init__(structures, specie, time_step, step_skip, min_obs=min_obs)
+        super().__init__(structures, specie, time_step, step_skip * sub_sample_time, min_obs=min_obs)
 
 
 
