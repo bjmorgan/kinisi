@@ -25,9 +25,10 @@ from pymatgen.core import Structure
 import periodictable as pt
 from tqdm import tqdm
 
-class PymatgenParser:
+
+class Parser:
     """
-    A parser for pymatgen Xdatcar files.
+    The base class for parsing.
     
     Attributes:
         time_step (:py:attr:`float`): Time step between measurements.
@@ -35,75 +36,41 @@ class PymatgenParser:
         indices (:py:attr:`array_like`): Indices for the atoms in the trajectory used in the calculation of the diffusion.
         delta_t (:py:attr:`array_like`):  Timestep values.
         disp_3d (:py:attr:`list` of :py:attr:`array_like`): Each element in the :py:attr:`list` has the axes [atom, displacement observation, dimension] and there is one element for each delta_t value. *Note: it is necessary to use a :py:attr:`list` of :py:attr:`array_like` as the number of observations is not necessary the same at each timestep point*.
-        disp_store (:py:attr:`list` of :py:attr:`array_like`): The :py:attr:`disp_3d` object, with the dimension axes removed by summation through this.
     
     Args:
+        drift_corrected (:py:attr:`array_like`: Displacements that have been corrected to account for framework drift.
         structures (:py:attr:`list` or :py:class`pymatgen.core.structure.Structure`): Structures ordered in sequence of run. 
         specie (:py:class:`pymatgen.core.periodic_table.Element` or :py:class:`pymatgen.core.periodic_table.Specie`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
         time_step (:py:attr:`float`): Time step between measurements.
         step_step (:py:attr:`int`): Sampling freqency of the displacements (time_step is multiplied by this number to get the real time between measurements).
         min_obs (:py:attr:`int`, optional): Minimum number of observations to have before including in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times. Defaults to :py:attr:`30`.    
     """
-    def __init__(self, structures, specie, time_step, step_skip, min_obs=30):
+    def __init__(self, drift_corrected, indices, time_step, step_skip, min_obs=30):
         self.time_step = time_step
         self.step_skip = step_skip
-        self.indices = []
-
-        structure, disp = _get_structure_and_disp(structures)
-
-        drift_corrected = self.correct_for_drift(structure, disp, specie)
+        self.indices = indices
 
         nsteps = drift_corrected.shape[1]
 
-        timesteps = self.smoothed_timesteps(nsteps, min_obs)
+        timesteps = self.smoothed_timesteps(nsteps, min_obs, indices)
 
-        self.delta_t, self.disp_store, self.disp_3d = self.get_disps(
+        self.delta_t, self.disp_3d = self.get_disps(
             timesteps, drift_corrected)
 
-    def correct_for_drift(self, structure, disp, specie):
-        """
-        Perform drift correction
-
-        Args:
-            structure (:py:class:`pymatgen.core.structure.Structure`): Initial structure.
-            disp (:py:attr:`array_like`): Numpy array of with shape [site, time step, axis].
-            specie (:py:class:`pymatgen.core.periodic_table.Element` or :py:class:`pymatgen.core.periodic_table.Specie`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
-
-        Returns:
-            :py:attr:`array_like`: Drift of framework corrected disp.
-        """
-        framework_indices = []
-        for i, site in enumerate(structure):
-            if site.specie.symbol == specie:
-                self.indices.append(i)
-            else:
-                framework_indices.append(i)
-
-        # drift corrected position
-        if len(framework_indices) > 0:
-            framework_disp = disp[framework_indices]
-            drift_corrected = disp - np.average(framework_disp, axis=0)[None, :, :]
-        else:
-            drift_corrected = disp
-
-        return drift_corrected
-
-    def smoothed_timesteps(self, nsteps, min_obs):
+    def smoothed_timesteps(self, nsteps, min_obs, indices):
         """
         Calculate the smoothed timesteps to be used.
 
         Args:
             nsteps (:py:attr:`int`): Number of time steps.
-        min_obs (:py:attr:`int`): Minimum number of observations to have before including in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times.
-                has 10 diffusing atoms, and min_obs = 30, the MSD vs dt will
-                be calculated up to dt = total_run_time / 3, so that each
-                diffusing atom is measured at least 3 uncorrelated times.
+            min_obs (:py:attr:`int`): Minimum number of observations to have before including in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times.
+            indices (:py:attr:`array_like`): Indices for the atoms in the trajectory used in the calculation of the diffusion.
 
         Returns:
             :py:attr:`array_like`: Smoothed timesteps.
         """
         min_dt = int(1000 / (self.step_skip * self.time_step))
-        max_dt = min(len(self.indices) * nsteps // min_obs, nsteps)
+        max_dt = min(len(indices) * nsteps // min_obs, nsteps)
         if min_dt == 0:
             min_dt = 1
         if min_dt >= max_dt:
@@ -126,29 +93,74 @@ class PymatgenParser:
         Returns:
             :py:attr:`tuple`: Containing:
                 - :py:attr:`array_like`: Time step intervals.
-                - :py:attr:`array_like`: Mean-squared displacement.
                 - :py:attr:`array_like`: Raw squared displacement.
         """
         delta_t = timesteps * self.time_step * self.step_skip
-        disp_store = []
         disp_3d = []
         for timestep in tqdm(timesteps, desc='Getting Displacements'):
             disp = np.subtract(
-                drift_corrected[:, timestep:, :],
-                drift_corrected[:, :-timestep, :]
+                drift_corrected[self.indices, timestep:, :],
+                drift_corrected[self.indices, :-timestep, :]
             )
             disp_3d.append(disp)
-            disp_store.append(np.sum(disp, axis=2)[self.indices])
 
-        return delta_t, disp_store, disp_3d
+        return delta_t, disp_3d
 
 
-class MDAnalysisParser(PymatgenParser):
+class PymatgenParser(Parser):
+    """
+    A parser for pymatgen structures.
+    
+    Args:
+        structures (:py:attr:`list` or :py:class`pymatgen.core.structure.Structure`): Structures ordered in sequence of run. 
+        specie (:py:class:`pymatgen.core.periodic_table.Element` or :py:class:`pymatgen.core.periodic_table.Specie`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
+        time_step (:py:attr:`float`): Time step between measurements.
+        step_step (:py:attr:`int`): Sampling freqency of the displacements (time_step is multiplied by this number to get the real time between measurements).
+        min_obs (:py:attr:`int`, optional): Minimum number of observations to have before including in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times. Defaults to :py:attr:`30`.    
+    """
+    def __init__(self, structures, specie, time_step, step_skip, min_obs=30):
+        structure, coords, latt = _pmg_get_structure_coords_latt(structures)
+
+        disp = _get_disp(coords, latt)
+
+        drift_corrected, indices = self.correct_for_drift(structure, disp, specie)
+
+        super().__init__(drift_corrected, indices, time_step, step_skip, min_obs)
+
+    def correct_for_drift(self, structure, disp, specie):
+        """
+        Perform drift correction
+
+        Args:
+            structure (:py:class:`pymatgen.core.structure.Structure`): Initial structure.
+            disp (:py:attr:`array_like`): Numpy array of with shape [site, time step, axis].
+            specie (:py:class:`pymatgen.core.periodic_table.Element` or :py:class:`pymatgen.core.periodic_table.Specie`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
+
+        Returns:
+            :py:attr:`array_like`: Drift of framework corrected disp.
+            :py:attr:`array_like`: Indices for the atoms in the trajectory used in the calculation of the diffusion.
+        """
+        indices = []
+        framework_indices = []
+        for i, site in enumerate(structure):
+            if site.specie.symbol == specie:
+                indices.append(i)
+            else:
+                framework_indices.append(i)
+
+        # drift corrected position
+        if len(framework_indices) > 0:
+            framework_disp = disp[framework_indices]
+            drift_corrected = disp - np.average(framework_disp, axis=0)[None, :, :]
+        else:
+            drift_corrected = disp
+
+        return drift_corrected, indices
+
+
+class MDAnalysisParser(Parser):
     """
     A parser that consumes an MDAnalysis.Universe object.
-
-    Attributes:
-        universe (:py:class:`MDAnalysis.core.universe.Universe`): The MDAnalysis object of interest.
 
     Args:
         universe (:py:class:`MDAnalysis.core.universe.Universe`): The MDAnalysis object of interest.
@@ -156,43 +168,144 @@ class MDAnalysisParser(PymatgenParser):
         time_step (:py:attr:`float`): Time step between measurements.
         step_step (:py:attr:`int`): Sampling freqency of the displacements (time_step is multiplied by this number to get the real time between measurements).
         min_obs (:py:attr:`int`, optional): Minimum number of observations to have before including in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times. Defaults to :py:attr:`30`.
-        sub_sample_time (:py:attr:`float`, optional): Multiple of the :py:attr:`time_step` to sub sample at. Defaults to :py:attr:`1` where all timesteps are used.  
+        sub_sample_time (:py:attr:`float`, optional): Multiple of the :py:attr:`time_step` to sub sample at. Defaults to :py:attr:`1` where all timesteps are used. 
     """
     def __init__(self, universe, specie, time_step, step_skip, min_obs=30, sub_sample_time=1):
-        
-        self.universe = universe
-        structures = []
-        for t in tqdm(self.universe.trajectory[::sub_sample_time], desc='Reading Trajectory'):
-            structures.append(
-                Structure(Lattice.from_parameters(*t.dimensions),
-                        self.universe.atoms.types,
-                        self.universe.atoms.positions,
-                        coords_are_cartesian=True)
-            )
-        super().__init__(structures, specie, time_step, step_skip * sub_sample_time, min_obs=min_obs)
+        structure, coords, latt = _mda_get_structure_coords_latt(universe, specie, sub_sample_time)
+
+        disp = _get_disp(coords, latt)
+              
+        drift_corrected, indices = self.correct_for_drift(structure, disp, specie)
+ 
+        super().__init__(drift_corrected, indices, time_step, step_skip * sub_sample_time, min_obs)
+
+    def correct_for_drift(self, structure, disp, specie):
+        """
+        Perform drift correction
+
+        Args:
+            structure (:py:class:`MDAnalysis.core.groups.AtomGroup`): Initial structure.
+            disp (:py:attr:`array_like`): Numpy array of with shape [site, time step, axis].
+            specie (:py:attr:`str` or :py:class:`pymatgen.core.periodic_table.Specie`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
+
+        Returns:
+            :py:attr:`array_like`: Drift of framework corrected disp.
+            :py:attr:`array_like`: Indices for the atoms in the trajectory used in the calculation of the diffusion.
+        """
+        indices = []
+        framework_indices = []
+        for i, site in enumerate(structure):
+            if site.type == str(pt.elements.symbol(specie).number):
+                indices.append(i)
+            else:
+                framework_indices.append(i)
+
+        # drift corrected position
+        if len(framework_indices) > 0:
+            framework_disp = disp[framework_indices]
+            drift_corrected = disp - np.average(framework_disp, axis=0)[None, :, :]
+        else:
+            drift_corrected = disp
+        return drift_corrected, indices
 
 
-
-def _get_structure_and_disp(structures):
+def _mda_get_structure_coords_latt(universe, specie, sub_sample_time):
     """
-    Obtain the initial structure and displacement from a Xdatcar file
+    Obtain the initial structure and displacement from a :py:class:`MDAnalysis.universe.Universe` file
 
     Args:
-        structures (:py:attr:`list` or :py:class`pymatgen.core.structure.Structure`): Structures ordered in sequence of run. 
+        universe (:py:class:MDAnalysis.universe.Universe): Universe for analysis.
+        specie (:py:attr:`str`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`. 
+        sub_sample_time (:py:attr:`float`, optional): Multiple of the :py:attr:`time_step` to sub sample at.  
             
     Returns:
         :py:class`pymatgen.core.structure.Structure`: Initial structure.
-        :py:attr:`array_like`: Numpy array of with shape [site, time step, axis].
+        :py:attr:`list` of :py:attr:`array_like`: Fractional coordinates for all atoms.
+        :py:attr:`list` of :py:attr:`array_like`: Lattice descriptions.
     """
     coords, latt = [], []
-    for i, struct in enumerate(structures):
-        if i == 0:
+    first = True
+    for timestep in tqdm(universe.trajectory[::sub_sample_time], desc='Reading Trajectory'):
+        if first:
+            structure = universe.atoms
+            first = False
+        matrix = get_matrix(timestep.dimensions)
+        inv_matrix = np.linalg.inv(matrix)
+        coords.append(np.array(np.dot(universe.atoms.positions, inv_matrix))[:, None])
+        latt.append(matrix)
+    coords.insert(0, coords[0])
+    latt.insert(0, latt[0])
+    return structure, coords, latt
+
+
+def get_matrix(dimensions):
+    """
+    Determine the lattice matrix. 
+
+    Args:
+        dimensions (:py:attr:`array_like`): a, b, c, vectors and alpha, beta, gamma angles.
+
+    Returns:
+        :py:attr:`array_like`: Lattice matrix 
+    """
+    a, b, c, alpha, beta, gamma = dimensions
+
+    angles_r = np.radians([alpha, beta, gamma])
+    cos_alpha, cos_beta, cos_gamma = np.cos(angles_r)
+    sin_alpha, sin_beta, sin_gamma = np.sin(angles_r)
+
+    val = (cos_alpha * cos_beta - cos_gamma) / (sin_alpha * sin_beta)
+    # Sometimes rounding errors result in values slightly > 1.
+    val = max(min(val, 1), -1)
+    gamma_star = np.arccos(val)
+
+    vector_a = [a * sin_beta, 0.0, a * cos_beta]
+    vector_b = [
+        -b * sin_alpha * np.cos(gamma_star),
+        b * sin_alpha * np.sin(gamma_star),
+        b * cos_alpha,
+    ]
+    vector_c = [0.0, 0.0, float(c)]
+
+    return np.array([vector_a, vector_b, vector_c], dtype=np.float64).reshape((3, 3))
+
+
+def _pmg_get_structure_coords_latt(structures):
+    """
+    Obtain the initial structure and displacement from a :py:attr:`list` of :py:class`pymatgen.core.structure.Structure`.
+
+    Args:
+        structures (:py:attr:`list` of :py:class`pymatgen.core.structure.Structure`): Structures ordered in sequence of run. 
+            
+    Returns:
+        :py:class`pymatgen.core.structure.Structure`: Initial structure.
+        :py:attr:`list` of :py:attr:`array_like`: Fractional coordinates for all atoms.
+        :py:attr:`list` of :py:attr:`array_like`: Lattice descriptions.
+    """
+    coords, latt = [], []
+    first = True
+    for struct in tqdm(structures, desc='Reading Trajectory'):
+        if first:
             structure = struct
+            first = False
         coords.append(np.array(struct.frac_coords)[:, None])
         latt.append(struct.lattice.matrix)
     coords.insert(0, coords[0])
     latt.insert(0, latt[0])
 
+    return structure, coords, latt
+
+def _get_disp(coords, latt):
+    """
+    Calculate displacements.
+
+    Args:
+        coords (:py:attr:`list` of :py:attr:`array_like`): Fractional coordinates for all atoms.
+        latt (:py:attr:`list` of :py:attr:`array_like`): Lattice descriptions.
+
+    Returns:
+        :py:attr:`array_like`: Numpy array of with shape [site, time step, axis] describing displacements.
+    """
     coords = np.concatenate(coords, axis=1)
     d_coords = coords[:, 1:] - coords[:, :-1]
     d_coords = d_coords - np.round(d_coords)
@@ -208,4 +321,4 @@ def _get_structure_and_disp(structures):
     else:
         latt = np.array(latt)
 
-    return structure, disp
+    return disp
