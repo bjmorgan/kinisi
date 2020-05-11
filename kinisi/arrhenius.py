@@ -36,13 +36,14 @@ class StandardArrhenius(Relationship):
         diffusion_unit (:py:class:`pint.unit.Unit`, optional): The unit for the diffusion coefficient. Default is :py:attr:`centimetre**2 / second`.
         temperature_names (:py:attr:`str`, optional): The label for the temperature. Default is :py:attr:`$T$`.
         diffusion_names (:py:attr:`str`, optional): The label for the diffusion coefficient. Default is :py:attr:`$D$`.
+        bounds (:py:attr:`tuple`): The minimum and maximum values for each parameters. Defaults to :py:attr:`None`.
         unaccounted_uncertainty (:py:attr:`bool`, optional): Should an unaccounted uncertainty in the ordinate be added? Defaults to :py:attr:`False`.
     """
     def __init__(self, temperature, diffusion, diffusion_error,
                  temperature_unit=UREG.kelvin,
                  diffusion_unit=UREG.centimeter**2 / UREG.second,
                  temperature_names=r'$T$',
-                 diffusion_names=r'$D$', unaccounted_uncertainty=False):
+                 diffusion_names=r'$D$', bounds=None, unaccounted_uncertainty=False):
         variable_names = [r'$E_a$', r'$A$']
         variable_units = [UREG.joules / UREG.mole, UREG.dimensionless]
         if unaccounted_uncertainty:
@@ -50,36 +51,19 @@ class StandardArrhenius(Relationship):
             variable_units.append(UREG.dimensionless)
         super().__init__(
             arrhenius, temperature, diffusion, diffusion_error, temperature_unit,
-            diffusion_unit, temperature_names, diffusion_names, variable_names, variable_units, unaccounted_uncertainty)
-        
-
-    def all_positive_prior(self):
-        """
-        The prior probability distributions for the Arrhenius relationship should all be positive (unless there is an unaccounted uncertainty).
-
-        Returns:
-            :py:attr:`list` of :py:class:`scipy.stats.rv_continuous`: Uniform probability distributions that describe the prior probabilities.
-        """
-        priors = []
-        for var in self.variable_medians:
-            loc = sys.float_info.min
-            scale = (var + np.abs(var) * 2) - loc
-            priors.append(uniform(loc=loc, scale=scale))
-        if self.unaccounted_uncertainty:
-            priors[-1] = uniform(loc=-10, scale=11)
-        return priors
+            diffusion_unit, temperature_names, diffusion_names, variable_names, variable_units, bounds, unaccounted_uncertainty)
 
     def sample(self, **kwargs):
         """
         Use MCMC to sample the posterior distribution of the relationship. For keyword arguments see the :func:`uravu.relationship.mcmc` docs. 
         """
-        self.mcmc(prior_function=self.all_positive_prior, **kwargs)
+        self.mcmc(prior_function=self.prior, **kwargs)
 
     def nested(self, **kwargs):
         """
         Use nested sampling to determine natural log-evidence for the model. For keyword arguments see the :func:`uravu.relationship.nested_sampling` docs.
         """
-        self.nested_sampling(prior_function=self.all_positive_prior, **kwargs)
+        self.nested_sampling(prior_function=self.prior, **kwargs)
 
 
 def arrhenius(abscissa, activation_energy, prefactor):
@@ -110,13 +94,14 @@ class SuperArrhenius(Relationship):
         diffusion_unit (:py:class:`pint.unit.Unit`, optional): The unit for the diffusion coefficient. Default is :py:attr:`centimetre**2 / second`.
         temperature_names (:py:attr:`str`, optional): The label for the temperature. Default is :py:attr:`$T$`.
         diffusion_names (:py:attr:`str`, optional): The label for the diffusion coefficient. Default is :py:attr:`$D$`.
+        bounds (:py:attr:`tuple`): The minimum and maximum values for each parameters. Defaults to :py:attr:`None`.
         unaccounted_uncertainty (:py:attr:`bool`, optional): Should an unaccounted uncertainty in the ordinate be added? Defaults to :py:attr:`False`.
     """
     def __init__(self, temperature, diffusion, diffusion_error,
                  temperature_unit=UREG.kelvin,
                  diffusion_unit=UREG.centimeter**2 / UREG.second,
                  temperature_names=r'$T$',
-                 diffusion_names=r'$D$', unaccounted_uncertainty=False):
+                 diffusion_names=r'$D$', bounds=None, unaccounted_uncertainty=False):
         variable_names = [r'$E_a$', r'$A$', r'$T_0$']
         variable_units = [UREG.joules / UREG.mole, UREG.dimensionless, UREG.kelvin]
         if unaccounted_uncertainty:
@@ -124,38 +109,19 @@ class SuperArrhenius(Relationship):
             variable_units.append(UREG.dimensionless)
         super().__init__(
             super_arrhenius, temperature, diffusion, diffusion_error, temperature_unit,
-            diffusion_unit, temperature_names, diffusion_names, variable_names, variable_units, unaccounted_uncertainty)
-
-    def all_positive_prior(self):
-        """
-        The prior probability distributions for the super-Arrhenius relationship should all be positive (unless there is an unaccounted uncertainty).
-
-        Returns:
-            :py:attr:`list` of :py:class:`scipy.stats.rv_continuous`: Uniform probability distributions that describe the prior probabilities.
-        """
-        priors = []
-        loc = sys.float_info.min
-        for var in self.variable_medians:
-            scale = (var + np.abs(var) * 4) - loc
-            priors.append(uniform(loc=loc, scale=scale))
-        if self.unaccounted_uncertainty:
-            priors[-2] = uniform(loc=loc, scale=np.sort(self.abscissa.m)[0] - 0.1)
-            priors[-1] = uniform(loc=-10, scale=11)
-        else:
-            priors[-1] = uniform(loc=loc, scale=np.sort(self.abscissa.m)[0] - 0.1)
-        return priors
+            diffusion_unit, temperature_names, diffusion_names, variable_names, variable_units, bounds, unaccounted_uncertainty)
 
     def sample(self, **kwargs):
         """
         Use MCMC to sample the posterior distribution of the relationship. For keyword arguments see the :func:`uravu.relationship.mcmc` docs. 
         """
-        self.mcmc(prior_function=self.all_positive_prior, **kwargs)
+        self.mcmc(prior_function=self.prior, **kwargs)
 
     def nested(self, **kwargs):
         """
         Use nested sampling to determine natural log-evidence for the model. For keyword arguments see the :func:`uravu.relationship.nested_sampling` docs.
         """
-        self.nested_sampling(prior_function=self.all_positive_prior, **kwargs)
+        self.nested_sampling(prior_function=self.prior, **kwargs)
 
 def super_arrhenius(abscissa, activation_energy, prefactor, t_zero):
     """

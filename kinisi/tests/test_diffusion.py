@@ -217,7 +217,7 @@ class TestMsd(unittest.TestCase):
         msd = np.linspace(5, 50, 10)
         dmsd = msd * 0.1
         diff = diffusion.Diffusion(dt, msd, dmsd)
-        diff.max_likelihood()
+        diff.max_likelihood('mini')
         assert_almost_equal(diff.diffusion_coefficient.m, 1 / 6)
 
     def test_diffusion_D_mcmc_a(self):
@@ -227,8 +227,9 @@ class TestMsd(unittest.TestCase):
         dt = np.linspace(5, 50, 10)
         msd = np.linspace(5, 50, 10)
         dmsd = msd * 0.1
-        diff = diffusion.Diffusion(dt, msd, dmsd)
-        diff.max_likelihood()
+        bnds = ((0, 1000), (0, 1000))
+        diff = diffusion.Diffusion(dt, msd, dmsd, bounds=bnds)
+        diff.max_likelihood('mini')
         diff.sample(n_samples=10, n_burn=10, progress=False)
         assert_equal(isinstance(diff.diffusion_coefficient, Distribution), True)
         assert_equal(diff.diffusion_coefficient.size, 1000)
@@ -242,8 +243,9 @@ class TestMsd(unittest.TestCase):
         dt = np.linspace(5, 50, 10)
         msd = np.linspace(5, 50, 10)
         dmsd = msd * 0.1
-        diff = diffusion.Diffusion(dt, msd, dmsd, unaccounted_uncertainty=True)
-        diff.max_likelihood()
+        bnds = ((0, 1000), (0, 1000))
+        diff = diffusion.Diffusion(dt, msd, dmsd, bounds=bnds, unaccounted_uncertainty=True)
+        diff.max_likelihood('mini')
         diff.sample(n_samples=10, n_burn=10, progress=False)
         assert_equal(isinstance(diff.diffusion_coefficient, Distribution), True)
         assert_equal(diff.diffusion_coefficient.size, 1000)
@@ -258,7 +260,7 @@ class TestMsd(unittest.TestCase):
         msd = np.linspace(5, 50, 10)
         dmsd = msd * 0.1
         diff = diffusion.Diffusion(dt, msd, dmsd, unaccounted_uncertainty=True)
-        diff.max_likelihood()
+        diff.max_likelihood('mini')
         diff.nested(maxiter=10)
         assert_equal(diff.ln_evidence != None, True)
         assert_equal(isinstance(diff.ln_evidence, uncertainties.core.Variable), True)

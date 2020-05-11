@@ -199,12 +199,13 @@ class Diffusion(Relationship):
         msd_unit (:py:class:`pint.unit.Unit`, optional): The unit for the mean squared displacement. Default is :py:attr:`angstrom**2`.
         delta_t_names (:py:attr:`str`, optional): The label for the timesteps. Default is :py:attr:`'$\delta t$'`.
         msd_names (:py:attr:`str`, optional): The label for the mean squared displacement. Default is :py:attr:`'$\langle r ^ 2 \rangle$'`.
+        bounds (:py:attr:`tuple`): The minimum and maximum values for each parameters. Defaults to :py:attr:`None`.
         unaccounted_uncertainty (:py:attr:`bool`, optional): Should an unaccounted uncertainty in the ordinate be added? Defaults to :py:attr:`False`.
     """
     def __init__(self, delta_t, msd, msd_error,
                  delta_t_unit=UREG.femtoseconds, msd_unit=UREG.angstrom**2,
                  delta_t_names=r'$\delta t$',
-                 msd_names=r'$\langle r ^ 2 \rangle$', unaccounted_uncertainty=False):
+                 msd_names=r'$\langle r ^ 2 \rangle$', bounds=None, unaccounted_uncertainty=False):
         variable_names = ['m', r'$D_0$']
         variable_units = [msd_unit / delta_t_unit, msd_unit]
         if unaccounted_uncertainty:
@@ -212,7 +213,7 @@ class Diffusion(Relationship):
             variable_units.append([msd_unit])
         super().__init__(
             utils.straight_line, delta_t, msd, msd_error, delta_t_unit, msd_unit, delta_t_names,
-            msd_names, variable_names, variable_units, unaccounted_uncertainty)
+            msd_names, variable_names, variable_units, bounds, unaccounted_uncertainty)
 
     @property
     def diffusion_coefficient(self):
@@ -227,32 +228,14 @@ class Diffusion(Relationship):
         else:
             return self.variables[0] / 6 * self.variable_units[0]
 
-    def all_positive_prior(self):
-        """
-        The standard prior probability distributions for the Einstein relationship.
-
-        Returns:
-            :py:attr:`list` of :py:class:`scipy.stats.rv_continuous`: Uniform probability distributions that describe the prior probabilities.
-        """
-        priors = []
-        for i, var in enumerate(self.variable_medians):
-            loc = (var - np.abs(var) * 5)
-            if i == 0:
-                loc = sys.float_info.min
-            scale = (var + np.abs(var) * 5) - loc
-            priors.append(uniform(loc=loc, scale=scale))
-        if self.unaccounted_uncertainty:
-            priors[-1] = uniform(loc=-10, scale=11)
-        return priors
-
     def sample(self, **kwargs):
         """
         Use MCMC to sample the posterior distribution of the relationship. For keyword arguments see the :func:`uravu.relationship.Relationship.mcmc` docs. 
         """
-        self.mcmc(prior_function=self.all_positive_prior, **kwargs)
+        self.mcmc(prior_function=self.prior, **kwargs)
 
     def nested(self, **kwargs):
         """
         Use nested sampling to determine natural log-evidence for the model. For keyword arguments see the :func:`uravu.relationship.Relationship.nested_sampling` docs.
         """
-        self.nested_sampling(prior_function=self.all_positive_prior, **kwargs)
+        self.nested_sampling(prior_function=self.prior, **kwargs)
