@@ -39,19 +39,14 @@ class StandardArrhenius(Relationship):
         bounds (:py:attr:`tuple`): The minimum and maximum values for each parameters. Defaults to :py:attr:`None`.
         unaccounted_uncertainty (:py:attr:`bool`, optional): Should an unaccounted uncertainty in the ordinate be added? Defaults to :py:attr:`False`.
     """
-    def __init__(self, temperature, diffusion, diffusion_error,
+    def __init__(self, temperature, diffusion,
                  temperature_unit=UREG.kelvin,
                  diffusion_unit=UREG.centimeter**2 / UREG.second,
                  temperature_names=r'$T$',
-                 diffusion_names=r'$D$', bounds=None, unaccounted_uncertainty=False):
+                 diffusion_names=r'$D$', bounds=None):
         variable_names = [r'$E_a$', r'$A$']
         variable_units = [UREG.joules / UREG.mole, UREG.dimensionless]
-        if unaccounted_uncertainty:
-            variable_names.append('unaccounted uncertainty')
-            variable_units.append(UREG.dimensionless)
-        super().__init__(
-            arrhenius, temperature, diffusion, diffusion_error, temperature_unit,
-            diffusion_unit, temperature_names, diffusion_names, variable_names, variable_units, bounds, unaccounted_uncertainty)
+        super().__init__(arrhenius, temperature, diffusion, bounds)
 
     def sample(self, **kwargs):
         """
@@ -97,19 +92,13 @@ class SuperArrhenius(Relationship):
         bounds (:py:attr:`tuple`): The minimum and maximum values for each parameters. Defaults to :py:attr:`None`.
         unaccounted_uncertainty (:py:attr:`bool`, optional): Should an unaccounted uncertainty in the ordinate be added? Defaults to :py:attr:`False`.
     """
-    def __init__(self, temperature, diffusion, diffusion_error,
-                 temperature_unit=UREG.kelvin,
+    def __init__(self, temperature, diffusion, temperature_unit=UREG.kelvin,
                  diffusion_unit=UREG.centimeter**2 / UREG.second,
                  temperature_names=r'$T$',
-                 diffusion_names=r'$D$', bounds=None, unaccounted_uncertainty=False):
+                 diffusion_names=r'$D$', bounds=None):
         variable_names = [r'$E_a$', r'$A$', r'$T_0$']
         variable_units = [UREG.joules / UREG.mole, UREG.dimensionless, UREG.kelvin]
-        if unaccounted_uncertainty:
-            variable_names.append('unaccounted uncertainty')
-            variable_units.append(UREG.dimensionless)
-        super().__init__(
-            super_arrhenius, temperature, diffusion, diffusion_error, temperature_unit,
-            diffusion_unit, temperature_names, diffusion_names, variable_names, variable_units, bounds, unaccounted_uncertainty)
+        super().__init__(super_arrhenius, temperature, diffusion, bounds)
 
     def sample(self, **kwargs):
         """

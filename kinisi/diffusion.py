@@ -202,18 +202,14 @@ class Diffusion(Relationship):
         bounds (:py:attr:`tuple`): The minimum and maximum values for each parameters. Defaults to :py:attr:`None`.
         unaccounted_uncertainty (:py:attr:`bool`, optional): Should an unaccounted uncertainty in the ordinate be added? Defaults to :py:attr:`False`.
     """
-    def __init__(self, delta_t, msd, msd_error,
+    def __init__(self, delta_t, msd,
                  delta_t_unit=UREG.femtoseconds, msd_unit=UREG.angstrom**2,
                  delta_t_names=r'$\delta t$',
-                 msd_names=r'$\langle r ^ 2 \rangle$', bounds=None, unaccounted_uncertainty=False):
+                 msd_names=r'$\langle r ^ 2 \rangle$', bounds=None):
         variable_names = ['m', r'$D_0$']
         variable_units = [msd_unit / delta_t_unit, msd_unit]
-        if unaccounted_uncertainty:
-            variable_names.append(r'$f$')
-            variable_units.append([msd_unit])
         super().__init__(
-            utils.straight_line, delta_t, msd, msd_error, delta_t_unit, msd_unit, delta_t_names,
-            msd_names, variable_names, variable_units, bounds, unaccounted_uncertainty)
+            utils.straight_line, delta_t, msd, bounds)
 
     @property
     def diffusion_coefficient(self):
@@ -223,10 +219,8 @@ class Diffusion(Relationship):
         Returns:
             (:py:class:`uncertainties.core.Variable` or :py:class:`uravu.distribution.Distribution`): The diffusion coefficient in the input units.
         """
-        if isinstance(self.variables[0], Distribution):
-            return Distribution(self.variables[0].samples / 6, r'$D$', None, self.variable_units[0])
-        else:
-            return self.variables[0] / 6 * self.variable_units[0]
+        return Distribution(self.variables[0].samples / 6, r'$D$', None)
+        
 
     def sample(self, **kwargs):
         """
