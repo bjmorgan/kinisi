@@ -54,6 +54,7 @@ def msd_bootstrap(delta_t, disp_3d, n_resamples=1000, samples_freq=1,
     err_msd = np.array([])
     con_int_msd_lower = np.array([])
     con_int_msd_upper = np.array([])
+    distributions = []
     if progress:
         iterator = tqdm(range(len(displacements)), desc='Bootstrapping displacements')
     else:
@@ -97,9 +98,10 @@ def msd_bootstrap(delta_t, disp_3d, n_resamples=1000, samples_freq=1,
             err_msd, np.var(distro.samples, ddof=1))
         con_int_msd_lower = np.append(con_int_msd_lower, distro.con_int[0])
         con_int_msd_upper = np.append(con_int_msd_upper, distro.con_int[1])
+        distributions.append(distro)
     return (
         output_delta_t, mean_msd, err_msd, con_int_msd_lower,
-        con_int_msd_upper)
+        con_int_msd_upper, distributions)
 
 
 def mscd_bootstrap(delta_t, disp_3d, indices=None, n_resamples=1000,
@@ -137,6 +139,7 @@ def mscd_bootstrap(delta_t, disp_3d, indices=None, n_resamples=1000,
     err_mscd = np.array([])
     con_int_mscd_lower = np.array([])
     con_int_mscd_upper = np.array([])
+    distributions = []
     if progress:
         iterator = tqdm(range(len(displacements)), desc='Bootstrapping displacements')
     else:
@@ -181,9 +184,10 @@ def mscd_bootstrap(delta_t, disp_3d, indices=None, n_resamples=1000,
             con_int_mscd_lower, distro.con_int[0] / len(indices))
         con_int_mscd_upper = np.append(
             con_int_mscd_upper, distro.con_int[1] / len(indices))
+        distributions.append(distro)
     return (
         output_delta_t, mean_mscd, err_mscd, con_int_mscd_lower,
-        con_int_mscd_upper)
+        con_int_mscd_upper, distributions)
 
 
 class Diffusion(Relationship):
