@@ -115,4 +115,8 @@ class TestParser(unittest.TestCase):
         assert_almost_equal(data.time_step, 20.0)
         assert_almost_equal(data.step_skip, 100)
         assert_equal(data.indices, list(range(xd.natoms[0])))
+
+    def test_get_matrix(self):
+        matrix = parser.get_matrix([10, 10, 10, 90, 90, 90])
+        assert_almost_equal(matrix, np.diag((10, 10, 10)))
         

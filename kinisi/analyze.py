@@ -10,6 +10,7 @@ This module includes the :py:class:`~kinisi.analyze.DiffAnalyzer` class for diff
 
 import MDAnalysis as mda
 from pymatgen.io.vasp import Xdatcar
+from uncertainties import unumpy as unp
 from kinisi import diffusion
 from kinisi.parser import MDAnalysisParser, PymatgenParser
 
@@ -52,7 +53,8 @@ class DiffAnalyzer:
         diff_data = diffusion.msd_bootstrap(self.delta_t, self.disp_3d)
 
         self.delta_t = diff_data[0]
-        self.msd = diff_data[1]
+        self.msd = diff_data[3].n
+        self.msd_err = diff_data[3].s
         self.MSD = diff_data[3]
 
         self.relationship = diffusion.Diffusion(self.delta_t, self.MSD, bounds)
