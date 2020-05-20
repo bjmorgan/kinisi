@@ -17,7 +17,7 @@ from kinisi.parser import MDAnalysisParser, PymatgenParser
 class DiffAnalyzer:
     """
     The :py:class:`kinisi.analyze.DiffAnalyzer` class performs analysis of diffusion relationships in materials. 
-    This is achieved through the application of a block bootstrapping methodology to obtain the most statistically accurate values for mean squared displacement and the associated uncertainity. 
+    This is achieved through the application of a block bootstrapping methodology to obtain the most statistically accurate values for mean squared displacement and the associated uncertainty. 
     The time-scale dependence of the MSD is then modeled with a straight line Einstein relationship, and Markov chain Monte Carlo is used to quantify inverse uncertainties for this model. 
 
     Attributes:
