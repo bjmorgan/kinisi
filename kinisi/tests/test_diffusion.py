@@ -14,10 +14,17 @@ import unittest
 import numpy as np
 import uncertainties
 from numpy.testing import assert_equal, assert_almost_equal
-from kinisi import diffusion, UREG
+from scipy.stats import norm
+from kinisi import diffusion
 from uravu.distribution import Distribution
 from uravu.utils import straight_line
 
+
+dt = np.linspace(5, 50, 10)
+msd = np.linspace(5, 50, 10)
+MSD = []
+for i in msd:
+    MSD.append(Distribution(norm.rvs(loc=i, scale=i*0.1, size=5000, random_state=np.random.RandomState(1))))
 
 class TestMsd(unittest.TestCase):
     """
@@ -32,7 +39,7 @@ class TestMsd(unittest.TestCase):
         to_resample = [
             np.array(ordinate) for i in range(1, 6)
         ]
-        delta_t, mean, err, con_int_l, con_int_u = diffusion.msd_bootstrap(
+        delta_t, mean, err, msd = diffusion.msd_bootstrap(
             np.linspace(100, 600, 5, dtype=int),
             to_resample,
             progress=False,
@@ -41,8 +48,7 @@ class TestMsd(unittest.TestCase):
         assert_equal(delta_t.size, 5)
         assert_equal(mean.size, 5)
         assert_equal(err.size, 5)
-        assert_equal(con_int_l.size, 5)
-        assert_equal(con_int_u.size, 5)
+        assert_equal(len(msd), 5)
 
     def test_msd_bootstrap_b(self):
         """
@@ -52,7 +58,7 @@ class TestMsd(unittest.TestCase):
         to_resample = [
             np.array(ordinate) for i in range(1, 6)
         ]
-        delta_t, mean, err, con_int_l, con_int_u = diffusion.msd_bootstrap(
+        delta_t, mean, err, msd = diffusion.msd_bootstrap(
             np.linspace(100, 600, 5, dtype=int),
             to_resample,
             progress=True,
@@ -61,8 +67,7 @@ class TestMsd(unittest.TestCase):
         assert_equal(delta_t.size, 5)
         assert_equal(mean.size, 5)
         assert_equal(err.size, 5)
-        assert_equal(con_int_l.size, 5)
-        assert_equal(con_int_u.size, 5)
+        assert_equal(len(msd), 5)
 
     def test_msd_bootstrap_c(self):
         """
@@ -80,7 +85,7 @@ class TestMsd(unittest.TestCase):
             ordinate4,
             ordinate5,
         ]
-        delta_t, mean, err, con_int_l, con_int_u = diffusion.msd_bootstrap(
+        delta_t, mean, err, msd = diffusion.msd_bootstrap(
             np.linspace(100, 600, 5, dtype=int),
             to_resample,
             progress=False,
@@ -90,8 +95,7 @@ class TestMsd(unittest.TestCase):
         assert_equal(delta_t.size, 3)
         assert_equal(mean.size, 3)
         assert_equal(err.size, 3)
-        assert_equal(con_int_l.size, 3)
-        assert_equal(con_int_u.size, 3)
+        assert_equal(len(msd), 3)
     
     def test_msd_bootstrap_d(self):
         """
@@ -109,7 +113,7 @@ class TestMsd(unittest.TestCase):
             ordinate4,
             ordinate5,
         ]
-        delta_t, mean, err, con_int_l, con_int_u = diffusion.msd_bootstrap(
+        delta_t, mean, err, msd = diffusion.msd_bootstrap(
             np.linspace(100, 600, 5, dtype=int),
             to_resample,
             progress=False,
@@ -119,8 +123,7 @@ class TestMsd(unittest.TestCase):
         assert_equal(delta_t.size, 1)
         assert_equal(mean.size, 1)
         assert_equal(err.size, 1)
-        assert_equal(con_int_l.size, 1)
-        assert_equal(con_int_u.size, 1)
+        assert_equal(len(msd), 1)
 
     def test_mscd_bootstrap_a(self):
         """
@@ -130,7 +133,7 @@ class TestMsd(unittest.TestCase):
         to_resample = [
             np.array(ordinate) for i in range(1, 6)
         ]
-        delta_t, mean, err, con_int_l, con_int_u = diffusion.mscd_bootstrap(
+        delta_t, mean, err, msd = diffusion.mscd_bootstrap(
             np.linspace(100, 600, 5, dtype=int),
             to_resample,
             [1],
@@ -139,9 +142,8 @@ class TestMsd(unittest.TestCase):
             max_resamples=1000)
         assert_equal(delta_t.size, 5)
         assert_equal(mean.size, 5)
-        assert_equal(err.size, 5)
-        assert_equal(con_int_l.size, 5)
-        assert_equal(con_int_u.size, 5)
+        assert_equal(err.size, 5) 
+        assert_equal(len(msd), 5)
 
     def test_mscd_bootstrap_b(self):
         """
@@ -151,7 +153,7 @@ class TestMsd(unittest.TestCase):
         to_resample = [
             np.array(ordinate) for i in range(1, 6)
         ]
-        delta_t, mean, err, con_int_l, con_int_u = diffusion.mscd_bootstrap(
+        delta_t, mean, err, msd = diffusion.mscd_bootstrap(
             np.linspace(100, 600, 5, dtype=int),
             to_resample,
             [1],
@@ -161,8 +163,7 @@ class TestMsd(unittest.TestCase):
         assert_equal(delta_t.size, 5)
         assert_equal(mean.size, 5)
         assert_equal(err.size, 5)
-        assert_equal(con_int_l.size, 5)
-        assert_equal(con_int_u.size, 5)
+        assert_equal(len(msd), 5)
 
     def test_mscd_bootstrap_c(self):
         """
@@ -180,7 +181,7 @@ class TestMsd(unittest.TestCase):
             ordinate4,
             ordinate5,
         ]
-        delta_t, mean, err, con_int_l, con_int_u = diffusion.mscd_bootstrap(
+        delta_t, mean, err, msd = diffusion.mscd_bootstrap(
             np.linspace(100, 600, 5, dtype=int),
             to_resample,
             [1],
@@ -191,76 +192,48 @@ class TestMsd(unittest.TestCase):
         assert_equal(delta_t.size, 2)
         assert_equal(mean.size, 2)
         assert_equal(err.size, 2)
-        assert_equal(con_int_l.size, 2)
-        assert_equal(con_int_u.size, 2)
+        assert_equal(len(msd), 2)
 
     def test_diffusion_init(self):
         """
         Test the initialisation of diffusion
         """
-        dt = np.linspace(5, 50, 10)
-        msd = np.linspace(5, 50, 10)
-        dmsd = msd * 0.1
-        diff = diffusion.Diffusion(dt, msd, dmsd)
+        bnds = ((0, 1000), (0, 1000))
+        diff = diffusion.Diffusion(dt, MSD, bnds)
         assert_equal(diff.function, straight_line)
-        assert_almost_equal(diff.abscissa.m, dt)
-        assert_equal(diff.abscissa.u, UREG.femtosecond)
-        assert_almost_equal(diff.y_n, msd)
-        assert_almost_equal(diff.y_s, dmsd)
-        assert_equal(diff.ordinate.u, UREG.angstrom**2)
+        assert_almost_equal(diff.abscissa, dt)
+        assert_almost_equal(diff.y.n, msd, decimal=0)
+        assert_almost_equal(diff.y.s, np.array([msd*0.196, msd*0.196]), decimal=0)
  
     def test_diffusion_D_max_likelihood(self):
         """
         Test the max likelihood of diffusion
         """
-        dt = np.linspace(5, 50, 10)
-        msd = np.linspace(5, 50, 10)
-        dmsd = msd * 0.1
-        diff = diffusion.Diffusion(dt, msd, dmsd)
+        bnds = ((0, 1000), (0, 1000))
+        diff = diffusion.Diffusion(dt, MSD, bnds)
         diff.max_likelihood('mini')
-        assert_almost_equal(diff.diffusion_coefficient.m, 1 / 6)
+        assert_almost_equal(diff.diffusion_coefficient.n, 1 / 6, decimal=2)
 
-    def test_diffusion_D_mcmc_a(self):
+    def test_diffusion_D_mcmc(self):
         """
         Test the mcmc of diffusion
         """
-        dt = np.linspace(5, 50, 10)
-        msd = np.linspace(5, 50, 10)
-        dmsd = msd * 0.1
         bnds = ((0, 1000), (0, 1000))
-        diff = diffusion.Diffusion(dt, msd, dmsd, bounds=bnds)
+        diff = diffusion.Diffusion(dt, MSD, bnds)
         diff.max_likelihood('mini')
-        diff.sample(n_samples=10, n_burn=10, progress=False)
+        diff.mcmc(n_samples=10, n_burn=10, progress=False)
         assert_equal(isinstance(diff.diffusion_coefficient, Distribution), True)
-        assert_equal(diff.diffusion_coefficient.size, 1000)
+        assert_equal(diff.diffusion_coefficient.size, 500)
         assert_equal(diff.variables[0].samples.min() > 0, True)
         assert_equal(len(diff.variables), 2)
     
-    def test_diffusion_D_mcmc_b(self):
-        """
-        Test the mcmc of diffusion with unaccounted uncertainty
-        """
-        dt = np.linspace(5, 50, 10)
-        msd = np.linspace(5, 50, 10)
-        dmsd = msd * 0.1
-        bnds = ((0, 1000), (0, 1000))
-        diff = diffusion.Diffusion(dt, msd, dmsd, bounds=bnds, unaccounted_uncertainty=True)
-        diff.max_likelihood('mini')
-        diff.sample(n_samples=10, n_burn=10, progress=False)
-        assert_equal(isinstance(diff.diffusion_coefficient, Distribution), True)
-        assert_equal(diff.diffusion_coefficient.size, 1000)
-        assert_equal(diff.variables[0].samples.min() > 0, True)
-        assert_equal(len(diff.variables), 3)
-
     def test_diffusion_nested(self):
         """
         Test the nested method
         """
-        dt = np.linspace(5, 50, 10)
-        msd = np.linspace(5, 50, 10)
-        dmsd = msd * 0.1
-        diff = diffusion.Diffusion(dt, msd, dmsd, unaccounted_uncertainty=True)
+        bnds = ((0, 2), (0, 2))
+        diff = diffusion.Diffusion(dt, MSD, bnds)
         diff.max_likelihood('mini')
-        diff.nested(maxiter=10)
+        diff.nested_sampling(maxiter=100)
         assert_equal(diff.ln_evidence != None, True)
         assert_equal(isinstance(diff.ln_evidence, uncertainties.core.Variable), True)

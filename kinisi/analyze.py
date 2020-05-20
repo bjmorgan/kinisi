@@ -35,9 +35,9 @@ class DiffAnalyzer:
         file (:py:attr:`str` or :py:attr:`list` of :py:attr:`str`): The file path(s) that should be read by either the :py:class:`pymatgen.io.vasp.Xdatcar` or :py:class:`MDAnalysis.core.universe.Universe` classes. 
         params (:py:attr:`dict`): The parameters for the :py:mod:`kinisi.parser` object, which is either :py:class:`kinisi.parser.PymatgenParser` or :py:class:`kinisi.parser.MDAnalysisParser` depending on the input file format. See the appropriate documention for more guidence on this object.  
         format (:py:attr:`str`, optional): The file format, for the :py:class:`kinisi.parser.PymatgenParser` this should be :py:attr:`'Xdatcar'` and for :py:class:`kinisi.parser.MDAnalysisParser` this should be the appropriate format to be passed to the :py:class:`MDAnalysis.core.universe.Universe`. Defaults to :py:attr:`'Xdatcar'`.
-        uncertainty (:py:attr:`str`, optional): How should the uncertainty be represented? This can either be as a 95 % confidence interval (:py:attr:`'con_int'`) or as a single standard deviation (:py:attr:`'std_dev'`). Defaults to :py:attr:`'con_int'`.
+        bounds (:py:attr:`tuple`, optional): Minimum and maximum values for the gradient and intercept of the diffusion relationship. Defaults to :py:attr:`((0, 100), (-10, 10))`. 
     """
-    def __init__(self, file, params, format='Xdatcar', uncertainty='con_int'):  # pragma: no cover
+    def __init__(self, file, params, format='Xdatcar', bounds=((0, 100), (-10, 10)):  # pragma: no cover
         if format is 'Xdatcar':
             xd = Xdatcar(file)
             u = PymatgenParser(xd.structures, **params)
@@ -54,15 +54,9 @@ class DiffAnalyzer:
         self.delta_t = diff_data[0]
         self.msd = diff_data[1]
         self.msd_err = diff_data[2]
-        self.msd_lb = diff_data[3]
-        self.msd_ub = diff_data[4]
+        self.MSD = diff_data[3]
 
-        if uncertainty is 'con_int':
-            self.relationship = diffusion.Diffusion(self.delta_t, self.msd, self.msd - self.msd_lb)
-        elif uncertainty is 'std_dev':
-            self.relationship = diffusion.Diffusion(self.delta_t, self.msd, self.msd_err) 
-        else:
-            raise ValueError('Only `con_int` and `std_dev` are accepted `uncertainty` options.')
+        self.relationship = diffusion.Diffusion(self.delta_t, self.MSD, bounds)
 
         self.relationship.max_likelihood()
         self.relationship.sample()

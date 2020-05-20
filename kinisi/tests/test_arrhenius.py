@@ -13,10 +13,17 @@ Distributed under the terms of the MIT License
 import unittest
 import numpy as np
 import uncertainties
+from scipy.stats import norm
 from numpy.testing import assert_equal, assert_almost_equal
-from kinisi import arrhenius, UREG
+from kinisi import arrhenius
 from uravu.distribution import Distribution
 from uravu.utils import straight_line
+
+temp = np.linspace(5, 50, 10)
+ea = np.linspace(5, 50, 10)
+EA = []
+for e in ea:
+    EA.append(Distribution(norm.rvs(loc=e, scale=e*0.1, size=5000, random_state=np.random.RandomState(1))))
 
 
 class TestArrhenius(unittest.TestCase):
@@ -27,138 +34,21 @@ class TestArrhenius(unittest.TestCase):
         """
         Test the initialisation of standard arrhenius
         """
-        temp = np.linspace(5, 50, 10)
-        ea = np.linspace(5, 50, 10)
-        dea = ea * 0.1
-        arr = arrhenius.StandardArrhenius(temp, ea, dea)
+        arr = arrhenius.StandardArrhenius(temp, EA, ((0, 1000), (0, 1000)))
         assert_equal(arr.function, arrhenius.arrhenius)
-        assert_almost_equal(arr.abscissa.m, temp)
-        assert_equal(arr.abscissa.u, UREG.kelvin)
-        assert_almost_equal(arr.y_n, ea)
-        assert_almost_equal(arr.y_s, dea)
-        assert_equal(arr.ordinate.u, UREG.centimeter**2 / UREG.second)
-        assert_equal(len(arr.variable_names), 2)
-        assert_equal(len(arr.variable_units), 2)
-
-    def test_standard_arrhenius_init_with_uu(self):
-        """
-        Test the initialisation of standard arrhenius with unaccounted uncertainty
-        """
-        temp = np.linspace(5, 50, 10)
-        ea = np.linspace(5, 50, 10)
-        dea = ea * 0.1
-        arr = arrhenius.StandardArrhenius(temp, ea, dea, unaccounted_uncertainty=True)
-        assert_equal(arr.function, arrhenius.arrhenius)
-        assert_almost_equal(arr.abscissa.m, temp)
-        assert_equal(arr.abscissa.u, UREG.kelvin)
-        assert_almost_equal(arr.y_n, ea)
-        assert_almost_equal(arr.y_s, dea)
-        assert_equal(arr.ordinate.u, UREG.centimeter**2 / UREG.second)
-        assert_equal(len(arr.variable_names), 3)
-        assert_equal(len(arr.variable_units), 3)
-
-    def test_all_positive_priors(self):
-        """
-        Test the creation of an all positive prior.
-        """
-        temp = np.linspace(5, 50, 10)
-        ea = np.linspace(5, 50, 10)
-        dea = ea * 0.1
-        bnds = ((0, 1000), (0, 1000)) 
-        arr = arrhenius.StandardArrhenius(temp, ea, dea, bounds=bnds)
-        arr.max_likelihood('mini')
-        priors = arr.prior()
-        assert_equal(len(priors), 2)
-        assert_equal(priors[0].pdf(-1), 0)
-        assert_equal(priors[0].pdf(10000), 0)
-        assert_equal(priors[0].pdf(arr.variable_medians[0]), 0.001)
-        assert_equal(priors[1].pdf(-1), 0)
-        assert_equal(priors[1].pdf(10000), 0)
-        assert_equal(priors[1].pdf(arr.variable_medians[1]), 0.001)
-
-    def test_all_positive_priors_with_uu(self):
-        """
-        Test the creation of an all positive prior.
-        """
-        temp = np.linspace(5, 50, 10)
-        ea = np.linspace(5, 50, 10)
-        dea = ea * 0.1
-        bnds = ((0, 1000), (0, 1000)) 
-        arr = arrhenius.StandardArrhenius(temp, ea, dea, bounds=bnds, unaccounted_uncertainty=True)
-        arr.max_likelihood('mini')
-        priors = arr.prior()
-        assert_equal(len(priors), 3)
-        assert_equal(priors[0].pdf(-1), 0)
-        assert_equal(priors[0].pdf(10000), 0)
-        assert_equal(priors[0].pdf(arr.variable_medians[0]), 0.001)
-        assert_equal(priors[1].pdf(-1), 0)
-        assert_equal(priors[1].pdf(10000), 0)
-        assert_equal(priors[1].pdf(arr.variable_medians[1]), 0.001)
-        assert_equal(priors[2].pdf(-100), 0)
-        assert_equal(priors[2].pdf(1000), 0)
-        assert_equal(priors[2].pdf(arr.variable_medians[2]), 1 / (11))
+        assert_almost_equal(arr.abscissa, temp)
+        assert_almost_equal(arr.y.n, ea, decimal=0)
+        assert_almost_equal(arr.y.s, np.array([ea*0.196, ea*0.196]), decimal=0)
 
     def test_super_arrhenius_init(self):
         """
         Test the initialisation of super arrhenius
         """
-        temp = np.linspace(5, 50, 10)
-        ea = np.linspace(5, 50, 10)
-        dea = ea * 0.1
-        arr = arrhenius.SuperArrhenius(temp, ea, dea)
+        arr = arrhenius.SuperArrhenius(temp, EA, ((0, 1000), (0, 1000), (0, 4)))
         assert_equal(arr.function, arrhenius.super_arrhenius)
-        assert_almost_equal(arr.abscissa.m, temp)
-        assert_equal(arr.abscissa.u, UREG.kelvin)
-        assert_almost_equal(arr.y_n, ea)
-        assert_almost_equal(arr.y_s, dea)
-        assert_equal(arr.ordinate.u, UREG.centimeter**2 / UREG.second) 
-
-    def test_all_positive_priors_super(self):
-        """
-        Test the creation of an all positive prior.
-        """
-        temp = np.linspace(5, 50, 10)
-        ea = np.linspace(5, 50, 10)
-        dea = ea * 0.1
-        bnds = ((0, 1000), (0, 1000), (0, 4)) 
-        arr = arrhenius.SuperArrhenius(temp, ea, dea, bounds=bnds)
-        arr.max_likelihood('mini')
-        priors = arr.prior()
-        assert_equal(len(priors), 3)
-        assert_equal(priors[0].pdf(-1), 0)
-        assert_equal(priors[0].pdf(100000), 0)
-        assert_equal(priors[0].pdf(arr.variable_medians[0]), 0.001)
-        assert_equal(priors[1].pdf(-1), 0)
-        assert_equal(priors[1].pdf(100000), 0)
-        assert_equal(priors[1].pdf(arr.variable_medians[1]), 0.001)
-        assert_equal(priors[2].pdf(-1), 0)
-        assert_equal(priors[2].pdf(5), 0)
-        assert_equal(priors[2].pdf(2.5), 1 / 4)
-
-    def test_all_positive_priors_super_with_uu(self):
-        """
-        Test the creation of an all positive prior.
-        """
-        temp = np.linspace(5, 50, 10)
-        ea = np.linspace(5, 50, 10)
-        dea = ea * 0.1
-        bnds = ((0, 1000), (0, 1000), (0, 4)) 
-        arr = arrhenius.SuperArrhenius(temp, ea, dea, bounds=bnds, unaccounted_uncertainty=True)
-        arr.max_likelihood('mini')
-        priors = arr.prior()
-        assert_equal(len(priors), 4)
-        assert_equal(priors[0].pdf(-1), 0)
-        assert_equal(priors[0].pdf(100000), 0)
-        assert_equal(priors[0].pdf(arr.variable_medians[0]), 0.001)
-        assert_equal(priors[1].pdf(-1), 0)
-        assert_equal(priors[1].pdf(100000), 0)
-        assert_equal(priors[1].pdf(arr.variable_medians[1]), 0.001)
-        assert_equal(priors[2].pdf(-1), 0)
-        assert_equal(priors[2].pdf(5), 0)
-        assert_equal(priors[2].pdf(2.5), 1 / 4)
-        assert_equal(priors[3].pdf(-100), 0)
-        assert_equal(priors[3].pdf(1000), 0)
-        assert_equal(priors[3].pdf(-1), 1 / (11))
+        assert_almost_equal(arr.abscissa, temp)
+        assert_almost_equal(arr.y.n, ea, decimal=0)
+        assert_almost_equal(arr.y.s, np.array([ea*0.196, ea*0.196]), decimal=0)
 
     def test_standard_arrhenius(self):
         """
@@ -171,63 +61,3 @@ class TestArrhenius(unittest.TestCase):
         Test the super arrhenius function
         """
         assert_almost_equal(9.995999241, arrhenius.super_arrhenius(300, 1e-5, 10, 10), decimal=5)
-
-    def test_arrhenius_mcmc(self):
-        """
-        Test the mcmc of arrhenius
-        """
-        temp = np.linspace(5, 50, 10)
-        ea = np.linspace(5, 50, 10)
-        dea = ea * 0.1
-        bnds = ((0, 1000), (0, 1000)) 
-        arr = arrhenius.StandardArrhenius(temp, ea, dea, bounds=bnds)
-        arr.max_likelihood('mini')
-        arr.sample(n_samples=10, n_burn=10, progress=False)
-        assert_equal(isinstance(arr.variables[0], Distribution), True)
-        assert_equal(arr.variables[0].size, 1000)
-        assert_equal(arr.variables[0].samples.min() > 0, True)
-        assert_equal(len(arr.variables), 2)
-
-    def test_super_D_mcmc_a(self):
-        """
-        Test the mcmc of super arrhenius
-        """
-        temp = np.linspace(5, 50, 10)
-        ea = np.linspace(5, 50, 10)
-        dea = ea * 0.1
-        bnds = ((0, 1000), (0, 1000), (0, 4))
-        arr = arrhenius.SuperArrhenius(temp, ea, dea, bounds=bnds)
-        arr.max_likelihood('mini')
-        arr.sample(n_samples=10, n_burn=10, progress=False)
-        assert_equal(isinstance(arr.variables[0], Distribution), True)
-        assert_equal(arr.variables[0].size, 1000)
-        assert_equal(arr.variables[0].samples.min() > 0, True)
-        assert_equal(len(arr.variables), 3)
-
-    def test_arrhenius_nested(self):
-        """
-        Test the nested method
-        """
-        temp = np.linspace(5, 50, 10)
-        ea = np.linspace(5, 50, 10)
-        dea = ea * 0.1
-        bnds = ((0, 1000), (0, 1000))
-        arr = arrhenius.StandardArrhenius(temp, ea, dea, bounds=bnds)
-        arr.max_likelihood('mini')
-        arr.nested(maxiter=10)
-        assert_equal(arr.ln_evidence != None, True)
-        assert_equal(isinstance(arr.ln_evidence, uncertainties.core.Variable), True)
-
-    def test_arrhenius_nested_super(self):
-        """
-        Test the nested method
-        """
-        temp = np.linspace(5, 50, 10)
-        ea = np.linspace(5, 50, 10)
-        dea = ea * 0.1
-        bnds = ((0, 1000), (0, 1000), (0, 4))
-        arr = arrhenius.SuperArrhenius(temp, ea, dea, bounds=bnds)
-        arr.max_likelihood('mini')
-        arr.nested(maxiter=10)
-        assert_equal(arr.ln_evidence != None, True)
-        assert_equal(isinstance(arr.ln_evidence, uncertainties.core.Variable), True)

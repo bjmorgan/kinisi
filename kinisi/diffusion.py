@@ -40,9 +40,8 @@ def msd_bootstrap(delta_t, disp_3d, n_resamples=1000, samples_freq=1,
         :py:attr:`tuple`: Containing:
             - :py:attr:`array_like`: Timestep values that were resampled.
             - :py:attr:`array_like`: Resampled mean squared displacement.
-            - :py:attr:`array_like`: Standard deviation in mean squared displacement.
-            - :py:attr:`array_like`: Lower bound in confidence interval for mean squared displacement.
-            - :py:attr:`array_like`: Upper bound in confidence interval for mean squared displacement.
+            - :py:attr:`array_like`: Variance in mean squared displacement.
+            - :py:attr:`list` of :py:class:`uravu.distribution.Distribution`: Resampled mean squared distributions.
     """
     if confidence_interval is None:
         confidence_interval = [2.5, 97.5]
@@ -96,12 +95,9 @@ def msd_bootstrap(delta_t, disp_3d, n_resamples=1000, samples_freq=1,
         mean_msd = np.append(mean_msd, distro.n)
         err_msd = np.append(
             err_msd, np.var(distro.samples, ddof=1))
-        con_int_msd_lower = np.append(con_int_msd_lower, distro.con_int[0])
-        con_int_msd_upper = np.append(con_int_msd_upper, distro.con_int[1])
         distributions.append(distro)
     return (
-        output_delta_t, mean_msd, err_msd, con_int_msd_lower,
-        con_int_msd_upper, distributions)
+        output_delta_t, mean_msd, err_msd, distributions)
 
 
 def mscd_bootstrap(delta_t, disp_3d, indices=None, n_resamples=1000,
@@ -123,11 +119,10 @@ def mscd_bootstrap(delta_t, disp_3d, indices=None, n_resamples=1000,
 
     Returns:
         :py:attr:`tuple`: Containing:
-            - :py:attr:`array_like`: Timestep values that were resampled.
-            - :py:attr:`array_like`: Resampled mean squared displacement.
-            - :py:attr:`array_like`: Standard deviation in mean squared displacement.
-            - :py:attr:`array_like`: Lower bound in confidence interval for mean squared displacement.
-            - :py:attr:`array_like`: Upper bound in confidence interval for mean squared displacement.
+           - :py:attr:`array_like`: Timestep values that were resampled.
+            - :py:attr:`array_like`: Resampled mean squared charge displacement.
+            - :py:attr:`array_like`: Variance in mean squared charge displacement.
+            - :py:attr:`list` of :py:class:`uravu.distribution.Distribution`: Resampled mean squared charge distributions.
     """
     if confidence_interval is None:
         confidence_interval = [2.5, 97.5]
@@ -180,40 +175,25 @@ def mscd_bootstrap(delta_t, disp_3d, indices=None, n_resamples=1000,
         output_delta_t = np.append(output_delta_t, delta_t[i])
         mean_mscd = np.append(mean_mscd, distro.n / len(indices))
         err_mscd = np.append(err_mscd, np.var(distro.samples, ddof=1))
-        con_int_mscd_lower = np.append(
-            con_int_mscd_lower, distro.con_int[0] / len(indices))
-        con_int_mscd_upper = np.append(
-            con_int_mscd_upper, distro.con_int[1] / len(indices))
         distributions.append(distro)
     return (
-        output_delta_t, mean_mscd, err_mscd, con_int_mscd_lower,
-        con_int_mscd_upper, distributions)
+        output_delta_t, mean_mscd, err_mscd, distributions)
 
 
 class Diffusion(Relationship):
     r"""
-    Evaluate the data with a Einstein diffusion relationship. For attributes associated with the :py:class:`uravu.relationship.Relationship` class see that documentation.
+    Evaluate the data with a Einstein diffusion relationship. 
+    For attributes associated with the :py:class:`uravu.relationship.Relationship` class see that documentation.
     This :py:attr:`uravu.relationship.Relationship.variables` for this model is a :py:attr:`list` of length 2, where :py:attr:`~uravu.relationship.Relationship.variables[0]` is the gradient of the straight line and :py:attr:`~uravu.relationship.Relationship.variables[1]` is the offset of the ordinate. 
 
     Args:       
         delta_t (:py:attr:`array_like`): Timestep data.
         msd (:py:attr:`array_like`): Mean squared displacement data.
-        msd_error (:py:attr:`array_like`): Uncertainty in the mean squared displacement data.
-        delta_t_unit (:py:class:`pint.unit.Unit`, optional): The unit for the timesteps. Default is :py:attr:`kelvin`.
-        msd_unit (:py:class:`pint.unit.Unit`, optional): The unit for the mean squared displacement. Default is :py:attr:`angstrom**2`.
-        delta_t_names (:py:attr:`str`, optional): The label for the timesteps. Default is :py:attr:`'$\delta t$'`.
-        msd_names (:py:attr:`str`, optional): The label for the mean squared displacement. Default is :py:attr:`'$\langle r ^ 2 \rangle$'`.
-        bounds (:py:attr:`tuple`): The minimum and maximum values for each parameters. Defaults to :py:attr:`None`.
-        unaccounted_uncertainty (:py:attr:`bool`, optional): Should an unaccounted uncertainty in the ordinate be added? Defaults to :py:attr:`False`.
+        bounds (:py:attr:`tuple`, optional): The minimum and maximum values for each parameters.
+        msd_error (:py:attr:`array_like`): Normal uncertainty in the mean squared displacement data. Not necessary if :py:attr:`msd` is :py:attr:`list` of :py:class:`uravu.distribution.Distribution` objects. 
     """
-    def __init__(self, delta_t, msd,
-                 delta_t_unit=UREG.femtoseconds, msd_unit=UREG.angstrom**2,
-                 delta_t_names=r'$\delta t$',
-                 msd_names=r'$\langle r ^ 2 \rangle$', bounds=None):
-        variable_names = ['m', r'$D_0$']
-        variable_units = [msd_unit / delta_t_unit, msd_unit]
-        super().__init__(
-            utils.straight_line, delta_t, msd, bounds)
+    def __init__(self, delta_t, msd, bounds, msd_errors=None):
+        super().__init__(utils.straight_line, delta_t, msd, bounds, ordinate_error=msd_errors)
 
     @property
     def diffusion_coefficient(self):
@@ -223,17 +203,5 @@ class Diffusion(Relationship):
         Returns:
             (:py:class:`uncertainties.core.Variable` or :py:class:`uravu.distribution.Distribution`): The diffusion coefficient in the input units.
         """
-        return Distribution(self.variables[0].samples / 6, r'$D$', None)
+        return Distribution(self.variables[0].samples / 6, r'$D$')
         
-
-    def sample(self, **kwargs):
-        """
-        Use MCMC to sample the posterior distribution of the relationship. For keyword arguments see the :func:`uravu.relationship.Relationship.mcmc` docs. 
-        """
-        self.mcmc(prior_function=self.prior, **kwargs)
-
-    def nested(self, **kwargs):
-        """
-        Use nested sampling to determine natural log-evidence for the model. For keyword arguments see the :func:`uravu.relationship.Relationship.nested_sampling` docs.
-        """
-        self.nested_sampling(prior_function=self.prior, **kwargs)
