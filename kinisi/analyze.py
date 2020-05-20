@@ -25,9 +25,8 @@ class DiffAnalyzer:
         disp_3d (:py:attr:`list` of :py:attr:`array_like`): Each element in the :py:attr:`list` has the axes [atom, displacement observation, dimension] and there is one element for each delta_t value. *Note: it is necessary to use a :py:attr:`list` of :py:attr:`array_like` as the number of observations is not necessary the same at each timestep point*.
         indices (:py:attr:`array_like`): Indices for the atoms in the trajectory used in the calculation of the diffusion.
         msd (:py:attr:`array_like`): The block bootstrap determined mean squared displacement values.
-        msd_err (:py:attr:`array_like`): A single standard deviation on each distribution underlying the mean squared displacement values.
-        msd_lb (:py:attr:`array_like`): The 2.5 % confidence interval value on each distribution underlying the mean squared displacement values.
-        msd_ub (:py:attr:`array_like`): The 97.5 % confidence interval value on each distribution underlying the mean squared displacement values.
+        msd_err (:py:attr:`array_like`): A upper and lower uncertainty in the mean squared displacement values.
+        MSD (:py:attr:`list` or :py:class:`Distribution`): The distributions describing the MSD at each timestep.
         relationship (:py:class:`kinisi.diffusion.Diffusion`): The :py:class:`~kinisi.diffusion.Diffusion` class object that describes the diffusion Einstein relationship.
         D (:py:class:`uravu.distribution.Distribution`): The gradient of the Einstein relationship divided by 6 (twice the number of dimensions).
         D_offset (:py:class:`uravu.distribution.Distribution`): The offset from the abscissa of the Einstein relationship.
@@ -65,3 +64,47 @@ class DiffAnalyzer:
 
         self.D = self.relationship.diffusion_coefficient
         self.D_offset = self.relationship.variables[1]
+
+
+class MSDAnalyzer:
+    """
+    The :py:class:`kinisi.analyze.MSDAnalyzer` class evaluates the MSD of atoms in a material. 
+    This is achieved through the application of a block bootstrapping methodology to obtain the most statistically accurate values for mean squared displacement and the associated uncertainity. 
+
+    Attributes:
+        delta_t (:py:attr:`array_like`):  Timestep values. 
+        disp_3d (:py:attr:`list` of :py:attr:`array_like`): Each element in the :py:attr:`list` has the axes [atom, displacement observation, dimension] and there is one element for each delta_t value. *Note: it is necessary to use a :py:attr:`list` of :py:attr:`array_like` as the number of observations is not necessary the same at each timestep point*.
+        indices (:py:attr:`array_like`): Indices for the atoms in the trajectory used in the calculation of the diffusion.
+        msd (:py:attr:`array_like`): The block bootstrap determined mean squared displacement values.
+        msd_err (:py:attr:`array_like`): A upper and lower uncertainty in the mean squared displacement values.
+        MSD (:py:attr:`list` or :py:class:`Distribution`): The distributions describing the MSD at each timestep.
+        relationship (:py:class:`kinisi.diffusion.Diffusion`): The :py:class:`~kinisi.diffusion.Diffusion` class object that describes the diffusion Einstein relationship.
+
+    Args:
+        file (:py:attr:`str` or :py:attr:`list` of :py:attr:`str`): The file path(s) that should be read by either the :py:class:`pymatgen.io.vasp.Xdatcar` or :py:class:`MDAnalysis.core.universe.Universe` classes. 
+        params (:py:attr:`dict`): The parameters for the :py:mod:`kinisi.parser` object, which is either :py:class:`kinisi.parser.PymatgenParser` or :py:class:`kinisi.parser.MDAnalysisParser` depending on the input file format. See the appropriate documention for more guidence on this object.  
+        format (:py:attr:`str`, optional): The file format, for the :py:class:`kinisi.parser.PymatgenParser` this should be :py:attr:`'Xdatcar'` and for :py:class:`kinisi.parser.MDAnalysisParser` this should be the appropriate format to be passed to the :py:class:`MDAnalysis.core.universe.Universe`. Defaults to :py:attr:`'Xdatcar'`.
+        bounds (:py:attr:`tuple`, optional): Minimum and maximum values for the gradient and intercept of the diffusion relationship. Defaults to :py:attr:`((0, 100), (-10, 10))`. 
+    """
+    def __init__(self, file, params, format='Xdatcar'):  # pragma: no cover
+        if format is 'Xdatcar':
+            xd = Xdatcar(file)
+            u = PymatgenParser(xd.structures, **params)
+        else:
+            universe = mda.Universe(*file, format=format)
+            u = MDAnalysisParser(universe, **params)
+
+        self.delta_t = u.delta_t
+        self.disp_3d = u.disp_3d
+        self.indices = u.indices
+
+        diff_data = diffusion.msd_bootstrap(self.delta_t, self.disp_3d)
+
+        self.delta_t = diff_data[0]
+        self.MSD = diff_data[3]
+
+        self.relationship = diffusion.Diffusion(self.delta_t, self.MSD, ((0, 100), (-10, 10))))
+
+        self.msd = self.relationship.y.n
+        self.msd_err = self.relationship.y.s
+
