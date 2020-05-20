@@ -107,7 +107,7 @@ class MSDAnalyzer:
         self.delta_t = diff_data[0]
         self.MSD = diff_data[3]
 
-        self.relationship = diffusion.Diffusion(self.delta_t, self.MSD, ((0, 100), (-10, 10))))
+        self.relationship = diffusion.Diffusion(self.delta_t, self.MSD, ((0, 100), (-10, 10)))
 
         self.msd = self.relationship.y.n
         self.msd_err = self.relationship.y.s
