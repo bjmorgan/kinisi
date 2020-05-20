@@ -60,7 +60,7 @@ class DiffAnalyzer:
         self.msd = self.relationship.y.n
         self.msd_err = self.relationship.y.s
 
-        self.relationship.max_likelihood()
+        self.relationship.max_likelihood('diff_evo')
         self.relationship.sample()
 
         self.D = self.relationship.diffusion_coefficient
