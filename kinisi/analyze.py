@@ -37,7 +37,7 @@ class DiffAnalyzer:
         format (:py:attr:`str`, optional): The file format, for the :py:class:`kinisi.parser.PymatgenParser` this should be :py:attr:`'Xdatcar'` and for :py:class:`kinisi.parser.MDAnalysisParser` this should be the appropriate format to be passed to the :py:class:`MDAnalysis.core.universe.Universe`. Defaults to :py:attr:`'Xdatcar'`.
         bounds (:py:attr:`tuple`, optional): Minimum and maximum values for the gradient and intercept of the diffusion relationship. Defaults to :py:attr:`((0, 100), (-10, 10))`. 
     """
-    def __init__(self, file, params, format='Xdatcar', bounds=((0, 100), (-10, 10)):  # pragma: no cover
+    def __init__(self, file, params, format='Xdatcar', bounds=((0, 100), (-10, 10))):  # pragma: no cover
         if format is 'Xdatcar':
             xd = Xdatcar(file)
             u = PymatgenParser(xd.structures, **params)
@@ -53,7 +53,6 @@ class DiffAnalyzer:
 
         self.delta_t = diff_data[0]
         self.msd = diff_data[1]
-        self.msd_err = diff_data[2]
         self.MSD = diff_data[3]
 
         self.relationship = diffusion.Diffusion(self.delta_t, self.MSD, bounds)
@@ -63,7 +62,3 @@ class DiffAnalyzer:
 
         self.D = self.relationship.diffusion_coefficient
         self.D_offset = self.relationship.variables[1]
-
-        
-
-

@@ -8,14 +8,8 @@ Parser functions, including implementation for :py:mod:`pymatgen` compatible VAS
 
 # pylint: disable=R0902,R0913
 
-# This parser borrows heavily from the
-# pymatgen.analysis.diffusion_analyzer.DiffusionAnalyzer
-# class, originally authored by Will Richards
-# (wrichard@mit.edu) and Shyue Ping Ong.
-# We include this statement to not that we make
-# no claim to authorship of that code and make
-# no attack on the original authors.
-#
+# This parser borrows heavily from the pymatgen.analysis.diffusion_analyzer.DiffusionAnalyzer class, originally authored by Will Richards (wrichard@mit.edu) and Shyue Ping Ong. We include this statement to not that we make no claim to authorship of that code and make no attack on the original authors.
+
 # In fact, we love pymatgen!
 
 import numpy as np
@@ -45,10 +39,11 @@ class Parser:
         step_step (:py:attr:`int`): Sampling freqency of the displacements (time_step is multiplied by this number to get the real time between measurements).
         min_obs (:py:attr:`int`, optional): Minimum number of observations to have before including in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times. Defaults to :py:attr:`30`.    
     """
-    def __init__(self, drift_corrected, indices, time_step, step_skip, min_obs=30):
+    def __init__(self, drift_corrected, indices, time_step, step_skip, min_obs=30, min_dt=100):
         self.time_step = time_step
         self.step_skip = step_skip
         self.indices = indices
+        self.min_dt = min_dt
 
         nsteps = drift_corrected.shape[1]
 
@@ -69,17 +64,13 @@ class Parser:
         Returns:
             :py:attr:`array_like`: Smoothed timesteps.
         """
-        min_dt = int(1000 / (self.step_skip * self.time_step))
+        min_dt = int(self.min_dt / (self.step_skip * self.time_step))
         max_dt = min(len(indices) * nsteps // min_obs, nsteps)
         if min_dt == 0:
             min_dt = 1
         if min_dt >= max_dt:
             raise ValueError('Not enough data to calculate diffusivity')
-        timesteps = np.arange(
-            min_dt,
-            max_dt,
-            max(int((max_dt - min_dt) / 200), 1),
-        )
+        timesteps = np.arange(min_dt, max_dt, max(int((max_dt - min_dt) / 200), 1))
         return timesteps
 
     def get_disps(self, timesteps, drift_corrected):
@@ -98,12 +89,8 @@ class Parser:
         delta_t = timesteps * self.time_step * self.step_skip
         disp_3d = []
         for timestep in tqdm(timesteps, desc='Getting Displacements'):
-            disp = np.subtract(
-                drift_corrected[self.indices, timestep:, :],
-                drift_corrected[self.indices, :-timestep, :]
-            )
+            disp = np.subtract(drift_corrected[self.indices, timestep:, :], drift_corrected[self.indices, :-timestep, :])
             disp_3d.append(disp)
-
         return delta_t, disp_3d
 
 
@@ -260,11 +247,7 @@ def get_matrix(dimensions):
     gamma_star = np.arccos(val)
 
     vector_a = [a * sin_beta, 0.0, a * cos_beta]
-    vector_b = [
-        -b * sin_alpha * np.cos(gamma_star),
-        b * sin_alpha * np.sin(gamma_star),
-        b * cos_alpha,
-    ]
+    vector_b = [-b * sin_alpha * np.cos(gamma_star), b * sin_alpha * np.sin(gamma_star), b * cos_alpha]
     vector_c = [0.0, 0.0, float(c)]
 
     return np.array([vector_a, vector_b, vector_c], dtype=np.float64).reshape((3, 3))

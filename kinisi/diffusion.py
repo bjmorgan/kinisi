@@ -19,9 +19,7 @@ from uravu.relationship import Relationship
 from uravu import UREG, utils
 
 
-def msd_bootstrap(delta_t, disp_3d, n_resamples=1000, samples_freq=1,
-                  confidence_interval=None, max_resamples=100000,
-                  bootstrap_multiplier=1, progress=True):
+def msd_bootstrap(delta_t, disp_3d, n_resamples=1000, samples_freq=1, confidence_interval=None, max_resamples=100000, bootstrap_multiplier=1, progress=True):
     """
     Perform a bootstrap resampling to obtain accurate estimates for the mean and uncertainty for the squared displacements. 
     This resampling method is applied until the MSD distribution is normal(or the `max_resamples` has been reached) and therefore may be described with a median and confidence interval.
@@ -50,9 +48,7 @@ def msd_bootstrap(delta_t, disp_3d, n_resamples=1000, samples_freq=1,
     max_obs = displacements[0].shape[1]
     output_delta_t = np.array([])
     mean_msd = np.array([])
-    err_msd = np.array([])
-    con_int_msd_lower = np.array([])
-    con_int_msd_upper = np.array([])
+    var_msd = np.array([])
     distributions = []
     if progress:
         iterator = tqdm(range(len(displacements)), desc='Bootstrapping displacements')
@@ -66,44 +62,23 @@ def msd_bootstrap(delta_t, disp_3d, n_resamples=1000, samples_freq=1,
         # approximate number of "non-overlapping" observations, allowing
         # for partial overlap
         # Evaluate MSD first
-        n_samples_msd = int(
-            max_obs / dt_int * n_atoms) * bootstrap_multiplier
+        n_samples_msd = int(max_obs / dt_int * n_atoms) * bootstrap_multiplier
         if n_samples_msd <= 1:
             continue
-        resampled = [
-            np.mean(resample(d_squared.flatten(), n_samples=n_samples_msd))
-            for j in range(n_resamples)
-        ]
-        distro = Distribution(
-            resampled, "delta_t_{}".format(i), confidence_interval
-        )
-        while (
-                not distro.normal) and distro.size < (
-                    max_resamples-n_resamples):
-            distro.add_samples(
-                [
-                    np.mean(
-                        resample(
-                            d_squared.flatten(),
-                            n_samples=n_samples_msd)) for j in range(100)]
-            )
+        resampled = [np.mean(resample(d_squared.flatten(), n_samples=n_samples_msd)) for j in range(n_resamples)]
+        distro = Distribution(resampled, "delta_t_{}".format(i), confidence_interval)
+        while (not distro.normal) and distro.size < (max_resamples-n_resamples):
+            distro.add_samples([np.mean(resample(d_squared.flatten(), n_samples=n_samples_msd)) for j in range(100)])
         if distro.size >= (max_resamples-n_resamples):
-            warnings.warn("The maximum number of resamples has been reached, "
-                          "and the distribution is not yet normal. The "
-                          "distribution will be treated as normal.")
+            warnings.warn("The maximum number of resamples has been reached, and the distribution is not yet normal. The distribution will be treated as normal.")
         output_delta_t = np.append(output_delta_t, delta_t[i])
         mean_msd = np.append(mean_msd, distro.n)
-        err_msd = np.append(
-            err_msd, np.var(distro.samples, ddof=1))
+        var_msd = np.append(var_msd, distro.v)
         distributions.append(distro)
-    return (
-        output_delta_t, mean_msd, err_msd, distributions)
+    return output_delta_t, mean_msd, var_msd, distributions
 
 
-def mscd_bootstrap(delta_t, disp_3d, indices=None, n_resamples=1000,
-                   samples_freq=1, confidence_interval=None,
-                   max_resamples=100000, bootstrap_multiplier=1,
-                   progress=True):
+def mscd_bootstrap(delta_t, disp_3d, indices=None, n_resamples=1000, samples_freq=1, confidence_interval=None, max_resamples=100000, bootstrap_multiplier=1, progress=True):
     """
     Perform a bootstrap resampling to obtain accurate estimates for the mean and uncertainty for the squared charge displacements. This resampling method is applied until the MSCD distribution is normal (or the `max_resamples` has been reached) and therefore may be described with a median and confidence interval.
 
@@ -131,9 +106,7 @@ def mscd_bootstrap(delta_t, disp_3d, indices=None, n_resamples=1000,
     max_obs = displacements[0].shape[1]
     output_delta_t = np.array([])
     mean_mscd = np.array([])
-    err_mscd = np.array([])
-    con_int_mscd_lower = np.array([])
-    con_int_mscd_upper = np.array([])
+    var_mscd = np.array([])
     distributions = []
     if progress:
         iterator = tqdm(range(len(displacements)), desc='Bootstrapping displacements')
@@ -147,37 +120,20 @@ def mscd_bootstrap(delta_t, disp_3d, indices=None, n_resamples=1000,
         # approximate number of "non-overlapping" observations, allowing
         # for partial overlap
         # Then evaluate MSCD
-        n_samples_mscd = int(
-            max_obs / dt_int / samples_freq) * bootstrap_multiplier
+        n_samples_mscd = int(max_obs / dt_int / samples_freq) * bootstrap_multiplier
         if n_samples_mscd <= 1:
             continue
-        resampled = [
-            np.mean(resample(sq_chg_disp.flatten(), n_samples=n_samples_mscd))
-            for j in range(n_resamples)
-        ]
-        distro = Distribution(
-            resampled, "delta_t_{}".format(i), confidence_interval
-        )
-        while (
-                not distro.normal) and distro.size < (
-                    max_resamples-n_resamples):
-            distro.add_samples(
-                [
-                    np.mean(
-                        resample(
-                            sq_chg_disp.flatten(),
-                            n_samples=n_samples_mscd)) for j in range(100)]
-            )
+        resampled = [np.mean(resample(sq_chg_disp.flatten(), n_samples=n_samples_mscd)) for j in range(n_resamples)]
+        distro = Distribution(resampled, "delta_t_{}".format(i), confidence_interval)
+        while (not distro.normal) and distro.size < (max_resamples-n_resamples):
+            distro.add_samples([np.mean(resample(sq_chg_disp.flatten(), n_samples=n_samples_mscd)) for j in range(100)])
         if distro.size >= (max_resamples-n_resamples):
-            warnings.warn("The maximum number of resamples has been reached, "
-                          "and the distribution is not yet normal. The "
-                          "distribution will be treated as normal.")
+            warnings.warn("The maximum number of resamples has been reached, and the distribution is not yet normal. The distribution will be treated as normal.")
         output_delta_t = np.append(output_delta_t, delta_t[i])
         mean_mscd = np.append(mean_mscd, distro.n / len(indices))
-        err_mscd = np.append(err_mscd, np.var(distro.samples, ddof=1))
+        var_mscd = np.append(var_mscd, distro.v)
         distributions.append(distro)
-    return (
-        output_delta_t, mean_mscd, err_mscd, distributions)
+    return output_delta_t, mean_mscd, var_mscd, distributions
 
 
 class Diffusion(Relationship):
