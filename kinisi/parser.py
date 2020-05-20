@@ -33,7 +33,7 @@ class Parser:
         min_dt (:py:attr:`float`, optional): Minimum timestep to be evaluated.
     
     Args:
-        disp (:py:attr:`array_like`: Displacements of atoms.
+        disp (:py:attr:`array_like`): Displacements of atoms.
         structures (:py:attr:`list` or :py:class`pymatgen.core.structure.Structure`): Structures ordered in sequence of run. 
         specie (:py:class:`pymatgen.core.periodic_table.Element` or :py:class:`pymatgen.core.periodic_table.Specie`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
         time_step (:py:attr:`float`): Time step between measurements.
