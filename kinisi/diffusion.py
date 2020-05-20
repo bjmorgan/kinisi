@@ -51,7 +51,7 @@ def msd_bootstrap(delta_t, disp_3d, n_resamples=1000, samples_freq=1, confidence
     var_msd = np.array([])
     distributions = []
     if progress:
-        iterator = tqdm(range(len(displacements)), desc='Bootstrapping displacements')
+        iterator = tqdm(range(len(displacements)), desc='Bootstrapping Displacements')
     else:
         iterator = range(len(displacements))
     for i in iterator:
@@ -109,7 +109,7 @@ def mscd_bootstrap(delta_t, disp_3d, indices=None, n_resamples=1000, samples_fre
     var_mscd = np.array([])
     distributions = []
     if progress:
-        iterator = tqdm(range(len(displacements)), desc='Bootstrapping displacements')
+        iterator = tqdm(range(len(displacements)), desc='Bootstrapping Displacements')
     else:
         iterator = range(len(displacements))
     for i in iterator:
