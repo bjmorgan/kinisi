@@ -32,17 +32,19 @@ class DiffAnalyzer:
         D_offset (:py:class:`uravu.distribution.Distribution`): The offset from the abscissa of the Einstein relationship.
 
     Args:
-        file (:py:attr:`str` or :py:attr:`list` of :py:attr:`str`): The file path(s) that should be read by either the :py:class:`pymatgen.io.vasp.Xdatcar` or :py:class:`MDAnalysis.core.universe.Universe` classes. 
+        trajectory (:py:attr:`str` or :py:attr:`list` of :py:attr:`str` or :py:attr:`list` of :py:class`pymatgen.core.structure.Structure`): The file path(s) that should be read by either the :py:class:`pymatgen.io.vasp.Xdatcar` or :py:class:`MDAnalysis.core.universe.Universe` classes, or a :py:attr:`list` of :py:class:`pymatgen.core.structure.Structure` objects ordered in sequence of run. 
         params (:py:attr:`dict`): The parameters for the :py:mod:`kinisi.parser` object, which is either :py:class:`kinisi.parser.PymatgenParser` or :py:class:`kinisi.parser.MDAnalysisParser` depending on the input file format. See the appropriate documention for more guidence on this object.  
         format (:py:attr:`str`, optional): The file format, for the :py:class:`kinisi.parser.PymatgenParser` this should be :py:attr:`'Xdatcar'` and for :py:class:`kinisi.parser.MDAnalysisParser` this should be the appropriate format to be passed to the :py:class:`MDAnalysis.core.universe.Universe`. Defaults to :py:attr:`'Xdatcar'`.
         bounds (:py:attr:`tuple`, optional): Minimum and maximum values for the gradient and intercept of the diffusion relationship. Defaults to :py:attr:`((0, 100), (-10, 10))`. 
     """
-    def __init__(self, file, params, format='Xdatcar', bounds=((0, 100), (-10, 10))):  # pragma: no cover
+    def __init__(self, trajectory, params, format='Xdatcar', bounds=((0, 100), (-10, 10))):  # pragma: no cover
         if format is 'Xdatcar':
-            xd = Xdatcar(file)
+            xd = Xdatcar(trajectory)
             u = PymatgenParser(xd.structures, **params)
+        elif format is 'structures':
+            u = PymatgenParser(trajectory, **params)
         else:
-            universe = mda.Universe(*file, format=format)
+            universe = mda.Universe(*trajectory, format=format)
             u = MDAnalysisParser(universe, **params)
 
         self.delta_t = u.delta_t
@@ -81,17 +83,19 @@ class MSDAnalyzer:
         relationship (:py:class:`kinisi.diffusion.Diffusion`): The :py:class:`~kinisi.diffusion.Diffusion` class object that describes the diffusion Einstein relationship.
 
     Args:
-        file (:py:attr:`str` or :py:attr:`list` of :py:attr:`str`): The file path(s) that should be read by either the :py:class:`pymatgen.io.vasp.Xdatcar` or :py:class:`MDAnalysis.core.universe.Universe` classes. 
+        trajectory (:py:attr:`str` or :py:attr:`list` of :py:attr:`str` or :py:attr:`list` of :py:class`pymatgen.core.structure.Structure`): The file path(s) that should be read by either the :py:class:`pymatgen.io.vasp.Xdatcar` or :py:class:`MDAnalysis.core.universe.Universe` classes, or a :py:attr:`list` of :py:class:`pymatgen.core.structure.Structure` objects ordered in sequence of run. 
         params (:py:attr:`dict`): The parameters for the :py:mod:`kinisi.parser` object, which is either :py:class:`kinisi.parser.PymatgenParser` or :py:class:`kinisi.parser.MDAnalysisParser` depending on the input file format. See the appropriate documention for more guidence on this object.  
         format (:py:attr:`str`, optional): The file format, for the :py:class:`kinisi.parser.PymatgenParser` this should be :py:attr:`'Xdatcar'` and for :py:class:`kinisi.parser.MDAnalysisParser` this should be the appropriate format to be passed to the :py:class:`MDAnalysis.core.universe.Universe`. Defaults to :py:attr:`'Xdatcar'`.
         bounds (:py:attr:`tuple`, optional): Minimum and maximum values for the gradient and intercept of the diffusion relationship. Defaults to :py:attr:`((0, 100), (-10, 10))`. 
     """
-    def __init__(self, file, params, format='Xdatcar'):  # pragma: no cover
+    def __init__(self, trajectory, params, format='Xdatcar'):  # pragma: no cover
         if format is 'Xdatcar':
-            xd = Xdatcar(file)
+            xd = Xdatcar(trajectory)
             u = PymatgenParser(xd.structures, **params)
+        elif format is 'structures':
+            u = PymatgenParser(trajectory, **params)
         else:
-            universe = mda.Universe(*file, format=format)
+            universe = mda.Universe(*trajectory, format=format)
             u = MDAnalysisParser(universe, **params)
 
         self.delta_t = u.delta_t
