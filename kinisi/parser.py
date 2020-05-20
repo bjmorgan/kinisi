@@ -30,6 +30,7 @@ class Parser:
         indices (:py:attr:`array_like`): Indices for the atoms in the trajectory used in the calculation of the diffusion.
         delta_t (:py:attr:`array_like`):  Timestep values.
         disp_3d (:py:attr:`list` of :py:attr:`array_like`): Each element in the :py:attr:`list` has the axes [atom, displacement observation, dimension] and there is one element for each delta_t value. *Note: it is necessary to use a :py:attr:`list` of :py:attr:`array_like` as the number of observations is not necessary the same at each timestep point*.
+        min_dt (:py:attr:`float`, optional): Minimum timestep to be evaluated.
     
     Args:
         disp (:py:attr:`array_like`: Displacements of atoms.
@@ -38,6 +39,7 @@ class Parser:
         time_step (:py:attr:`float`): Time step between measurements.
         step_step (:py:attr:`int`): Sampling freqency of the displacements (time_step is multiplied by this number to get the real time between measurements).
         min_obs (:py:attr:`int`, optional): Minimum number of observations to have before including in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times. Defaults to :py:attr:`30`.    
+        min_dt (:py:attr:`float`, optional): Minimum timestep to be evaluated. Defaults to :py:attr:`100`.
     """
     def __init__(self, disp, indices, framework_indices, time_step, step_skip, min_obs=30, min_dt=100):
         self.time_step = time_step
@@ -126,15 +128,16 @@ class PymatgenParser(Parser):
         time_step (:py:attr:`float`): Time step between measurements.
         step_step (:py:attr:`int`): Sampling freqency of the displacements (time_step is multiplied by this number to get the real time between measurements).
         min_obs (:py:attr:`int`, optional): Minimum number of observations to have before including in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times. Defaults to :py:attr:`30`.    
+        min_dt (:py:attr:`float`, optional): Minimum timestep to be evaluated. Defaults to :py:attr:`100`.
     """
-    def __init__(self, structures, specie, time_step, step_skip, min_obs=30):
+    def __init__(self, structures, specie, time_step, step_skip, min_obs=30, min_dt=100):
         structure, coords, latt = _pmg_get_structure_coords_latt(structures)
 
         disp, latt = _get_disp(coords, latt)
 
         indices, framework_indices = self.get_indices(structure, specie)
 
-        super().__init__(disp, indices, framework_indices, time_step, step_skip, min_obs)
+        super().__init__(disp, indices, framework_indices, time_step, step_skip, min_obs, min_dt)
 
     def get_indices(self, structure, specie):
         """
@@ -169,17 +172,18 @@ class MDAnalysisParser(Parser):
         specie (:py:attr:`str`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
         time_step (:py:attr:`float`): Time step between measurements.
         step_step (:py:attr:`int`): Sampling freqency of the displacements (time_step is multiplied by this number to get the real time between measurements).
-        min_obs (:py:attr:`int`, optional): Minimum number of observations to have before including in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times. Defaults to :py:attr:`30`.
         sub_sample_time (:py:attr:`float`, optional): Multiple of the :py:attr:`time_step` to sub sample at. Defaults to :py:attr:`1` where all timesteps are used. 
+        min_obs (:py:attr:`int`, optional): Minimum number of observations to have before including in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times. Defaults to :py:attr:`30`.
+        min_dt (:py:attr:`float`, optional): Minimum timestep to be evaluated. Defaults to :py:attr:`100`.
     """
-    def __init__(self, universe, specie, time_step, step_skip, min_obs=30, sub_sample_time=1):
+    def __init__(self, universe, specie, time_step, step_skip, min_obs=30, sub_sample_time=1, min_dt=100):
         structure, coords, latt = _mda_get_structure_coords_latt(universe, specie, sub_sample_time)
 
         disp, latt = _get_disp(coords, latt)
 
         indices, framework_indices = self.get_indices(structure, specie)
                
-        super().__init__(dips, indices, framework_indices, time_step, step_skip * sub_sample_time, min_obs)
+        super().__init__(dips, indices, framework_indices, time_step, step_skip * sub_sample_time, min_obs, min_dt)
 
     def get_indices(self, structure, specie):
         """
