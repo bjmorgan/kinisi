@@ -53,11 +53,12 @@ class DiffAnalyzer:
         diff_data = diffusion.msd_bootstrap(self.delta_t, self.disp_3d)
 
         self.delta_t = diff_data[0]
-        self.msd = diff_data[3].n
-        self.msd_err = diff_data[3].s
         self.MSD = diff_data[3]
 
         self.relationship = diffusion.Diffusion(self.delta_t, self.MSD, bounds)
+
+        self.msd = self.relationship.y.n
+        self.msd_err = self.relationship.y.s
 
         self.relationship.max_likelihood()
         self.relationship.sample()
