@@ -32,18 +32,20 @@ class Parser:
         disp_3d (:py:attr:`list` of :py:attr:`array_like`): Each element in the :py:attr:`list` has the axes [atom, displacement observation, dimension] and there is one element for each delta_t value. *Note: it is necessary to use a :py:attr:`list` of :py:attr:`array_like` as the number of observations is not necessary the same at each timestep point*.
     
     Args:
-        drift_corrected (:py:attr:`array_like`: Displacements that have been corrected to account for framework drift.
+        disp (:py:attr:`array_like`: Displacements of atoms.
         structures (:py:attr:`list` or :py:class`pymatgen.core.structure.Structure`): Structures ordered in sequence of run. 
         specie (:py:class:`pymatgen.core.periodic_table.Element` or :py:class:`pymatgen.core.periodic_table.Specie`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
         time_step (:py:attr:`float`): Time step between measurements.
         step_step (:py:attr:`int`): Sampling freqency of the displacements (time_step is multiplied by this number to get the real time between measurements).
         min_obs (:py:attr:`int`, optional): Minimum number of observations to have before including in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times. Defaults to :py:attr:`30`.    
     """
-    def __init__(self, drift_corrected, indices, time_step, step_skip, min_obs=30, min_dt=100):
+    def __init__(self, disp, indices, framework_indices, time_step, step_skip, min_obs=30, min_dt=100):
         self.time_step = time_step
         self.step_skip = step_skip
         self.indices = indices
         self.min_dt = min_dt
+
+        drift_corrected = self.correct_drift(framework_indices, disp)
 
         nsteps = drift_corrected.shape[1]
 
@@ -93,6 +95,26 @@ class Parser:
             disp_3d.append(disp)
         return delta_t, disp_3d
 
+    def correct_drift(self, framework_indices, disp):
+        """        
+        Perform drift correction
+
+        Args:
+            framework_indices (:py:attr:`array_like`): Indices of framework atoms, to correct against.
+            disp (:py:attr:`array_like`): Numpy array of with shape [site, time step, axis].
+
+        Returns:
+            :py:attr:`array_like`: Drift of framework corrected disp.
+        """
+        # drift corrected position
+        if len(framework_indices) > 0:
+            framework_disp = disp[framework_indices]
+            drift_corrected = disp - np.average(framework_disp, axis=0)[None, :, :]
+        else:
+            drift_corrected = disp
+
+        return drift_corrected
+
 
 class PymatgenParser(Parser):
     """
@@ -108,24 +130,25 @@ class PymatgenParser(Parser):
     def __init__(self, structures, specie, time_step, step_skip, min_obs=30):
         structure, coords, latt = _pmg_get_structure_coords_latt(structures)
 
-        disp = _get_disp(coords, latt)
+        disp, latt = _get_disp(coords, latt)
 
-        drift_corrected, indices = self.correct_for_drift(structure, disp, specie)
+        indices, framework_indices = self.get_indices(structure, specie)
 
-        super().__init__(drift_corrected, indices, time_step, step_skip, min_obs)
+        super().__init__(disp, indices, framework_indices, time_step, step_skip, min_obs)
 
-    def correct_for_drift(self, structure, disp, specie):
+    def get_indices(self, structure, specie):
         """
+        Determine framework and non-framework indices
+
         Perform drift correction
 
         Args:
             structure (:py:class:`pymatgen.core.structure.Structure`): Initial structure.
-            disp (:py:attr:`array_like`): Numpy array of with shape [site, time step, axis].
             specie (:py:class:`pymatgen.core.periodic_table.Element` or :py:class:`pymatgen.core.periodic_table.Specie`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
 
         Returns:
-            :py:attr:`array_like`: Drift of framework corrected disp.
             :py:attr:`array_like`: Indices for the atoms in the trajectory used in the calculation of the diffusion.
+            :py:attr:`array_like`: Indices of framework atoms.
         """
         indices = []
         framework_indices = []
@@ -134,15 +157,7 @@ class PymatgenParser(Parser):
                 indices.append(i)
             else:
                 framework_indices.append(i)
-
-        # drift corrected position
-        if len(framework_indices) > 0:
-            framework_disp = disp[framework_indices]
-            drift_corrected = disp - np.average(framework_disp, axis=0)[None, :, :]
-        else:
-            drift_corrected = disp
-
-        return drift_corrected, indices
+        return indices, framework_indices
 
 
 class MDAnalysisParser(Parser):
@@ -160,24 +175,25 @@ class MDAnalysisParser(Parser):
     def __init__(self, universe, specie, time_step, step_skip, min_obs=30, sub_sample_time=1):
         structure, coords, latt = _mda_get_structure_coords_latt(universe, specie, sub_sample_time)
 
-        disp = _get_disp(coords, latt)
-              
-        drift_corrected, indices = self.correct_for_drift(structure, disp, specie)
- 
-        super().__init__(drift_corrected, indices, time_step, step_skip * sub_sample_time, min_obs)
+        disp, latt = _get_disp(coords, latt)
 
-    def correct_for_drift(self, structure, disp, specie):
+        indices, framework_indices = self.get_indices(structure, specie)
+               
+        super().__init__(dips, indices, framework_indices, time_step, step_skip * sub_sample_time, min_obs)
+
+    def get_indices(self, structure, specie):
         """
+        Determine framework and non-framework indices
+
         Perform drift correction
 
         Args:
             structure (:py:class:`MDAnalysis.core.groups.AtomGroup`): Initial structure.
-            disp (:py:attr:`array_like`): Numpy array of with shape [site, time step, axis].
-            specie (:py:attr:`str` or :py:class:`pymatgen.core.periodic_table.Specie`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
+            specie (:py:class:`pymatgen.core.periodic_table.Element` or :py:class:`pymatgen.core.periodic_table.Specie`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
 
         Returns:
-            :py:attr:`array_like`: Drift of framework corrected disp.
             :py:attr:`array_like`: Indices for the atoms in the trajectory used in the calculation of the diffusion.
+            :py:attr:`array_like`: Indices of framework atoms.
         """
         indices = []
         framework_indices = []
@@ -186,14 +202,7 @@ class MDAnalysisParser(Parser):
                 indices.append(i)
             else:
                 framework_indices.append(i)
-
-        # drift corrected position
-        if len(framework_indices) > 0:
-            framework_disp = disp[framework_indices]
-            drift_corrected = disp - np.average(framework_disp, axis=0)[None, :, :]
-        else:
-            drift_corrected = disp
-        return drift_corrected, indices
+        return indices, framework_indices
 
 
 def _mda_get_structure_coords_latt(universe, specie, sub_sample_time):
@@ -304,4 +313,4 @@ def _get_disp(coords, latt):
     else:
         latt = np.array(latt)
 
-    return disp
+    return disp, latt

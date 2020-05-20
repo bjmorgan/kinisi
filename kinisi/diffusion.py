@@ -16,7 +16,7 @@ from sklearn.utils import resample
 from tqdm import tqdm
 from uravu.distribution import Distribution
 from uravu.relationship import Relationship
-from uravu import UREG, utils
+from uravu import utils
 
 
 def msd_bootstrap(delta_t, disp_3d, n_resamples=1000, samples_freq=1, confidence_interval=None, max_resamples=100000, bootstrap_multiplier=1, progress=True):
