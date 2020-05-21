@@ -52,10 +52,10 @@ class MSDAnalyzer:
         dt = u.delta_t
         disp_3d = u.disp_3d
 
-        diff_data = diffusion.msd_bootstrap(dt, disp_3d, progress=params['progress'])
+        diff_data = diffusion.MSDBootstrap(dt, disp_3d, progress=params['progress'])
 
-        self.dt = diff_data[0]
-        self.msd_distributions = diff_data[3]
+        self.dt = diff_data.dt
+        self.msd_distributions = diff_data.distributions
 
         self.relationship = diffusion.Diffusion(self.dt, self.msd_distributions, bounds)
 

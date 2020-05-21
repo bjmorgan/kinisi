@@ -19,121 +19,164 @@ from uravu.relationship import Relationship
 from uravu import utils
 
 
-def msd_bootstrap(delta_t, disp_3d, n_resamples=1000, samples_freq=1, confidence_interval=None, max_resamples=100000, bootstrap_multiplier=1, progress=True):
+class Bootstrap:
+    """
+    The top-level class for bootstrapping. 
+
+    Attributes:
+        confidence_interval (:py:attr:`array_like`): The percentile points of the distribution that should be stored. 
+        displacements (:py:attr:`list` of :py:attr:`array_like`): A list of arrays, where each array has the axes [atom, displacement observation, dimension]. There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as the number of observations is not necessary the same at each data point.
+        delta_t (:py:attr:`array_like`): An array of the timestep values.
+        max_obs (:py:attr:`int`): The maximum number of observations for the trajectory.
+        dt (:py:attr:`array_like`): Timestep values that were resampled.
+        distributions ():py:attr:`list` of :py:class:`uravu.distribution.Distribution`): Resampled mean squared distributions.
+        iterator (:py:attr:`tqdm` or :py:attr:`range`): The iteration object. 
+
+    Args:
+        delta_t (:py:attr:`array_like`): An array of the timestep values.
+        disp_3d (:py:attr:`list` of :py:attr:`array_like`): A list of arrays, where each array has the axes [atom, displacement observation, dimension]. There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as the number of observations is not necessary the same at each data point.
+        samples_freq (:py:attr:`int`. optional): The frequency in observations to be sampled. Default is :py:attr:`1` (every observation).
+        confidence_interval (:py:attr:`array_like`, optional): The percentile points of the distribution that should be stored. Default is :py:attr:`[2.5, 97.5]` (a 95 % confidence interval).
+        progress (:py:attr:`bool`, optional): Show tqdm progress for sampling. Default is :py:attr:`True`.
+    """
+    def __init__(self, delta_t, disp_3d, samples_freq=1, confidence_interval=None, progress=True):
+        if confidence_interval is None:
+            self.confidence_interval = [2.5, 97.5]
+        self.displacements = disp_3d[::samples_freq]
+        self.delta_t = delta_t[::samples_freq]
+        self.max_obs = self.displacements[0].shape[1]
+        self.distributions = []
+        self.dt = np.array([])
+        self.iterator = _iterator(progress, range(len(self.displacements)))
+
+
+class MSDBootstrap(Bootstrap):
     """
     Perform a bootstrap resampling to obtain accurate estimates for the mean and uncertainty for the squared displacements. 
-    This resampling method is applied until the MSD distribution is normal(or the `max_resamples` has been reached) and therefore may be described with a median and confidence interval.
+    This resampling method is applied until the MSD distribution is normal (or the `max_resamples` has been reached) and therefore may be described with a median and confidence interval.
 
     Args:
         delta_t (:py:attr:`array_like`): An array of the timestep values.
-        displacements (:py:attr:`list` of :py:attr:`array_like`): A list of arrays, where each array has the axes [atom, displacement observation, dimension]. There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as the number of observations is not necessary the same at each data point.
+        disp_3d (:py:attr:`list` of :py:attr:`array_like`): A list of arrays, where each array has the axes [atom, displacement observation, dimension]. There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as the number of observations is not necessary the same at each data point.
         n_resamples (:py:attr:`int`, optional): The initial number of resamples to be performed. Default is :py:attr:`1000`.
         samples_freq (:py:attr:`int`. optional): The frequency in observations to be sampled. Default is :py:attr:`1` (every observation).
         confidence_interval (:py:attr:`array_like`, optional): The percentile points of the distribution that should be stored. Default is :py:attr:`[2.5, 97.5]` (a 95 % confidence interval).
         max_resamples (:py:attr:`int`, optional): The max number of resamples to be performed by the distribution is assumed to be normal. This is present to allow user control over the time taken for the resampling to occur. Default is :py:attr:`100000`.
         bootstrap_multiplier (:py:attr:`int`, optional): The factor by which the number of bootstrap samples should be multiplied. The default is :py:attr:`1`, which is the maximum number of truely independent samples in a given timestep. This can be increase, however it is importance to note that when greater than 1 the sampling is no longer independent.
         progress (:py:attr:`bool`, optional): Show tqdm progress for sampling. Default is :py:attr:`True`.
-
-    Returns:
-        :py:attr:`tuple`: Containing:
-            - :py:attr:`array_like`: Timestep values that were resampled.
-            - :py:attr:`array_like`: Resampled mean squared displacement.
-            - :py:attr:`array_like`: Variance in mean squared displacement.
-            - :py:attr:`list` of :py:class:`uravu.distribution.Distribution`: Resampled mean squared distributions.
     """
-    if confidence_interval is None:
-        confidence_interval = [2.5, 97.5]
-    displacements = disp_3d[::samples_freq]
-    delta_t = delta_t[::samples_freq]
-    max_obs = displacements[0].shape[1]
-    output_delta_t = np.array([])
-    mean_msd = np.array([])
-    var_msd = np.array([])
-    distributions = []
-    if progress:
-        iterator = tqdm(range(len(displacements)), desc='Bootstrapping Displacements')
-    else:
-        iterator = range(len(displacements))
-    for i in iterator:
-        d_squared = np.sum(displacements[i] ** 2, axis=2)
-        n_obs = displacements[i].shape[1]
-        n_atoms = displacements[i].shape[0]
-        dt_int = max_obs - n_obs + 1
-        # approximate number of "non-overlapping" observations, allowing
-        # for partial overlap
-        # Evaluate MSD first
-        n_samples_msd = int(max_obs / dt_int * n_atoms) * bootstrap_multiplier
-        if n_samples_msd <= 1:
-            continue
-        resampled = [np.mean(resample(d_squared.flatten(), n_samples=n_samples_msd)) for j in range(n_resamples)]
-        distro = Distribution(resampled, "delta_t_{}".format(i), confidence_interval)
-        while (not distro.normal) and distro.size < (max_resamples-n_resamples):
-            distro.add_samples([np.mean(resample(d_squared.flatten(), n_samples=n_samples_msd)) for j in range(100)])
-        if distro.size >= (max_resamples-n_resamples):
-            warnings.warn("The maximum number of resamples has been reached, and the distribution is not yet normal. The distribution will be treated as normal.")
-        output_delta_t = np.append(output_delta_t, delta_t[i])
-        mean_msd = np.append(mean_msd, distro.n)
-        var_msd = np.append(var_msd, distro.v)
-        distributions.append(distro)
-    return output_delta_t, mean_msd, var_msd, distributions
+    def __init__(self, delta_t, disp_3d, n_resamples=1000, samples_freq=1, confidence_interval=None, max_resamples=10000, bootstrap_multiplier=1, progress=True):
+        super().__init__(delta_t, disp_3d, samples_freq, confidence_interval, progress)
+        for i in self.iterator:
+            d_squared = np.sum(self.displacements[i] ** 2, axis=2)
+            n_samples_msd = _n_samples(self.displacements[i].shape, self.max_obs, bootstrap_multiplier)
+            if n_samples_msd <= 1:
+                continue
+            distro = _sample_until_normal(d_squared, n_samples_msd, n_resamples, max_resamples, self.confidence_interval)
+            self.dt = np.append(self.dt, delta_t[i])
+            self.distributions.append(distro)
 
 
-def mscd_bootstrap(delta_t, disp_3d, indices=None, n_resamples=1000, samples_freq=1, confidence_interval=None, max_resamples=100000, bootstrap_multiplier=1, progress=True):
+class MSCDBootstrap(Bootstrap):
     """
-    Perform a bootstrap resampling to obtain accurate estimates for the mean and uncertainty for the squared charge displacements. This resampling method is applied until the MSCD distribution is normal (or the `max_resamples` has been reached) and therefore may be described with a median and confidence interval.
+    Perform a bootstrap resampling to obtain accurate estimates for the mean and uncertainty for the squared charge displacements. 
+    This resampling method is applied until the MSCD distribution is normal (or the `max_resamples` has been reached) and therefore may be described with a median and confidence interval.
 
     Args:
         delta_t (:py:attr:`array_like`): An array of the timestep values.
-        displacements (:py:attr:`list` of :py:attr:`array_like`): A list of arrays, where each array has the axes [atom, displacement observation, dimension]. There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as the number of observations is not necessary the same at each data point.
+        disp_3d (:py:attr:`list` of :py:attr:`array_like`): A list of arrays, where each array has the axes [atom, displacement observation, dimension]. There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as the number of observations is not necessary the same at each data point.
         n_resamples (:py:attr:`int`, optional): The initial number of resamples to be performed. Default is :py:attr:`1000`.
         samples_freq (:py:attr:`int`. optional): The frequency in observations to be sampled. Default is :py:attr:`1` (every observation).
         confidence_interval (:py:attr:`array_like`, optional): The percentile points of the distribution that should be stored. Default is :py:attr:`[2.5, 97.5]` (a 95 % confidence interval).
         max_resamples (:py:attr:`int`, optional): The max number of resamples to be performed by the distribution is assumed to be normal. This is present to allow user control over the time taken for the resampling to occur. Default is :py:attr:`100000`.
         bootstrap_multiplier (:py:attr:`int`, optional): The factor by which the number of bootstrap samples should be multiplied. The default is :py:attr:`1`, which is the maximum number of truely independent samples in a given timestep. This can be increase, however it is importance to note that when greater than 1 the sampling is no longer independent.
         progress (:py:attr:`bool`, optional): Show tqdm progress for sampling. Default is :py:attr:`True`.
+    """
+    def __init__(self, delta_t, disp_3d, n_resamples=1000, samples_freq=1, confidence_interval=None, max_resamples=10000, bootstrap_multiplier=1, progress=True):
+        super().__init__(delta_t, disp_3d, samples_freq, confidence_interval, progress)
+        for i in self.iterator:
+            sq_com_motion = np.sum(self.displacements[i], axis=0) ** 2
+            sq_chg_disp = np.sum(sq_com_motion, axis=1)
+            n_samples_mscd = _n_samples((1, self.displacements[i].shape[1]), self.max_obs, bootstrap_multiplier)
+            if n_samples_mscd <= 1:
+                continue
+            distro = _sample_until_normal(sq_chg_disp, n_samples_mscd, n_resamples, max_resamples, self.confidence_interval)
+            self.dt = np.append(self.dt, self.delta_t[i])
+            self.distributions.append(distro)
+
+
+def _n_samples(disp_shape, max_obs, bootstrap_multiplier):
+    """
+    Calculate the maximum number of independent observations. 
+
+    Args:
+        disp_shape (:py:attr:`tuple`): The shape of the displacements array.
+        max_obs (:py:attr:`int`): The maximum number of observations for the trajectory.
+        bootstrap_multiplier (:py:attr:`int`, optional): The factor by which the number of bootstrap samples should be multiplied. The default is :py:attr:`1`, which is the maximum number of truely independent samples in a given timestep. This can be increase, however it is importance to note that when greater than 1 the sampling is no longer independent.
+    
+    Returns: 
+        :py:attr:`int`: Maximum number of independent observations.
+    """
+    n_obs = disp_shape[1]
+    n_atoms = disp_shape[0]
+    dt_int = max_obs - n_obs + 1
+    # approximate number of "non-overlapping" observations, allowing
+    # for partial overlap
+    return int(max_obs / dt_int * n_atoms) * bootstrap_multiplier 
+
+
+def _iterator(progress, loop):
+    """
+    Get the iteration object, using :py:mod:`tqdm` as appropriate.
+
+    Args:
+        progress (:py:attr:`bool`): Should :py:mod:`tqdm` be used to give a progress bar.
+        loop (:py:attr:`list` or :py:attr:`range`): The object that should be looped over.
+    
+    Returns:
+        :py:attr:`tqdm` or :py:attr:`range`: Iterator object.
+    """
+    if progress:
+        return tqdm(loop, desc='Bootstrapping Displacements') 
+    else:
+        return loop
+
+
+def _sample_until_normal(array, n_samples, n_resamples, max_resamples, confidence_interval):
+    """
+    Resample from the distribution until a normal distribution is obtained or a maximum is reached. 
+
+    Args:
+        array (:py:attr:`array_like`): The array to sample from. 
+        n_samples (:py:attr:`int`): Number of samples. 
+        r_resamples (:py:attr:`int`): Number of resamples to perform initially.
+        max_resamples (:py:attr:`int`): The maximum number of resamples to perform.
+        confidence_interval (:py:attr:`array_like`): The percentile points of the distribution that should be stored. 
+    
+    Returns:
+        :py:class:`uravu.distribution.Distribution`: The resampled distribution.
+    """
+    distro = Distribution(_bootstrap(array.flatten(), n_samples, n_resamples), ci_points=confidence_interval)
+    while (not distro.normal) and distro.size < max_resamples:
+        distro.add_samples(_bootstrap(array.flatten(), n_samples, 100))
+    if distro.size >= max_resamples:
+        warnings.warn("The maximum number of resamples has been reached, and the distribution is not yet normal.")
+    return distro
+
+
+def _bootstrap(array, n_samples, n_resamples):
+    """
+    Perform a set of resamples.
+
+    Args:
+        array (:py:attr:`array_like`): The array to sample from. 
+        n_samples (:py:attr:`int`): Number of samples. 
+        r_resamples (:py:attr:`int`): Number of resamples to perform initially.
 
     Returns:
-        :py:attr:`tuple`: Containing:
-           - :py:attr:`array_like`: Timestep values that were resampled.
-            - :py:attr:`array_like`: Resampled mean squared charge displacement.
-            - :py:attr:`array_like`: Variance in mean squared charge displacement.
-            - :py:attr:`list` of :py:class:`uravu.distribution.Distribution`: Resampled mean squared charge distributions.
+        :py:attr:`array_like`: Resampled values from the array.
     """
-    if confidence_interval is None:
-        confidence_interval = [2.5, 97.5]
-    displacements = disp_3d[::samples_freq]
-    delta_t = delta_t[::samples_freq]
-    max_obs = displacements[0].shape[1]
-    output_delta_t = np.array([])
-    mean_mscd = np.array([])
-    var_mscd = np.array([])
-    distributions = []
-    if progress:
-        iterator = tqdm(range(len(displacements)), desc='Bootstrapping Displacements')
-    else:
-        iterator = range(len(displacements))
-    for i in iterator:
-        sq_com_motion = np.sum(displacements[i][indices, :, :], axis=0) ** 2
-        sq_chg_disp = np.sum(sq_com_motion, axis=1)
-        n_obs = displacements[i].shape[1]
-        dt_int = max_obs - n_obs + 1
-        # approximate number of "non-overlapping" observations, allowing
-        # for partial overlap
-        # Then evaluate MSCD
-        n_samples_mscd = int(max_obs / dt_int / samples_freq) * bootstrap_multiplier
-        if n_samples_mscd <= 1:
-            continue
-        resampled = [np.mean(resample(sq_chg_disp.flatten(), n_samples=n_samples_mscd)) for j in range(n_resamples)]
-        distro = Distribution(resampled, "delta_t_{}".format(i), confidence_interval)
-        while (not distro.normal) and distro.size < (max_resamples-n_resamples):
-            distro.add_samples([np.mean(resample(sq_chg_disp.flatten(), n_samples=n_samples_mscd)) for j in range(100)])
-        if distro.size >= (max_resamples-n_resamples):
-            warnings.warn("The maximum number of resamples has been reached, and the distribution is not yet normal. The distribution will be treated as normal.")
-        output_delta_t = np.append(output_delta_t, delta_t[i])
-        mean_mscd = np.append(mean_mscd, distro.n / len(indices))
-        var_mscd = np.append(var_mscd, distro.v)
-        distributions.append(distro)
-    return output_delta_t, mean_mscd, var_mscd, distributions
+    return [np.mean(resample(array.flatten(), n_samples=n_samples)) for j in range(n_resamples)]
 
 
 class Diffusion(Relationship):

@@ -39,16 +39,14 @@ class TestMsd(unittest.TestCase):
         to_resample = [
             np.array(ordinate) for i in range(1, 6)
         ]
-        delta_t, mean, err, msd = diffusion.msd_bootstrap(
+        boot = diffusion.MSDBootstrap(
             np.linspace(100, 600, 5, dtype=int),
             to_resample,
             progress=False,
             n_resamples=100,
             max_resamples=1000)
-        assert_equal(delta_t.size, 5)
-        assert_equal(mean.size, 5)
-        assert_equal(err.size, 5)
-        assert_equal(len(msd), 5)
+        assert_equal(boot.dt.size, 5)
+        assert_equal(len(boot.distributions), 5)
 
     def test_msd_bootstrap_b(self):
         """
@@ -58,16 +56,14 @@ class TestMsd(unittest.TestCase):
         to_resample = [
             np.array(ordinate) for i in range(1, 6)
         ]
-        delta_t, mean, err, msd = diffusion.msd_bootstrap(
+        boot = diffusion.MSDBootstrap(
             np.linspace(100, 600, 5, dtype=int),
             to_resample,
             progress=True,
             n_resamples=1,
             max_resamples=1000)
-        assert_equal(delta_t.size, 5)
-        assert_equal(mean.size, 5)
-        assert_equal(err.size, 5)
-        assert_equal(len(msd), 5)
+        assert_equal(boot.dt.size, 5)
+        assert_equal(len(boot.distributions), 5)
 
     def test_msd_bootstrap_c(self):
         """
@@ -85,17 +81,15 @@ class TestMsd(unittest.TestCase):
             ordinate4,
             ordinate5,
         ]
-        delta_t, mean, err, msd = diffusion.msd_bootstrap(
+        boot = diffusion.MSDBootstrap(
             np.linspace(100, 600, 5, dtype=int),
             to_resample,
             progress=False,
             n_resamples=1,
             max_resamples=10, 
             samples_freq=2)
-        assert_equal(delta_t.size, 3)
-        assert_equal(mean.size, 3)
-        assert_equal(err.size, 3)
-        assert_equal(len(msd), 3)
+        assert_equal(boot.dt.size, 3)
+        assert_equal(len(boot.distributions), 3)
     
     def test_msd_bootstrap_d(self):
         """
@@ -113,17 +107,15 @@ class TestMsd(unittest.TestCase):
             ordinate4,
             ordinate5,
         ]
-        delta_t, mean, err, msd = diffusion.msd_bootstrap(
+        boot = diffusion.MSDBootstrap(
             np.linspace(100, 600, 5, dtype=int),
             to_resample,
             progress=False,
             n_resamples=1,
             max_resamples=10, 
             samples_freq=2)
-        assert_equal(delta_t.size, 1)
-        assert_equal(mean.size, 1)
-        assert_equal(err.size, 1)
-        assert_equal(len(msd), 1)
+        assert_equal(boot.dt.size, 1)
+        assert_equal(len(boot.distributions), 1)
 
     def test_mscd_bootstrap_a(self):
         """
@@ -133,17 +125,14 @@ class TestMsd(unittest.TestCase):
         to_resample = [
             np.array(ordinate) for i in range(1, 6)
         ]
-        delta_t, mean, err, msd = diffusion.mscd_bootstrap(
+        boot = diffusion.MSCDBootstrap(
             np.linspace(100, 600, 5, dtype=int),
             to_resample,
-            [1],
             progress=False,
             n_resamples=100,
             max_resamples=1000)
-        assert_equal(delta_t.size, 5)
-        assert_equal(mean.size, 5)
-        assert_equal(err.size, 5) 
-        assert_equal(len(msd), 5)
+        assert_equal(boot.dt.size, 5)
+        assert_equal(len(boot.distributions), 5)
 
     def test_mscd_bootstrap_b(self):
         """
@@ -153,17 +142,14 @@ class TestMsd(unittest.TestCase):
         to_resample = [
             np.array(ordinate) for i in range(1, 6)
         ]
-        delta_t, mean, err, msd = diffusion.mscd_bootstrap(
+        boot = diffusion.MSCDBootstrap(
             np.linspace(100, 600, 5, dtype=int),
             to_resample,
-            [1],
             progress=True,
             n_resamples=1,
             max_resamples=1000)
-        assert_equal(delta_t.size, 5)
-        assert_equal(mean.size, 5)
-        assert_equal(err.size, 5)
-        assert_equal(len(msd), 5)
+        assert_equal(boot.dt.size, 5)
+        assert_equal(len(boot.distributions), 5)
 
     def test_mscd_bootstrap_c(self):
         """
@@ -181,18 +167,15 @@ class TestMsd(unittest.TestCase):
             ordinate4,
             ordinate5,
         ]
-        delta_t, mean, err, msd = diffusion.mscd_bootstrap(
+        boot = diffusion.MSCDBootstrap(
             np.linspace(100, 600, 5, dtype=int),
             to_resample,
-            [1],
             progress=False,
             n_resamples=1,
             max_resamples=10, 
             samples_freq=2)
-        assert_equal(delta_t.size, 2)
-        assert_equal(mean.size, 2)
-        assert_equal(err.size, 2)
-        assert_equal(len(msd), 2)
+        assert_equal(boot.dt.size, 2)
+        assert_equal(len(boot.distributions), 2)
 
     def test_diffusion_init(self):
         """
