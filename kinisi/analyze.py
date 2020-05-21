@@ -33,8 +33,13 @@ class MSDAnalyzer:
     """
     def __init__(self, trajectory, params, dtype='Xdatcar', bounds=((0, 100), (-10, 10))):  # pragma: no cover
         if dtype is 'Xdatcar':
-            xd = Xdatcar(trajectory)
-            u = PymatgenParser(xd.structures, **params)
+            if isinstance(trajectory, list):
+                trajectory_list = (Xdatcar(f) for f in trajectory)
+                structures = _flatten_list([x.structures for x in trajectory_list])
+            else:
+                xd = Xdatcar(trajectory)
+                structures = xd.structures
+            u = PymatgenParser(structures, **params)
         elif dtype is 'structures':
             u = PymatgenParser(trajectory, **params)
         else:
@@ -127,4 +132,15 @@ class DiffAnalyzer(MSDAnalyzer):
         """
         return self.relationship.variables[1]
 
-    
+
+def _flatten_list(this_list):
+    """
+    Flatten nested lists.
+
+    Args:
+        this_list (:py:attr:`list`): List to be flattened. 
+
+    Returns:
+        :py:attr:`list`: Flattened list.
+    """
+    return [item for sublist in this_list for item in sublist]
