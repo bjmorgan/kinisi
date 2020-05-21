@@ -88,21 +88,24 @@ class DiffAnalyzer(MSDAnalyzer):
     This is achieved through the application of a block bootstrapping methodology to obtain the most statistically accurate values for mean squared displacement and the associated uncertainty. 
     The time-scale dependence of the MSD is then modeled with a straight line Einstein relationship, and Markov chain Monte Carlo is used to quantify inverse uncertainties for this model. 
 
-    Attributes:
-        D (:py:class:`uravu.distribution.Distribution`): The gradient of the Einstein relationship divided by 6 (twice the number of dimensions).
-        D_offset (:py:class:`uravu.distribution.Distribution`): The offset from the abscissa of the Einstein relationship.
-
     Args:
         trajectory (:py:attr:`str` or :py:attr:`list` of :py:attr:`str` or :py:attr:`list` of :py:class`pymatgen.core.structure.Structure`): The file path(s) that should be read by either the :py:class:`pymatgen.io.vasp.Xdatcar` or :py:class:`MDAnalysis.core.universe.Universe` classes, or a :py:attr:`list` of :py:class:`pymatgen.core.structure.Structure` objects ordered in sequence of run. 
         params (:py:attr:`dict`): The parameters for the :py:mod:`kinisi.parser` object, which is either :py:class:`kinisi.parser.PymatgenParser` or :py:class:`kinisi.parser.MDAnalysisParser` depending on the input file format. See the appropriate documention for more guidance on this object.  
         dtype (:py:attr:`str`, optional): The file format, for the :py:class:`kinisi.parser.PymatgenParser` this should be :py:attr:`'Xdatcar'` and for :py:class:`kinisi.parser.MDAnalysisParser` this should be the appropriate format to be passed to the :py:class:`MDAnalysis.core.universe.Universe`. Defaults to :py:attr:`'Xdatcar'`.
         bounds (:py:attr:`tuple`, optional): Minimum and maximum values for the gradient and intercept of the diffusion relationship. Defaults to :py:attr:`((0, 100), (-10, 10))`. 
+        sampling_method (:py:attr:`str`, optional): The method used to sample the posterior distributions. Can be either :py:attr:`'mcmc'` or :py:attr:`'nested_sampling'`. Default is :py:attr:`'mcmc'`.
+        sampling_kwargs (:py:attr:`dict`, optional): Keyword arguments to be passed to the sampling method. See :py:class:`uravu.relationship.Relationship` for options.
     """
-    def __init__(self, trajectory, params, dtype='Xdatcar', bounds=((0, 100), (-10, 10))):  # pragma: no cover
-        super.__init__(trajectory, params, dtype, bounds)
+    def __init__(self, trajectory, params, dtype='Xdatcar', bounds=((0, 100), (-10, 10)), sampling_method='mcmc', sampling_kwargs={}):  # pragma: no cover
+        super().__init__(trajectory, params, dtype, bounds)
 
         self.relationship.max_likelihood('diff_evo')
-        self.relationship.mcmc()
+        if sampling_method == 'mcmc':
+            self.relationship.mcmc(**sampling_kwargs)
+        elif sampling_method == 'nested_sampling':
+            self.relationship.nested_sampling(**sampling_kwargs)
+        else:
+            raise ValueError("The only available sampling methods are 'mcmc' or 'nested_sampling', please select one of these.")
 
     @property
     def D(self):
