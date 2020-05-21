@@ -30,7 +30,6 @@ class MSDAnalyzer:
         trajectory (:py:attr:`str` or :py:attr:`list` of :py:attr:`str` or :py:attr:`list` of :py:class`pymatgen.core.structure.Structure`): The file path(s) that should be read by either the :py:class:`pymatgen.io.vasp.Xdatcar` or :py:class:`MDAnalysis.core.universe.Universe` classes, or a :py:attr:`list` of :py:class:`pymatgen.core.structure.Structure` objects ordered in sequence of run. 
         params (:py:attr:`dict`): The parameters for the :py:mod:`kinisi.parser` object, which is either :py:class:`kinisi.parser.PymatgenParser` or :py:class:`kinisi.parser.MDAnalysisParser` depending on the input file format. See the appropriate documention for more guidance on this object.  
         dtype (:py:attr:`str`, optional): The file format, for the :py:class:`kinisi.parser.PymatgenParser` this should be :py:attr:`'Xdatcar'` and for :py:class:`kinisi.parser.MDAnalysisParser` this should be the appropriate format to be passed to the :py:class:`MDAnalysis.core.universe.Universe`. Defaults to :py:attr:`'Xdatcar'`.
-        bounds (:py:attr:`tuple`, optional): Minimum and maximum values for the gradient and intercept of the diffusion relationship. Defaults to :py:attr:`((0, 100), (-10, 10))`. 
     """
     def __init__(self, trajectory, params, dtype='Xdatcar', bounds=((0, 100), (-10, 10))):  # pragma: no cover
         if 'progress' not in params.keys():
@@ -57,7 +56,7 @@ class MSDAnalyzer:
         self.dt = diff_data.dt
         self.msd_distributions = diff_data.distributions
 
-        self.relationship = diffusion.Diffusion(self.dt, self.msd_distributions, bounds)
+        self.relationship = diffusion.Diffusion(self.dt, self.msd_distributions, ((0, 1), (0, 1)))
 
     @property
     def msd(self):
@@ -107,8 +106,9 @@ class DiffAnalyzer(MSDAnalyzer):
     def __init__(self, trajectory, params, dtype='Xdatcar', bounds=((0, 100), (-10, 10)), sampling_method='mcmc', sampling_kwargs={}):  # pragma: no cover
         if 'progress' not in params.keys():
             params['progress'] = True 
-        super().__init__(trajectory, params, dtype, bounds)
+        super().__init__(trajectory, params, dtype)
 
+        self.relationship.bounds = bounds
         self.relationship.max_likelihood('diff_evo')
         if sampling_method == 'mcmc':
             self.relationship.mcmc(progress=params['progress'], **sampling_kwargs)
