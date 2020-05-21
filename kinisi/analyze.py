@@ -8,6 +8,7 @@ This module includes the :py:class:`~kinisi.analyze.DiffAnalyzer` class for diff
 # Distributed under the terms of the MIT License
 # author: Andrew R. McCluskey
 
+import numpy as np
 import MDAnalysis as mda
 from pymatgen.io.vasp import Xdatcar
 from kinisi import diffusion
