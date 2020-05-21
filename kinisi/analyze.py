@@ -33,6 +33,8 @@ class MSDAnalyzer:
         bounds (:py:attr:`tuple`, optional): Minimum and maximum values for the gradient and intercept of the diffusion relationship. Defaults to :py:attr:`((0, 100), (-10, 10))`. 
     """
     def __init__(self, trajectory, params, dtype='Xdatcar', bounds=((0, 100), (-10, 10))):  # pragma: no cover
+        if 'progress' not in params.keys():
+            params['progress'] = True
         if dtype is 'Xdatcar':
             if isinstance(trajectory, list):
                 trajectory_list = (Xdatcar(f) for f in trajectory)
@@ -103,6 +105,8 @@ class DiffAnalyzer(MSDAnalyzer):
         sampling_kwargs (:py:attr:`dict`, optional): Keyword arguments to be passed to the sampling method. See :py:class:`uravu.relationship.Relationship` for options.
     """
     def __init__(self, trajectory, params, dtype='Xdatcar', bounds=((0, 100), (-10, 10)), sampling_method='mcmc', sampling_kwargs={}):  # pragma: no cover
+        if 'progress' not in params.keys():
+            params['progress'] = True 
         super().__init__(trajectory, params, dtype, bounds)
 
         self.relationship.max_likelihood('diff_evo')
