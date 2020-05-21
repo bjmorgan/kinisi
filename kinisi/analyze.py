@@ -24,7 +24,7 @@ class DiffAnalyzer:
         delta_t (:py:attr:`array_like`):  Timestep values. 
         msd (:py:attr:`array_like`): The block bootstrap determined mean squared displacement values.
         msd_err (:py:attr:`array_like`): A upper and lower uncertainty in the mean squared displacement values.
-        msd_distros (:py:attr:`list` or :py:class:`Distribution`): The distributions describing the MSD at each timestep.
+        msd_distributions (:py:attr:`list` or :py:class:`Distribution`): The distributions describing the MSD at each timestep.
         relationship (:py:class:`kinisi.diffusion.Diffusion`): The :py:class:`~kinisi.diffusion.Diffusion` class object that describes the diffusion Einstein relationship.
         D (:py:class:`uravu.distribution.Distribution`): The gradient of the Einstein relationship divided by 6 (twice the number of dimensions).
         D_offset (:py:class:`uravu.distribution.Distribution`): The offset from the abscissa of the Einstein relationship.
@@ -51,9 +51,9 @@ class DiffAnalyzer:
         diff_data = diffusion.msd_bootstrap(dt, disp_3d)
 
         self.dt = diff_data[0]
-        self.msd_distros = diff_data[3]
+        self.msd_distributions = diff_data[3]
 
-        self.relationship = diffusion.Diffusion(self.dt, self.msd_distros, bounds)
+        self.relationship = diffusion.Diffusion(self.dt, self.msd_distributions, bounds)
 
         self.msd = self.relationship.y.n
         self.msd_err = self.relationship.y.s
@@ -74,7 +74,7 @@ class MSDAnalyzer:
         dt (:py:attr:`array_like`):  Timestep values. 
         msd (:py:attr:`array_like`): The block bootstrap determined mean squared displacement values.
         msd_err (:py:attr:`array_like`): A upper and lower uncertainty in the mean squared displacement values.
-        msd_distros (:py:attr:`list` or :py:class:`Distribution`): The distributions describing the MSD at each timestep.
+        msd_distributions (:py:attr:`list` or :py:class:`Distribution`): The distributions describing the MSD at each timestep.
         relationship (:py:class:`kinisi.diffusion.Diffusion`): The :py:class:`~kinisi.diffusion.Diffusion` class object that describes the diffusion Einstein relationship.
 
     Args:
@@ -99,9 +99,9 @@ class MSDAnalyzer:
         diff_data = diffusion.msd_bootstrap(dt, disp_3d)
 
         self.dt = diff_data[0]
-        self.msd_distros = diff_data[3]
+        self.msd_distributions = diff_data[3]
 
-        self.relationship = diffusion.Diffusion(self.dt, self.msd_distros, ((0, 100), (-10, 10)))
+        self.relationship = diffusion.Diffusion(self.dt, self.msd_distributions, ((0, 100), (-10, 10)))
 
         self.msd = self.relationship.y.n
         self.msd_err = self.relationship.y.s
