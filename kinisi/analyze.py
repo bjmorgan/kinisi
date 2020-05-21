@@ -23,7 +23,7 @@ class DiffAnalyzer:
     Attributes:
         delta_t (:py:attr:`array_like`):  Timestep values. 
         msd (:py:attr:`array_like`): The block bootstrap determined mean squared displacement values.
-        msd_err (:py:attr:`array_like`): A upper and lower uncertainty in the mean squared displacement values.
+        msd_err (:py:attr:`array_like`): A upper and lower uncertainty, at a 95 % confidence interval, of the mean squared displacement values.
         msd_distributions (:py:attr:`list` or :py:class:`Distribution`): The distributions describing the MSD at each timestep.
         relationship (:py:class:`kinisi.diffusion.Diffusion`): The :py:class:`~kinisi.diffusion.Diffusion` class object that describes the diffusion Einstein relationship.
         D (:py:class:`uravu.distribution.Distribution`): The gradient of the Einstein relationship divided by 6 (twice the number of dimensions).
@@ -56,7 +56,7 @@ class DiffAnalyzer:
         self.relationship = diffusion.Diffusion(self.dt, self.msd_distributions, bounds)
 
         self.msd = self.relationship.y.n
-        self.msd_err = self.relationship.y.s
+        self.msd_err = self.relationship.y.s[0]
 
         self.relationship.max_likelihood('diff_evo')
         self.relationship.mcmc()
@@ -73,7 +73,7 @@ class MSDAnalyzer:
     Attributes:
         dt (:py:attr:`array_like`):  Timestep values. 
         msd (:py:attr:`array_like`): The block bootstrap determined mean squared displacement values.
-        msd_err (:py:attr:`array_like`): A upper and lower uncertainty in the mean squared displacement values.
+        msd_err (:py:attr:`array_like`): A upper and lower uncertainty, at a 95 % confidence interval, of the mean squared displacement values.
         msd_distributions (:py:attr:`list` or :py:class:`Distribution`): The distributions describing the MSD at each timestep.
         relationship (:py:class:`kinisi.diffusion.Diffusion`): The :py:class:`~kinisi.diffusion.Diffusion` class object that describes the diffusion Einstein relationship.
 
@@ -104,5 +104,5 @@ class MSDAnalyzer:
         self.relationship = diffusion.Diffusion(self.dt, self.msd_distributions, ((0, 100), (-10, 10)))
 
         self.msd = self.relationship.y.n
-        self.msd_err = self.relationship.y.s
+        self.msd_err = self.relationship.y.s[0]
 
