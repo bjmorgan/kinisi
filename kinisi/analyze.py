@@ -50,7 +50,7 @@ class MSDAnalyzer:
         dt = u.delta_t
         disp_3d = u.disp_3d
 
-        diff_data = diffusion.msd_bootstrap(dt, disp_3d)
+        diff_data = diffusion.msd_bootstrap(dt, disp_3d, progress=params['progress'])
 
         self.dt = diff_data[0]
         self.msd_distributions = diff_data[3]
@@ -107,9 +107,9 @@ class DiffAnalyzer(MSDAnalyzer):
 
         self.relationship.max_likelihood('diff_evo')
         if sampling_method == 'mcmc':
-            self.relationship.mcmc(**sampling_kwargs)
+            self.relationship.mcmc(progress=params['progress'], **sampling_kwargs)
         elif sampling_method == 'nested_sampling':
-            self.relationship.nested_sampling(**sampling_kwargs)
+            self.relationship.nested_sampling(progress=params['progress'], **sampling_kwargs)
         else:
             raise ValueError("The only available sampling methods are 'mcmc' or 'nested_sampling', please select one of these.")
 
