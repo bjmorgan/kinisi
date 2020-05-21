@@ -17,7 +17,7 @@ from pymatgen.analysis.diffusion_analyzer import get_conversion_factor
 from pymatgen.core.lattice import Lattice
 from pymatgen.core import Structure
 import periodictable as pt
-from tqdm import tqdm
+from tqdm.autonotebook import tqdm
 
 
 class Parser:

@@ -13,7 +13,7 @@ import warnings
 import numpy as np
 from scipy.stats import uniform, norm
 from sklearn.utils import resample
-from tqdm import tqdm
+from tqdm.autonotebook import tqdm
 from uravu.distribution import Distribution
 from uravu.relationship import Relationship
 from uravu import utils
