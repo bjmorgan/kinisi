@@ -106,10 +106,22 @@ class DiffAnalyzer(MSDAnalyzer):
 
     @property
     def D(self):
+        """
+        Diffusion coefficient. 
+
+        Returns:
+            :py:class:`uravu.distribution.Distribution`: Diffusion coefficient.
+        """
         return self.relationship.diffusion_coefficient
 
     @property
     def D_offset(self):
+        """
+        Offset from abscissa. 
+
+        Returns:
+            :py:class:`uravu.distribution.Distribution`: Abscissa offset.
+        """
         return self.relationship.variables[1]
 
     
