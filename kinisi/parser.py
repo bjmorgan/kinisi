@@ -191,7 +191,7 @@ class MDAnalysisParser(Parser):
 
         indices, framework_indices = self.get_indices(structure, specie)
                
-        super().__init__(dips, indices, framework_indices, time_step, step_skip * sub_sample_time, min_obs, min_dt, progress)
+        super().__init__(disp, indices, framework_indices, time_step, step_skip * sub_sample_time, min_obs, min_dt, progress)
 
     def get_indices(self, structure, specie):
         """
