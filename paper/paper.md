@@ -10,16 +10,19 @@ tags:
 authors:
   - name: Andrew R. McCluskey
     orcid: 0000-0003-3381-5911
-    affiliation: "1, 2" 
+    affiliation: "1, 2"
+  - name: Samuel W. Coles
+    orcid: 0000-0001-9722-5676
+    affiliation: 2
   - name: Benjamin J. Morgan
     orcid: 0000-0002-3056-8233
-    affiliation: 1
+    affiliation: 2
 affiliations:
  - name: Diamond Light Source, Rutherford Appleton Laboratory, Harwell Science and Innovation Campus, Didcot, OX11 0DE, UK
    index: 1
  - name: Department of Chemistry, University of Bath, Claverton Down, Bath, BA2 7AY, UK
    index: 2
-date: 04 May 2020
+date: 21 May 2020
 bibliography: paper.bib
 ---
 
