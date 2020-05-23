@@ -11,6 +11,8 @@ This module includes the :py:class:`~kinisi.analyze.DiffAnalyzer` class for diff
 import numpy as np
 import MDAnalysis as mda
 from pymatgen.io.vasp import Xdatcar
+from pymatgen.analysis.diffusion_analyzer import get_conversion_factor
+from uravu.distribution import Distribution
 from kinisi import diffusion
 from kinisi.parser import MDAnalysisParser, PymatgenParser
 
@@ -30,8 +32,10 @@ class MSDAnalyzer:
         trajectory (:py:attr:`str` or :py:attr:`list` of :py:attr:`str` or :py:attr:`list` of :py:class:`pymatgen.core.structure.Structure`): The file path(s) that should be read by either the :py:class:`pymatgen.io.vasp.Xdatcar` or :py:class:`MDAnalysis.core.universe.Universe` classes, or a :py:attr:`list` of :py:class:`pymatgen.core.structure.Structure` objects ordered in sequence of run. 
         params (:py:attr:`dict`): The parameters for the :py:mod:`kinisi.parser` object, which is either :py:class:`kinisi.parser.PymatgenParser` or :py:class:`kinisi.parser.MDAnalysisParser` depending on the input file format. See the appropriate documention for more guidance on this object.  
         dtype (:py:attr:`str`, optional): The file format, for the :py:class:`kinisi.parser.PymatgenParser` this should be :py:attr:`'Xdatcar'` and for :py:class:`kinisi.parser.MDAnalysisParser` this should be the appropriate format to be passed to the :py:class:`MDAnalysis.core.universe.Universe`. Defaults to :py:attr:`'Xdatcar'`.
+        bounds (:py:attr:`tuple`, optional): Minimum and maximum values for the gradient and intercept of the diffusion relationship. Defaults to :py:attr:`((0, 100), (-10, 10))`. 
+        charge (:py:attr:`bool`, optional): Calculate the charge displacement. Default is :py:attr:`False`.
     """
-    def __init__(self, trajectory, params, dtype='Xdatcar', bounds=((0, 100), (-10, 10))):  # pragma: no cover
+    def __init__(self, trajectory, params, dtype='Xdatcar', bounds=((0, 100), (-10, 10)), charge=False):  # pragma: no cover
         if 'progress' not in params.keys():
             params['progress'] = True
         if dtype is 'Xdatcar':
@@ -42,8 +46,10 @@ class MSDAnalyzer:
                 xd = Xdatcar(trajectory)
                 structures = xd.structures
             u = PymatgenParser(structures, **params)
+            self.first_structure = structures[0]
         elif dtype is 'structures':
             u = PymatgenParser(trajectory, **params)
+            self.first_structure = structures[0]
         else:
             universe = mda.Universe(*trajectory, format=dtype)
             u = MDAnalysisParser(universe, **params)
@@ -51,7 +57,10 @@ class MSDAnalyzer:
         dt = u.delta_t
         disp_3d = u.disp_3d
 
-        diff_data = diffusion.MSDBootstrap(dt, disp_3d, progress=params['progress'])
+        if charge:
+            diff_data = diffusion.MSCDBootstrap(dt, disp_3d, progress=params['progress'])
+        else:
+            diff_data = diffusion.MSDBootstrap(dt, disp_3d, progress=params['progress'])
 
         self.dt = diff_data.dt
         self.msd_distributions = diff_data.distributions
@@ -79,7 +88,7 @@ class MSDAnalyzer:
         return self.relationship.y.s
 
     @property
-    def ci(self):
+    def con_int(self):
         """
         Returns MSD confidence inteval, at 95 %, for the input trajectories.
 
@@ -102,11 +111,16 @@ class DiffAnalyzer(MSDAnalyzer):
         bounds (:py:attr:`tuple`, optional): Minimum and maximum values for the gradient and intercept of the diffusion relationship. Defaults to :py:attr:`((0, 100), (-10, 10))`. 
         sampling_method (:py:attr:`str`, optional): The method used to sample the posterior distributions. Can be either :py:attr:`'mcmc'` or :py:attr:`'nested_sampling'`. Default is :py:attr:`'mcmc'`.
         sampling_kwargs (:py:attr:`dict`, optional): Keyword arguments to be passed to the sampling method. See :py:class:`uravu.relationship.Relationship` for options.
+        charge (:py:attr:`bool`, optional): Calculate the charge mean-squared displacment. Default is :py:attr:`False`.
     """
-    def __init__(self, trajectory, params, dtype='Xdatcar', bounds=((0, 100), (-10, 10)), sampling_method='mcmc', sampling_kwargs={}):  # pragma: no cover
+    def __init__(self, trajectory, params, dtype='Xdatcar', bounds=((0, 100), (-10, 10)), sampling_method='mcmc', sampling_kwargs={}, charge=False):  # pragma: no cover
         if 'progress' not in params.keys():
             params['progress'] = True 
-        super().__init__(trajectory, params, dtype)
+        self.pymatgen = False
+        if dtype == 'Xdatcar' or dtype == 'structures':
+            self.pymatgen = True
+            self.specie = params['specie']
+        super().__init__(trajectory, params, dtype, bounds, charge)
 
         self.relationship.bounds = bounds
         self.relationship.max_likelihood('diff_evo')
@@ -136,6 +150,23 @@ class DiffAnalyzer(MSDAnalyzer):
             :py:class:`uravu.distribution.Distribution`: Abscissa offset.
         """
         return self.relationship.variables[1]
+
+    def sigma(self, temperature):
+        """
+        Conductivity.
+
+        Args:
+            :py:attr:`float`: Simulation temperature.
+
+        Returns:
+            :py:class:`uravu.distribution.Distribution`: Conductivity.
+        """
+        if self.pymatgen:
+            conv_factor = get_conversion_factor(self.first_structure, self.specie, temperature)
+            return Distribution(self.relationship.diffusion_coefficient.samples * conv_factor)
+        else:
+            raise ValueError("This is currently only supported for Pymatgen files, please convert from D manually. ")
+
 
 
 def _flatten_list(this_list):
