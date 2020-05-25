@@ -100,9 +100,9 @@ class MSCDBootstrap(Bootstrap):
             n_samples_mscd = _n_samples((1, self.displacements[i].shape[1]), self.max_obs, bootstrap_multiplier)
             if n_samples_mscd <= 1:
                 continue
-            distro = _sample_until_normal(sq_chg_disp, n_samples_mscd, n_resamples, max_resamples, self.confidence_interval)
+            distro = _sample_until_normal(sq_chg_disp, n_samples_mscd, n_resamples, max_resamples, self.confidence_interval) 
             self.dt = np.append(self.dt, self.delta_t[i])
-            self.distributions.append(distro)
+            self.distributions.append(Distribution(distro.samples / self.displacements[i].shape[0]))
 
 
 def _n_samples(disp_shape, max_obs, bootstrap_multiplier):

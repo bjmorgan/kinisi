@@ -165,7 +165,7 @@ class DiffAnalyzer(MSDAnalyzer):
             conv_factor = get_conversion_factor(self.first_structure, self.specie, temperature)
             return Distribution(self.relationship.diffusion_coefficient.samples * conv_factor)
         else:
-            raise ValueError("This is currently only supported for Pymatgen files, please convert from D manually. ")
+            raise ValueError("This is currently only supported for Pymatgen files, please convert from D manually.")
 
 
 
