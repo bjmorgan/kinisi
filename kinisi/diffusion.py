@@ -16,6 +16,7 @@ from sklearn.utils import resample
 from tqdm import tqdm
 from uravu.distribution import Distribution
 from uravu.relationship import Relationship
+from uravu.axis import Axis
 from uravu import utils
 
 
@@ -47,6 +48,7 @@ class Bootstrap:
         self.max_obs = self.displacements[0].shape[1]
         self.distributions = []
         self.dt = np.array([])
+        self.msd_observed = np.array([])
         self.iterator = _iterator(progress, range(len(self.displacements)))
 
 
@@ -72,9 +74,13 @@ class MSDBootstrap(Bootstrap):
             n_samples_msd = _n_samples(self.displacements[i].shape, self.max_obs, bootstrap_multiplier)
             if n_samples_msd <= 1:
                 continue
+            self.msd_observed = np.append(self.msd_observed, np.mean(d_squared.flatten()))
             distro = _sample_until_normal(d_squared, n_samples_msd, n_resamples, max_resamples, self.confidence_interval)
             self.dt = np.append(self.dt, delta_t[i])
             self.distributions.append(distro)
+        ax = Axis(self.distributions)
+        self.msd_sampled = ax.n
+        self.msd_sampled_err = ax.s
 
 
 class MSCDBootstrap(Bootstrap):
@@ -100,9 +106,13 @@ class MSCDBootstrap(Bootstrap):
             n_samples_mscd = _n_samples((1, self.displacements[i].shape[1]), self.max_obs, bootstrap_multiplier)
             if n_samples_mscd <= 1:
                 continue
+            self.msd_observed = np.append(self.msd_observed, np.mean(sq_chg_disp.flatten())  / self.displacements[i].shape[0])
             distro = _sample_until_normal(sq_chg_disp, n_samples_mscd, n_resamples, max_resamples, self.confidence_interval) 
             self.dt = np.append(self.dt, self.delta_t[i])
             self.distributions.append(Distribution(distro.samples / self.displacements[i].shape[0]))
+        ax = Axis(self.distributions)
+        self.msd_sampled = ax.n
+        self.msd_sampled_err = ax.s
 
 
 def _n_samples(disp_shape, max_obs, bootstrap_multiplier):

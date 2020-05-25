@@ -47,6 +47,8 @@ class TestMsd(unittest.TestCase):
             max_resamples=1000)
         assert_equal(boot.dt.size, 5)
         assert_equal(len(boot.distributions), 5)
+        assert_equal(boot.msd_observed.size, 5)
+        assert_equal(boot.msd_sampled.size, 5)
 
     def test_msd_bootstrap_b(self):
         """
@@ -64,6 +66,8 @@ class TestMsd(unittest.TestCase):
             max_resamples=1000)
         assert_equal(boot.dt.size, 5)
         assert_equal(len(boot.distributions), 5)
+        assert_equal(boot.msd_observed.size, 5)
+        assert_equal(boot.msd_sampled.size, 5)
 
     def test_msd_bootstrap_c(self):
         """
@@ -90,6 +94,8 @@ class TestMsd(unittest.TestCase):
             samples_freq=2)
         assert_equal(boot.dt.size, 3)
         assert_equal(len(boot.distributions), 3)
+        assert_equal(boot.msd_observed.size, 3)
+        assert_equal(boot.msd_sampled.size, 3)
     
     def test_msd_bootstrap_d(self):
         """
@@ -116,6 +122,8 @@ class TestMsd(unittest.TestCase):
             samples_freq=2)
         assert_equal(boot.dt.size, 1)
         assert_equal(len(boot.distributions), 1)
+        assert_equal(boot.msd_observed.size, 1)
+        assert_equal(boot.msd_sampled.size, 1)
 
     def test_mscd_bootstrap_a(self):
         """
@@ -133,6 +141,8 @@ class TestMsd(unittest.TestCase):
             max_resamples=1000)
         assert_equal(boot.dt.size, 5)
         assert_equal(len(boot.distributions), 5)
+        assert_equal(boot.msd_observed.size, 5)
+        assert_equal(boot.msd_sampled.size, 5)
 
     def test_mscd_bootstrap_b(self):
         """
@@ -150,6 +160,8 @@ class TestMsd(unittest.TestCase):
             max_resamples=1000)
         assert_equal(boot.dt.size, 5)
         assert_equal(len(boot.distributions), 5)
+        assert_equal(boot.msd_observed.size, 5)
+        assert_equal(boot.msd_sampled.size, 5)
 
     def test_mscd_bootstrap_c(self):
         """
@@ -176,6 +188,8 @@ class TestMsd(unittest.TestCase):
             samples_freq=2)
         assert_equal(boot.dt.size, 2)
         assert_equal(len(boot.distributions), 2)
+        assert_equal(boot.msd_observed.size, 2)
+        assert_equal(boot.msd_sampled.size, 2)
 
     def test_diffusion_init(self):
         """
@@ -195,7 +209,7 @@ class TestMsd(unittest.TestCase):
         bnds = ((0, 1000), (0, 1000))
         diff = diffusion.Diffusion(dt, MSD, bnds)
         diff.max_likelihood('mini')
-        assert_almost_equal(diff.diffusion_coefficient.n, 1 / 6, decimal=2)
+        assert_almost_equal(diff.diffusion_coefficient.n, 1 / 6, decimal=1)
 
     def test_diffusion_D_mcmc(self):
         """
