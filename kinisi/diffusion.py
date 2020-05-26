@@ -48,7 +48,6 @@ class Bootstrap:
         self.max_obs = self.displacements[0].shape[1]
         self.distributions = []
         self.dt = np.array([])
-        self.msd_observed = np.array([])
         self.iterator = _iterator(progress, range(len(self.displacements)))
 
 
@@ -56,6 +55,11 @@ class MSDBootstrap(Bootstrap):
     """
     Perform a bootstrap resampling to obtain accurate estimates for the mean and uncertainty for the squared displacements. 
     This resampling method is applied until the MSD distribution is normal (or the `max_resamples` has been reached) and therefore may be described with a median and confidence interval.
+
+    Attributes:
+        msd_observed (:py:attr:`array_like`): The sample mean-squared displacements, found from the arithmetic average of the observations.
+        msd_sampled (:py:attr:`array_like`): The population mean-squared displacements, found from the bootstrap resampling of the observations.
+        msd_sampled_err (:py:attr:`array_like`): The two-dimensional uncertainties, at the given confidence interval, found from the bootstrap resampling of the observations.
 
     Args:
         delta_t (:py:attr:`array_like`): An array of the timestep values.
@@ -69,6 +73,7 @@ class MSDBootstrap(Bootstrap):
     """
     def __init__(self, delta_t, disp_3d, n_resamples=1000, samples_freq=1, confidence_interval=None, max_resamples=10000, bootstrap_multiplier=1, progress=True):
         super().__init__(delta_t, disp_3d, samples_freq, confidence_interval, progress)
+        self.msd_observed = np.array([])
         for i in self.iterator:
             d_squared = np.sum(self.displacements[i] ** 2, axis=2)
             n_samples_msd = _n_samples(self.displacements[i].shape, self.max_obs, bootstrap_multiplier)
@@ -88,6 +93,11 @@ class MSCDBootstrap(Bootstrap):
     Perform a bootstrap resampling to obtain accurate estimates for the mean and uncertainty for the squared charge displacements. 
     This resampling method is applied until the MSCD distribution is normal (or the `max_resamples` has been reached) and therefore may be described with a median and confidence interval.
 
+    Attributes:
+        msd_observed (:py:attr:`array_like`): The sample mean-squared displacements, found from the arithmetic average of the observations.
+        msd_sampled (:py:attr:`array_like`): The population mean-squared displacements, found from the bootstrap resampling of the observations.
+        msd_sampled_err (:py:attr:`array_like`): The two-dimensional uncertainties, at the given confidence interval, found from the bootstrap resampling of the observations.
+        
     Args:
         delta_t (:py:attr:`array_like`): An array of the timestep values.
         disp_3d (:py:attr:`list` of :py:attr:`array_like`): A list of arrays, where each array has the axes [atom, displacement observation, dimension]. There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as the number of observations is not necessary the same at each data point.
