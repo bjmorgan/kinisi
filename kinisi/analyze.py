@@ -129,9 +129,9 @@ class DiffAnalyzer(MSDAnalyzer):
         self.relationship.bounds = bounds
         self.relationship.max_likelihood('diff_evo')
         if sampling_method == 'mcmc':
-            self.relationship.mcmc(progress=params['progress'], **sampling_kwargs)
+            self.relationship.mcmc(**sampling_kwargs)
         elif sampling_method == 'nested_sampling':
-            self.relationship.nested_sampling(progress=params['progress'], **sampling_kwargs)
+            self.relationship.nested_sampling(**sampling_kwargs)
         else:
             raise ValueError("The only available sampling methods are 'mcmc' or 'nested_sampling', please select one of these.")
 
