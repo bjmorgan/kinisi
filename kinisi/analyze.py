@@ -73,7 +73,7 @@ class MSDAnalyzer:
     @property
     def msd(self):
         """
-        Returns MSD for the input trajectories.
+        Returns MSD for the input trajectories. Note that this is the bootstrap sampled MSD, not the numerical average from the data.
 
         Returns:
             :py:attr:`array_like`: MSD values.
