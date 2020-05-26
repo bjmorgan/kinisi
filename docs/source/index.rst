@@ -8,11 +8,12 @@ Uncertainty quantification in diffusion
 
 :py:mod:`kinisi` is an open-source package focussed on accurately quantifying the uncertainty in atomic and molecular displacements, and using this to more completely understanding diffusion in materials.
 
-Bootstrapping
--------------
+**Bootstrapping**
 
 :py:mod:`kinisi` uses a custom bootstrapping method to evaluate distribution of the mean-squared displacement at a particular timestep length. 
 This resampling is performed until the distribution is found to be normal, or a user-controlled threshold is reached.
+
+**Uncertainty propagation**
 
 The :py:class:`uravu.relationship.Relationship` class is leveraged to propagate these uncertainties using Bayesian inference, allowing the determination of the uncertainty in the diffusion coefficient and activation energy.
 Finally, Bayesian model selection can be used to determine between an Arrhenius and a `super-Arrhenius relationship`_ in the temperature-dependent behaviour.
