@@ -36,15 +36,15 @@ class Bootstrap:
     Args:
         delta_t (:py:attr:`array_like`): An array of the timestep values.
         disp_3d (:py:attr:`list` of :py:attr:`array_like`): A list of arrays, where each array has the axes [atom, displacement observation, dimension]. There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as the number of observations is not necessary the same at each data point.
-        samples_freq (:py:attr:`int`. optional): The frequency in observations to be sampled. Default is :py:attr:`1` (every observation).
+        sub_sample_dt (:py:attr:`int`. optional): The frequency in observations to be sampled. Default is :py:attr:`1` (every observation).
         confidence_interval (:py:attr:`array_like`, optional): The percentile points of the distribution that should be stored. Default is :py:attr:`[2.5, 97.5]` (a 95 % confidence interval).
         progress (:py:attr:`bool`, optional): Show tqdm progress for sampling. Default is :py:attr:`True`.
     """
-    def __init__(self, delta_t, disp_3d, samples_freq=1, confidence_interval=None, progress=True):
+    def __init__(self, delta_t, disp_3d, sub_sample_dt=1, confidence_interval=None, progress=True):
         if confidence_interval is None:
             self.confidence_interval = [2.5, 97.5]
-        self.displacements = disp_3d[::samples_freq]
-        self.delta_t = delta_t[::samples_freq]
+        self.displacements = disp_3d[::sub_sample_dt]
+        self.delta_t = delta_t[::sub_sample_dt]
         self.max_obs = self.displacements[0].shape[1]
         self.distributions = []
         self.dt = np.array([])
@@ -65,14 +65,14 @@ class MSDBootstrap(Bootstrap):
         delta_t (:py:attr:`array_like`): An array of the timestep values.
         disp_3d (:py:attr:`list` of :py:attr:`array_like`): A list of arrays, where each array has the axes [atom, displacement observation, dimension]. There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as the number of observations is not necessary the same at each data point.
         n_resamples (:py:attr:`int`, optional): The initial number of resamples to be performed. Default is :py:attr:`1000`.
-        samples_freq (:py:attr:`int`. optional): The frequency in observations to be sampled. Default is :py:attr:`1` (every observation).
+        sub_sample_dt (:py:attr:`int`. optional): The frequency in observations to be sampled. Default is :py:attr:`1` (every observation).
         confidence_interval (:py:attr:`array_like`, optional): The percentile points of the distribution that should be stored. Default is :py:attr:`[2.5, 97.5]` (a 95 % confidence interval).
         max_resamples (:py:attr:`int`, optional): The max number of resamples to be performed by the distribution is assumed to be normal. This is present to allow user control over the time taken for the resampling to occur. Default is :py:attr:`100000`.
         bootstrap_multiplier (:py:attr:`int`, optional): The factor by which the number of bootstrap samples should be multiplied. The default is :py:attr:`1`, which is the maximum number of truely independent samples in a given timestep. This can be increase, however it is importance to note that when greater than 1 the sampling is no longer independent.
         progress (:py:attr:`bool`, optional): Show tqdm progress for sampling. Default is :py:attr:`True`.
     """
-    def __init__(self, delta_t, disp_3d, n_resamples=1000, samples_freq=1, confidence_interval=None, max_resamples=10000, bootstrap_multiplier=1, progress=True):
-        super().__init__(delta_t, disp_3d, samples_freq, confidence_interval, progress)
+    def __init__(self, delta_t, disp_3d, n_resamples=1000, sub_sample_dt=1, confidence_interval=None, max_resamples=10000, bootstrap_multiplier=1, progress=True):
+        super().__init__(delta_t, disp_3d, sub_sample_dt, confidence_interval, progress)
         self.msd_observed = np.array([])
         for i in self.iterator:
             d_squared = np.sum(self.displacements[i] ** 2, axis=2)
@@ -102,14 +102,14 @@ class MSCDBootstrap(Bootstrap):
         delta_t (:py:attr:`array_like`): An array of the timestep values.
         disp_3d (:py:attr:`list` of :py:attr:`array_like`): A list of arrays, where each array has the axes [atom, displacement observation, dimension]. There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as the number of observations is not necessary the same at each data point.
         n_resamples (:py:attr:`int`, optional): The initial number of resamples to be performed. Default is :py:attr:`1000`.
-        samples_freq (:py:attr:`int`. optional): The frequency in observations to be sampled. Default is :py:attr:`1` (every observation).
+        sub_sample_dt (:py:attr:`int`. optional): The frequency in observations to be sampled. Default is :py:attr:`1` (every observation).
         confidence_interval (:py:attr:`array_like`, optional): The percentile points of the distribution that should be stored. Default is :py:attr:`[2.5, 97.5]` (a 95 % confidence interval).
         max_resamples (:py:attr:`int`, optional): The max number of resamples to be performed by the distribution is assumed to be normal. This is present to allow user control over the time taken for the resampling to occur. Default is :py:attr:`100000`.
         bootstrap_multiplier (:py:attr:`int`, optional): The factor by which the number of bootstrap samples should be multiplied. The default is :py:attr:`1`, which is the maximum number of truely independent samples in a given timestep. This can be increase, however it is importance to note that when greater than 1 the sampling is no longer independent.
         progress (:py:attr:`bool`, optional): Show tqdm progress for sampling. Default is :py:attr:`True`.
     """
-    def __init__(self, delta_t, disp_3d, n_resamples=1000, samples_freq=1, confidence_interval=None, max_resamples=10000, bootstrap_multiplier=1, progress=True):
-        super().__init__(delta_t, disp_3d, samples_freq, confidence_interval, progress)
+    def __init__(self, delta_t, disp_3d, n_resamples=1000, sub_sample_dt=1, confidence_interval=None, max_resamples=10000, bootstrap_multiplier=1, progress=True):
+        super().__init__(delta_t, disp_3d, sub_sample_dt, confidence_interval, progress)
         self.msd_observed = np.array([])
         for i in self.iterator:
             sq_com_motion = np.sum(self.displacements[i], axis=0) ** 2

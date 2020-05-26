@@ -33,13 +33,14 @@ class MSDAnalyzer:
 
     Args:
         trajectory (:py:attr:`str` or :py:attr:`list` of :py:attr:`str` or :py:attr:`list` of :py:class:`pymatgen.core.structure.Structure`): The file path(s) that should be read by either the :py:class:`pymatgen.io.vasp.Xdatcar` or :py:class:`MDAnalysis.core.universe.Universe` classes, or a :py:attr:`list` of :py:class:`pymatgen.core.structure.Structure` objects ordered in sequence of run. 
-        params (:py:attr:`dict`): The parameters for the :py:mod:`kinisi.parser` object, which is either :py:class:`kinisi.parser.PymatgenParser` or :py:class:`kinisi.parser.MDAnalysisParser` depending on the input file format. See the appropriate documention for more guidance on this object.  
+        parser_params (:py:attr:`dict`): The parameters for the :py:mod:`kinisi.parser` object, which is either :py:class:`kinisi.parser.PymatgenParser` or :py:class:`kinisi.parser.MDAnalysisParser` depending on the input file format. See the appropriate documention for more guidance on this object.
+        bootstrap_params (:py:attr:`dict`, optional): The parameters for the :py:class:`kinisi.diffusion.Bootstrap` object. See the appropriate documentation for more guidance on this. Default is the default bootstrap parameters.
         dtype (:py:attr:`str`, optional): The file format, for the :py:class:`kinisi.parser.PymatgenParser` this should be :py:attr:`'Xdatcar'` and for :py:class:`kinisi.parser.MDAnalysisParser` this should be the appropriate format to be passed to the :py:class:`MDAnalysis.core.universe.Universe`. Defaults to :py:attr:`'Xdatcar'`.
         charge (:py:attr:`bool`, optional): Calculate the charge displacement. Default is :py:attr:`False`.
     """
-    def __init__(self, trajectory, params, dtype='Xdatcar', charge=False):  # pragma: no cover
-        if 'progress' not in params.keys():
-            params['progress'] = True
+    def __init__(self, trajectory, parser_params, bootstrap_params=None, dtype='Xdatcar', charge=False):  # pragma: no cover
+        if bootstrap_params is None:
+            bootstrap_params = {}
         if dtype is 'Xdatcar':
             if isinstance(trajectory, list):
                 trajectory_list = (Xdatcar(f) for f in trajectory)
@@ -47,22 +48,22 @@ class MSDAnalyzer:
             else:
                 xd = Xdatcar(trajectory)
                 structures = xd.structures
-            u = PymatgenParser(structures, **params)
+            u = PymatgenParser(structures, **parser_params)
             self.first_structure = structures[0]
         elif dtype is 'structures':
-            u = PymatgenParser(trajectory, **params)
+            u = PymatgenParser(trajectory, **parser_params)
             self.first_structure = structures[0]
         else:
             universe = mda.Universe(*trajectory, format=dtype)
-            u = MDAnalysisParser(universe, **params)
+            u = MDAnalysisParser(universe, **parser_params)
 
         dt = u.delta_t
         disp_3d = u.disp_3d
 
         if charge:
-            diff_data = diffusion.MSCDBootstrap(dt, disp_3d, progress=params['progress'])
+            diff_data = diffusion.MSCDBootstrap(dt, disp_3d, **bootstrap_params)
         else:
-            diff_data = diffusion.MSDBootstrap(dt, disp_3d, progress=params['progress'])
+            diff_data = diffusion.MSDBootstrap(dt, disp_3d, **bootstrap_params)
 
         self.dt = diff_data.dt
         self.msd_sampled = diff_data.msd_sampled
@@ -109,21 +110,20 @@ class DiffAnalyzer(MSDAnalyzer):
 
     Args:
         trajectory (:py:attr:`str` or :py:attr:`list` of :py:attr:`str` or :py:attr:`list` of :py:class:`pymatgen.core.structure.Structure`): The file path(s) that should be read by either the :py:class:`pymatgen.io.vasp.Xdatcar` or :py:class:`MDAnalysis.core.universe.Universe` classes, or a :py:attr:`list` of :py:class:`pymatgen.core.structure.Structure` objects ordered in sequence of run. 
-        params (:py:attr:`dict`): The parameters for the :py:mod:`kinisi.parser` object, which is either :py:class:`kinisi.parser.PymatgenParser` or :py:class:`kinisi.parser.MDAnalysisParser` depending on the input file format. See the appropriate documention for more guidance on this object.  
+        parser_params (:py:attr:`dict`): The parameters for the :py:mod:`kinisi.parser` object, which is either :py:class:`kinisi.parser.PymatgenParser` or :py:class:`kinisi.parser.MDAnalysisParser` depending on the input file format. See the appropriate documention for more guidance on this object.
+        bootstrap_params (:py:attr:`dict`, optional): The parameters for the :py:class:`kinisi.diffusion.Bootstrap` object. See the appropriate documentation for more guidance on this. Default is the default bootstrap parameters.
         dtype (:py:attr:`str`, optional): The file format, for the :py:class:`kinisi.parser.PymatgenParser` this should be :py:attr:`'Xdatcar'` and for :py:class:`kinisi.parser.MDAnalysisParser` this should be the appropriate format to be passed to the :py:class:`MDAnalysis.core.universe.Universe`. Defaults to :py:attr:`'Xdatcar'`.
         bounds (:py:attr:`tuple`, optional): Minimum and maximum values for the gradient and intercept of the diffusion relationship. Defaults to :py:attr:`((0, 100), (-10, 10))`. 
         sampling_method (:py:attr:`str`, optional): The method used to sample the posterior distributions. Can be either :py:attr:`'mcmc'` or :py:attr:`'nested_sampling'`. Default is :py:attr:`'mcmc'`.
         sampling_kwargs (:py:attr:`dict`, optional): Keyword arguments to be passed to the sampling method. See :py:class:`uravu.relationship.Relationship` for options.
         charge (:py:attr:`bool`, optional): Calculate the charge mean-squared displacment. Default is :py:attr:`False`.
     """
-    def __init__(self, trajectory, params, dtype='Xdatcar', bounds=((0, 100), (-10, 10)), sampling_method='mcmc', sampling_kwargs={}, charge=False):  # pragma: no cover
-        if 'progress' not in params.keys():
-            params['progress'] = True 
+    def __init__(self, trajectory, parser_params, bootstrap_params=None, dtype='Xdatcar', bounds=((0, 100), (-10, 10)), sampling_method='mcmc', sampling_kwargs={}, charge=False):  # pragma: no cover
         self.pymatgen = False
         if dtype == 'Xdatcar' or dtype == 'structures':
             self.pymatgen = True
-            self.specie = params['specie']
-        super().__init__(trajectory, params, dtype, charge) 
+            self.specie = parser_params['specie']
+        super().__init__(trajectory, parser_params, bootstrap_params, dtype, charge) 
         self.relationship = diffusion.Diffusion(self.dt, self.distributions, bounds=bounds) 
    
         self.relationship.bounds = bounds

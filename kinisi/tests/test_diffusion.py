@@ -91,7 +91,7 @@ class TestMsd(unittest.TestCase):
             progress=False,
             n_resamples=1,
             max_resamples=10, 
-            samples_freq=2)
+            sub_sample_dt=2)
         assert_equal(boot.dt.size, 3)
         assert_equal(len(boot.distributions), 3)
         assert_equal(boot.msd_observed.size, 3)
@@ -119,7 +119,7 @@ class TestMsd(unittest.TestCase):
             progress=False,
             n_resamples=1,
             max_resamples=10, 
-            samples_freq=2)
+            sub_sample_dt=2)
         assert_equal(boot.dt.size, 1)
         assert_equal(len(boot.distributions), 1)
         assert_equal(boot.msd_observed.size, 1)
@@ -185,7 +185,7 @@ class TestMsd(unittest.TestCase):
             progress=False,
             n_resamples=1,
             max_resamples=10, 
-            samples_freq=2)
+            sub_sample_dt=2)
         assert_equal(boot.dt.size, 2)
         assert_equal(len(boot.distributions), 2)
         assert_equal(boot.msd_observed.size, 2)
