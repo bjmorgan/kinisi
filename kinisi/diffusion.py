@@ -97,7 +97,7 @@ class MSCDBootstrap(Bootstrap):
         msd_observed (:py:attr:`array_like`): The sample mean-squared displacements, found from the arithmetic average of the observations.
         msd_sampled (:py:attr:`array_like`): The population mean-squared displacements, found from the bootstrap resampling of the observations.
         msd_sampled_err (:py:attr:`array_like`): The two-dimensional uncertainties, at the given confidence interval, found from the bootstrap resampling of the observations.
-        
+
     Args:
         delta_t (:py:attr:`array_like`): An array of the timestep values.
         disp_3d (:py:attr:`list` of :py:attr:`array_like`): A list of arrays, where each array has the axes [atom, displacement observation, dimension]. There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as the number of observations is not necessary the same at each data point.
@@ -110,6 +110,7 @@ class MSCDBootstrap(Bootstrap):
     """
     def __init__(self, delta_t, disp_3d, n_resamples=1000, samples_freq=1, confidence_interval=None, max_resamples=10000, bootstrap_multiplier=1, progress=True):
         super().__init__(delta_t, disp_3d, samples_freq, confidence_interval, progress)
+        self.msd_observed = np.array([])
         for i in self.iterator:
             sq_com_motion = np.sum(self.displacements[i], axis=0) ** 2
             sq_chg_disp = np.sum(sq_com_motion, axis=1)
