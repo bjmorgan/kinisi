@@ -39,6 +39,7 @@ Contributors
 
    installation
    tutorials
+   faq
    modules
 
 Searching
