@@ -22,6 +22,7 @@ Distributed under the terms of the MIT License
 
 import unittest
 import numpy as np
+import MDAnalysis as mda
 from numpy.testing import assert_almost_equal, assert_equal
 from pymatgen.core import Structure
 from pymatgen.io.vasp import Xdatcar
@@ -136,6 +137,18 @@ class TestParser(unittest.TestCase):
         assert_almost_equal(data.time_step, 20.0)
         assert_almost_equal(data.step_skip, 100)
         assert_equal(data.indices, list(range(xd.natoms[0])))
+    
+    def test_mda_init(self):
+        xd = mda.Universe(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS.data'),
+                          os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS.dcd'), format='LAMMPS')
+        da_params = { 'specie': 'H',
+                      'time_step': 0.005,
+                      'step_skip': 250,
+                      'min_obs': 50}
+        data = parser.MDAnalysisParser(xd, **da_params)
+        assert_almost_equal(data.time_step, 0.005)
+        assert_almost_equal(data.step_skip, 250)
+        assert_equal(data.indices, list(range(204)))
 
     def test_get_matrix(self):
         matrix = parser.get_matrix([10, 10, 10, 90, 90, 90])
