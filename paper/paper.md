@@ -31,7 +31,7 @@ bibliography: paper.bib
 Molecular dynamics simulation are a popular tool for the study of diffusion in materials. 
 However, the computational cost of these simulations limit the ``real-world'' timescale and system size that can the investigated. 
 `kinisi` provides a straightforward interface, and compatibility with a variety of common simulation software packages, including VASP [@kresse_ab_1993,kresse_ab_1994,kresse_efficiency_1996,kresse_efficient_1996] and those compatible with MDAnalysis [@michaud_mdanalysis_2011,gowers_python_2016], for the accurate and statistically rigorous calculation of the mean-squared displacement and the associated uncertainty of atoms in a material.
-The use of a custom blockstrapping method allows the mean-squared displacement and uncertainty may be obtained, and the time- and temperature-dependent relationships can then be studied with custom `uravu.relationship.Relationship`[@mccluskey_uravu_2020] objects.
+The use of a custom blockstrapping method allows the mean-squared displacement and uncertainty may be obtained, and the time- and temperature-dependent relationships can then be studied with custom `uravu.relationship.Relationship` [@mccluskey_uravu_2020] objects.
 
 The availability of this software will offer users the ability to accurately quantify the uncertainties in atomic displacement and introduce this into downstream modelling in a quantitative manner. 
 
