@@ -38,7 +38,7 @@ The availability of this software will offer users the ability to accurately qua
 # Statement of Need
 
 Currently `kinisi` is the only software (to the authors' knowledge), that accurately quantifies the diffusion of atoms in materials and includes substantial compatibility with simulation software. 
-the `pymatgen` [@ong_python_2013] and others are capable of estimating displacement and uncertainty, however the method applied is not statistically rigorous. 
+While `pymatgen` [@ong_python_2013] and others are capable of estimating displacement and uncertainty, the methods applied lack the statistical rigour available in `kinisi`. 
 Tutorials, and API level documentation is available online (kinisi.rtfd.io). 
 
 # Acknowledgements
