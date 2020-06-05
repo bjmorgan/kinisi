@@ -210,8 +210,11 @@ class MDAnalysisParser(Parser):
         """
         indices = []
         framework_indices = []
+        species_names = []
+        if not isinstance(specie, list):
+            specie = [specie]
         for i, site in enumerate(structure):
-            if site.type == str(pt.elements.symbol(specie).number):
+            if site.type in specie:
                 indices.append(i)
             else:
                 framework_indices.append(i)

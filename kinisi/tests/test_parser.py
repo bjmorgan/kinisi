@@ -141,7 +141,7 @@ class TestParser(unittest.TestCase):
     def test_mda_init(self):
         xd = mda.Universe(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS.data'),
                           os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS.dcd'), format='LAMMPS')
-        da_params = { 'specie': 'H',
+        da_params = { 'specie': '1',
                       'time_step': 0.005,
                       'step_skip': 250,
                       'min_obs': 50}
