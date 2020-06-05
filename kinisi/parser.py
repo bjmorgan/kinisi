@@ -40,13 +40,15 @@ class Parser:
         step_step (:py:attr:`int`): Sampling freqency of the displacements (time_step is multiplied by this number to get the real time between measurements).
         min_obs (:py:attr:`int`, optional): Minimum number of observations to have before including in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times. Defaults to :py:attr:`30`.    
         min_dt (:py:attr:`float`, optional): Minimum timestep to be evaluated. Defaults to :py:attr:`100`.
+        ndt (:py:attr:`int`, optional): The number of dt values to calculate the MSD over. Defaults to :py:attr:`75`.
         progress (:py:attr:`bool`, optional): Print progress bars to screen. Defaults to :py:attr:`True`.
     """
-    def __init__(self, disp, indices, framework_indices, time_step, step_skip, min_obs=30, min_dt=100, progress=True):
+    def __init__(self, disp, indices, framework_indices, time_step, step_skip, min_obs=30, min_dt=100, ndt=75, progress=True):
         self.time_step = time_step
         self.step_skip = step_skip
         self.indices = indices
         self.min_dt = min_dt
+        self.ndt = ndt
 
         drift_corrected = self.correct_drift(framework_indices, disp)
 
@@ -75,7 +77,7 @@ class Parser:
             min_dt = 1
         if min_dt >= max_dt:
             raise ValueError('Not enough data to calculate diffusivity')
-        timesteps = np.arange(min_dt, max_dt, max(int((max_dt - min_dt) / 200), 1))
+        timesteps = np.arange(min_dt, max_dt, max(int((max_dt - min_dt) / self.ndt), 1))
         return timesteps
 
     def get_disps(self, timesteps, drift_corrected, progress=True):
@@ -136,16 +138,17 @@ class PymatgenParser(Parser):
         sub_sample_traj (:py:attr:`float`, optional): Multiple of the :py:attr:`time_step` to sub sample at. Defaults to :py:attr:`1` where all timesteps are used. 
         min_obs (:py:attr:`int`, optional): Minimum number of observations to have before including in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times. Defaults to :py:attr:`30`.    
         min_dt (:py:attr:`float`, optional): Minimum timestep to be evaluated. Defaults to :py:attr:`100`.
+        ndt (:py:attr:`int`, optional): The number of dt values to calculate the MSD over. Defaults to :py:attr:`75`.
         progress (:py:attr:`bool`, optional): Print progress bars to screen. Defaults to :py:attr:`True`.
     """
-    def __init__(self, structures, specie, time_step, step_skip, min_obs=30, sub_sample_traj=1, min_dt=100, progress=True):
+    def __init__(self, structures, specie, time_step, step_skip, min_obs=30, sub_sample_traj=1, min_dt=100, ndt=75, progress=True):
         structure, coords, latt = _pmg_get_structure_coords_latt(structures, sub_sample_traj, progress)
 
         disp, latt = _get_disp(coords, latt)
 
         indices, framework_indices = self.get_indices(structure, specie)
 
-        super().__init__(disp, indices, framework_indices, time_step, step_skip, min_obs, min_dt, progress)
+        super().__init__(disp, indices, framework_indices, time_step, step_skip, min_obs, min_dt, ndt, progress)
 
     def get_indices(self, structure, specie):
         """
@@ -183,16 +186,17 @@ class MDAnalysisParser(Parser):
         sub_sample_traj (:py:attr:`float`, optional): Multiple of the :py:attr:`time_step` to sub sample at. Defaults to :py:attr:`1` where all timesteps are used. 
         min_obs (:py:attr:`int`, optional): Minimum number of observations to have before including in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times. Defaults to :py:attr:`30`.
         min_dt (:py:attr:`float`, optional): Minimum timestep to be evaluated. Defaults to :py:attr:`100`.
+        ndt (:py:attr:`int`, optional): The number of dt values to calculate the MSD over. Defaults to :py:attr:`75`.
         progress (:py:attr:`bool`, optional): Print progress bars to screen. Defaults to :py:attr:`True`.
     """
-    def __init__(self, universe, specie, time_step, step_skip, min_obs=30, sub_sample_traj=1, min_dt=100, progress=True):
+    def __init__(self, universe, specie, time_step, step_skip, min_obs=30, sub_sample_traj=1, min_dt=100, ndt=75, progress=True):
         structure, coords, latt = _mda_get_structure_coords_latt(universe, specie, sub_sample_traj, progress)
 
         disp, latt = _get_disp(coords, latt)
 
         indices, framework_indices = self.get_indices(structure, specie)
                
-        super().__init__(disp, indices, framework_indices, time_step, step_skip * sub_sample_traj, min_obs, min_dt, progress)
+        super().__init__(disp, indices, framework_indices, time_step, step_skip * sub_sample_traj, min_obs, min_dt, ndt, progress)
 
     def get_indices(self, structure, specie):
         """
