@@ -81,7 +81,7 @@ class MSDBootstrap(Bootstrap):
                 continue
             self.msd_observed = np.append(self.msd_observed, np.mean(d_squared.flatten()))
             distro = _sample_until_normal(d_squared, n_samples_msd, n_resamples, max_resamples, self.confidence_interval)
-            self.dt = np.append(self.dt, delta_t[i])
+            self.dt = np.append(self.dt, self.delta_t[i])
             self.distributions.append(distro)
         ax = Axis(self.distributions)
         self.msd_sampled = ax.n
