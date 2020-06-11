@@ -33,7 +33,8 @@ class Parser:
         min_dt (:py:attr:`float`, optional): Minimum timestep to be evaluated.
     
     Args:
-        disp (:py:attr:`array_like`): Displacements of atoms.
+        coords (:py:attr:`array_like`): Atomic displacements.
+        disp (:py:attr:`array_like`): Cumulative displacements of atoms.
         structures (:py:attr:`list` of :py:class`pymatgen.core.structure.Structure`): Structures ordered in sequence of run. 
         specie (:py:class:`pymatgen.core.periodic_table.Element` or :py:class:`pymatgen.core.periodic_table.Specie`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
         time_step (:py:attr:`float`): Time step between measurements.
@@ -43,7 +44,8 @@ class Parser:
         ndt (:py:attr:`int`, optional): The number of dt values to calculate the MSD over. Defaults to :py:attr:`75`.
         progress (:py:attr:`bool`, optional): Print progress bars to screen. Defaults to :py:attr:`True`.
     """
-    def __init__(self, disp, indices, framework_indices, time_step, step_skip, min_obs=30, min_dt=100, ndt=75, progress=True):
+    def __init__(self, coords, disp, indices, framework_indices, time_step, step_skip, min_obs=30, min_dt=100, ndt=75, get_msd=False, progress=True):
+        self.coords = coords
         self.time_step = time_step
         self.step_skip = step_skip
         self.indices = indices
@@ -55,9 +57,10 @@ class Parser:
         nsteps = drift_corrected.shape[1]
 
         timesteps = self.smoothed_timesteps(nsteps, min_obs, indices)
+        self.delta_t = timesteps * self.time_step * self.step_skip
 
-        self.delta_t, self.disp_3d = self.get_disps(
-            timesteps, drift_corrected, progress)
+        if get_msd:
+            self.disp_3d = self.get_disps(timesteps, drift_corrected, progress)
 
     def smoothed_timesteps(self, nsteps, min_obs, indices):
         """
@@ -90,11 +93,8 @@ class Parser:
             progress (:py:attr:`bool`, optional): Print progress bars to screen. Defaults to :py:attr:`True`.
 
         Returns:
-            :py:attr:`tuple`: Containing:
-                - :py:attr:`array_like`: Time step intervals.
-                - :py:attr:`array_like`: Raw squared displacement.
+            :py:attr:`array_like`: Raw squared displacement.
         """
-        delta_t = timesteps * self.time_step * self.step_skip
         disp_3d = []
         if progress:
             iterator = tqdm(timesteps, desc='Getting Displacements')
@@ -103,7 +103,7 @@ class Parser:
         for timestep in iterator:
             disp = np.subtract(drift_corrected[self.indices, timestep:, :], drift_corrected[self.indices, :-timestep, :])
             disp_3d.append(disp)
-        return delta_t, disp_3d
+        return disp_3d
 
     def correct_drift(self, framework_indices, disp):
         """        
@@ -144,11 +144,11 @@ class PymatgenParser(Parser):
     def __init__(self, structures, specie, time_step, step_skip, min_obs=30, sub_sample_traj=1, min_dt=100, ndt=75, progress=True):
         structure, coords, latt = _pmg_get_structure_coords_latt(structures, sub_sample_traj, progress)
 
-        disp, latt = _get_disp(coords, latt)
+        coords, disp, latt = _get_disp(coords, latt)
 
         indices, framework_indices = self.get_indices(structure, specie)
 
-        super().__init__(disp, indices, framework_indices, time_step, step_skip, min_obs, min_dt, ndt, progress)
+        super().__init__(coords, disp, indices, framework_indices, time_step, step_skip, min_obs, min_dt, ndt, progress)
 
     def get_indices(self, structure, specie):
         """
@@ -192,11 +192,11 @@ class MDAnalysisParser(Parser):
     def __init__(self, universe, specie, time_step, step_skip, min_obs=30, sub_sample_traj=1, min_dt=100, ndt=75, progress=True):
         structure, coords, latt = _mda_get_structure_coords_latt(universe, specie, sub_sample_traj, progress)
 
-        disp, latt = _get_disp(coords, latt)
+        coords, disp, latt = _get_disp(coords, latt)
 
         indices, framework_indices = self.get_indices(structure, specie)
                
-        super().__init__(disp, indices, framework_indices, time_step, step_skip * sub_sample_traj, min_obs, min_dt, ndt, progress)
+        super().__init__(coords, disp, indices, framework_indices, time_step, step_skip * sub_sample_traj, min_obs, min_dt, ndt, progress)
 
     def get_indices(self, structure, specie):
         """
@@ -344,4 +344,4 @@ def _get_disp(coords, latt):
     else:
         latt = np.array(latt)
 
-    return disp, latt
+    return d_coords, disp, latt

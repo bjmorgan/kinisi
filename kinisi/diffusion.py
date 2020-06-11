@@ -15,7 +15,6 @@ from scipy.stats import uniform, norm
 from sklearn.utils import resample
 from tqdm import tqdm
 from uravu.distribution import Distribution
-from uravu.relationship import Relationship
 from uravu.axis import Axis
 from uravu import utils
 
@@ -126,6 +125,99 @@ class MSCDBootstrap(Bootstrap):
         self.msd_sampled_err = ax.s
 
 
+class Diffusion:
+    def __init__(self, dt, coords, timestep, skip_step, convergence_criteria=0.9, block_size=20):
+        """
+        coords (:py:attr:`array_like`): Atomic coordinates [site, timestep, axis]. 
+        """
+        self.dt = dt
+        self.timesteps = (dt / (timestep * skip_step)).astype(int)
+        self.coords = coords
+        self.msds = []
+        self.similarity_array = []
+        similarity = 0
+        i = 0
+        pbar = tqdm(total=convergence_criteria, bar_format='{desc} Time elapsed [{elapsed}]')
+        pbar.set_description("Covariance Matrix Convergence [{:.3f} -> {:.3f}] : Iteration number [{:d}] ".format(similarity, convergence_criteria, i))
+        while similarity < convergence_criteria:
+            re_coords = self._block_bootstrap_coords(block_size)
+            self.msds.append(self._generate_msds(re_coords))
+            if i > 25:
+                msd_array = np.array(self.msds).T
+                choice = np.random.randint(0, msd_array.shape[1], size=50)
+                cov1 = np.cov(msd_array[:, choice[:25]])
+                cov2 = np.cov(msd_array[:, choice[25:]])
+                m1, _ = gls(self.dt, msd_array, cov1)
+                m2, _ = gls(self.dt, msd_array, cov2)
+                similarity = compare_dists(m1, m2)
+            self.similarity_array.append(similarity)
+            pbar.set_description("Covariance Matrix Convergence [{:.3f} -> {:.3f}] : Iteration number [{:d}] ".format(similarity, convergence_criteria, i))
+            i += 1
+        pbar.close()
+        self.msds = np.array(self.msds).T
+        self.cov = np.cov(self.msds)
+        m, c = gls(self.dt, self.msds, self.cov)
+        self.gradient = Distribution(m)
+        self.intercept = Distribution(c)
+        self.diffusion_coefficient = Distribution(m / (2 * self.coords.shape[-1]))
+
+    def _block_bootstrap_coords(self, block_size):
+        """
+        Perform a block bootstrapping of the single timestep displacements.
+        """
+        n_sampled_blocks = self.coords.shape[1] // block_size
+        re_coords = np.zeros_like(self.coords)
+        for j in range(self.coords.shape[0]): # number of atoms
+            for i in range(n_sampled_blocks):
+                dt_choice = np.random.choice(self.coords.shape[1]-block_size+1)
+                atom_choice = np.random.choice(self.coords.shape[0])
+                re_coords[j, i*block_size:i*block_size+block_size] = self.coords[atom_choice, dt_choice:dt_choice+block_size]
+        return re_coords
+
+    def _generate_msds(self, re_coords):
+        """
+        Get mean squared displacements
+        """
+        msd = np.zeros(len(self.timesteps))
+        cum_disp = np.cumsum(re_coords, axis=1)
+        for i, t in enumerate(self.timesteps):
+            msd[i] = np.mean(np.sum(np.subtract(cum_disp[:, t:], cum_disp[:, :-t]) ** 2, axis=2).flatten())
+        return msd
+
+
+def compare_dists(d1, d2):
+    """
+    Simple distribution comparison.
+    """
+    h1 = np.histogram(d1, bins=100)[0]
+    h2 = np.histogram(d2, bins=100)[0]
+    h_overlap = np.minimum(h1, h2)
+    conv = np.true_divide(np.sum(h_overlap), np.sum(h2))
+    return conv
+
+
+def gls(x, Y, cov):
+    """
+    Vectorised generalised least squares.
+
+    Args:
+        x (:py:attr:`array_like`): abscissa
+        y (:py:attr:`array_like`): ordinate
+        C (:py:attr:`array_like`): covariance matrix
+    
+    Returns:
+        (tuple): gradient, intercept
+    """
+    X = np.vstack([np.ones(x.size), x]).T
+    C_1 = np.linalg.inv(cov)
+    XTC_1 = np.matmul(X.T, C_1)
+    XTC_1X = np.matmul(XTC_1, X)
+    XTC_1X_1 = np.linalg.inv(XTC_1X)
+    XTC_1X_1X = np.matmul(XTC_1X_1, X.T)
+    XTC_1X_1XC_1 = np.matmul(XTC_1X_1X, C_1)
+    c, m = np.matmul(XTC_1X_1XC_1, Y)
+    return m, c
+
 def _n_samples(disp_shape, max_obs, bootstrap_multiplier):
     """
     Calculate the maximum number of independent observations. 
@@ -200,28 +292,28 @@ def _bootstrap(array, n_samples, n_resamples):
     return [np.mean(resample(array.flatten(), n_samples=n_samples)) for j in range(n_resamples)]
 
 
-class Diffusion(Relationship):
-    r"""
-    Evaluate the data with a Einstein diffusion relationship. 
-    For attributes associated with the :py:class:`uravu.relationship.Relationship` class see that documentation.
-    This :py:attr:`uravu.relationship.Relationship.variables` for this model is a :py:attr:`list` of length 2, where :py:attr:`~uravu.relationship.Relationship.variables[0]` is the gradient of the straight line and :py:attr:`~uravu.relationship.Relationship.variables[1]` is the offset of the ordinate. 
-
-    Args:       
-        delta_t (:py:attr:`array_like`): Timestep data.
-        msd (:py:attr:`array_like`): Mean squared displacement data.
-        bounds (:py:attr:`tuple`, optional): The minimum and maximum values for each parameters.
-        msd_error (:py:attr:`array_like`): Normal uncertainty in the mean squared displacement data. Not necessary if :py:attr:`msd` is :py:attr:`list` of :py:class:`uravu.distribution.Distribution` objects. 
-    """
-    def __init__(self, delta_t, msd, bounds, msd_errors=None):
-        super().__init__(utils.straight_line, delta_t, msd, bounds, ordinate_error=msd_errors)
-
-    @property
-    def diffusion_coefficient(self):
-        """
-        Get the diffusion coefficient found as the gradient divide by 6 (twice the number of dimensions). 
-
-        Returns:
-            (:py:class:`uncertainties.core.Variable` or :py:class:`uravu.distribution.Distribution`): The diffusion coefficient in the input units.
-        """
-        return Distribution(self.variables[0].samples / 6, r'$D$')
+#class Diffusion(Relationship):
+#    r"""
+#    Evaluate the data with a Einstein diffusion relationship. 
+#    For attributes associated with the :py:class:`uravu.relationship.Relationship` class see that documentation.
+#    This :py:attr:`uravu.relationship.Relationship.variables` for this model is a :py:attr:`list` of length 2, where :py:attr:`~uravu.relationship.Relationship.variables[0]` is the gradient of the straight line and :py:attr:`~uravu.relationship.Relationship.variables[1]` is the offset of the ordinate. 
+#
+#    Args:       
+#        delta_t (:py:attr:`array_like`): Timestep data.
+#        msd (:py:attr:`array_like`): Mean squared displacement data.
+#        bounds (:py:attr:`tuple`, optional): The minimum and maximum values for each parameters.
+#        msd_error (:py:attr:`array_like`): Normal uncertainty in the mean squared displacement data. Not necessary if :py:attr:`msd` is :py:attr:`list` of :py:class:`uravu.distribution.Distribution` objects. 
+#    """
+#    def __init__(self, delta_t, msd, bounds, msd_errors=None):
+#        super().__init__(utils.straight_line, delta_t, msd, bounds, ordinate_error=msd_errors)
+#
+#    @property
+#    def diffusion_coefficient(self):
+#        """
+#       Get the diffusion coefficient found as the gradient divide by 6 (twice the number of dimensions). 
+#
+#        Returns:
+#            (:py:class:`uncertainties.core.Variable` or :py:class:`uravu.distribution.Distribution`): The diffusion coefficient in the input units.
+#        """
+#        return Distribution(self.variables[0].samples / 6, r'$D$')
         
