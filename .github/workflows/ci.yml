@@ -19,8 +19,7 @@ jobs:
         python -m pip install --upgrade pip
         if [ -f docs/requirements.txt ]; then pip install -r docs/requirements.txt; fi
     - name: CodeClimate
-      uses: paambaati/codeclimate-action@v2.2.4
-      env:
-        CC_TEST_REPORTER_ID: $CODECLIMATE_REPO_TOKEN
+      uses: codecov/codecov-action@v1
       with:
-        coverageCommand: coverage run --source=uravu setup.py test
+        fail_ci_if_error: true # optional (default = false)
+        verbose: true # optional (default = false)
