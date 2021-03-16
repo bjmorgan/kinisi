@@ -90,13 +90,13 @@ class TestMsd(unittest.TestCase):
             to_resample,
             progress=False,
             n_resamples=1,
-            max_resamples=10, 
+            max_resamples=10,
             sub_sample_dt=2)
         assert_equal(boot.dt.size, 3)
         assert_equal(len(boot.distributions), 3)
         assert_equal(boot.msd_observed.size, 3)
         assert_equal(boot.msd_sampled.size, 3)
-    
+
     def test_msd_bootstrap_d(self):
         """
         Test msd_bootstrap very few particles.
@@ -118,7 +118,7 @@ class TestMsd(unittest.TestCase):
             to_resample,
             progress=False,
             n_resamples=1,
-            max_resamples=10, 
+            max_resamples=10,
             sub_sample_dt=2)
         assert_equal(boot.dt.size, 1)
         assert_equal(len(boot.distributions), 1)
@@ -184,53 +184,9 @@ class TestMsd(unittest.TestCase):
             to_resample,
             progress=False,
             n_resamples=1,
-            max_resamples=10, 
+            max_resamples=10,
             sub_sample_dt=2)
         assert_equal(boot.dt.size, 2)
         assert_equal(len(boot.distributions), 2)
         assert_equal(boot.msd_observed.size, 2)
         assert_equal(boot.msd_sampled.size, 2)
-
-    def test_diffusion_init(self):
-        """
-        Test the initialisation of diffusion
-        """
-        bnds = ((0, 1000), (0, 1000))
-        diff = diffusion.Diffusion(dt, MSD, bnds)
-        assert_equal(diff.function, straight_line)
-        assert_almost_equal(diff.abscissa, dt)
-        assert_almost_equal(diff.y.n, msd, decimal=0)
-        assert_almost_equal(diff.y.s, np.array([msd*0.196, msd*0.196]), decimal=0)
- 
-    def test_diffusion_D_max_likelihood(self):
-        """
-        Test the max likelihood of diffusion
-        """
-        bnds = ((0, 1000), (0, 1000))
-        diff = diffusion.Diffusion(dt, MSD, bnds)
-        diff.max_likelihood('mini')
-        assert_almost_equal(diff.diffusion_coefficient.n, 1 / 6, decimal=1)
-
-    def test_diffusion_D_mcmc(self):
-        """
-        Test the mcmc of diffusion
-        """
-        bnds = ((0, 1000), (0, 1000))
-        diff = diffusion.Diffusion(dt, MSD, bnds)
-        diff.max_likelihood('mini')
-        diff.mcmc(n_samples=10, n_burn=10, progress=False)
-        assert_equal(isinstance(diff.diffusion_coefficient, Distribution), True)
-        assert_equal(diff.diffusion_coefficient.size, 500)
-        assert_equal(diff.variables[0].samples.min() > 0, True)
-        assert_equal(len(diff.variables), 2)
-    
-    def test_diffusion_nested(self):
-        """
-        Test the nested method
-        """
-        bnds = ((0, 2), (0, 2))
-        diff = diffusion.Diffusion(dt, MSD, bnds)
-        diff.max_likelihood('mini')
-        diff.nested_sampling(maxiter=100)
-        assert_equal(diff.ln_evidence != None, True)
-        assert_equal(isinstance(diff.ln_evidence, uncertainties.core.Variable), True)
