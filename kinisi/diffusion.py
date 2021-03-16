@@ -17,9 +17,7 @@ from sklearn.utils import resample
 from tqdm import tqdm
 from statsmodels.stats.moment_helpers import corr2cov
 from uravu.distribution import Distribution
-from uravu.relationship import Relationship
 from uravu.axis import Axis
-from uravu import utils
 
 
 class Bootstrap:
@@ -117,12 +115,13 @@ class MSDBootstrap(Bootstrap):
         if fit_intercept:
             A = np.array([np.ones(self.dt.size), self.dt]).T
         Y = single_msd_samples.T
+        straight_line = np.matmul(np.matmul(np.linalg.inv(np.matmul(A.T, A)), A.T), Y)
         if fit_intercept:
-            gradient, intercept = np.matmul(np.matmul(np.linalg.inv(np.matmul(A.T, A)), A.T), Y)
+            gradient, intercept = straight_line
             self.diffusion_coefficient = Distribution(gradient / 6)
             self.intercept = Distribution(intercept)
         else:
-            self.diffusion_coefficient = Distribution(np.matmul(np.matmul(np.linalg.inv(np.matmul(A.T, A)), A.T), Y)[0] / 6)
+            self.diffusion_coefficient = Distribution(straight_line[0] / 6)
 
 
 class MSCDBootstrap(Bootstrap):
