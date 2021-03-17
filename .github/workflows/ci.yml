@@ -22,7 +22,7 @@ jobs:
       run: |
         pip install pytest
         pip install pytest-cov
-        pytest --cov-report xml --cov project
+        pytest --cov-report xml --cov=.
     - uses: codecov/codecov-action@v1.3.1
       with:
         fail_ci_if_error: true # optional (default = false)
