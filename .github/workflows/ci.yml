@@ -23,7 +23,7 @@ jobs:
     - name: Generate coverage report
       run: |
         pytest --cov-report xml --cov=.
-    - uses: codecov/codecov-action@v1.3.1
-      with:
-        fail_ci_if_error: true # optional (default = false)
-        token: ${{ secrets.CODECLIMATE_REPO_TOKEN }}
+    - name: Publish code coverage
+      uses: paambaati/codeclimate-action@v2.7.5
+      env:
+        CC_TEST_REPORTER_ID: ${{ secrets.CODECLIMATE_REPO_TOKEN }}
