@@ -10,13 +10,18 @@ Uncertainty quantification in diffusion
 
 **Bootstrapping**
 
-:py:mod:`kinisi` uses a custom bootstrapping method to evaluate distribution of the mean-squared displacement at a particular timestep length. 
+:py:mod:`kinisi` uses a custom bootstrapping method to evaluate distribution of the mean-squared displacement at a particular timestep length.
 This resampling is performed until the distribution is found to be normal, or a user-controlled threshold is reached.
+
+**Diffusion uncertainty estimation**
+
+A covariance diffusion distribution is found based on the temporal correlation of individual atoms.
+This allows for the accurate estimation of uncertainty in the diffusion coefficient.
 
 **Uncertainty propagation**
 
-The :py:class:`uravu.relationship.Relationship` class is leveraged to propagate these uncertainties using Bayesian inference, allowing the determination of the uncertainty in the diffusion coefficient and activation energy.
-Finally, Bayesian model selection can be used to determine between an Arrhenius and a `super-Arrhenius relationship`_ in the temperature-dependent behaviour.
+The :py:class:`uravu.relationship.Relationship` class is leveraged to propagate the uncertainty in the diffusion coefficient using Bayesian inference, allowing the determination of the uncertainty in the activation energy from either an Arrhenius or a `super-Arrhenius relationship`_.
+Finally, it is possible to use :py:mod:`uravu` to perform Bayesian model seletion between the different temperature dependent relationships.
 
 Brief tutorials showing how :py:mod:`kinisi` may be used in the study of an `VASP Xdatcar`_ file and a :py:class:`MDAnalysis.core.universe.Universe` object can be found in the `tutorials`_, along with an example of :py:mod:`kinisi` being used to distinguish between Arrhenius and super-Arrhenius behaviour.
 
@@ -27,7 +32,7 @@ Contributors
 - `Andrew R. McCluskey`_
 - `Benjamin J. Morgan`_
 
-.. _Andrew R. McCluskey: https://www.armccluskey.com
+.. _Andrew R. McCluskey: https://www.mccluskey.scot
 .. _Benjamin J. Morgan: http://analysisandsynthesis.com
 .. _super-Arrhenius relationship: https://doi.org/10.1103/PhysRevB.74.134202
 .. _VASP Xdatcar: https://www.vasp.at/wiki/index.php/XDATCAR
