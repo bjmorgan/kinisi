@@ -17,7 +17,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r test_requirements.txt
+        pip install -r kinisi/tests/requirements.txt
         pip install pytest
         pip install pytest-cov
     - name: Generate coverage report
