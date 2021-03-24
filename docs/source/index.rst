@@ -15,7 +15,7 @@ This resampling is performed until the distribution is found to be normal, or a 
 
 **Diffusion uncertainty estimation**
 
-A covariance diffusion distribution is found based on the temporal correlation of individual atoms.
+A diffusion distribution is found based on the temporal correlation of individual atoms.
 This allows for the accurate estimation of uncertainty in the diffusion coefficient.
 
 **Uncertainty propagation**
