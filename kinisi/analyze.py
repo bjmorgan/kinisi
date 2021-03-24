@@ -22,19 +22,18 @@ class MSDAnalyzer:
     Attributes:
         dt (:py:attr:`array_like`):  Timestep values.
         distributions (:py:attr:`list` or :py:class:`Distribution`): The distributions describing the MSD at each timestep.
-        relationship (:py:class:`kinisi.diffusion.Diffusion`): The :py:class:`~kinisi.diffusion.Diffusion` class object that describes the diffusion Einstein relationship.
         msd_observed (:py:attr:`array_like`): The sample mean-squared displacements, found from the arithmetic average of the observations.
         msd_sampled (:py:attr:`array_like`): The population mean-squared displacements, found from the bootstrap resampling of the observations.
         msd_sampled_err (:py:attr:`array_like`): The two-dimensional uncertainties, at the given confidence interval, found from the bootstrap resampling of the observations.
+        _diff (:py:class:`kinisi.diffusion.MSDBootstrap`): The :py:mod:`kinisi` bootstrap and diffusion object.
 
     Args:
-        trajectory (:py:attr:`str` or :py:attr:`list` of :py:attr:`str` or :py:attr:`list` of :py:class:`pymatgen.core.structure.Structure` or :py:class:`MDAnalysis.core.Universe`): The file path(s) that should be read by either the :py:class:`pymatgen.io.vasp.Xdatcar` or :py:class:`MDAnalysis.core.universe.Universe` classes, a :py:attr:`list` of :py:class:`pymatgen.core.structure.Structure` objects ordered in sequence of run, or an :py:class:`MDAnalysis.core.Universe` object.
+        trajectory (:py:attr:`str` or :py:attr:`list` of :py:attr:`str` or :py:attr:`list` of :py:class:`pymatgen.core.structure.Structure` or :py:class:`MDAnalysis.core.Universe`): The file path(s) that should be read by either the :py:class:`pymatgen.io.vasp.Xdatcar` or :py:class:`MDAnalysis.core.universe.Universe` classes, a :py:attr:`list` of :py:class:`pymatgen.core.structure.Structure` objects ordered in sequence of run, or an :py:class:`MDAnalysis.core.universe.Universe` object.
         parser_params (:py:attr:`dict`): The parameters for the :py:mod:`kinisi.parser` object, which is either :py:class:`kinisi.parser.PymatgenParser` or :py:class:`kinisi.parser.MDAnalysisParser` depending on the input file format. See the appropriate documention for more guidance on this dictionary.
         bootstrap_params (:py:attr:`dict`, optional): The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the appropriate documentation for more guidance on this. Default is the default bootstrap parameters.
-        dtype (:py:attr:`str`, optional): The file format, for the :py:class:`kinisi.parser.PymatgenParser` this should be :py:attr:`'Xdatcar'` and for :py:class:`kinisi.parser.MDAnalysisParser` this should be the appropriate format to be passed to the :py:class:`MDAnalysis.core.universe.Universe`. Defaults to :py:attr:`'Xdatcar'`.
-        charge (:py:attr:`bool`, optional): Calculate the charge displacement. Default is :py:attr:`False`.
+        dtype (:py:attr:`str`, optional): The file format of the :py:attr:`trajectory`, for a trajectory file path to be read by :py:class:`pymatgen.io.vasp.Xdatcar` this should be :py:attr:`'Xdatcar'`, for a :py:attr:`list` of :py:class:`pymatgen.core.structure.Structure` objects this should be :py:attr:`'structures'`, for a trajectory file path to be read by :py:mod:`MDAnalysis` this should be the appropriate format to be passed to the :py:class:`MDAnalysis.core.universe.Universe`, and for a n :py:class:`MDAnalysis.core.universe.Universe` object this should be :py:attr:`'universe'`. Defaults to :py:attr:`'Xdatcar'`.
     """
-    def __init__(self, trajectory, parser_params, bootstrap_params=None, dtype='Xdatcar', charge=False):  # pragma: no cover
+    def __init__(self, trajectory, parser_params, bootstrap_params=None, dtype='Xdatcar'):  # pragma: no cover
         if bootstrap_params is None:
             bootstrap_params = {}
         if dtype is 'Xdatcar':
@@ -60,16 +59,13 @@ class MSDAnalyzer:
         dt = u.delta_t
         disp_3d = u.disp_3d
 
-        if charge:
-            self.diff = diffusion.MSCDBootstrap(dt, disp_3d, **bootstrap_params)
-        else:
-            self.diff = diffusion.MSDBootstrap(dt, disp_3d, **bootstrap_params)
+        self._diff = diffusion.MSDBootstrap(dt, disp_3d, **bootstrap_params)
 
-        self.dt = self.diff.dt
-        self.msd_sampled = self.diff.msd_sampled
-        self.msd_sampled_err = self.diff.msd_sampled_err
-        self.msd_observed = self.diff.msd_observed
-        self.distributions = self.diff.distributions
+        self.dt = self._diff.dt
+        self.msd_sampled = self._diff.msd_sampled
+        self.msd_sampled_err = self._diff.msd_sampled_err
+        self.msd_observed = self._diff.msd_observed
+        self.distributions = self._diff.distributions
 
     @property
     def msd(self):
@@ -99,22 +95,21 @@ class DiffAnalyzer(MSDAnalyzer):
     The time-scale dependence of the MSD is then modeled with a straight line Einstein relationship, and Markov chain Monte Carlo is used to quantify inverse uncertainties for this model.
 
     Args:
-        trajectory (:py:attr:`str` or :py:attr:`list` of :py:attr:`str` or :py:attr:`list` of :py:class:`pymatgen.core.structure.Structure`): The file path(s) that should be read by either the :py:class:`pymatgen.io.vasp.Xdatcar` or :py:class:`MDAnalysis.core.universe.Universe` classes, or a :py:attr:`list` of :py:class:`pymatgen.core.structure.Structure` objects ordered in sequence of run.
-        parser_params (:py:attr:`dict`): The parameters for the :py:mod:`kinisi.parser` object, which is either :py:class:`kinisi.parser.PymatgenParser` or :py:class:`kinisi.parser.MDAnalysisParser` depending on the input file format. See the appropriate documention for more guidance on this object.
-        bootstrap_params (:py:attr:`dict`, optional): The parameters for the :py:class:`kinisi.diffusion.Bootstrap` object. See the appropriate documentation for more guidance on this. Default is the default bootstrap parameters.
-        dtype (:py:attr:`str`, optional): The file format, for the :py:class:`kinisi.parser.PymatgenParser` this should be :py:attr:`'Xdatcar'` and for :py:class:`kinisi.parser.MDAnalysisParser` this should be the appropriate format to be passed to the :py:class:`MDAnalysis.core.universe.Universe`. Defaults to :py:attr:`'Xdatcar'`.
+        trajectory (:py:attr:`str` or :py:attr:`list` of :py:attr:`str` or :py:attr:`list` of :py:class:`pymatgen.core.structure.Structure` or :py:class:`MDAnalysis.core.Universe`): The file path(s) that should be read by either the :py:class:`pymatgen.io.vasp.Xdatcar` or :py:class:`MDAnalysis.core.universe.Universe` classes, a :py:attr:`list` of :py:class:`pymatgen.core.structure.Structure` objects ordered in sequence of run, or an :py:class:`MDAnalysis.core.universe.Universe` object.
+        parser_params (:py:attr:`dict`): The parameters for the :py:mod:`kinisi.parser` object, which is either :py:class:`kinisi.parser.PymatgenParser` or :py:class:`kinisi.parser.MDAnalysisParser` depending on the input file format. See the appropriate documention for more guidance on this dictionary.
+        bootstrap_params (:py:attr:`dict`, optional): The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the appropriate documentation for more guidance on this. Default is the default bootstrap parameters.
+        dtype (:py:attr:`str`, optional): The file format of the :py:attr:`trajectory`, for a trajectory file path to be read by :py:class:`pymatgen.io.vasp.Xdatcar` this should be :py:attr:`'Xdatcar'`, for a :py:attr:`list` of :py:class:`pymatgen.core.structure.Structure` objects this should be :py:attr:`'structures'`, for a trajectory file path to be read by :py:mod:`MDAnalysis` this should be the appropriate format to be passed to the :py:class:`MDAnalysis.core.universe.Universe`, and for a n :py:class:`MDAnalysis.core.universe.Universe` object this should be :py:attr:`'universe'`. Defaults to :py:attr:`'Xdatcar'`.
         n_samples_fit (:py:attr:`int`, optional): The number of samples in the random generator for the fitting of the linear relationship. Default is :py:attr:`10000`.
         fit_intercept (:py:attr:`bool`, optional): Should the intercept of the diffusion relationship be fit. Default is :py:attr:`True`.
-        charge (:py:attr:`bool`, optional): Calculate the charge mean-squared displacment. Default is :py:attr:`False`.
     """
-    def __init__(self, trajectory, parser_params, bootstrap_params=None, dtype='Xdatcar', n_samples_fit=10000, fit_intercept=True, charge=False):  # pragma: no cover
+    def __init__(self, trajectory, parser_params, bootstrap_params=None, dtype='Xdatcar', n_samples_fit=10000, fit_intercept=True):  # pragma: no cover
         self.pymatgen = False
         if dtype == 'Xdatcar' or dtype == 'structures':
             from pymatgen.analysis.diffusion_analyzer import get_conversion_factor
             self.pymatgen = True
             self.specie = parser_params['specie']
         super().__init__(trajectory, parser_params, bootstrap_params, dtype, charge)
-        self.diff.diffusion(n_samples_fit, fit_intercept)
+        self._diff.diffusion(n_samples_fit, fit_intercept)
 
     @property
     def D(self):
@@ -124,7 +119,7 @@ class DiffAnalyzer(MSDAnalyzer):
         Returns:
             :py:class:`uravu.distribution.Distribution`: Diffusion coefficient.
         """
-        return self.diff.diffusion_coefficient
+        return self._diff.diffusion_coefficient
 
     @property
     def D_offset(self):
@@ -134,7 +129,7 @@ class DiffAnalyzer(MSDAnalyzer):
         Returns:
             :py:class:`uravu.distribution.Distribution`: Abscissa offset.
         """
-        return self.diff.intercept
+        return self._diff.intercept
 
     def sigma(self, temperature):
         """
@@ -148,7 +143,7 @@ class DiffAnalyzer(MSDAnalyzer):
         """
         if self.pymatgen:
             conv_factor = get_conversion_factor(self.first_structure, self.specie, temperature)
-            return Distribution(self.diff.diffusion_coefficient.samples * conv_factor)
+            return Distribution(self._diff.diffusion_coefficient.samples * conv_factor)
         else:
             raise ValueError("This is currently only supported for Pymatgen files, please convert from D manually.")
 
