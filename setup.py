@@ -10,7 +10,7 @@ import io
 from os import path
 from setuptools import setup, find_packages
 
-PACKAGES = find_packages()
+PACKAGES = find_packages(exclude=['tests*'])
 
 # versioning
 MAJOR = 0
