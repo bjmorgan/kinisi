@@ -5,7 +5,7 @@ scipy
 emcee
 tqdm
 dynesty
-uravu
+uravu>=1.2.4
 pymatgen
 uncertainties
 periodictable

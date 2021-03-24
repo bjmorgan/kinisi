@@ -37,7 +37,10 @@ class MSDAnalyzer:
         if bootstrap_params is None:
             bootstrap_params = {}
         if dtype is 'Xdatcar':
-            from pymatgen.io.vasp import Xdatcar
+            try:
+                from pymatgen.io.vasp import Xdatcar
+            except ModuleNotFoundError:
+                raise ModuleNotFoundError("To use the Xdatcar file parsing, pymatgen must be installed.")
             if isinstance(trajectory, list):
                 trajectory_list = (Xdatcar(f) for f in trajectory)
                 structures = _flatten_list([x.structures for x in trajectory_list])
@@ -52,7 +55,10 @@ class MSDAnalyzer:
         elif dtype == 'universe':
             u = MDAnalysisParser(trajectory, **parser_params)
         else:
-            import MDAnalysis as mda
+            try:
+                import MDAnalysis as mda
+            except ModuleNotFoundError:
+                raise ModuleNotFoundError("To use the MDAnalysis from file parsing, MDAnalysis must be installed.")
             universe = mda.Universe(*trajectory, format=dtype)
             u = MDAnalysisParser(universe, **parser_params)
 

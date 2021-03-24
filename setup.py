@@ -2,7 +2,7 @@
 """
 setup.py for kinisi
 
-@author: Andrew R. McCluskey (andrew.mccluskey@diamond.ac.uk)
+@author: Andrew R. McCluskey (andrew.mccluskey@ess.eu)
 """
 
 # System imports
@@ -29,17 +29,17 @@ INFO = {
         'description': 'Uncertainty analysis and model comparison '
                        'for atomistic molecular dynamics.',
         'author': 'Andrew R. McCluskey and Benjamin J. Morgan',
-        'author_email': 'andrew.mccluskey@diamond.ac.uk '
+        'author_email': 'andrew.mccluskey@ess.eu '
                         'and b.j.morgan@bath.ac.uk',
         'packages': PACKAGES,
         'include_package_data': True,
         'setup_requires': ['numpy', 'pandas', 'statsmodels', 'matplotlib', 'scikit-learn',
                            'scipy', 'emcee', 'tqdm', 'uncertainties',
-                           'dynesty', 'uravu', 'pymatgen', 'MDAnalysis',
+                           'dynesty', 'uravu>=1.5.4',
                            'periodictable'],
         'install_requires': ['numpy', 'pandas', 'statsmodels', 'matplotlib', 'scikit-learn',
                              'scipy', 'emcee', 'tqdm',
-                             'uncertainties', 'dynesty', 'uravu', 'pymatgen', 'MDAnalysis',
+                             'uncertainties', 'dynesty', 'uravu>=1.5.4',
                              'periodictable'],
         'version': VERSION,
         'license': 'MIT',
