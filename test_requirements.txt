@@ -1,0 +1,14 @@
+numpy
+scikit-learn
+scipy
+tqdm
+uravu>=1.2.4
+pymatgen
+MDAnalysis
+statsmodels
+pandas
+coverage
+codeclimate-test-reporter
+nbsphinx
+jupyter-sphinx
+sphinx_rtd_theme

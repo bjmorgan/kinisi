@@ -12,7 +12,6 @@ Distributed under the terms of the MIT License
 
 import unittest
 import numpy as np
-import uncertainties
 from scipy.stats import norm
 from numpy.testing import assert_equal, assert_almost_equal
 from kinisi import arrhenius

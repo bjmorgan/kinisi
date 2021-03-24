@@ -13,7 +13,6 @@ Parser functions, including implementation for :py:mod:`pymatgen` compatible VAS
 # In fact, we love pymatgen!
 
 import numpy as np
-import periodictable as pt
 from tqdm import tqdm
 
 
