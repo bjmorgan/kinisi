@@ -7,8 +7,12 @@ kee-nee-si
 
 Uncertainty analysis and model comparison for diffusion in molecular dynamics.
 
+## Installation
+
+`kinisi` is available from the [PyPI](https://pypi.org/project/kinisi/) repository so can be [installed using `pip`](https://kinisi.readthedocs.io/en/latest/installation.html) or alternatively `clone` this repository and install the latest development build with the commands below.
+
 ```
-python setup.py build
+pip install -r requirements.txt
 python setup.py install
 pytest
 ```
