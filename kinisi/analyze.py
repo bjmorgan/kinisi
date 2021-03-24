@@ -109,7 +109,7 @@ class DiffAnalyzer(MSDAnalyzer):
         fit_intercept (:py:attr:`bool`, optional): Should the intercept of the diffusion relationship be fit. Default is :py:attr:`True`.
     """
     def __init__(self, trajectory, parser_params, bootstrap_params=None, dtype='Xdatcar', n_samples_fit=10000, fit_intercept=True):  # pragma: no cover
-        super().__init__(trajectory, parser_params, bootstrap_params, dtype, charge)
+        super().__init__(trajectory, parser_params, bootstrap_params, dtype)
         self._diff.diffusion(n_samples_fit, fit_intercept)
 
     @property
