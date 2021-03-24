@@ -109,11 +109,6 @@ class DiffAnalyzer(MSDAnalyzer):
         fit_intercept (:py:attr:`bool`, optional): Should the intercept of the diffusion relationship be fit. Default is :py:attr:`True`.
     """
     def __init__(self, trajectory, parser_params, bootstrap_params=None, dtype='Xdatcar', n_samples_fit=10000, fit_intercept=True):  # pragma: no cover
-        self.pymatgen = False
-        if dtype == 'Xdatcar' or dtype == 'structures':
-            from pymatgen.analysis.diffusion_analyzer import get_conversion_factor
-            self.pymatgen = True
-            self.specie = parser_params['specie']
         super().__init__(trajectory, parser_params, bootstrap_params, dtype, charge)
         self._diff.diffusion(n_samples_fit, fit_intercept)
 
@@ -136,22 +131,6 @@ class DiffAnalyzer(MSDAnalyzer):
             :py:class:`uravu.distribution.Distribution`: Abscissa offset.
         """
         return self._diff.intercept
-
-    def sigma(self, temperature):
-        """
-        Conductivity.
-
-        Args:
-            :py:attr:`float`: Simulation temperature.
-
-        Returns:
-            :py:class:`uravu.distribution.Distribution`: Conductivity.
-        """
-        if self.pymatgen:
-            conv_factor = get_conversion_factor(self.first_structure, self.specie, temperature)
-            return Distribution(self._diff.diffusion_coefficient.samples * conv_factor)
-        else:
-            raise ValueError("This is currently only supported for Pymatgen files, please convert from D manually.")
 
 
 def _flatten_list(this_list):
