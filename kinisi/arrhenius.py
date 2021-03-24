@@ -12,7 +12,6 @@ Furthermore, the classes are build on the Relationship subclass, therefore it is
 
 import sys
 import numpy as np
-from uravu.distribution import Distribution
 from uravu.relationship import Relationship
 from scipy.constants import R, N_A, eV
 from scipy.stats import uniform
@@ -24,18 +23,19 @@ R_eV = R_no_mol / eV
 
 class StandardArrhenius(Relationship):
     """
-    Evaluate the data with a standard Arrhenius relationship. 
+    Evaluate the data with a standard Arrhenius relationship.
     For attributes associated with the :py:class:`uravu.relationship.Relationship` class see that documentation.
-    The :py:attr:`uravu.relationship.Relationship.variables` for this model is a :py:attr:`list` of length 2, where :py:attr:`kinisi.arrhenius.StandardArrhenius.variables[0]` is the activation energy (in eV) and :py:attr:`kinisi.arrhenius.StandardArrhenius.variables[1]` is the prefactor of the Arrhenius equation. 
+    The :py:attr:`uravu.relationship.Relationship.variables` for this model is a :py:attr:`list` of length 2, where :py:attr:`kinisi.arrhenius.StandardArrhenius.variables[0]` is the activation energy (in eV) and :py:attr:`kinisi.arrhenius.StandardArrhenius.variables[1]` is the prefactor of the Arrhenius equation.
 
     Args:
         temperature (:py:attr:`array_like`): Temperature data.
         diffusion (:py:attr:`array_like`): Diffusion coefficient data.
         bounds (:py:attr:`tuple`): The minimum and maximum values for each parameters. Defaults to :py:attr:`None`.
-        diffusion_error (:py:attr:`array_like`): Uncertainty in the diffusion coefficient data. Not necessary if :py:attr:`diffusion` is :py:attr:`list` of :py:class:`uravu.distribution.Distribution` objects. 
+        diffusion_error (:py:attr:`array_like`): Uncertainty in the diffusion coefficient data. Not necessary if :py:attr:`diffusion` is :py:attr:`list` of :py:class:`uravu.distribution.Distribution` objects.
+        ci_points (:py:attr:`array_like`, optional): The two percentiles at which confidence intervals should be found for the variables. Default is :py:attr:`[2.5, 97.5]` (a 95 % confidence interval).
     """
-    def __init__(self, temperature, diffusion, bounds, diffusion_error=None):
-        super().__init__(arrhenius, temperature, diffusion, bounds, ordinate_error=diffusion_error)
+    def __init__(self, temperature, diffusion, bounds, diffusion_error=None, ci_points=None):
+        super().__init__(arrhenius, temperature, diffusion, bounds, ordinate_error=diffusion_error, ci_points=None)
 
 
 def arrhenius(abscissa, activation_energy, prefactor):
@@ -62,10 +62,11 @@ class SuperArrhenius(Relationship):
         temperature (:py:attr:`array_like`): Temperature data.
         diffusion (:py:attr:`array_like`): Diffusion coefficient data.
         bounds (:py:attr:`tuple`): The minimum and maximum values for each parameters. Defaults to :py:attr:`None`.
-        diffusion_error (:py:attr:`array_like`): Uncertainty in the diffusion coefficient data. Not necessary if :py:attr:`diffusion` is :py:attr:`list` of :py:class:`uravu.distribution.Distribution` objects. 
+        diffusion_error (:py:attr:`array_like`): Uncertainty in the diffusion coefficient data. Not necessary if :py:attr:`diffusion` is :py:attr:`list` of :py:class:`uravu.distribution.Distribution` objects.
+        ci_points (:py:attr:`array_like`, optional): The two percentiles at which confidence intervals should be found for the variables. Default is :py:attr:`[2.5, 97.5]` (a 95 % confidence interval).
     """
-    def __init__(self, temperature, diffusion, bounds, diffusion_error=None):
-        super().__init__(super_arrhenius, temperature, diffusion, bounds, ordinate_error=diffusion_error)
+    def __init__(self, temperature, diffusion, bounds, diffusion_error=None, ci_points=None):
+        super().__init__(super_arrhenius, temperature, diffusion, bounds, ordinate_error=diffusion_error, ci_points=None)
 
 
 def super_arrhenius(abscissa, activation_energy, prefactor, t_zero):

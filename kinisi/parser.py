@@ -13,9 +13,6 @@ Parser functions, including implementation for :py:mod:`pymatgen` compatible VAS
 # In fact, we love pymatgen!
 
 import numpy as np
-from pymatgen.analysis.diffusion_analyzer import get_conversion_factor
-from pymatgen.core.lattice import Lattice
-from pymatgen.core import Structure
 import periodictable as pt
 from tqdm import tqdm
 
@@ -23,7 +20,7 @@ from tqdm import tqdm
 class Parser:
     """
     The base class for parsing.
-    
+
     Attributes:
         time_step (:py:attr:`float`): Time step between measurements.
         step_step (:py:attr:`int`): Sampling freqency of the displacements (time_step is multiplied by this number to get the real time between measurements).
@@ -31,14 +28,14 @@ class Parser:
         delta_t (:py:attr:`array_like`):  Timestep values.
         disp_3d (:py:attr:`list` of :py:attr:`array_like`): Each element in the :py:attr:`list` has the axes [atom, displacement observation, dimension] and there is one element for each delta_t value. *Note: it is necessary to use a :py:attr:`list` of :py:attr:`array_like` as the number of observations is not necessary the same at each timestep point*.
         min_dt (:py:attr:`float`, optional): Minimum timestep to be evaluated.
-    
+
     Args:
         disp (:py:attr:`array_like`): Displacements of atoms.
-        structures (:py:attr:`list` of :py:class`pymatgen.core.structure.Structure`): Structures ordered in sequence of run. 
+        structures (:py:attr:`list` of :py:class`pymatgen.core.structure.Structure`): Structures ordered in sequence of run.
         specie (:py:class:`pymatgen.core.periodic_table.Element` or :py:class:`pymatgen.core.periodic_table.Specie`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
         time_step (:py:attr:`float`): Time step between measurements.
         step_step (:py:attr:`int`): Sampling freqency of the displacements (time_step is multiplied by this number to get the real time between measurements).
-        min_obs (:py:attr:`int`, optional): Minimum number of observations to have before including in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times. Defaults to :py:attr:`30`.    
+        min_obs (:py:attr:`int`, optional): Minimum number of observations to have before including in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times. Defaults to :py:attr:`30`.
         min_dt (:py:attr:`float`, optional): Minimum timestep to be evaluated. Defaults to :py:attr:`100`.
         ndt (:py:attr:`int`, optional): The number of dt values to calculate the MSD over. Defaults to :py:attr:`75`.
         progress (:py:attr:`bool`, optional): Print progress bars to screen. Defaults to :py:attr:`True`.
@@ -106,7 +103,7 @@ class Parser:
         return delta_t, disp_3d
 
     def correct_drift(self, framework_indices, disp):
-        """        
+        """
         Perform drift correction
 
         Args:
@@ -129,14 +126,14 @@ class Parser:
 class PymatgenParser(Parser):
     """
     A parser for pymatgen structures.
-    
+
     Args:
-        structures (:py:attr:`list` or :py:class`pymatgen.core.structure.Structure`): Structures ordered in sequence of run. 
+        structures (:py:attr:`list` or :py:class`pymatgen.core.structure.Structure`): Structures ordered in sequence of run.
         specie (:py:class:`pymatgen.core.periodic_table.Element` or :py:class:`pymatgen.core.periodic_table.Specie`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
         time_step (:py:attr:`float`): Time step between measurements.
         step_step (:py:attr:`int`): Sampling frequency of the displacements (time_step is multiplied by this number to get the real time between measurements).
-        sub_sample_traj (:py:attr:`float`, optional): Multiple of the :py:attr:`time_step` to sub sample at. Defaults to :py:attr:`1` where all timesteps are used. 
-        min_obs (:py:attr:`int`, optional): Minimum number of observations to have before including in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times. Defaults to :py:attr:`30`.    
+        sub_sample_traj (:py:attr:`float`, optional): Multiple of the :py:attr:`time_step` to sub sample at. Defaults to :py:attr:`1` where all timesteps are used.
+        min_obs (:py:attr:`int`, optional): Minimum number of observations to have before including in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times. Defaults to :py:attr:`30`.
         min_dt (:py:attr:`float`, optional): Minimum timestep to be evaluated. Defaults to :py:attr:`100`.
         ndt (:py:attr:`int`, optional): The number of dt values to calculate the MSD over. Defaults to :py:attr:`75`.
         progress (:py:attr:`bool`, optional): Print progress bars to screen. Defaults to :py:attr:`True`.
@@ -183,7 +180,7 @@ class MDAnalysisParser(Parser):
         specie (:py:attr:`str`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
         time_step (:py:attr:`float`): Time step between measurements.
         step_step (:py:attr:`int`): Sampling freqency of the displacements (time_step is multiplied by this number to get the real time between measurements).
-        sub_sample_traj (:py:attr:`float`, optional): Multiple of the :py:attr:`time_step` to sub sample at. Defaults to :py:attr:`1` where all timesteps are used. 
+        sub_sample_traj (:py:attr:`float`, optional): Multiple of the :py:attr:`time_step` to sub sample at. Defaults to :py:attr:`1` where all timesteps are used.
         min_obs (:py:attr:`int`, optional): Minimum number of observations to have before including in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times. Defaults to :py:attr:`30`.
         min_dt (:py:attr:`float`, optional): Minimum timestep to be evaluated. Defaults to :py:attr:`100`.
         ndt (:py:attr:`int`, optional): The number of dt values to calculate the MSD over. Defaults to :py:attr:`75`.
@@ -195,7 +192,7 @@ class MDAnalysisParser(Parser):
         disp, latt = _get_disp(coords, latt)
 
         indices, framework_indices = self.get_indices(structure, specie)
-               
+
         super().__init__(disp, indices, framework_indices, time_step, step_skip * sub_sample_traj, min_obs, min_dt, ndt, progress)
 
     def get_indices(self, structure, specie):
@@ -231,10 +228,10 @@ def _mda_get_structure_coords_latt(universe, specie, sub_sample_traj=1, progress
 
     Args:
         universe (:py:class:MDAnalysis.universe.Universe): Universe for analysis.
-        specie (:py:attr:`str`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`. 
+        specie (:py:attr:`str`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
         sub_sample_traj (:py:attr:`float`, optional): Multiple of the :py:attr:`time_step` to sub sample at. Default is :py:attr:`1`.
         progress (:py:attr:`bool`, optional): Print progress bars to screen. Defaults to :py:attr:`True`.
-            
+
     Returns:
         :py:class`pymatgen.core.structure.Structure`: Initial structure.
         :py:attr:`list` of :py:attr:`array_like`: Fractional coordinates for all atoms.
@@ -261,13 +258,13 @@ def _mda_get_structure_coords_latt(universe, specie, sub_sample_traj=1, progress
 
 def get_matrix(dimensions):
     """
-    Determine the lattice matrix. 
+    Determine the lattice matrix.
 
     Args:
         dimensions (:py:attr:`array_like`): a, b, c, vectors and alpha, beta, gamma angles.
 
     Returns:
-        :py:attr:`array_like`: Lattice matrix 
+        :py:attr:`array_like`: Lattice matrix
     """
     a, b, c, alpha, beta, gamma = dimensions
 
@@ -292,10 +289,10 @@ def _pmg_get_structure_coords_latt(structures, sub_sample_traj=1, progress=True)
     Obtain the initial structure and displacement from a :py:attr:`list` of :py:class`pymatgen.core.structure.Structure`.
 
     Args:
-        structures (:py:attr:`list` of :py:class`pymatgen.core.structure.Structure`): Structures ordered in sequence of run. 
+        structures (:py:attr:`list` of :py:class`pymatgen.core.structure.Structure`): Structures ordered in sequence of run.
         sub_sample_traj (:py:attr:`float`, optional): Multiple of the :py:attr:`time_step` to sub sample at. Default is :py:attr:`1`.
         progress (:py:attr:`bool`, optional): Print progress bars to screen. Defaults to :py:attr:`True`.
-            
+
     Returns:
         :py:class`pymatgen.core.structure.Structure`: Initial structure.
         :py:attr:`list` of :py:attr:`array_like`: Fractional coordinates for all atoms.

@@ -38,12 +38,12 @@ class Bootstrap:
         delta_t (:py:attr:`array_like`): An array of the timestep values.
         disp_3d (:py:attr:`list` of :py:attr:`array_like`): A list of arrays, where each array has the axes [atom, displacement observation, dimension]. There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as the number of observations is not necessary the same at each data point.
         sub_sample_dt (:py:attr:`int`. optional): The frequency in observations to be sampled. Default is :py:attr:`1` (every observation).
-        confidence_interval (:py:attr:`array_like`, optional): The percentile points of the distribution that should be stored. Default is :py:attr:`[31.73, 68.27]` (a single standard deviation).
+        confidence_interval (:py:attr:`array_like`, optional): The percentile points of the distribution that should be stored. Default is :py:attr:`[2.5, 97.5]` (a 95 % confidence interval).
         progress (:py:attr:`bool`, optional): Show tqdm progress for sampling. Default is :py:attr:`True`.
     """
     def __init__(self, delta_t, disp_3d, sub_sample_dt=1, confidence_interval=None, progress=True):
         if confidence_interval is None:
-            self.confidence_interval = [31.73, 68.27]
+            self.confidence_interval = [2.5, 97.5]
         self.displacements = disp_3d[::sub_sample_dt]
         self.delta_t = np.array(delta_t[::sub_sample_dt])
         self.max_obs = self.displacements[0].shape[1]
@@ -51,6 +51,7 @@ class Bootstrap:
         self.dt = np.array([])
         self.iterator = _iterator(progress, range(len(self.displacements)))
         self.diffusion_coefficient = None
+        self.intercept = None
 
     @property
     def D(self):
@@ -117,11 +118,11 @@ class MSDBootstrap(Bootstrap):
         Y = single_msd_samples.T
         straight_line = np.matmul(np.matmul(np.linalg.inv(np.matmul(A.T, A)), A.T), Y)
         if fit_intercept:
-            gradient, intercept = straight_line
-            self.diffusion_coefficient = Distribution(gradient / 6)
-            self.intercept = Distribution(intercept)
+            intercept, gradient = straight_line
+            self.diffusion_coefficient = Distribution(gradient / 6, ci_points=self.confidence_interval)
+            self.intercept = Distribution(intercept, ci_points=self.confidence_interval)
         else:
-            self.diffusion_coefficient = Distribution(straight_line[0] / 6)
+            self.diffusion_coefficient = Distribution(straight_line[0] / 6, ci_points=self.confidence_interval)
 
 
 class MSCDBootstrap(Bootstrap):
@@ -147,19 +148,23 @@ class MSCDBootstrap(Bootstrap):
     def __init__(self, delta_t, disp_3d, n_resamples=1000, sub_sample_dt=1, confidence_interval=None, max_resamples=10000, bootstrap_multiplier=1, progress=True):
         super().__init__(delta_t, disp_3d, sub_sample_dt, confidence_interval, progress)
         self.msd_observed = np.array([])
+        self.msd_sampled = np.array([])
+        self.msd_sampled_err = np.array([])
+        samples = np.zeros((1, len(self.displacements)))
         for i in self.iterator:
             sq_com_motion = np.sum(self.displacements[i], axis=0) ** 2
             sq_chg_disp = np.sum(sq_com_motion, axis=1)
+            samples[:, i] = sq_chg_disp.mean().flatten()
             n_samples_mscd = _n_samples((1, self.displacements[i].shape[1]), self.max_obs, bootstrap_multiplier)
             if n_samples_mscd <= 1:
                 continue
             self.msd_observed = np.append(self.msd_observed, np.mean(sq_chg_disp.flatten())  / self.displacements[i].shape[0])
             distro = _sample_until_normal(sq_chg_disp, n_samples_mscd, n_resamples, max_resamples, self.confidence_interval)
             self.dt = np.append(self.dt, self.delta_t[i])
-            self.distributions.append(Distribution(distro.samples / self.displacements[i].shape[0]))
-        ax = Axis(self.distributions)
-        self.msd_sampled = ax.n
-        self.msd_sampled_err = ax.s
+            self.distributions.append(Distribution(distro.samples / self.displacements[i].shape[0], ci_points=self.confidence_interval))
+            self.msd_sampled = np.append(self.msd_sampled, distro.n)
+            self.msd_sampled_err = np.append(self.msd_sampled_err, np.std(distro.samples))
+        self.correlation_matrix = np.array(pd.DataFrame(samples).corr())
 
 
 def _n_samples(disp_shape, max_obs, bootstrap_multiplier):
