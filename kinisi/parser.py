@@ -1,3 +1,4 @@
+# pylint: disable=C0301
 """
 Parser functions, including implementation for :py:mod:`pymatgen` compatible VASP files and :py:mod:`MDAnalysis` compatible trajectories.
 """
@@ -21,32 +22,33 @@ class Parser:
     The base class for parsing.
 
     Attributes:
-        time_step (:py:attr:`float`): Time step between measurements.
-        step_step (:py:attr:`int`): Sampling freqency of the displacements (time_step is multiplied by this number to get the real time between measurements).
-        indices (:py:attr:`array_like`): Indices for the atoms in the trajectory used in the calculation of the diffusion.
-        delta_t (:py:attr:`array_like`):  Timestep values.
+        time_step (:py:attr:`float`): Time step, in simulation units, between steps in trajectory.
+        step_step (:py:attr:`int`): Sampling freqency of the trajectory (time_step is multiplied by this number to get the real time between output from the simulation file).
+        indices (:py:attr:`array_like`): Indices for the atoms in the trajectory used in the diffusion calculation.
+        delta_t (:py:attr:`array_like`):  Time intervals at which the MSD is determined.
         disp_3d (:py:attr:`list` of :py:attr:`array_like`): Each element in the :py:attr:`list` has the axes [atom, displacement observation, dimension] and there is one element for each delta_t value. *Note: it is necessary to use a :py:attr:`list` of :py:attr:`array_like` as the number of observations is not necessary the same at each timestep point*.
-        min_dt (:py:attr:`float`, optional): Minimum timestep to be evaluated.
+        min_dt (:py:attr:`float`, optional): Minimum time interval to be evaluated.
+        ndelta_t (:py:attr:`int`, optional): The number of :py:attr:`delta_t` values to calculate the MSD over. Defaults to :py:attr:`75`.
 
     Args:
-        disp (:py:attr:`array_like`): Displacements of atoms.
-        structures (:py:attr:`list` of :py:class`pymatgen.core.structure.Structure`): Structures ordered in sequence of run.
-        specie (:py:class:`pymatgen.core.periodic_table.Element` or :py:class:`pymatgen.core.periodic_table.Specie`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
-        time_step (:py:attr:`float`): Time step between measurements.
-        step_step (:py:attr:`int`): Sampling freqency of the displacements (time_step is multiplied by this number to get the real time between measurements).
-        min_obs (:py:attr:`int`, optional): Minimum number of observations to have before including in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times. Defaults to :py:attr:`30`.
-        min_dt (:py:attr:`float`, optional): Minimum timestep to be evaluated. Defaults to :py:attr:`100`.
-        ndt (:py:attr:`int`, optional): The number of dt values to calculate the MSD over. Defaults to :py:attr:`75`.
+        disp (:py:attr:`array_like`): Displacements of atoms with the shape [site, time step, axis] .
+        indices (:py:attr:`array_like`): Indices for the atoms in the trajectory used in the diffusion calculation.
+        framework_indices (:py:attr:`array_like`): Indices for the atoms in the trajectory that should not be used in the diffusion calculation.
+        time_step (:py:attr:`float`): Time step, in simulation units, between steps in trajectory.
+        step_step (:py:attr:`int`): Sampling freqency of the trajectory (time_step is multiplied by this number to get the real time between output from the simulation file).
+        min_obs (:py:attr:`int`, optional): Minimum number of observations of an atom before including it in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times. Defaults to :py:attr:`30`.
+        min_dt (:py:attr:`float`, optional): Minimum timestep to be evaluated, in the simulation units. Defaults to :py:attr:`100`.
+        ndelta_t (:py:attr:`int`, optional): The number of :py:attr:`delta_t` values to calculate the MSD over. Defaults to :py:attr:`75`.
         progress (:py:attr:`bool`, optional): Print progress bars to screen. Defaults to :py:attr:`True`.
     """
-    def __init__(self, disp, indices, framework_indices, time_step, step_skip, min_obs=30, min_dt=100, ndt=75, progress=True):
+    def __init__(self, disp, indices, framework_indices, time_step, step_skip, min_obs=30, min_dt=100, ndelta_t=75, progress=True):
         self.time_step = time_step
         self.step_skip = step_skip
         self.indices = indices
         self.min_dt = min_dt
-        self.ndt = ndt
+        self.ndelta_t = ndelta_t
 
-        drift_corrected = self.correct_drift(framework_indices, disp)
+        drift_corrected = _correct_drift(framework_indices, disp)
 
         nsteps = drift_corrected.shape[1]
 
@@ -73,12 +75,12 @@ class Parser:
             min_dt = 1
         if min_dt >= max_dt:
             raise ValueError('Not enough data to calculate diffusivity')
-        timesteps = np.arange(min_dt, max_dt, max(int((max_dt - min_dt) / self.ndt), 1))
+        timesteps = np.arange(min_dt, max_dt, max(int((max_dt - min_dt) / self.ndelta_t), 1))
         return timesteps
 
     def get_disps(self, timesteps, drift_corrected, progress=True):
         """
-        Calculate the mean-squared displacement
+        Calculate the displacement at each timestep.
 
         Args:
             timesteps (:py:attr:`array_like`): Smoothed timesteps.
@@ -101,26 +103,6 @@ class Parser:
             disp_3d.append(disp)
         return delta_t, disp_3d
 
-    def correct_drift(self, framework_indices, disp):
-        """
-        Perform drift correction
-
-        Args:
-            framework_indices (:py:attr:`array_like`): Indices of framework atoms, to correct against.
-            disp (:py:attr:`array_like`): Numpy array of with shape [site, time step, axis].
-
-        Returns:
-            :py:attr:`array_like`: Drift of framework corrected disp.
-        """
-        # drift corrected position
-        if len(framework_indices) > 0:
-            framework_disp = disp[framework_indices]
-            drift_corrected = disp - np.average(framework_disp, axis=0)[None, :, :]
-        else:
-            drift_corrected = disp
-
-        return drift_corrected
-
 
 class PymatgenParser(Parser):
     """
@@ -129,45 +111,20 @@ class PymatgenParser(Parser):
     Args:
         structures (:py:attr:`list` or :py:class`pymatgen.core.structure.Structure`): Structures ordered in sequence of run.
         specie (:py:class:`pymatgen.core.periodic_table.Element` or :py:class:`pymatgen.core.periodic_table.Specie`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
-        time_step (:py:attr:`float`): Time step between measurements.
-        step_step (:py:attr:`int`): Sampling frequency of the displacements (time_step is multiplied by this number to get the real time between measurements).
+        time_step (:py:attr:`float`): Time step, in simulation units, between steps in trajectory.
+        step_step (:py:attr:`int`): Sampling freqency of the trajectory (time_step is multiplied by this number to get the real time between output from the simulation file).
+        min_obs (:py:attr:`int`, optional): Minimum number of observations of an atom before including it in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times. Defaults to :py:attr:`30`.
         sub_sample_traj (:py:attr:`float`, optional): Multiple of the :py:attr:`time_step` to sub sample at. Defaults to :py:attr:`1` where all timesteps are used.
-        min_obs (:py:attr:`int`, optional): Minimum number of observations to have before including in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times. Defaults to :py:attr:`30`.
-        min_dt (:py:attr:`float`, optional): Minimum timestep to be evaluated. Defaults to :py:attr:`100`.
-        ndt (:py:attr:`int`, optional): The number of dt values to calculate the MSD over. Defaults to :py:attr:`75`.
+        min_dt (:py:attr:`float`, optional): Minimum timestep to be evaluated, in the simulation units. Defaults to :py:attr:`100`.
+        ndelta_t (:py:attr:`int`, optional): The number of :py:attr:`delta_t` values to calculate the MSD over. Defaults to :py:attr:`75`.
         progress (:py:attr:`bool`, optional): Print progress bars to screen. Defaults to :py:attr:`True`.
     """
-    def __init__(self, structures, specie, time_step, step_skip, min_obs=30, sub_sample_traj=1, min_dt=100, ndt=75, progress=True):
+    def __init__(self, structures, specie, time_step, step_skip, min_obs=30, sub_sample_traj=1, min_dt=100, ndelta_t=75, progress=True):
         structure, coords, latt = _pmg_get_structure_coords_latt(structures, sub_sample_traj, progress)
 
-        disp, latt = _get_disp(coords, latt)
+        indices = _pmg_get_indices(structure, specie)
 
-        indices, framework_indices = self.get_indices(structure, specie)
-
-        super().__init__(disp, indices, framework_indices, time_step, step_skip, min_obs, min_dt, ndt, progress)
-
-    def get_indices(self, structure, specie):
-        """
-        Determine framework and non-framework indices
-
-        Perform drift correction
-
-        Args:
-            structure (:py:class:`pymatgen.core.structure.Structure`): Initial structure.
-            specie (:py:class:`pymatgen.core.periodic_table.Element` or :py:class:`pymatgen.core.periodic_table.Specie`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
-
-        Returns:
-            :py:attr:`array_like`: Indices for the atoms in the trajectory used in the calculation of the diffusion.
-            :py:attr:`array_like`: Indices of framework atoms.
-        """
-        indices = []
-        framework_indices = []
-        for i, site in enumerate(structure):
-            if site.specie.symbol == specie:
-                indices.append(i)
-            else:
-                framework_indices.append(i)
-        return indices, framework_indices
+        super().__init__(_get_disp(coords, latt), indices[0], indices[1], time_step, step_skip, min_obs, min_dt, ndelta_t, progress)
 
 
 class MDAnalysisParser(Parser):
@@ -177,57 +134,28 @@ class MDAnalysisParser(Parser):
     Args:
         universe (:py:class:`MDAnalysis.core.universe.Universe`): The MDAnalysis object of interest.
         specie (:py:attr:`str`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
-        time_step (:py:attr:`float`): Time step between measurements.
-        step_step (:py:attr:`int`): Sampling freqency of the displacements (time_step is multiplied by this number to get the real time between measurements).
+        time_step (:py:attr:`float`): Time step, in simulation units, between steps in trajectory.
+        step_step (:py:attr:`int`): Sampling freqency of the trajectory (time_step is multiplied by this number to get the real time between output from the simulation file).
+        min_obs (:py:attr:`int`, optional): Minimum number of observations of an atom before including it in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times. Defaults to :py:attr:`30`.
         sub_sample_traj (:py:attr:`float`, optional): Multiple of the :py:attr:`time_step` to sub sample at. Defaults to :py:attr:`1` where all timesteps are used.
-        min_obs (:py:attr:`int`, optional): Minimum number of observations to have before including in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times. Defaults to :py:attr:`30`.
-        min_dt (:py:attr:`float`, optional): Minimum timestep to be evaluated. Defaults to :py:attr:`100`.
-        ndt (:py:attr:`int`, optional): The number of dt values to calculate the MSD over. Defaults to :py:attr:`75`.
+        min_dt (:py:attr:`float`, optional): Minimum timestep to be evaluated, in the simulation units. Defaults to :py:attr:`100`.
+        ndelta_t (:py:attr:`int`, optional): The number of :py:attr:`delta_t` values to calculate the MSD over. Defaults to :py:attr:`75`.
         progress (:py:attr:`bool`, optional): Print progress bars to screen. Defaults to :py:attr:`True`.
     """
-    def __init__(self, universe, specie, time_step, step_skip, min_obs=30, sub_sample_traj=1, min_dt=100, ndt=75, progress=True):
-        structure, coords, latt = _mda_get_structure_coords_latt(universe, specie, sub_sample_traj, progress)
+    def __init__(self, universe, specie, time_step, step_skip, min_obs=30, sub_sample_traj=1, min_dt=100, ndelta_t=75, progress=True):
+        structure, coords, latt = _mda_get_structure_coords_latt(universe, sub_sample_traj, progress)
 
-        disp, latt = _get_disp(coords, latt)
+        indices = _mda_get_indices(structure, specie)
 
-        indices, framework_indices = self.get_indices(structure, specie)
-
-        super().__init__(disp, indices, framework_indices, time_step, step_skip * sub_sample_traj, min_obs, min_dt, ndt, progress)
-
-    def get_indices(self, structure, specie):
-        """
-        Determine framework and non-framework indices
-
-        Perform drift correction
-
-        Args:
-            structure (:py:class:`MDAnalysis.core.groups.AtomGroup`): Initial structure.
-            specie (:py:class:`pymatgen.core.periodic_table.Element` or :py:class:`pymatgen.core.periodic_table.Specie`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
-
-        Returns:
-            :py:attr:`array_like`: Indices for the atoms in the trajectory used in the calculation of the diffusion.
-            :py:attr:`array_like`: Indices of framework atoms.
-        """
-        indices = []
-        framework_indices = []
-        species_names = []
-        if not isinstance(specie, list):
-            specie = [specie]
-        for i, site in enumerate(structure):
-            if site.type in specie:
-                indices.append(i)
-            else:
-                framework_indices.append(i)
-        return indices, framework_indices
+        super().__init__(_get_disp(coords, latt), indices[0], indices[1], time_step, step_skip * sub_sample_traj, min_obs, min_dt, ndelta_t, progress)
 
 
-def _mda_get_structure_coords_latt(universe, specie, sub_sample_traj=1, progress=True):
+def _mda_get_structure_coords_latt(universe, sub_sample_traj=1, progress=True):
     """
-    Obtain the initial structure and displacement from a :py:class:`MDAnalysis.universe.Universe` file
+    Obtain the initial structure and displacement from a :py:class:`MDAnalysis.universe.Universe` file.
 
     Args:
         universe (:py:class:MDAnalysis.universe.Universe): Universe for analysis.
-        specie (:py:attr:`str`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
         sub_sample_traj (:py:attr:`float`, optional): Multiple of the :py:attr:`time_step` to sub sample at. Default is :py:attr:`1`.
         progress (:py:attr:`bool`, optional): Print progress bars to screen. Defaults to :py:attr:`True`.
 
@@ -246,7 +174,7 @@ def _mda_get_structure_coords_latt(universe, specie, sub_sample_traj=1, progress
         if first:
             structure = universe.atoms
             first = False
-        matrix = get_matrix(timestep.dimensions)
+        matrix = _get_matrix(timestep.dimensions)
         inv_matrix = np.linalg.inv(matrix)
         coords.append(np.array(np.dot(universe.atoms.positions, inv_matrix))[:, None])
         latt.append(matrix)
@@ -255,7 +183,7 @@ def _mda_get_structure_coords_latt(universe, specie, sub_sample_traj=1, progress
     return structure, coords, latt
 
 
-def get_matrix(dimensions):
+def _get_matrix(dimensions):
     """
     Determine the lattice matrix.
 
@@ -265,20 +193,18 @@ def get_matrix(dimensions):
     Returns:
         :py:attr:`array_like`: Lattice matrix
     """
-    a, b, c, alpha, beta, gamma = dimensions
-
-    angles_r = np.radians([alpha, beta, gamma])
+    angles_r = np.radians(dimensions[3:])
     cos_alpha, cos_beta, cos_gamma = np.cos(angles_r)
-    sin_alpha, sin_beta, sin_gamma = np.sin(angles_r)
+    sin_alpha, sin_beta = np.sin(angles_r)[:2]
 
     val = (cos_alpha * cos_beta - cos_gamma) / (sin_alpha * sin_beta)
     # Sometimes rounding errors result in values slightly > 1.
     val = max(min(val, 1), -1)
     gamma_star = np.arccos(val)
 
-    vector_a = [a * sin_beta, 0.0, a * cos_beta]
-    vector_b = [-b * sin_alpha * np.cos(gamma_star), b * sin_alpha * np.sin(gamma_star), b * cos_alpha]
-    vector_c = [0.0, 0.0, float(c)]
+    vector_a = [dimensions[0] * sin_beta, 0.0, dimensions[0] * cos_beta]
+    vector_b = [-dimensions[1] * sin_alpha * np.cos(gamma_star), dimensions[1] * sin_alpha * np.sin(gamma_star), dimensions[1] * cos_alpha]
+    vector_c = [0.0, 0.0, float(dimensions[2])]
 
     return np.array([vector_a, vector_b, vector_c], dtype=np.float64).reshape((3, 3))
 
@@ -314,6 +240,7 @@ def _pmg_get_structure_coords_latt(structures, sub_sample_traj=1, progress=True)
 
     return structure, coords, latt
 
+
 def _get_disp(coords, latt):
     """
     Calculate displacements.
@@ -334,10 +261,71 @@ def _get_disp(coords, latt):
         c_disp.append([np.dot(d, m) for d, m in zip(i, latt[1:])])
     disp = np.array(c_disp)
 
-    # If is NVT-AIMD, clear lattice data.
-    if np.array_equal(latt[0], latt[-1]):
-        latt = np.array([latt[0]])
-    else:
-        latt = np.array(latt)
+    return disp
 
-    return disp, latt
+
+def _correct_drift(framework_indices, disp):
+    """
+    Perform drift correction, such that the displacement is calculated normalised to any framework drift.
+
+    Args:
+        framework_indices (:py:attr:`array_like`): Indices for the atoms in the trajectory that should not be used in the diffusion calculation.
+        disp (:py:attr:`array_like`): Numpy array of with shape [site, time step, axis] that describes the displacements.
+
+    Returns:
+        :py:attr:`array_like`: Displacements corrected to account for drift of a framework.
+    """
+    # drift corrected position
+    if len(framework_indices) > 0:
+        framework_disp = disp[framework_indices]
+        drift_corrected = disp - np.average(framework_disp, axis=0)[None, :, :]
+    else:
+        drift_corrected = disp
+
+    return drift_corrected
+
+
+def _pmg_get_indices(structure, specie):
+    """
+    Determine framework and non-framework indices for a :py:mod:`pymatgen` compatible file.
+
+    Args:
+        structure (:py:class:`pymatgen.core.structure.Structure`): Initial structure.
+        specie (:py:class:`pymatgen.core.periodic_table.Element` or :py:class:`pymatgen.core.periodic_table.Specie`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
+
+    Returns:
+        :py:attr:`array_like`: Indices for the atoms in the trajectory used in the calculation of the diffusion.
+        :py:attr:`array_like`: Indices of framework atoms.
+    """
+    indices = []
+    framework_indices = []
+    for i, site in enumerate(structure):
+        if site.specie.symbol == specie:
+            indices.append(i)
+        else:
+            framework_indices.append(i)
+    return indices, framework_indices
+
+
+def _mda_get_indices(structure, specie):
+    """
+    Determine framework and non-framework indices for an :py:mod:`MDAnalysis` compatible file.
+
+    Args:
+        structure (:py:class:`MDAnalysis.core.groups.AtomGroup`): Initial structure.
+        specie (:py:attr:`str`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
+
+    Returns:
+        :py:attr:`array_like`: Indices for the atoms in the trajectory used in the calculation of the diffusion.
+        :py:attr:`array_like`: Indices of framework atoms.
+    """
+    indices = []
+    framework_indices = []
+    if not isinstance(specie, list):
+        specie = [specie]
+    for i, site in enumerate(structure):
+        if site.type in specie:
+            indices.append(i)
+        else:
+            framework_indices.append(i)
+    return indices, framework_indices

@@ -53,11 +53,11 @@ class TestParser(unittest.TestCase):
     def test_parser_init_indices(self):
         p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=20)
         assert_equal(p.indices, indices)
-    
+
     def test_parser_init_min_dt(self):
         p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=20)
         assert_equal(p.min_dt, 20)
-    
+
     def test_parser_delta_t(self):
         p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=20)
         assert_equal(p.delta_t.size, 80)
@@ -83,24 +83,22 @@ class TestParser(unittest.TestCase):
     def test_smoothed_timesteps_min_dt_zero(self):
         p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=0)
         timesteps = p.smoothed_timesteps(100, 30, indices)
-        assert_equal(timesteps, np.arange(1, 100, 1)) 
-                
+        assert_equal(timesteps, np.arange(1, 100, 1))
+
     def test_smoothed_timesteps_min_dt_zero(self):
         p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=0)
         timesteps = p.smoothed_timesteps(100, 30, indices)
-        assert_equal(timesteps, np.arange(1, 100, 1)) 
+        assert_equal(timesteps, np.arange(1, 100, 1))
 
     def test_correct_drift_no_framework(self):
-        p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=20)
-        corrected = p.correct_drift([], dc)
+        corrected = parser._correct_drift([], dc)
         assert_equal(len(corrected), 100)
         for i, d in enumerate(corrected):
             assert_equal(d.shape[0], 100)
             assert_equal(d.shape[1], 3)
 
     def test_correct_drift_framework(self):
-        p = parser.Parser(dc, indices, [0, 1, 2], time_step, step_skip, min_dt=20)
-        corrected = p.correct_drift([], dc)
+        corrected = parser._correct_drift([], dc)
         assert_equal(len(corrected), 100)
         for i, d in enumerate(corrected):
             assert_equal(d.shape[0], 100)
@@ -137,7 +135,7 @@ class TestParser(unittest.TestCase):
         assert_almost_equal(data.time_step, 20.0)
         assert_almost_equal(data.step_skip, 100)
         assert_equal(data.indices, list(range(xd.natoms[0])))
-    
+
     def test_mda_init(self):
         xd = mda.Universe(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS.data'),
                           os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS.dcd'), format='LAMMPS')
@@ -151,6 +149,5 @@ class TestParser(unittest.TestCase):
         assert_equal(data.indices, list(range(204)))
 
     def test_get_matrix(self):
-        matrix = parser.get_matrix([10, 10, 10, 90, 90, 90])
+        matrix = parser._get_matrix([10, 10, 10, 90, 90, 90])
         assert_almost_equal(matrix, np.diag((10, 10, 10)))
-        
