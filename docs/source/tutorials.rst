@@ -6,4 +6,5 @@ Here are some simple tutorials, showing how :py:mod:`kinisi` may be used to anal
 .. toctree::
    :maxdepth: 1
 
-   vasp
+   vasp_msd
+   vasp_d
