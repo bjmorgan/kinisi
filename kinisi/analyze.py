@@ -49,11 +49,32 @@ class MSDAnalyzer:
                 structures = xd.structures
             u = PymatgenParser(structures, **parser_params)
             self.first_structure = structures[0]
+            dt = u.delta_t
+            disp_3d = u.disp_3d
+        elif dtype is 'IdenticalXdatcar':
+            try:
+                from pymatgen.io.vasp import Xdatcar
+            except ModuleNotFoundError:
+                raise ModuleNotFoundError("To use the Xdatcar file parsing, pymatgen must be installed.")
+            u = [PymatgenParser(Xdatcar(f).structures, **parser_params) for f in trajectory]
+            joint_disp_3d = []
+            for i in range(len(u[0].disp_3d)):
+                disp = np.zeros((u[0].disp_3d[i].shape[0] * len(u), u[0].disp_3d[i].shape[1], u[0].disp_3d[i].shape[2]))
+                disp[:u[0].disp_3d[i].shape[0]] = u[0].disp_3d[i]
+                for j in range(1, len(u)):
+                    disp[u[0].disp_3d[i].shape[0] * j:u[0].disp_3d[i].shape[0] * (j+1)] = u[j].disp_3d[i]
+                joint_disp_3d.append(disp)
+            dt = u[0].delta_t
+            disp_3d = joint_disp_3d
         elif dtype is 'structures':
             u = PymatgenParser(trajectory, **parser_params)
             self.first_structure = structures[0]
+            dt = u.delta_t
+            disp_3d = u.disp_3d
         elif dtype == 'universe':
             u = MDAnalysisParser(trajectory, **parser_params)
+            dt = u.delta_t
+            disp_3d = u.disp_3d
         else:
             try:
                 import MDAnalysis as mda
@@ -61,9 +82,8 @@ class MSDAnalyzer:
                 raise ModuleNotFoundError("To use the MDAnalysis from file parsing, MDAnalysis must be installed.")
             universe = mda.Universe(*trajectory, format=dtype)
             u = MDAnalysisParser(universe, **parser_params)
-
-        dt = u.delta_t
-        disp_3d = u.disp_3d
+            dt = u.delta_t
+            disp_3d = u.disp_3d
 
         self._diff = diffusion.MSDBootstrap(dt, disp_3d, **bootstrap_params)
 
