@@ -88,6 +88,7 @@ class MSDBootstrap(Bootstrap):
         self.msd_observed = np.array([])
         self.msd_sampled = np.array([])
         self.msd_sampled_err = np.array([])
+        self.msd_sampled_std = np.array([])
         samples = np.zeros((self.displacements[0].shape[0], len(self.displacements)))
         for i in self.iterator:
             d_squared = np.sum(self.displacements[i] ** 2, axis=2)
