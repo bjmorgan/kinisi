@@ -69,7 +69,8 @@ class MSDBootstrap(Bootstrap):
     Attributes:
         msd_observed (:py:attr:`array_like`): The sample mean-squared displacements, found from the arithmetic average of the observations.
         msd_sampled (:py:attr:`array_like`): The population mean-squared displacements, found from the bootstrap resampling of the observations.
-        msd_sampled_err (:py:attr:`array_like`): The two-dimensional uncertainties, at the given confidence interval, found from the bootstrap resampling of the observations.
+        msd_sampled_err (:py:attr:`array_like`): The uncertainties, at the given confidence interval, found from the bootstrap resampling of the observations.
+        msd_sampled_std (:py:attr:`array_like`): The standard deviation in the mean-squared displacement, found from the bootstrap resampling of the observations.
         correlation_matrix (:py:attr:`array_like`): The estimated correlation matrix for the mean-squared displacements.
 
     Args:
@@ -99,7 +100,8 @@ class MSDBootstrap(Bootstrap):
             self.dt = np.append(self.dt, self.delta_t[i])
             self.distributions.append(distro)
             self.msd_sampled = np.append(self.msd_sampled, distro.n)
-            self.msd_sampled_err = np.append(self.msd_sampled_err, np.std(distro.samples))
+            self.msd_sampled_err = np.append(self.msd_sampled_err, distro.n - distro.con_int[0])
+            self.msd_sampled_std = np.append(self.msd_sampled_err, np.std(distro.samples))
         self.correlation_matrix = np.array(pd.DataFrame(samples).corr())
 
     def diffusion(self, n_samples=10000, fit_intercept=True):
@@ -110,7 +112,7 @@ class MSDBootstrap(Bootstrap):
             n_samples (:py:attr:`int`, optional): The number of samples in the random generator. Default is :py:attr:`10000`.
             fit_intercept (:py:attr:`bool`, optional): Should the intercept of the diffusion relationship be fit. Default is :py:attr:`True`.
         """
-        single_msd = multivariate_normal(self.msd_sampled, corr2cov(self.correlation_matrix, self.msd_sampled_err), allow_singular=True)
+        single_msd = multivariate_normal(self.msd_sampled, corr2cov(self.correlation_matrix, self.msd_sampled_std), allow_singular=True)
         single_msd_samples = single_msd.rvs(n_samples)
         A = np.array([self.dt]).T
         if fit_intercept:
