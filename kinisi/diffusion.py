@@ -102,7 +102,7 @@ class MSDBootstrap(Bootstrap):
             self.distributions.append(distro)
             self.msd_sampled = np.append(self.msd_sampled, distro.n)
             self.msd_sampled_err = np.append(self.msd_sampled_err, distro.n - distro.con_int[0])
-            self.msd_sampled_std = np.append(self.msd_sampled_err, np.std(distro.samples))
+            self.msd_sampled_std = np.append(self.msd_sampled_std, np.std(distro.samples))
         self.correlation_matrix = np.array(pd.DataFrame(samples).corr())
 
     def diffusion(self, n_samples=10000, fit_intercept=True):
