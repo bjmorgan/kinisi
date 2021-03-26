@@ -9,15 +9,14 @@ setup.py for kinisi
 import io
 from os import path
 from setuptools import setup, find_packages
+from kinisi import __version__
 
 PACKAGES = find_packages(exclude=['tests*'])
 
 # versioning
-MAJOR = 0
-MINOR = 0
-MICRO = 5
+
 ISRELEASED = False
-VERSION = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
+VERSION = __version__
 
 
 THIS_DIRECTORY = path.abspath(path.dirname(__file__))
@@ -40,13 +39,11 @@ INFO = {
         'license': 'MIT',
         'long_description': LONG_DESCRIPTION,
         'long_description_content_type': 'text/markdown',
-        'classifiers': ['Development Status :: 3 - Alpha',
+        'classifiers': ['Development Status :: 4 - Beta',
                         'Intended Audience :: Science/Research',
                         'License :: OSI Approved :: MIT License',
                         'Natural Language :: English',
                         'Operating System :: OS Independent',
-                        'Programming Language :: Python :: 3.5',
-                        'Programming Language :: Python :: 3.6',
                         'Programming Language :: Python :: 3.7',
                         'Programming Language :: Python :: 3.8',
                         'Programming Language :: Python :: 3.9',
