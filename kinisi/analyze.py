@@ -109,7 +109,7 @@ class MSDAnalyzer:
         Returns MSD uncertainty for the input trajectories.
 
         Returns:
-            :py:attr:`array_like`: A lower and upper uncertainty, at a single standard deviation, of the mean squared displacement values.
+            :py:attr:`array_like`: A lower and upper uncertainty, at the defined confidence_interval (default is 95 % CI), of the mean squared displacement values.
         """
         return self.msd_sampled_err
 
