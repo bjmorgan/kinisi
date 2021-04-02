@@ -119,7 +119,7 @@ class PymatgenParser(Parser):
         ndelta_t (:py:attr:`int`, optional): The number of :py:attr:`delta_t` values to calculate the MSD over. Defaults to :py:attr:`75`.
         progress (:py:attr:`bool`, optional): Print progress bars to screen. Defaults to :py:attr:`True`.
     """
-    def __init__(self, structures, specie, time_step, step_skip, min_obs=30, sub_sample_traj=1, min_dt=100, ndelta_t=75, progress=True):
+    def __init__(self, structures, specie, time_step, step_skip, min_obs=30, sub_sample_traj=1, min_dt=0, ndelta_t=75, progress=True):
         structure, coords, latt = _pmg_get_structure_coords_latt(structures, sub_sample_traj, progress)
 
         indices = _pmg_get_indices(structure, specie)
@@ -142,7 +142,7 @@ class MDAnalysisParser(Parser):
         ndelta_t (:py:attr:`int`, optional): The number of :py:attr:`delta_t` values to calculate the MSD over. Defaults to :py:attr:`75`.
         progress (:py:attr:`bool`, optional): Print progress bars to screen. Defaults to :py:attr:`True`.
     """
-    def __init__(self, universe, specie, time_step, step_skip, min_obs=30, sub_sample_traj=1, min_dt=100, ndelta_t=75, progress=True):
+    def __init__(self, universe, specie, time_step, step_skip, min_obs=30, sub_sample_traj=1, min_dt=0, ndelta_t=75, progress=True):
         structure, coords, latt = _mda_get_structure_coords_latt(universe, sub_sample_traj, progress)
 
         indices = _mda_get_indices(structure, specie)
