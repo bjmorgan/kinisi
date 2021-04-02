@@ -68,7 +68,7 @@ class MSDAnalyzer:
             disp_3d = joint_disp_3d
         elif dtype is 'structures':
             u = PymatgenParser(trajectory, **parser_params)
-            self.first_structure = structures[0]
+            self.first_structure = trajectory[0]
             dt = u.delta_t
             disp_3d = u.disp_3d
         elif dtype == 'universe':
