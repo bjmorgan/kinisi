@@ -23,8 +23,6 @@ class MSDAnalyzer:
         dt (:py:attr:`array_like`):  Timestep values.
         distributions (:py:attr:`list` or :py:class:`Distribution`): The distributions describing the MSD at each timestep.
         msd_observed (:py:attr:`array_like`): The sample mean-squared displacements, found from the arithmetic average of the observations.
-        msd_sampled (:py:attr:`array_like`): The population mean-squared displacements, found from the bootstrap resampling of the observations.
-        msd_sampled_err (:py:attr:`array_like`): The two-dimensional uncertainties, at the given confidence interval, found from the bootstrap resampling of the observations.
         _diff (:py:class:`kinisi.diffusion.MSDBootstrap`): The :py:mod:`kinisi` bootstrap and diffusion object.
 
     Args:
@@ -88,8 +86,6 @@ class MSDAnalyzer:
         self._diff = diffusion.MSDBootstrap(dt, disp_3d, **bootstrap_params)
 
         self.dt = self._diff.dt
-        self.msd_sampled = self._diff.msd_sampled
-        self.msd_sampled_err = self._diff.msd_sampled_err
         self.msd_observed = self._diff.msd_observed
         self.distributions = self._diff.distributions
 
@@ -101,7 +97,7 @@ class MSDAnalyzer:
         Returns:
             :py:attr:`array_like`: MSD values.
         """
-        return self.msd_sampled
+        return self._diff.msd_sampled
 
     @property
     def msd_err(self):
@@ -111,7 +107,17 @@ class MSDAnalyzer:
         Returns:
             :py:attr:`array_like`: A lower and upper uncertainty, at the defined confidence_interval (default is 95 % CI), of the mean squared displacement values.
         """
-        return self.msd_sampled_err
+        return self._diff.msd_sampled_err
+
+    @property
+    def dr(self):
+        """
+        Returns a list of :py:class:`uravu.distribution.Distribution` objects that describe the euclidian displacement at each :py:attr:`dt`.
+
+        Return:
+            :py:attr:`list` of :py:class:`uravu.distribution.Distribution`: euclidian displacements at each :py:attr:`dt`.
+        """
+        return self._diff.euclidian_displacements
 
 
 class DiffAnalyzer(MSDAnalyzer):

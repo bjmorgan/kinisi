@@ -89,9 +89,11 @@ class MSDBootstrap(Bootstrap):
         self.msd_sampled = np.array([])
         self.msd_sampled_err = np.array([])
         self.msd_sampled_std = np.array([])
+        self.euclidian_displacements = []
         samples = np.zeros((self.displacements[0].shape[0], len(self.displacements)))
         for i in self.iterator:
             d_squared = np.sum(self.displacements[i] ** 2, axis=2)
+            self.euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
             samples[:, i] = d_squared.mean(axis=1).flatten()
             n_samples_msd = _n_samples(self.displacements[i].shape, self.max_obs, bootstrap_multiplier)
             if n_samples_msd <= 1:
