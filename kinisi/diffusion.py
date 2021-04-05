@@ -48,6 +48,7 @@ class Bootstrap:
         self.delta_t = np.array(delta_t[::sub_sample_dt])
         self.max_obs = self.displacements[0].shape[1]
         self.distributions = []
+        self.distributions_4 = []
         self.dt = np.array([])
         self.iterator = _iterator(progress, range(len(self.displacements)))
         self.diffusion_coefficient = None
@@ -83,12 +84,15 @@ class MSDBootstrap(Bootstrap):
         bootstrap_multiplier (:py:attr:`int`, optional): The factor by which the number of bootstrap samples should be multiplied. The default is :py:attr:`1`, which is the maximum number of truely independent samples in a given timestep. This can be increase, however it is importance to note that when greater than 1 the sampling is no longer independent.
         progress (:py:attr:`bool`, optional): Show tqdm progress for sampling. Default is :py:attr:`True`.
     """
-    def __init__(self, delta_t, disp_3d, n_resamples=1000, sub_sample_dt=1, confidence_interval=None, max_resamples=10000, bootstrap_multiplier=1, progress=True):
+    def __init__(self, delta_t, disp_3d, n_resamples=1000, sub_sample_dt=1, confidence_interval=None, max_resamples=10000, bootstrap_multiplier=1, progress=True, ngp_errors=False):
         super().__init__(delta_t, disp_3d, sub_sample_dt, confidence_interval, progress)
         self.msd_observed = np.array([])
         self.msd_sampled = np.array([])
         self.msd_sampled_err = np.array([])
         self.msd_sampled_std = np.array([])
+        self.ngp = np.array([])
+        if ngp_errors:
+            self.ngp_err = np.array([])
         self.euclidian_displacements = []
         samples = np.zeros((self.displacements[0].shape[0], len(self.displacements)))
         for i in self.iterator:
@@ -100,12 +104,24 @@ class MSDBootstrap(Bootstrap):
                 continue
             self.msd_observed = np.append(self.msd_observed, np.mean(d_squared.flatten()))
             distro = _sample_until_normal(d_squared, n_samples_msd, n_resamples, max_resamples, self.confidence_interval)
+            if ngp_errors:
+                distro4 = _sample_until_normal(d_squared * d_squared, n_samples_msd, n_resamples, max_resamples, self.confidence_interval)
+                self.distributions_4.append(distro4)
+                top = distro4.samples[np.random.choice(distro4.size, size=1000)] * 3
+                bottom = np.square(distro.samples[np.random.choice(distro.size, size=1000)]) * 5
+                ngp_d = Distribution(top / bottom - 1, ci_points=self.confidence_interval)
+                self.ngp = np.append(self.ngp, ngp_d.n)
+                self.ngp_err = np.append(self.ngp_err, distro4.n - distro4.con_int[0])
+            else:
+                top = np.mean(d_squared.flatten() * d_squared.flatten()) * 3
+                bottom = np.square(np.mean(d_squared.flatten())) * 5
+                self.ngp = np.append(self.ngp, top / bottom - 1)
             self.dt = np.append(self.dt, self.delta_t[i])
             self.distributions.append(distro)
             self.msd_sampled = np.append(self.msd_sampled, distro.n)
             self.msd_sampled_err = np.append(self.msd_sampled_err, distro.n - distro.con_int[0])
             self.msd_sampled_std = np.append(self.msd_sampled_std, np.std(distro.samples))
-        self.correlation_matrix = np.array(pd.DataFrame(samples).corr())
+        self.correlation_matrix = np.array(pd.DataFrame(samples[np.argmax(self.ngp):, np.argmax(self.ngp):]).corr())
 
     def diffusion(self, n_samples=10000, fit_intercept=True):
         """
@@ -115,13 +131,14 @@ class MSDBootstrap(Bootstrap):
             n_samples (:py:attr:`int`, optional): The number of samples in the random generator. Default is :py:attr:`10000`.
             fit_intercept (:py:attr:`bool`, optional): Should the intercept of the diffusion relationship be fit. Default is :py:attr:`True`.
         """
-        single_msd = multivariate_normal(self.msd_sampled, corr2cov(self.correlation_matrix, self.msd_sampled_std), allow_singular=True)
+        cov = corr2cov(self.correlation_matrix, self.msd_sampled_std[np.argmax(self.ngp):])
+        single_msd = multivariate_normal(self.msd_sampled[np.argmax(self.ngp):], cov, allow_singular=True)
         single_msd_samples = single_msd.rvs(n_samples)
-        A = np.array([self.dt]).T
+        A = np.array([self.dt[np.argmax(self.ngp):]]).T
         if fit_intercept:
-            A = np.array([np.ones(self.dt.size), self.dt]).T
+            A = np.array([np.ones(self.dt[np.argmax(self.ngp):].size), self.dt[np.argmax(self.ngp):]]).T
         Y = single_msd_samples.T
-        straight_line = np.matmul(np.matmul(np.linalg.inv(np.matmul(A.T, A)), A.T), Y)
+        straight_line = np.matmul(np.linalg.inv(np.matmul(A.T, np.matmul(np.linalg.inv(cov), A))), np.matmul(A.T, np.matmul(np.linalg.inv(cov), Y)))
         if fit_intercept:
             intercept, gradient = straight_line
             self.diffusion_coefficient = Distribution(gradient / 6, ci_points=self.confidence_interval)

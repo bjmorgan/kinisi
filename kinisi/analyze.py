@@ -119,6 +119,16 @@ class MSDAnalyzer:
         """
         return self._diff.euclidian_displacements
 
+    @property
+    def ngp_max(self):
+        """
+        Returns the position in dt where the non-Gaussian parameter is maximised.
+
+        Return:
+            :py:attr:`float`: dt where NGP is max.
+        """
+        return self.dt[self._diff.ngp.argmax()]
+
 
 class DiffAnalyzer(MSDAnalyzer):
     """
