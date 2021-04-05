@@ -43,31 +43,50 @@ class TestParser(unittest.TestCase):
     Unit tests for parser module
     """
     def test_parser_init_timestep(self):
-        p = parser.Parser(dc, indices, [], time_step, step_skip)
+        p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=20)
         assert_equal(p.time_step, time_step)
 
     def test_parser_init_stepskip(self):
-        p = parser.Parser(dc, indices, [], time_step, step_skip)
+        p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=20)
         assert_equal(p.step_skip, step_skip)
 
     def test_parser_init_indices(self):
-        p = parser.Parser(dc, indices, [], time_step, step_skip)
+        p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=20)
         assert_equal(p.indices, indices)
 
+    def test_parser_init_min_dt(self):
+        p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=20)
+        assert_equal(p.min_dt, 20)
+
     def test_parser_delta_t(self):
-        p = parser.Parser(dc, indices, [], time_step, step_skip)
-        assert_equal(p.delta_t.size, 99)
+        p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=20)
+        assert_equal(p.delta_t.size, 80)
 
     def test_parser_disp_3d(self):
-        p = parser.Parser(dc, indices, [], time_step, step_skip)
-        assert_equal(len(p.disp_3d), 99)
+        p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=20)
+        assert_equal(len(p.disp_3d), 80)
         for i, d in enumerate(p.disp_3d):
             assert_equal(d.shape[0], 100)
-            assert_equal(d.shape[1], 99-i)
+            assert_equal(d.shape[1], 80-i)
             assert_equal(d.shape[2], 3)
 
     def test_smoothed_timesteps(self):
-        p = parser.Parser(dc, indices, [], time_step, step_skip)
+        p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=20)
+        timesteps = p.smoothed_timesteps(100, 30, indices)
+        assert_equal(timesteps, np.arange(20, 100, 1))
+
+    def test_smoothed_timesteps_not_enough(self):
+        with self.assertRaises(ValueError):
+            p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=120)
+            p.smoothed_timesteps(100, 20, indices)
+
+    def test_smoothed_timesteps_min_dt_zero(self):
+        p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=0)
+        timesteps = p.smoothed_timesteps(100, 30, indices)
+        assert_equal(timesteps, np.arange(1, 100, 1))
+
+    def test_smoothed_timesteps_min_dt_zero(self):
+        p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=0)
         timesteps = p.smoothed_timesteps(100, 30, indices)
         assert_equal(timesteps, np.arange(1, 100, 1))
 
@@ -86,7 +105,7 @@ class TestParser(unittest.TestCase):
             assert_equal(d.shape[1], 3)
 
     def test_get_disps(self):
-        p = parser.Parser(dc, indices, [], time_step, step_skip)
+        p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=20)
         dt, disp_3d = p.get_disps(np.arange(20, 100, 1), dc)
         assert_equal(dt, np.arange(20, 100, 1))
         assert_equal(len(disp_3d), 80)
