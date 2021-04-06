@@ -15,7 +15,7 @@ This resampling is performed until the distribution is found to be normal, or a 
 
 **Diffusion estimation**
 
-A diffusion distribution using a generalised least squares approach to modelling the Einstein relation to the data.
+A diffusion distribution is evaluated using a generalised least squares approach to modelling the Einstein relation to the data.
 This uses a covariance matrix that includes the bootstrapped uncertainties for each MSD and an estimate of the correlation between each MSD measurement.
 This approach allows an estimate of the true displacement to be found from an infinitely long simulation.
 
