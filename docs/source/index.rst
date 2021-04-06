@@ -15,13 +15,14 @@ This resampling is performed until the distribution is found to be normal, or a 
 
 **Diffusion uncertainty estimation**
 
-A diffusion distribution is found based on the temporal correlation of individual atoms.
-This allows for the accurate estimation of uncertainty in the diffusion coefficient.
+A diffusion distribution using a generalised least squares approach to modelling the Einstein relation to the data.
+This uses a covariance matrix that includes the bootstrapped uncertainties for each MSD and an estimate of the correlation between each MSD measurement.
+This approach allows an estimate of the true displacement to be found from an infinitely long simulation.
 
 **Uncertainty propagation**
 
 The :py:class:`uravu.relationship.Relationship` class is leveraged to propagate the uncertainty in the diffusion coefficient using Bayesian inference, allowing the determination of the uncertainty in the activation energy from either an Arrhenius or a `super-Arrhenius relationship`_.
-Finally, it is possible to use :py:mod:`uravu` to perform Bayesian model seletion between the different temperature dependent relationships.
+Finally, it is possible to use :py:mod:`uravu` to perform Bayesian model selection between the different temperature dependent relationships.
 
 Brief tutorials showing how :py:mod:`kinisi` may be used in the study of an `VASP Xdatcar`_ file can be found in the `tutorials`_.
 
