@@ -13,7 +13,7 @@ Uncertainty quantification in diffusion
 :py:mod:`kinisi` uses a custom bootstrapping method to evaluate distribution of the mean-squared displacement at a particular timestep length.
 This resampling is performed until the distribution is found to be normal, or a user-controlled threshold is reached.
 
-**Diffusion uncertainty estimation**
+**Diffusion estimation**
 
 A diffusion distribution using a generalised least squares approach to modelling the Einstein relation to the data.
 This uses a covariance matrix that includes the bootstrapped uncertainties for each MSD and an estimate of the correlation between each MSD measurement.
