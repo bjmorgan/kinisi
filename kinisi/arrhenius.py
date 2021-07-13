@@ -10,11 +10,9 @@ Furthermore, the classes are build on the Relationship subclass, therefore it is
 
 # pylint: disable=R0913
 
-import sys
 import numpy as np
 from uravu.relationship import Relationship
 from scipy.constants import R, N_A, eV
-from scipy.stats import uniform
 
 # Convert R to eV
 R_no_mol = R / N_A

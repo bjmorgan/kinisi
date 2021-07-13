@@ -12,19 +12,18 @@ Distributed under the terms of the MIT License
 
 import unittest
 import numpy as np
-import uncertainties
-from numpy.testing import assert_equal, assert_almost_equal
+from numpy.testing import assert_equal
 from scipy.stats import norm
 from kinisi import diffusion
 from uravu.distribution import Distribution
-from uravu.utils import straight_line
 
 
 dt = np.linspace(5, 50, 10)
 msd = np.linspace(5, 50, 10)
 MSD = []
 for i in msd:
-    MSD.append(Distribution(norm.rvs(loc=i, scale=i*0.1, size=5000, random_state=np.random.RandomState(1))))
+    MSD.append(Distribution(norm.rvs(loc=i, scale=i * 0.1, size=5000, random_state=np.random.RandomState(1))))
+
 
 class TestMsd(unittest.TestCase):
     """

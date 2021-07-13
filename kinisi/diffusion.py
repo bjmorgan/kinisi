@@ -8,16 +8,12 @@ The modules is focused on tools for the evaluation of the mean squared displacem
 
 # pylint: disable=R0913,R0914
 
-import sys
 import warnings
 import numpy as np
-import pandas as pd
-from scipy.stats import uniform, norm, multivariate_normal
+from scipy.stats import norm
 from sklearn.utils import resample
 from tqdm import tqdm
-from statsmodels.stats.moment_helpers import corr2cov
 from uravu.distribution import Distribution
-from uravu.axis import Axis
 
 
 class Bootstrap:
@@ -82,9 +78,11 @@ class MSDBootstrap(Bootstrap):
         confidence_interval (:py:attr:`array_like`, optional): The percentile points of the distribution that should be stored. Default is :py:attr:`[31.73, 68.27]` (a single standard deviation).
         max_resamples (:py:attr:`int`, optional): The max number of resamples to be performed by the distribution is assumed to be normal. This is present to allow user control over the time taken for the resampling to occur. Default is :py:attr:`100000`.
         bootstrap_multiplier (:py:attr:`int`, optional): The factor by which the number of bootstrap samples should be multiplied. The default is :py:attr:`1`, which is the maximum number of truely independent samples in a given timestep. This can be increase, however it is importance to note that when greater than 1 the sampling is no longer independent.
+        ngp_errors (:py:attr:`bool`, optional): Should the non-Gaussian parameter uncertainty be calculated. Default is :py:attr:`True`.
         progress (:py:attr:`bool`, optional): Show tqdm progress for sampling. Default is :py:attr:`True`.
     """
-    def __init__(self, delta_t, disp_3d, n_resamples=1000, sub_sample_dt=1, confidence_interval=None, max_resamples=10000, bootstrap_multiplier=1, progress=True, ngp_errors=False):
+
+    def __init__(self, delta_t, disp_3d, n_resamples=1000, sub_sample_dt=1, confidence_interval=None, max_resamples=10000, bootstrap_multiplier=1, ngp_errors=False, progress=True):
         super().__init__(delta_t, disp_3d, sub_sample_dt, confidence_interval, progress)
         self.msd_observed = np.array([])
         self.msd_sampled = np.array([])
@@ -94,18 +92,17 @@ class MSDBootstrap(Bootstrap):
         if ngp_errors:
             self.ngp_err = np.array([])
         self.euclidian_displacements = []
-        samples = np.zeros((self.displacements[0].shape[0], len(self.displacements)))
+        self.n_samples_msd = np.array([], dtype=int)
         for i in self.iterator:
             d_squared = np.sum(self.displacements[i] ** 2, axis=2)
             self.euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
-            samples[:, i] = d_squared.mean(axis=1).flatten()
-            n_samples_msd = _n_samples(self.displacements[i].shape, self.max_obs, bootstrap_multiplier)
-            if n_samples_msd <= 1:
+            self.n_samples_msd = np.append(self.n_samples_msd, _n_samples(self.displacements[i].shape, self.max_obs, bootstrap_multiplier))
+            if self.n_samples_msd[i] <= 1:
                 continue
             self.msd_observed = np.append(self.msd_observed, np.mean(d_squared.flatten()))
-            distro = _sample_until_normal(d_squared, n_samples_msd, n_resamples, max_resamples, self.confidence_interval)
+            distro = _sample_until_normal(d_squared, self.n_samples_msd[i], n_resamples, max_resamples, self.confidence_interval)
             if ngp_errors:
-                distro4 = _sample_until_normal(d_squared * d_squared, n_samples_msd, n_resamples, max_resamples, self.confidence_interval)
+                distro4 = _sample_until_normal(d_squared * d_squared, self.n_samples_msd[i], n_resamples, max_resamples, self.confidence_interval)
                 self.distributions_4.append(distro4)
                 top = distro4.samples[np.random.choice(distro4.size, size=1000)] * 3
                 bottom = np.square(distro.samples[np.random.choice(distro.size, size=1000)]) * 5
@@ -121,30 +118,35 @@ class MSDBootstrap(Bootstrap):
             self.msd_sampled = np.append(self.msd_sampled, distro.n)
             self.msd_sampled_err = np.append(self.msd_sampled_err, distro.n - distro.con_int[0])
             self.msd_sampled_std = np.append(self.msd_sampled_std, np.std(distro.samples))
-        self.correlation_matrix = np.array(pd.DataFrame(samples[np.argmax(self.ngp):, np.argmax(self.ngp):]).corr())
 
-    def diffusion(self, n_samples=10000, fit_intercept=True):
+    def diffusion(self, fit_intercept=True, use_ngp=True):
         """
         Calculate the diffusion coefficient for the trajectory.
 
         Args:
-            n_samples (:py:attr:`int`, optional): The number of samples in the random generator. Default is :py:attr:`10000`.
             fit_intercept (:py:attr:`bool`, optional): Should the intercept of the diffusion relationship be fit. Default is :py:attr:`True`.
+            use_ngp (:py:attr:`bool`, optional): Should the ngp max be used as the starting point for the diffusion fitting. Default is :py:attr:`True`.
         """
-        cov = corr2cov(self.correlation_matrix, self.msd_sampled_std[np.argmax(self.ngp):])
-        single_msd = multivariate_normal(self.msd_sampled[np.argmax(self.ngp):], cov, allow_singular=True)
-        single_msd_samples = single_msd.rvs(n_samples)
-        A = np.array([self.dt[np.argmax(self.ngp):]]).T
+        max_ngp = np.argmax(self.ngp)
+        if not use_ngp:
+            max_ngp = 0
+        self.covariance_matrix = np.zeros((self.dt[max_ngp:].size, self.dt[max_ngp:].size))
+        for i, ii in enumerate(range(max_ngp, self.dt.size)):
+            for j, jj in zip(range(i, self.dt[max_ngp:].size), range(ii, self.dt.size)):
+                ratio = self.n_samples_msd[ii] / self.n_samples_msd[jj]
+                self.covariance_matrix[i, j] = self.msd_sampled_std[ii] ** 2 * ratio
+                self.covariance_matrix[j, i] = np.copy(self.covariance_matrix[i, j])
+        A = np.array([self.dt[max_ngp:]]).T
         if fit_intercept:
-            A = np.array([np.ones(self.dt[np.argmax(self.ngp):].size), self.dt[np.argmax(self.ngp):]]).T
-        Y = single_msd_samples.T
-        straight_line = np.matmul(np.linalg.inv(np.matmul(A.T, np.matmul(np.linalg.inv(cov), A))), np.matmul(A.T, np.matmul(np.linalg.inv(cov), Y)))
+            A = np.array([np.ones(self.dt[max_ngp:].size), self.dt[max_ngp:]]).T
+        Y = self.msd_sampled[max_ngp:]
+        straight_line = np.matmul(np.linalg.inv(np.matmul(A.T, np.matmul(np.linalg.inv(self.covariance_matrix), A))), np.matmul(A.T, np.matmul(np.linalg.inv(self.covariance_matrix), Y)))
+        straight_line_err = np.sqrt(np.diag(np.linalg.inv(np.matmul(A.T, np.matmul(np.linalg.inv(self.covariance_matrix), A)))))
         if fit_intercept:
-            intercept, gradient = straight_line
-            self.diffusion_coefficient = Distribution(gradient / 6, ci_points=self.confidence_interval)
-            self.intercept = Distribution(intercept, ci_points=self.confidence_interval)
+            self.diffusion_coefficient = Distribution(norm(loc=straight_line[1] / 6, scale=straight_line_err[1] / 6).rvs(10000), ci_points=self.confidence_interval)
+            self.intercept = Distribution(norm(loc=straight_line[0], scale=straight_line_err[0]).rvs(10000), ci_points=self.confidence_interval)
         else:
-            self.diffusion_coefficient = Distribution(straight_line[0] / 6, ci_points=self.confidence_interval)
+            self.diffusion_coefficient = Distribution(norm(loc=straight_line[0] / 6, scale=straight_line_err[0] / 6).rvs(10000), ci_points=self.confidence_interval)
 
 
 def _n_samples(disp_shape, max_obs, bootstrap_multiplier):
@@ -180,8 +182,7 @@ def _iterator(progress, loop):
     """
     if progress:
         return tqdm(loop, desc='Bootstrapping Displacements')
-    else:
-        return loop
+    return loop
 
 
 def _sample_until_normal(array, n_samples, n_resamples, max_resamples, confidence_interval):

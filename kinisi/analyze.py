@@ -9,7 +9,6 @@ This module includes the :py:class:`~kinisi.analyze.DiffAnalyzer` class for diff
 # author: Andrew R. McCluskey
 
 import numpy as np
-from uravu.distribution import Distribution
 from kinisi import diffusion
 from kinisi.parser import MDAnalysisParser, PymatgenParser
 
@@ -34,7 +33,7 @@ class MSDAnalyzer:
     def __init__(self, trajectory, parser_params, bootstrap_params=None, dtype='Xdatcar'):  # pragma: no cover
         if bootstrap_params is None:
             bootstrap_params = {}
-        if dtype is 'Xdatcar':
+        if dtype == 'Xdatcar':
             try:
                 from pymatgen.io.vasp import Xdatcar
             except ModuleNotFoundError:
@@ -49,7 +48,7 @@ class MSDAnalyzer:
             self.first_structure = structures[0]
             dt = u.delta_t
             disp_3d = u.disp_3d
-        elif dtype is 'IdenticalXdatcar':
+        elif dtype == 'IdenticalXdatcar':
             try:
                 from pymatgen.io.vasp import Xdatcar
             except ModuleNotFoundError:
@@ -60,11 +59,11 @@ class MSDAnalyzer:
                 disp = np.zeros((u[0].disp_3d[i].shape[0] * len(u), u[0].disp_3d[i].shape[1], u[0].disp_3d[i].shape[2]))
                 disp[:u[0].disp_3d[i].shape[0]] = u[0].disp_3d[i]
                 for j in range(1, len(u)):
-                    disp[u[0].disp_3d[i].shape[0] * j:u[0].disp_3d[i].shape[0] * (j+1)] = u[j].disp_3d[i]
+                    disp[u[0].disp_3d[i].shape[0] * j:u[0].disp_3d[i].shape[0] * (j + 1)] = u[j].disp_3d[i]
                 joint_disp_3d.append(disp)
             dt = u[0].delta_t
             disp_3d = joint_disp_3d
-        elif dtype is 'structures':
+        elif dtype == 'structures':
             u = PymatgenParser(trajectory, **parser_params)
             self.first_structure = trajectory[0]
             dt = u.delta_t

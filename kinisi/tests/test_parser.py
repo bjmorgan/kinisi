@@ -24,19 +24,17 @@ import unittest
 import numpy as np
 import MDAnalysis as mda
 from numpy.testing import assert_almost_equal, assert_equal
-from pymatgen.core import Structure
 from pymatgen.io.vasp import Xdatcar
 import os
 import kinisi
 from kinisi import parser
-from uravu.distribution import Distribution
-from uravu.utils import straight_line
 
 
 dc = np.random.random(size=(100, 100, 3))
 indices = np.arange(0, 100, 1, dtype=int)
 time_step = 1.0
 step_skip = 1
+
 
 class TestParser(unittest.TestCase):
     """
@@ -67,7 +65,7 @@ class TestParser(unittest.TestCase):
         assert_equal(len(p.disp_3d), 80)
         for i, d in enumerate(p.disp_3d):
             assert_equal(d.shape[0], 100)
-            assert_equal(d.shape[1], 80-i)
+            assert_equal(d.shape[1], 80 - i)
             assert_equal(d.shape[2], 3)
 
     def test_smoothed_timesteps(self):
@@ -79,11 +77,6 @@ class TestParser(unittest.TestCase):
         with self.assertRaises(ValueError):
             p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=120)
             p.smoothed_timesteps(100, 20, indices)
-
-    def test_smoothed_timesteps_min_dt_zero(self):
-        p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=0)
-        timesteps = p.smoothed_timesteps(100, 30, indices)
-        assert_equal(timesteps, np.arange(1, 100, 1))
 
     def test_smoothed_timesteps_min_dt_zero(self):
         p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=0)
@@ -111,15 +104,15 @@ class TestParser(unittest.TestCase):
         assert_equal(len(disp_3d), 80)
         for i, d in enumerate(disp_3d):
             assert_equal(d.shape[0], 100)
-            assert_equal(d.shape[1], 80-i)
+            assert_equal(d.shape[1], 80 - i)
             assert_equal(d.shape[2], 3)
 
     def test_pymatgen_init(self):
         xd = Xdatcar(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_XDATCAR.gz'))
-        da_params = { 'specie': 'Li',
-                      'time_step': 2.0,
-                      'step_skip': 50,
-                      'min_obs': 50}
+        da_params = {'specie': 'Li',
+                     'time_step': 2.0,
+                     'step_skip': 50,
+                     'min_obs': 50}
         data = parser.PymatgenParser(xd.structures, **da_params)
         assert_almost_equal(data.time_step, 2.0)
         assert_almost_equal(data.step_skip, 50)
@@ -127,10 +120,10 @@ class TestParser(unittest.TestCase):
 
     def test_pymatgen_big_timestep(self):
         xd = Xdatcar(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_XDATCAR.gz'))
-        da_params = { 'specie': 'Li',
-                      'time_step': 20.0,
-                      'step_skip': 100,
-                      'min_obs': 50}
+        da_params = {'specie': 'Li',
+                     'time_step': 20.0,
+                     'step_skip': 100,
+                     'min_obs': 50}
         data = parser.PymatgenParser(xd.structures, **da_params)
         assert_almost_equal(data.time_step, 20.0)
         assert_almost_equal(data.step_skip, 100)
@@ -139,10 +132,10 @@ class TestParser(unittest.TestCase):
     def test_mda_init(self):
         xd = mda.Universe(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS.data'),
                           os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS.dcd'), format='LAMMPS')
-        da_params = { 'specie': '1',
-                      'time_step': 0.005,
-                      'step_skip': 250,
-                      'min_obs': 50}
+        da_params = {'specie': '1',
+                     'time_step': 0.005,
+                     'step_skip': 250,
+                     'min_obs': 50}
         data = parser.MDAnalysisParser(xd, **da_params)
         assert_almost_equal(data.time_step, 0.005)
         assert_almost_equal(data.step_skip, 250)

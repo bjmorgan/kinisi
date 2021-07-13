@@ -16,13 +16,12 @@ from scipy.stats import norm
 from numpy.testing import assert_equal, assert_almost_equal
 from kinisi import arrhenius
 from uravu.distribution import Distribution
-from uravu.utils import straight_line
 
 temp = np.linspace(5, 50, 10)
 ea = np.linspace(5, 50, 10)
 EA = []
 for e in ea:
-    EA.append(Distribution(norm.rvs(loc=e, scale=e*0.1, size=5000, random_state=np.random.RandomState(1))))
+    EA.append(Distribution(norm.rvs(loc=e, scale=e * 0.1, size=5000, random_state=np.random.RandomState(1))))
 
 
 class TestArrhenius(unittest.TestCase):
@@ -37,7 +36,7 @@ class TestArrhenius(unittest.TestCase):
         assert_equal(arr.function, arrhenius.arrhenius)
         assert_almost_equal(arr.abscissa, temp)
         assert_almost_equal(arr.y.n, ea, decimal=0)
-        assert_almost_equal(arr.y.s, np.array([ea*0.196, ea*0.196]), decimal=0)
+        assert_almost_equal(arr.y.s, np.array([ea * 0.196, ea * 0.196]), decimal=0)
 
     def test_super_arrhenius_init(self):
         """
@@ -47,7 +46,7 @@ class TestArrhenius(unittest.TestCase):
         assert_equal(arr.function, arrhenius.super_arrhenius)
         assert_almost_equal(arr.abscissa, temp)
         assert_almost_equal(arr.y.n, ea, decimal=0)
-        assert_almost_equal(arr.y.s, np.array([ea*0.196, ea*0.196]), decimal=0)
+        assert_almost_equal(arr.y.s, np.array([ea * 0.196, ea * 0.196]), decimal=0)
 
     def test_standard_arrhenius(self):
         """
