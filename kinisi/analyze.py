@@ -147,11 +147,11 @@ class DiffAnalyzer(MSDAnalyzer):
     def __init__(self, trajectory, parser_params, bootstrap_params=None, dtype='Xdatcar', fit_intercept=True, use_ngp=True):  # pragma: no cover
         if bootstrap_params is not None:
             if 'n_resamples' not in bootstrap_params.keys():
-                bootstrap_params['n_resamples'] = 5000
+                bootstrap_params['n_resamples'] = 10000
             if 'max_resamples' not in bootstrap_params.keys():
                 bootstrap_params['max_resamples'] = 100000
         else:
-            bootstrap_params = {'n_resamples': 5000, 'max_resamples': 100000}
+            bootstrap_params = {'n_resamples': 10000, 'max_resamples': 100000}
         super().__init__(trajectory, parser_params, bootstrap_params, dtype)
         self._diff.diffusion(fit_intercept, use_ngp)
 

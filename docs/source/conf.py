@@ -54,6 +54,8 @@ extensions = [
 # Use this kernel instead of the one stored in the notebook metadata:
 nbsphinx_kernel_name = 'python3'
 
+nbsphinx_execute = 'never'
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -204,6 +206,6 @@ intersphinx_mapping = {
     'uravu': ('https://uravu.readthedocs.io/en/latest/', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
     'MDAnalysis': ('https://www.mdanalysis.org/docs/', None),
-    'pymatgen': ('https://pymatgen.org/index.html', None),
+    'pymatgen': ('https://pymatgen.org/', None),
     'uncertainties': ('https://uncertainties-python-package.readthedocs.io/en/latest/', None),
 }
