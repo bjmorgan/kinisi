@@ -122,7 +122,7 @@ class MSDBootstrap(Bootstrap):
             self.msd_sampled_err = np.append(self.msd_sampled_err, distro.n - distro.con_int[0])
             self.msd_sampled_std = np.append(self.msd_sampled_std, np.std(distro.samples))
 
-    def diffusion(self, fit_intercept=True, use_ngp=True, n_samples=1000):
+    def diffusion(self, fit_intercept=True, use_ngp=True, n_samples=1000, progress=False):
         """
         Calculate the diffusion coefficient for the trajectory.
 
@@ -155,7 +155,7 @@ class MSDBootstrap(Bootstrap):
             max_likelihood = minimize(nll, np.array([ols.slope])).x
         pos = max_likelihood + max_likelihood * 1e-3 * np.random.randn(32, max_likelihood.size)
         sampler = EnsembleSampler(*pos.shape, log_likelihood)
-        sampler.run_mcmc(pos, n_samples, progress=False)
+        sampler.run_mcmc(pos, n_samples, progress=progress)
         self.diffusion_coefficient = Distribution(sampler.flatchain[:, 0] / 6, ci_points=self.confidence_interval)
         if fit_intercept:
             self.intercept = Distribution(

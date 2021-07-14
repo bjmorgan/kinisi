@@ -16,8 +16,9 @@ This resampling is performed until the distribution is found to be normal, or a 
 **Diffusion estimation**
 
 A diffusion distribution is evaluated using a generalised least squares approach to modelling the Einstein relation to the data.
-This uses a covariance matrix that includes the bootstrapped uncertainties for each MSD and an estimate of the correlation between each MSD measurement.
+This uses a covariance matrix defined based on the bootstrapped uncertainties for each MSD. 
 This approach allows an estimate of the true displacement to be found from an infinitely long simulation.
+**Note, this methodology is unpublished and results from it should be considered with great caution**.
 
 **Uncertainty propagation**
 
@@ -30,8 +31,7 @@ Brief tutorials showing how :py:mod:`kinisi` may be used in the study of an `VAS
 Contributors
 ------------
 
-- `Andrew R. McCluskey`_
-- `Benjamin J. Morgan`_
+`Andrew R. McCluskey`_ | `Benjamin J. Morgan`_
 
 .. _Andrew R. McCluskey: https://www.mccluskey.scot
 .. _Benjamin J. Morgan: http://analysisandsynthesis.com
@@ -52,6 +52,4 @@ Contributors
 Searching
 =========
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+:ref:`genindex` | :ref:`modindex` | :ref:`search`
