@@ -5,8 +5,7 @@ tqdm
 uravu>=1.2.4
 pymatgen
 MDAnalysis
-statsmodels
-pandas
+emcee
 coverage
 codeclimate-test-reporter
 nbsphinx
