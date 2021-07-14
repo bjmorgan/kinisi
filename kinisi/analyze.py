@@ -142,10 +142,18 @@ class DiffAnalyzer(MSDAnalyzer):
         dtype (:py:attr:`str`, optional): The file format of the :py:attr:`trajectory`, for a trajectory file path to be read by :py:class:`pymatgen.io.vasp.Xdatcar` this should be :py:attr:`'Xdatcar'`, for multiple trajectory files that are of the same system (but simulated from a different starting random seed) to be read by :py:class:`pymatgen.io.vasp.Xdatcar` then :py:attr:`'IdenticalXdatcar'` should be used (this assumes that all files have the same number of steps and atoms), for a :py:attr:`list` of :py:class:`pymatgen.core.structure.Structure` objects this should be :py:attr:`'structures'`, for a trajectory file path to be read by :py:mod:`MDAnalysis` this should be the appropriate format to be passed to the :py:class:`MDAnalysis.core.universe.Universe`, and for a n :py:class:`MDAnalysis.core.universe.Universe` object this should be :py:attr:`'universe'`. Defaults to :py:attr:`'Xdatcar'`.
         n_samples_fit (:py:attr:`int`, optional): The number of samples in the random generator for the fitting of the linear relationship. Default is :py:attr:`10000`.
         fit_intercept (:py:attr:`bool`, optional): Should the intercept of the diffusion relationship be fit. Default is :py:attr:`True`.
+        use_ngp (:py:attr:`bool`, optional): Should the ngp max be used as the starting point for the diffusion fitting. Default is :py:attr:`True`.
     """
-    def __init__(self, trajectory, parser_params, bootstrap_params=None, dtype='Xdatcar', n_samples_fit=10000, fit_intercept=True):  # pragma: no cover
+    def __init__(self, trajectory, parser_params, bootstrap_params=None, dtype='Xdatcar', fit_intercept=True, use_ngp=True):  # pragma: no cover
+        if bootstrap_params is not None:
+            if 'n_resamples' not in bootstrap_params.keys():
+                bootstrap_params['n_resamples'] = 5000
+            if 'max_resamples' not in bootstrap_params.keys():
+                bootstrap_params['max_resamples'] = 100000
+        else:
+            bootstrap_params = {'n_resamples': 5000, 'max_resamples': 100000}
         super().__init__(trajectory, parser_params, bootstrap_params, dtype)
-        self._diff.diffusion(n_samples_fit, fit_intercept)
+        self._diff.diffusion(fit_intercept, use_ngp)
 
     @property
     def D(self):

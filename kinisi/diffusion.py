@@ -10,10 +10,13 @@ The modules is focused on tools for the evaluation of the mean squared displacem
 
 import warnings
 import numpy as np
-from scipy.stats import norm
+from scipy.stats import norm, linregress
+from scipy.optimize import minimize
 from sklearn.utils import resample
 from tqdm import tqdm
+from emcee import EnsembleSampler
 from uravu.distribution import Distribution
+from uravu.utils import straight_line
 
 
 class Bootstrap:
@@ -119,7 +122,7 @@ class MSDBootstrap(Bootstrap):
             self.msd_sampled_err = np.append(self.msd_sampled_err, distro.n - distro.con_int[0])
             self.msd_sampled_std = np.append(self.msd_sampled_std, np.std(distro.samples))
 
-    def diffusion(self, fit_intercept=True, use_ngp=True):
+    def diffusion(self, fit_intercept=True, use_ngp=True, n_samples=1000):
         """
         Calculate the diffusion coefficient for the trajectory.
 
@@ -134,19 +137,29 @@ class MSDBootstrap(Bootstrap):
         for i, ii in enumerate(range(max_ngp, self.dt.size)):
             for j, jj in zip(range(i, self.dt[max_ngp:].size), range(ii, self.dt.size)):
                 ratio = self.n_samples_msd[ii] / self.n_samples_msd[jj]
-                self.covariance_matrix[i, j] = self.msd_sampled_std[ii] ** 2 * ratio
+                self.covariance_matrix[i, j] = np.var(self.distributions[ii].samples) * ratio
                 self.covariance_matrix[j, i] = np.copy(self.covariance_matrix[i, j])
-        A = np.array([self.dt[max_ngp:]]).T
+        ln_sigma = np.multiply(*np.linalg.slogdet(self.covariance_matrix))
+        inv = np.linalg.pinv(self.covariance_matrix)
+        end = self.msd_sampled[max_ngp:].size * np.log(2. * np.pi)
+        def log_likelihood(theta):
+            model = straight_line(self.dt[max_ngp:], *theta)
+            difference = np.subtract(model, self.msd_sampled[max_ngp:])
+            logl = -0.5 * (ln_sigma + np.matmul(difference.T, np.matmul(inv, difference)) + end)
+            return logl
+        ols = linregress(self.dt[max_ngp:], self.msd_sampled[max_ngp:])
+        nll = lambda *args: -log_likelihood(*args)
         if fit_intercept:
-            A = np.array([np.ones(self.dt[max_ngp:].size), self.dt[max_ngp:]]).T
-        Y = self.msd_sampled[max_ngp:]
-        straight_line = np.matmul(np.linalg.inv(np.matmul(A.T, np.matmul(np.linalg.inv(self.covariance_matrix), A))), np.matmul(A.T, np.matmul(np.linalg.inv(self.covariance_matrix), Y)))
-        straight_line_err = np.sqrt(np.diag(np.linalg.inv(np.matmul(A.T, np.matmul(np.linalg.inv(self.covariance_matrix), A)))))
-        if fit_intercept:
-            self.diffusion_coefficient = Distribution(norm(loc=straight_line[1] / 6, scale=straight_line_err[1] / 6).rvs(10000), ci_points=self.confidence_interval)
-            self.intercept = Distribution(norm(loc=straight_line[0], scale=straight_line_err[0]).rvs(10000), ci_points=self.confidence_interval)
+            max_likelihood = minimize(nll, np.array([ols.slope, ols.intercept])).x
         else:
-            self.diffusion_coefficient = Distribution(norm(loc=straight_line[0] / 6, scale=straight_line_err[0] / 6).rvs(10000), ci_points=self.confidence_interval)
+            max_likelihood = minimize(nll, np.array([ols.slope])).x
+        pos = max_likelihood + max_likelihood * 1e-3 * np.random.randn(32, max_likelihood.size)
+        sampler = EnsembleSampler(*pos.shape, log_likelihood)
+        sampler.run_mcmc(pos, n_samples, progress=False)
+        self.diffusion_coefficient = Distribution(sampler.flatchain[:, 0] / 6, ci_points=self.confidence_interval)
+        if fit_intercept:
+            self.intercept = Distribution(
+                sampler.flatchain[:, 1], ci_points=self.confidence_interval)
 
 
 def _n_samples(disp_shape, max_obs, bootstrap_multiplier):
