@@ -10,7 +10,7 @@ The modules is focused on tools for the evaluation of the mean squared displacem
 
 import warnings
 import numpy as np
-from scipy.stats import norm, linregress
+from scipy.stats import linregress
 from scipy.optimize import minimize
 from scipy.linalg import pinv
 from sklearn.utils import resample
@@ -25,21 +25,21 @@ class Bootstrap:
     The top-level class for bootstrapping.
 
     Attributes:
-        confidence_interval (:py:attr:`array_like`): The percentile points of the distribution that should be stored.
-        displacements (:py:attr:`list` of :py:attr:`array_like`): A list of arrays, where each array has the axes [atom, displacement observation, dimension]. There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as the number of observations is not necessary the same at each data point.
-        delta_t (:py:attr:`array_like`): An array of the timestep values.
-        max_obs (:py:attr:`int`): The maximum number of observations for the trajectory.
-        dt (:py:attr:`array_like`): Timestep values that were resampled.
-        distributions ():py:attr:`list` of :py:class:`uravu.distribution.Distribution`): Resampled mean squared distributions.
-        iterator (:py:attr:`tqdm` or :py:attr:`range`): The iteration object.
+        confidence_interval (:py:attr:`array_like`): The percentile points of the distribution that should be stored
+        displacements (:py:attr:`list` of :py:attr:`array_like`): A list of arrays, where each array has the axes [atom, displacement observation, dimension]. There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as the number of observations is not necessary the same at each data point
+        delta_t (:py:attr:`array_like`): An array of the timestep values
+        max_obs (:py:attr:`int`): The maximum number of observations for the trajectory
+        dt (:py:attr:`array_like`): Timestep values that were resampled
+        distributions (:py:attr:`list` of :py:class:`uravu.distribution.Distribution`): Resampled mean squared distributions
+        iterator (:py:attr:`tqdm` or :py:attr:`range`): The iteration object
 
 
     Args:
-        delta_t (:py:attr:`array_like`): An array of the timestep values.
-        disp_3d (:py:attr:`list` of :py:attr:`array_like`): A list of arrays, where each array has the axes [atom, displacement observation, dimension]. There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as the number of observations is not necessary the same at each data point.
-        sub_sample_dt (:py:attr:`int`. optional): The frequency in observations to be sampled. Default is :py:attr:`1` (every observation).
-        confidence_interval (:py:attr:`array_like`, optional): The percentile points of the distribution that should be stored. Default is :py:attr:`[2.5, 97.5]` (a 95 % confidence interval).
-        progress (:py:attr:`bool`, optional): Show tqdm progress for sampling. Default is :py:attr:`True`.
+        delta_t (:py:attr:`array_like`): An array of the timestep values
+        disp_3d (:py:attr:`list` of :py:attr:`array_like`): A list of arrays, where each array has the axes [atom, displacement observation, dimension]. There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as the number of observations is not necessary the same at each data point
+        sub_sample_dt (:py:attr:`int`. optional): The frequency in observations to be sampled. Default is :py:attr:`1` (every observation)
+        confidence_interval (:py:attr:`array_like`, optional): The percentile points of the distribution that should be stored. Default is :py:attr:`[2.5, 97.5]` (a 95 % confidence interval)
+        progress (:py:attr:`bool`, optional): Show tqdm progress for sampling. Default is :py:attr:`True`
     """
     def __init__(self, delta_t, disp_3d, sub_sample_dt=1, confidence_interval=None, progress=True):
         if confidence_interval is None:
@@ -58,6 +58,9 @@ class Bootstrap:
     def D(self):
         """
         An alias for the diffusion coefficient Distribution.
+
+        Returns:
+            (:py:class:`uravu.distribution.Distribution`): Diffusion coefficient
         """
         return self.diffusion_coefficient
 
@@ -68,31 +71,37 @@ class MSDBootstrap(Bootstrap):
     This resampling method is applied until the MSD distribution is normal (or the `max_resamples` has been reached) and therefore may be described with a median and confidence interval.
 
     Attributes:
-        msd_observed (:py:attr:`array_like`): The sample mean-squared displacements, found from the arithmetic average of the observations.
-        msd_sampled (:py:attr:`array_like`): The population mean-squared displacements, found from the bootstrap resampling of the observations.
-        msd_sampled_err (:py:attr:`array_like`): The uncertainties, at the given confidence interval, found from the bootstrap resampling of the observations.
-        msd_sampled_std (:py:attr:`array_like`): The standard deviation in the mean-squared displacement, found from the bootstrap resampling of the observations.
-        correlation_matrix (:py:attr:`array_like`): The estimated correlation matrix for the mean-squared displacements.
+        msd_observed (:py:attr:`array_like`): The sample mean-squared displacements, found from the arithmetic average of the observations
+        msd_sampled (:py:attr:`array_like`): The population mean-squared displacements, found from the bootstrap resampling of the observations
+        msd_sampled_err (:py:attr:`array_like`): The uncertainties, at the given confidence interval, found from the bootstrap resampling of the observations
+        msd_sampled_std (:py:attr:`array_like`): The standard deviation in the mean-squared displacement, found from the bootstrap resampling of the observations
+        correlation_matrix (:py:attr:`array_like`): The estimated correlation matrix for the mean-squared displacements
+        ngp (:py:attr:`array_like`): Non-Gaussian parameter as a function of dt
+        ngp_err (:py:attr:`array_like`): Non-Gaussian parameter uncertainty as a function of dt, if found
+        euclidian_displacements (:py:attr:`list` of :py:class:`uravu.distribution.Distribution`): Displacements between particles at each dt
+        n_sampled_msd (:py:attr:`array_like`): The number of independent trajectories as a function of dt
 
     Args:
-        delta_t (:py:attr:`array_like`): An array of the timestep values.
-        disp_3d (:py:attr:`list` of :py:attr:`array_like`): A list of arrays, where each array has the axes [atom, displacement observation, dimension]. There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as the number of observations is not necessary the same at each data point.
-        n_resamples (:py:attr:`int`, optional): The initial number of resamples to be performed. Default is :py:attr:`1000`.
-        sub_sample_dt (:py:attr:`int`. optional): The frequency in observations to be sampled. Default is :py:attr:`1` (every observation).
-        confidence_interval (:py:attr:`array_like`, optional): The percentile points of the distribution that should be stored. Default is :py:attr:`[31.73, 68.27]` (a single standard deviation).
-        max_resamples (:py:attr:`int`, optional): The max number of resamples to be performed by the distribution is assumed to be normal. This is present to allow user control over the time taken for the resampling to occur. Default is :py:attr:`100000`.
-        bootstrap_multiplier (:py:attr:`int`, optional): The factor by which the number of bootstrap samples should be multiplied. The default is :py:attr:`1`, which is the maximum number of truely independent samples in a given timestep. This can be increase, however it is importance to note that when greater than 1 the sampling is no longer independent.
-        ngp_errors (:py:attr:`bool`, optional): Should the non-Gaussian parameter uncertainty be calculated. Default is :py:attr:`True`.
-        progress (:py:attr:`bool`, optional): Show tqdm progress for sampling. Default is :py:attr:`True`.
+        delta_t (:py:attr:`array_like`): An array of the timestep values
+        disp_3d (:py:attr:`list` of :py:attr:`array_like`): A list of arrays, where each array has the axes [atom, displacement observation, dimension]. There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as the number of observations is not necessary the same at each data point
+        n_resamples (:py:attr:`int`, optional): The initial number of resamples to be performed. Default is :py:attr:`1000`
+        sub_sample_dt (:py:attr:`int`. optional): The frequency in observations to be sampled. Default is :py:attr:`1` (every observation)
+        confidence_interval (:py:attr:`array_like`, optional): The percentile points of the distribution that should be stored. Default is :py:attr:`[31.73, 68.27]` (a single standard deviation)
+        max_resamples (:py:attr:`int`, optional): The max number of resamples to be performed by the distribution is assumed to be normal. This is present to allow user control over the time taken for the resampling to occur. Default is :py:attr:`100000`
+        bootstrap_multiplier (:py:attr:`int`, optional): The factor by which the number of bootstrap samples should be multiplied. The default is :py:attr:`1`, which is the maximum number of truely independent samples in a given timestep. This can be increase, however it is importance to note that when greater than 1 the sampling is no longer independent
+        ngp_errors (:py:attr:`bool`, optional): Should the non-Gaussian parameter uncertainty be calculated. Default is :py:attr:`True`
+        progress (:py:attr:`bool`, optional): Show tqdm progress for sampling. Default is :py:attr:`True`
     """
 
-    def __init__(self, delta_t, disp_3d, n_resamples=1000, sub_sample_dt=1, confidence_interval=None, max_resamples=10000, bootstrap_multiplier=1, ngp_errors=False, progress=True):
+    def __init__(self, delta_t, disp_3d, n_resamples=1000, sub_sample_dt=1, confidence_interval=None, 
+                 max_resamples=10000, bootstrap_multiplier=1, ngp_errors=False, progress=True):
         super().__init__(delta_t, disp_3d, sub_sample_dt, confidence_interval, progress)
         self.msd_observed = np.array([])
         self.msd_sampled = np.array([])
         self.msd_sampled_err = np.array([])
         self.msd_sampled_std = np.array([])
         self.ngp = np.array([])
+        self.ngp_err = None
         if ngp_errors:
             self.ngp_err = np.array([])
         self.euclidian_displacements = []
@@ -123,13 +132,16 @@ class MSDBootstrap(Bootstrap):
             self.msd_sampled_err = np.append(self.msd_sampled_err, distro.n - distro.con_int[0])
             self.msd_sampled_std = np.append(self.msd_sampled_std, np.std(distro.samples))
 
-    def diffusion(self, fit_intercept=True, use_ngp=True, n_samples=1000, progress=False):
+    def diffusion(self, fit_intercept=True, use_ngp=True, n_samples=1000, n_walkers=32, progress=False):
         """
         Calculate the diffusion coefficient for the trajectory.
 
         Args:
             fit_intercept (:py:attr:`bool`, optional): Should the intercept of the diffusion relationship be fit. Default is :py:attr:`True`.
-            use_ngp (:py:attr:`bool`, optional): Should the ngp max be used as the starting point for the diffusion fitting. Default is :py:attr:`True`.
+            use_ngp (:py:attr:`bool`, optional): Should the ngp max be used as the starting point for the diffusion fitting. Default is :py:attr:`True`
+            n_samples (:ypy:attr:`int`, optional): Number of likelihood samples to perform. Default is :py:attr:`1000`.
+            n_walkers (:ypy:attr:`int`, optional): Number of likelihood walkers to use. Default is :py:attr:`32`.
+            progress (:py:attr:`bool`, optional): Show tqdm progress for likelihood sampling. Default is :py:attr:`False`.
         """
         max_ngp = np.argmax(self.ngp)
         if not use_ngp:
@@ -141,27 +153,43 @@ class MSDBootstrap(Bootstrap):
                 self.covariance_matrix[i, j] = np.var(self.distributions[i].samples) * ratio
                 self.covariance_matrix[j, i] = np.copy(self.covariance_matrix[i, j])
         ln_sigma = np.multiply(*np.linalg.slogdet(self.covariance_matrix[max_ngp:, max_ngp:]))
-        inv = pinv(self.covariance_matrix[max_ngp:, max_ngp:],
-                   atol=self.covariance_matrix[max_ngp:, max_ngp:].min() * 1e-3)
+        inv = pinv(self.covariance_matrix[max_ngp:, max_ngp:], atol=self.covariance_matrix[max_ngp:, max_ngp:].min())
         end = self.msd_sampled[max_ngp:].size * np.log(2. * np.pi)
+
         def log_likelihood(theta):
+            """
+            Get the log likelihood for multivariate normal distribution.
+
+            Args:
+                theta (:py:attr:`array_like`): Value of the gradient and intercept of the straight line.
+
+            Returns:
+                (:py:attr:`float`): Log-likelihood value.
+            """
             model = straight_line(self.dt[max_ngp:], *theta)
             difference = np.subtract(model, self.msd_sampled[max_ngp:])
             logl = -0.5 * (ln_sigma + np.matmul(difference.T, np.matmul(inv, difference)) + end)
             return logl
         ols = linregress(self.dt[max_ngp:], self.msd_sampled[max_ngp:])
-        nll = lambda *args: -log_likelihood(*args)
+
+        def nll(*args):
+            """
+            General purpose negative log-likelihood.
+
+            Returns:
+                (:py:attr:`float`): Negative log-likelihood.
+            """
+            return -log_likelihood(*args)
         if fit_intercept:
             max_likelihood = minimize(nll, np.array([ols.slope, ols.intercept])).x
         else:
             max_likelihood = minimize(nll, np.array([ols.slope])).x
-        pos = max_likelihood + max_likelihood * 1e-3 * np.random.randn(32, max_likelihood.size)
+        pos = max_likelihood + max_likelihood * 1e-3 * np.random.randn(n_walkers, max_likelihood.size)
         sampler = EnsembleSampler(*pos.shape, log_likelihood)
         sampler.run_mcmc(pos, n_samples, progress=progress)
         self.diffusion_coefficient = Distribution(sampler.flatchain[:, 0] / 6, ci_points=self.confidence_interval)
         if fit_intercept:
-            self.intercept = Distribution(
-                sampler.flatchain[:, 1], ci_points=self.confidence_interval)
+            self.intercept = Distribution(sampler.flatchain[:, 1], ci_points=self.confidence_interval)
 
 
 def _n_samples(disp_shape, max_obs, bootstrap_multiplier):
