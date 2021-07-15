@@ -12,6 +12,7 @@ import warnings
 import numpy as np
 from scipy.stats import norm, linregress
 from scipy.optimize import minimize
+from scipy.linalg import pinv
 from sklearn.utils import resample
 from tqdm import tqdm
 from emcee import EnsembleSampler
@@ -133,14 +134,15 @@ class MSDBootstrap(Bootstrap):
         max_ngp = np.argmax(self.ngp)
         if not use_ngp:
             max_ngp = 0
-        self.covariance_matrix = np.zeros((self.dt[max_ngp:].size, self.dt[max_ngp:].size))
-        for i, ii in enumerate(range(max_ngp, self.dt.size)):
-            for j, jj in zip(range(i, self.dt[max_ngp:].size), range(ii, self.dt.size)):
-                ratio = self.n_samples_msd[ii] / self.n_samples_msd[jj]
-                self.covariance_matrix[i, j] = np.var(self.distributions[ii].samples) * ratio
+        self.covariance_matrix = np.zeros((self.dt.size, self.dt.size))
+        for i in range(0, self.dt.size):
+            for j in range(i, self.dt.size):
+                ratio = self.n_samples_msd[i] / self.n_samples_msd[j]
+                self.covariance_matrix[i, j] = np.var(self.distributions[i].samples) * ratio
                 self.covariance_matrix[j, i] = np.copy(self.covariance_matrix[i, j])
-        ln_sigma = np.multiply(*np.linalg.slogdet(self.covariance_matrix))
-        inv = np.linalg.pinv(self.covariance_matrix)
+        ln_sigma = np.multiply(*np.linalg.slogdet(self.covariance_matrix[max_ngp:, max_ngp:]))
+        inv = pinv(self.covariance_matrix[max_ngp:, max_ngp:],
+                   atol=self.covariance_matrix[max_ngp:, max_ngp:].min() * 1e-3)
         end = self.msd_sampled[max_ngp:].size * np.log(2. * np.pi)
         def log_likelihood(theta):
             model = straight_line(self.dt[max_ngp:], *theta)
