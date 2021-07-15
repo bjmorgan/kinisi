@@ -6,9 +6,7 @@ Furthermore, the classes are build on the Relationship subclass, therefore it is
 
 # Copyright (c) Andrew R. McCluskey and Benjamin J. Morgan
 # Distributed under the terms of the MIT License
-# author: Andrew R. McCluskey
-
-# pylint: disable=R0913
+# author: Andrew R. McCluskey (arm61)
 
 import numpy as np
 from uravu.relationship import Relationship

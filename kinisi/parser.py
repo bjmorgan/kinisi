@@ -1,13 +1,10 @@
-# pylint: disable=C0301
 """
 Parser functions, including implementation for :py:mod:`pymatgen` compatible VASP files and :py:mod:`MDAnalysis` compatible trajectories.
 """
 
 # Copyright (c) Andrew R. McCluskey and Benjamin J. Morgan
 # Distributed under the terms of the MIT License
-# author: Andrew R. McCluskey
-
-# pylint: disable=R0902,R0913
+# author: Andrew R. McCluskey (arm61)
 
 # This parser borrows heavily from the pymatgen.analysis.diffusion_analyzer.DiffusionAnalyzer class, originally authored by Will Richards (wrichard@mit.edu) and Shyue Ping Ong. 
 # We include this statement to not that we make no claim to authorship of that code and make no attack on the original authors.

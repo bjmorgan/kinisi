@@ -1,12 +1,12 @@
 """
 This module contains the API classes for :py:mod:`kinisi`.
 It is anticipated that this is where the majority of interaction with the package will occur.
-This module includes the :py:class:`~kinisi.analyze.DiffAnalyzer` class for diffusion analysis, which is compatible with both VASP Xdatcar output files and any MD trajectory that the :py:mod:`MDAnalysis` package can handle.
+This module includes the :py:class`kinisi.analyze.MSDAnalyzer` class for MSD analysis and the :py:class:`kinisi.analyze.DiffAnalyzer` class for diffusion analysis, these are both compatible with VASP Xdatcar output files and any MD trajectory that the :py:mod:`MDAnalysis` package can handle.
 """
 
 # Copyright (c) Andrew R. McCluskey and Benjamin J. Morgan
 # Distributed under the terms of the MIT License
-# author: Andrew R. McCluskey
+# author: Andrew R. McCluskey (arm61)
 
 import numpy as np
 from kinisi import diffusion

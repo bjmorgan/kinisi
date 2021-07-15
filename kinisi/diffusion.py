@@ -4,9 +4,7 @@ The modules is focused on tools for the evaluation of the mean squared displacem
 
 # Copyright (c) Andrew R. McCluskey and Benjamin J. Morgan
 # Distributed under the terms of the MIT License
-# author: Andrew R. McCluskey
-
-# pylint: disable=R0913,R0914
+# author: Andrew R. McCluskey (arm61)
 
 import warnings
 import numpy as np

@@ -1,7 +1,7 @@
 Tutorials
 =========
 
-Here are some simple tutorials, showing how :py:mod:`kinisi` may be used to analysis a VASP Xdatcar file, an :py:class:`MDAnalysis.core.universe.Universe` object, and how it is possible to leverage :py:mod:`kinisi` to distinguish between Arrhenius and super-Arrhenius behaviour.
+Here are some simple tutorials, showing how :py:mod:`kinisi` can be used to investigate mean-squared displacement and diffusion from a VASP Xdatcar file.
 
 .. toctree::
    :maxdepth: 1
