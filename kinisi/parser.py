@@ -9,7 +9,8 @@ Parser functions, including implementation for :py:mod:`pymatgen` compatible VAS
 
 # pylint: disable=R0902,R0913
 
-# This parser borrows heavily from the pymatgen.analysis.diffusion_analyzer.DiffusionAnalyzer class, originally authored by Will Richards (wrichard@mit.edu) and Shyue Ping Ong. We include this statement to not that we make no claim to authorship of that code and make no attack on the original authors.
+# This parser borrows heavily from the pymatgen.analysis.diffusion_analyzer.DiffusionAnalyzer class, originally authored by Will Richards (wrichard@mit.edu) and Shyue Ping Ong. 
+# We include this statement to not that we make no claim to authorship of that code and make no attack on the original authors.
 
 # In fact, we love pymatgen!
 

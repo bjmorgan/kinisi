@@ -92,8 +92,7 @@ class MSDBootstrap(Bootstrap):
         ngp_errors (:py:attr:`bool`, optional): Should the non-Gaussian parameter uncertainty be calculated. Default is :py:attr:`True`
         progress (:py:attr:`bool`, optional): Show tqdm progress for sampling. Default is :py:attr:`True`
     """
-
-    def __init__(self, delta_t, disp_3d, n_resamples=1000, sub_sample_dt=1, confidence_interval=None, 
+    def __init__(self, delta_t, disp_3d, n_resamples=1000, sub_sample_dt=1, confidence_interval=None,
                  max_resamples=10000, bootstrap_multiplier=1, ngp_errors=False, progress=True):
         super().__init__(delta_t, disp_3d, sub_sample_dt, confidence_interval, progress)
         self.msd_observed = np.array([])
