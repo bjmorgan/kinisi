@@ -194,7 +194,7 @@ epub_exclude_files = ['search.html']
 todo_include_todos = True
 
 # Some logo things
-html_logo = "kinisi_logo.png"
+html_logo = "_static/kinisi_logo.png"
 html_theme_options = {"logo_only": True}
 
 def setup(app):
