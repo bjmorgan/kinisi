@@ -43,6 +43,4 @@ Tutorials, and API level documentation is available online (kinisi.rtfd.io).
 
 # Acknowledgements
 
-This work is supported by the Ada Lovelace Centre – a joint initiative between the Science and Technology Facilities Council (as part of UK Research and Innovation), Diamond Light Source, and the UK Atomic Energy Authority.
-
 # References
