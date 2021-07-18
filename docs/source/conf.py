@@ -23,10 +23,12 @@ project = 'kinisi'
 copyright = '2020, Andrew R. McCluskey and Benjamin J. Morgan'
 author = 'Andrew R. McCluskey and Benjamin J. Morgan'
 
+from kinisi import __version__
+
 # The short X.Y version
-version = '0.0'
+version = __version__
 # The full version, including alpha/beta/rc tags
-release = '0.0.5'
+release = __version__
 
 
 # -- General configuration ---------------------------------------------------
