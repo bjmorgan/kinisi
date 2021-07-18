@@ -18,7 +18,7 @@ authors:
     orcid: 0000-0002-3056-8233
     affiliation: 2
 affiliations:
- - name: Diamond Light Source, Rutherford Appleton Laboratory, Harwell Science and Innovation Campus, Didcot, OX11 0DE, UK
+ - name: Data Management and Software Centre, European Spallation Source ERIC, Ole Maaløes vej 3, 2200 København, Denmark
    index: 1
  - name: Department of Chemistry, University of Bath, Claverton Down, Bath, BA2 7AY, UK
    index: 2
