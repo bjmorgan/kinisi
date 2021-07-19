@@ -24,7 +24,7 @@ class Parser:
         step_step (:py:attr:`int`): Sampling freqency of the trajectory (time_step is multiplied by this number to get the real time between output from the simulation file).
         indices (:py:attr:`array_like`): Indices for the atoms in the trajectory used in the diffusion calculation.
         delta_t (:py:attr:`array_like`):  Time intervals at which the MSD is determined.
-        disp_3d (:py:attr:`list` of :py:attr:`array_like`): Each element in the :py:attr:`list` has the axes [atom, displacement observation, dimension] and there is one element for each delta_t value. *Note: it is necessary to use a :py:attr:`list` of :py:attr:`array_like` as the number of observations is not necessary the same at each timestep point*.
+        disp_3d (:py:attr:`list` of :py:attr:`array_like`): Each element in the :py:attr:`list` has the axes [atom, displacement observation, dimension] and there is one element for each delta_t value. *Note*: it is necessary to use a :py:attr:`list` of :py:attr:`array_like` as the number of observations is not necessary the same at each timestep point.
         min_dt (:py:attr:`float`, optional): Minimum time interval to be evaluated.
         ndelta_t (:py:attr:`int`, optional): The number of :py:attr:`delta_t` values to calculate the MSD over. Defaults to :py:attr:`75`.
 
@@ -107,7 +107,7 @@ class PymatgenParser(Parser):
     A parser for pymatgen structures.
 
     Args:
-        structures (:py:attr:`list` or :py:class`pymatgen.core.structure.Structure`): Structures ordered in sequence of run.
+        structures (:py:attr:`list` or :py:class:`pymatgen.core.structure.Structure`): Structures ordered in sequence of run.
         specie (:py:class:`pymatgen.core.periodic_table.Element` or :py:class:`pymatgen.core.periodic_table.Specie`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
         time_step (:py:attr:`float`): Time step, in simulation units, between steps in trajectory.
         step_step (:py:attr:`int`): Sampling freqency of the trajectory (time_step is multiplied by this number to get the real time between output from the simulation file).

@@ -6,7 +6,7 @@ Pronunciation: *kee-nee-si*
 [![Documentation Status](https://readthedocs.org/projects/kinisi/badge/?version=latest)](https://kinisi.readthedocs.io/en/latest/?badge=latest)
 [![PyPI version](https://badge.fury.io/py/kinisi.svg)](https://badge.fury.io/py/kinisi)
 
-`kinisi` is an open-source package focussed on accurately quantifying the uncertainty in atomic and molecular displacements, and using this to more completely understanding diffusion in materials.
+`kinisi` is an open-source package focussed on accurately quantifying the uncertainty in atomic and molecular displacements, and using this to more completely understand diffusion in materials.
 
 ## Installation
 

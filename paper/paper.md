@@ -6,6 +6,7 @@ tags:
   - diffusion
   - battery materials
   - bootstrap
+  - generalised least squares
   - Bayesian
 authors:
   - name: Andrew R. McCluskey
@@ -18,11 +19,11 @@ authors:
     orcid: 0000-0002-3056-8233
     affiliation: 2
 affiliations:
- - name: Diamond Light Source, Rutherford Appleton Laboratory, Harwell Science and Innovation Campus, Didcot, OX11 0DE, UK
+ - name: Data Management and Software Centre, European Spallation Source ERIC, Ole Maaløes vej 3, 2200 København, Denmark
    index: 1
  - name: Department of Chemistry, University of Bath, Claverton Down, Bath, BA2 7AY, UK
    index: 2
-date: 21 May 2020
+date: 18 July 2021
 bibliography: paper.bib
 ---
 
@@ -43,6 +44,6 @@ Tutorials, and API level documentation is available online (kinisi.rtfd.io).
 
 # Acknowledgements
 
-This work is supported by the Ada Lovelace Centre – a joint initiative between the Science and Technology Facilities Council (as part of UK Research and Innovation), Diamond Light Source, and the UK Atomic Energy Authority.
+S.W.C. and B.J.M. acknowledge the support of the Faraday Institution through the CATMAT project (grant number FIRG016). B.J.M. acknowledges support from the Royal Society (UF130329 & URF\R\191006).
 
 # References

@@ -136,8 +136,8 @@ class MSDBootstrap(Bootstrap):
         Args:
             fit_intercept (:py:attr:`bool`, optional): Should the intercept of the diffusion relationship be fit. Default is :py:attr:`True`.
             use_ngp (:py:attr:`bool`, optional): Should the ngp max be used as the starting point for the diffusion fitting. Default is :py:attr:`True`
-            n_samples (:ypy:attr:`int`, optional): Number of likelihood samples to perform. Default is :py:attr:`1000`.
-            n_walkers (:ypy:attr:`int`, optional): Number of likelihood walkers to use. Default is :py:attr:`32`.
+            n_samples (:py:attr:`int`, optional): Number of likelihood samples to perform. Default is :py:attr:`1000`.
+            n_walkers (:py:attr:`int`, optional): Number of likelihood walkers to use. Default is :py:attr:`32`.
             progress (:py:attr:`bool`, optional): Show tqdm progress for likelihood sampling. Default is :py:attr:`False`.
         """
         max_ngp = np.argmax(self.ngp)

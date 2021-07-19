@@ -23,10 +23,12 @@ project = 'kinisi'
 copyright = '2020, Andrew R. McCluskey and Benjamin J. Morgan'
 author = 'Andrew R. McCluskey and Benjamin J. Morgan'
 
+from kinisi import __version__
+
 # The short X.Y version
-version = '0.0'
+version = __version__
 # The full version, including alpha/beta/rc tags
-release = '0.0.5'
+release = __version__
 
 
 # -- General configuration ---------------------------------------------------
@@ -56,6 +58,8 @@ nbsphinx_kernel_name = 'python3'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
+
+autodoc_member_order = 'bysource'
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
