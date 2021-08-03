@@ -147,20 +147,23 @@ class MSDBootstrap(Bootstrap):
         max_ngp = np.argmax(self.ngp)
         if not use_ngp:
             max_ngp = 0
-        resampled_samples = np.array([np.mean(resample(
-            self.samples.T, n_samples=self.n_samples_msd[-1]), axis=0) for i in range(n_resamples)]).T
-        distro = Distribution(resampled_samples[-1], ci_points=self.confidence_interval)
+        self.resampled_samples = np.array([np.mean(resample(
+            self.samples.T, n_samples=self.displacements[0].shape[0]), axis=0) for i in range(n_resamples)]).T
+        distro = Distribution(
+            self.resampled_samples[-1], ci_points=self.confidence_interval)
         samples_so_far = n_resamples
         while (not distro.normal) and distro.size < max_resamples:
-            resampled_samples = np.append(resampled_samples, np.array([np.mean(resample(
-                self.samples.T, n_samples=self.n_samples_msd[-1]), axis=0) for i in range(n_resamples)]).T)
             samples_so_far += n_resamples
-            resampled_samples = resampled_samples.reshape(self.samples.shape[0], samples_so_far)
-            distro.add_samples(resampled_samples[-1])
+            self.resampled_samples = np.array([np.mean(resample(
+                self.samples.T, n_samples=self.displacements[0].shape[0]), axis=0) for i in range(samples_so_far)]).T
+            # self.resampled_samples = self.resampled_samples.reshape(
+            #     self.samples.shape[0], samples_so_far)
+            distro = Distribution(
+            self.resampled_samples[-1], ci_points=self.confidence_interval)
         if distro.size >= max_resamples:
             warnings.warn(
                 "The maximum number of covariance matrix has been reached, and the final distribution is not yet normal.")
-        self.covariance_matrix = np.cov(resampled_samples[max_ngp:])
+        self.covariance_matrix = np.cov(self.resampled_samples[max_ngp:])
         # self.covariance_matrix = find_nearest_positive_definite(self.covariance_matrix[max_ngp:, max_ngp:])
         
         ln_sigma = np.linalg.slogdet(self.covariance_matrix)[1]
