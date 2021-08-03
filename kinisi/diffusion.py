@@ -16,7 +16,6 @@ from tqdm import tqdm
 from emcee import EnsembleSampler
 from uravu.distribution import Distribution
 from uravu.utils import straight_line
-from statsmodels.stats.moment_helpers import corr2cov
 
 
 class Bootstrap:
