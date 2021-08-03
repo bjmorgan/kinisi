@@ -16,6 +16,7 @@ from tqdm import tqdm
 from emcee import EnsembleSampler
 from uravu.distribution import Distribution
 from uravu.utils import straight_line
+from statsmodels.stats.moment_helpers import corr2cov
 
 
 class Bootstrap:
@@ -97,12 +98,14 @@ class MSDBootstrap(Bootstrap):
         self.msd_sampled = np.array([])
         self.msd_sampled_err = np.array([])
         self.msd_sampled_std = np.array([])
+        self.msd_sampled_var = np.array([])
         self.ngp = np.array([])
         self.ngp_err = None
         if ngp_errors:
             self.ngp_err = np.array([])
         self.euclidian_displacements = []
         self.n_samples_msd = np.array([], dtype=int)
+        self.samples = np.array([])
         for i in self.iterator:
             d_squared = np.sum(self.displacements[i] ** 2, axis=2)
             self.euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
@@ -128,8 +131,10 @@ class MSDBootstrap(Bootstrap):
             self.msd_sampled = np.append(self.msd_sampled, distro.n)
             self.msd_sampled_err = np.append(self.msd_sampled_err, distro.n - distro.con_int[0])
             self.msd_sampled_std = np.append(self.msd_sampled_std, np.std(distro.samples))
+            self.msd_sampled_var = np.append(self.msd_sampled_var, np.var(distro.samples, ddof=1))
+            self.samples = np.append(self.samples, d_squared.mean(axis=1).flatten()).reshape(self.msd_sampled.size, d_squared.shape[0])
 
-    def diffusion(self, fit_intercept=True, use_ngp=True, n_samples=1000, n_walkers=32, progress=False):
+    def diffusion(self, fit_intercept=True, use_ngp=True, n_resamples=1000, max_resamples=1000000, n_samples=1000, n_walkers=32, progress=False):
         """
         Calculate the diffusion coefficient for the trajectory.
 
@@ -143,14 +148,24 @@ class MSDBootstrap(Bootstrap):
         max_ngp = np.argmax(self.ngp)
         if not use_ngp:
             max_ngp = 0
-        self.covariance_matrix = np.zeros((self.dt.size, self.dt.size))
-        for i in range(0, self.dt.size):
-            for j in range(i, self.dt.size):
-                ratio = self.n_samples_msd[i] / self.n_samples_msd[j]
-                self.covariance_matrix[i, j] = np.var(self.distributions[i].samples) * ratio
-                self.covariance_matrix[j, i] = np.copy(self.covariance_matrix[i, j])
-        ln_sigma = np.multiply(*np.linalg.slogdet(self.covariance_matrix[max_ngp:, max_ngp:]))
-        inv = pinv(self.covariance_matrix[max_ngp:, max_ngp:], atol=self.covariance_matrix[max_ngp:, max_ngp:].min())
+        resampled_samples = np.array([np.mean(resample(
+            self.samples.T, n_samples=self.n_samples_msd[-1]), axis=0) for i in range(n_resamples)]).T
+        distro = Distribution(resampled_samples[-1], ci_points=self.confidence_interval)
+        samples_so_far = n_resamples
+        while (not distro.normal) and distro.size < max_resamples:
+            resampled_samples = np.append(resampled_samples, np.array([np.mean(resample(
+                self.samples.T, n_samples=self.n_samples_msd[-1]), axis=0) for i in range(n_resamples)]).T)
+            samples_so_far += n_resamples
+            resampled_samples = resampled_samples.reshape(self.samples.shape[0], samples_so_far)
+            distro.add_samples(resampled_samples[-1])
+        if distro.size >= max_resamples:
+            warnings.warn(
+                "The maximum number of covariance matrix has been reached, and the final distribution is not yet normal.")
+        self.covariance_matrix = np.cov(resampled_samples[max_ngp:])
+        # self.covariance_matrix = find_nearest_positive_definite(self.covariance_matrix[max_ngp:, max_ngp:])
+        
+        ln_sigma = np.linalg.slogdet(self.covariance_matrix)[1]
+        inv = pinv(self.covariance_matrix)
         end = self.msd_sampled[max_ngp:].size * np.log(2. * np.pi)
 
         def log_likelihood(theta):
@@ -260,3 +275,55 @@ def _bootstrap(array, n_samples, n_resamples):
         :py:attr:`array_like`: Resampled values from the array.
     """
     return [np.mean(resample(array.flatten(), n_samples=n_samples)) for j in range(n_resamples)]
+
+
+def find_nearest_positive_definite(matrix):
+    """
+    Find the nearest positive-definite matrix to that given, using the method from 
+    N.J. Higham, "Computing a nearest symmetric positive semidefinite matrix" (1988): 10.1016/0024-3795(88)90223-6 
+
+    Args:
+        matrix (:py:attr:`array_like`): Matrix to find nearest positive-definite for.
+    Returns: 
+        :py:attr:`array_like`: Nearest positive-definite matrix.
+    """
+
+    if check_positive_definite(matrix):
+        return matrix
+
+    B = (matrix + matrix.T) / 2
+    _, s, V = np.linalg.svd(B)
+    H = np.dot(V.T, np.dot(np.diag(s), V))
+    A2 = (B + H) / 2
+    A3 = (A2 + A2.T) / 2
+
+    if check_positive_definite(A3):
+        return A3
+
+    spacing = np.spacing(np.linalg.norm(matrix))
+    I = np.eye(matrix.shape[0])
+    k = 1
+    while not check_positive_definite(A3):
+        mineig = np.min(np.real(np.linalg.eigvals(A3)))
+        A3 += I * (-mineig * k**2 + spacing)
+        k += 1
+
+    return A3
+
+
+def check_positive_definite(matrix):
+    """
+    Checks if a matrix is positive-definite via Cholesky decomposition.
+
+    Args:
+        matrix (:py:attr:`array_like`): Matrix to check.
+    Returns:
+        :py_attr:`bool`: True for a positive-definite matrix.
+
+
+    Returns true when input is positive-definite, via Cholesky"""
+    try:
+        _ = np.linalg.cholesky(matrix)
+        return True
+    except np.linalg.LinAlgError:
+        return False
