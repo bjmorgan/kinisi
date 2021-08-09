@@ -90,16 +90,16 @@ class MSDBootstrap(Bootstrap):
         self.ngp = np.array([])
         self.ngp_err = None
         self.euclidian_displacements = []
-        self.samples = np.array([])
+        self.samples = np.zeros((len(self.displacements), self.displacements[0].shape[0]))
         for i in self.iterator:
             d_squared = np.sum(self.displacements[i] ** 2, axis=2)
             self.euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
-            self.msd = np.append(self.msd, np.mean(d_squared[::2].flatten()))
+            self.msd = np.append(self.msd, np.mean(d_squared.flatten()))
             top = np.mean(d_squared.flatten() * d_squared.flatten()) * 3
             bottom = np.square(np.mean(d_squared.flatten())) * 5
             self.ngp = np.append(self.ngp, top / bottom - 1)
             self.dt = np.append(self.dt, self.delta_t[i])
-            self.samples = np.append(self.samples, d_squared[1::2].mean(axis=1).flatten()).reshape(self.msd.size, d_squared[1::2].shape[0])
+            self.samples[i] = d_squared.mean(axis=1).flatten()
         self.resampled_samples = _sample_until_normal(self.samples.T, self.displacements[0].shape[0], n_resamples, max_resamples, self.confidence_interval, random_state=random_state)
         self.msd_std = np.sqrt(np.cov(self.resampled_samples).diagonal())
 
@@ -164,13 +164,13 @@ class DiffBootstrap(MSDBootstrap):
             max_likelihood = minimize(nll, np.array([ols.slope, ols.intercept])).x
         else:
             max_likelihood = minimize(nll, np.array([ols.slope])).x
-        pos = max_likelihood + max_likelihood * 1e-3 * np.random.randn(n_walkers, max_likelihood.size)
-        sampler = EnsembleSampler(*pos.shape, log_likelihood)
-        sampler.run_mcmc(pos, n_samples, progress=progress, progress_kwargs={'desc':"Likelihood Sampling"})
-        self.diffusion_coefficient = Distribution(sampler.flatchain[:, 0] / 6, ci_points=self.confidence_interval)
+        pos = max_likelihood + max_likelihood * 1e-1 * np.random.randn(n_walkers, max_likelihood.size)
+        self.sampler = EnsembleSampler(*pos.shape, log_likelihood)
+        self.sampler.run_mcmc(pos, n_samples, progress=progress, progress_kwargs={'desc':"Likelihood Sampling"})
+        self.diffusion_coefficient = Distribution(self.sampler.flatchain[:, 0] / 6, ci_points=self.confidence_interval)
         self.intercept = None
         if fit_intercept:
-            self.intercept = Distribution(sampler.flatchain[:, 1], ci_points=self.confidence_interval)
+            self.intercept = Distribution(self.sampler.flatchain[:, 1], ci_points=self.confidence_interval)
 
 
 def _iterator(progress, loop):
