@@ -45,9 +45,7 @@ class TestMsd(unittest.TestCase):
             n_resamples=100,
             max_resamples=1000)
         assert_equal(boot.dt.size, 5)
-        assert_equal(len(boot.distributions), 5)
-        assert_equal(boot.msd_observed.size, 5)
-        assert_equal(boot.msd_sampled.size, 5)
+        assert_equal(boot.msd.size, 5)
 
     def test_msd_bootstrap_b(self):
         """
@@ -64,9 +62,7 @@ class TestMsd(unittest.TestCase):
             n_resamples=1,
             max_resamples=1000)
         assert_equal(boot.dt.size, 5)
-        assert_equal(len(boot.distributions), 5)
-        assert_equal(boot.msd_observed.size, 5)
-        assert_equal(boot.msd_sampled.size, 5)
+        assert_equal(boot.msd.size, 5)
 
     def test_msd_bootstrap_c(self):
         """
@@ -92,34 +88,5 @@ class TestMsd(unittest.TestCase):
             max_resamples=10,
             sub_sample_dt=2)
         assert_equal(boot.dt.size, 3)
-        assert_equal(len(boot.distributions), 3)
-        assert_equal(boot.msd_observed.size, 3)
-        assert_equal(boot.msd_sampled.size, 3)
+        assert_equal(boot.msd.size, 3)
 
-    def test_msd_bootstrap_d(self):
-        """
-        Test msd_bootstrap very few particles.
-        """
-        ordinate1 = np.random.randn(10, 10, 3)
-        ordinate2 = np.random.randn(1, 1, 3)
-        ordinate3 = np.random.randn(1, 1, 3)
-        ordinate4 = np.random.randn(1, 1, 3)
-        ordinate5 = np.random.randn(1, 1, 3)
-        to_resample = [
-            ordinate1,
-            ordinate2,
-            ordinate3,
-            ordinate4,
-            ordinate5,
-        ]
-        boot = diffusion.MSDBootstrap(
-            np.linspace(100, 600, 5, dtype=int),
-            to_resample,
-            progress=False,
-            n_resamples=1,
-            max_resamples=10,
-            sub_sample_dt=2)
-        assert_equal(boot.dt.size, 1)
-        assert_equal(len(boot.distributions), 1)
-        assert_equal(boot.msd_observed.size, 1)
-        assert_equal(boot.msd_sampled.size, 1)
