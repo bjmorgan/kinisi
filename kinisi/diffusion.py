@@ -51,16 +51,6 @@ class Bootstrap:
         self.diffusion_coefficient = None
         self.intercept = None
 
-    @property
-    def D(self):
-        """
-        An alias for the diffusion coefficient Distribution.
-
-        Returns:
-            (:py:class:`uravu.distribution.Distribution`): Diffusion coefficient
-        """
-        return self.diffusion_coefficient
-
 
 class MSDBootstrap(Bootstrap):
     """
@@ -135,7 +125,7 @@ class DiffBootstrap(MSDBootstrap):
         self.covariance_matrix = np.cov(self.resampled_samples[max_ngp:])
         self.covariance_matrix = find_nearest_positive_definite(self.covariance_matrix)
 
-        mv = multivariate_normal(self.msd, self.covariance_matrix, allow_singular=True)
+        mv = multivariate_normal(self.msd[max_ngp:], self.covariance_matrix, allow_singular=True)
 
         def log_likelihood(theta):
             """
@@ -164,13 +154,33 @@ class DiffBootstrap(MSDBootstrap):
             max_likelihood = minimize(nll, np.array([ols.slope, ols.intercept])).x
         else:
             max_likelihood = minimize(nll, np.array([ols.slope])).x
-        pos = max_likelihood + max_likelihood * 1e-1 * np.random.randn(n_walkers, max_likelihood.size)
+        pos = max_likelihood + max_likelihood * 1e-3 * np.random.randn(n_walkers, max_likelihood.size)
         self.sampler = EnsembleSampler(*pos.shape, log_likelihood)
         self.sampler.run_mcmc(pos, n_samples, progress=progress, progress_kwargs={'desc':"Likelihood Sampling"})
         self.diffusion_coefficient = Distribution(self.sampler.flatchain[:, 0] / 6, ci_points=self.confidence_interval)
         self.intercept = None
         if fit_intercept:
             self.intercept = Distribution(self.sampler.flatchain[:, 1], ci_points=self.confidence_interval)
+
+    @property
+    def D(self):
+        """
+        An alias for the diffusion coefficient Distribution.
+
+        Returns:
+            (:py:class:`uravu.distribution.Distribution`): Diffusion coefficient
+        """
+        return self.diffusion_coefficient
+
+    @property
+    def D_offset(self):
+        """
+        An alias for the diffusion coefficient offset Distribution.
+
+        Returns:
+            (:py:class:`uravu.distribution.Distribution`): Diffusion coefficient offset
+        """
+        return self.intercept
 
 
 def _iterator(progress, loop):
