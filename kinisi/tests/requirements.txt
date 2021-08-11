@@ -5,7 +5,7 @@ tqdm
 uravu>=1.2.4
 pymatgen
 MDAnalysis
-emcee
+git+https://github.com/dfm/emcee.git
 coverage
 codeclimate-test-reporter
 nbsphinx
