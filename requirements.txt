@@ -2,4 +2,5 @@ numpy
 scikit-learn
 scipy>=1.7.0
 tqdm
+git+https://github.com/dfm/emcee.git
 uravu>=1.2.4
