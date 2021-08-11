@@ -23,7 +23,6 @@ class Bootstrap:
     The top-level class for bootstrapping.
 
     Attributes:
-        confidence_interval (:py:attr:`array_like`): The percentile points of the distribution that should be stored
         displacements (:py:attr:`list` of :py:attr:`array_like`): A list of arrays, where each array has the axes [atom, displacement observation, dimension]. There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as the number of observations is not necessary the same at each data point
         delta_t (:py:attr:`array_like`): An array of the timestep values
         max_obs (:py:attr:`int`): The maximum number of observations for the trajectory
@@ -35,17 +34,13 @@ class Bootstrap:
         delta_t (:py:attr:`array_like`): An array of the timestep values
         disp_3d (:py:attr:`list` of :py:attr:`array_like`): A list of arrays, where each array has the axes [atom, displacement observation, dimension]. There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as the number of observations is not necessary the same at each data point
         sub_sample_dt (:py:attr:`int`. optional): The frequency in observations to be sampled. Default is :py:attr:`1` (every observation)
-        confidence_interval (:py:attr:`array_like`, optional): The percentile points of the distribution that should be stored. Default is :py:attr:`[2.5, 97.5]` (a 95 % confidence interval)
         progress (:py:attr:`bool`, optional): Show tqdm progress for sampling. Default is :py:attr:`True`
     """
-    def __init__(self, delta_t, disp_3d, sub_sample_dt=1, confidence_interval=None, progress=True):
-        if confidence_interval is None:
-            self.confidence_interval = [2.5, 97.5]
+    def __init__(self, delta_t, disp_3d, sub_sample_dt=1, progress=True):
         self.displacements = disp_3d[::sub_sample_dt]
         self.delta_t = np.array(delta_t[::sub_sample_dt])
         self.max_obs = self.displacements[0].shape[1]
         self.distributions = []
-        self.distributions_4 = []
         self.dt = np.array([])
         self.iterator = _iterator(progress, range(len(self.displacements)))
         self.diffusion_coefficient = None
@@ -55,7 +50,7 @@ class Bootstrap:
 class MSDBootstrap(Bootstrap):
     """
     Perform a bootstrap resampling to obtain accurate estimates for the mean and uncertainty for the squared displacements.
-    This resampling method is applied until the MSD final distribution is normal (or the `max_resamples` has been reached) and therefore may be described with a median and confidence interval.
+    This resampling method is applied until the final MSD distribution is normal (or :py:code:`max_resamples` has been reached).
 
     Attributes:
         msd (:py:attr:`array_like`): The sample mean-squared displacements, found from the arithmetic average of the observations
@@ -68,14 +63,13 @@ class MSDBootstrap(Bootstrap):
         delta_t (:py:attr:`array_like`): An array of the timestep values
         disp_3d (:py:attr:`list` of :py:attr:`array_like`): A list of arrays, where each array has the axes [atom, displacement observation, dimension]. There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as the number of observations is not necessary the same at each data point
         sub_sample_dt (:py:attr:`int`. optional): The frequency in observations to be sampled. Default is :py:attr:`1` (every observation)
-        confidence_interval (:py:attr:`array_like`, optional): The percentile points of the distribution that should be stored. Default is :py:attr:`[31.73, 68.27]` (a single standard deviation)
         n_resamples (:py:attr:`int`, optional): The initial number of resamples to be performed. Default is :py:attr:`1000`
         max_resamples (:py:attr:`int`, optional): The max number of resamples to be performed by the distribution is assumed to be normal. This is present to allow user control over the time taken for the resampling to occur. Default is :py:attr:`100000`
         random_state (:py:class:`numpy.random.mtrand.RandomState`, optional): A :py:code:`RandomState` object to be used to ensure reproducibility. Default is :py:code:`None`
         progress (:py:attr:`bool`, optional): Show tqdm progress for sampling. Default is :py:attr:`True`
     """
-    def __init__(self, delta_t, disp_3d, sub_sample_dt=1, confidence_interval=None, n_resamples=1000, max_resamples=100000, random_state=None, progress=True):
-        super().__init__(delta_t, disp_3d, sub_sample_dt, confidence_interval, progress)
+    def __init__(self, delta_t, disp_3d, sub_sample_dt=1, n_resamples=1000, max_resamples=100000, random_state=None, progress=True):
+        super().__init__(delta_t, disp_3d, sub_sample_dt, progress)
         self.msd = np.array([])
         self.ngp = np.array([])
         self.ngp_err = None
@@ -90,7 +84,7 @@ class MSDBootstrap(Bootstrap):
             self.ngp = np.append(self.ngp, top / bottom - 1)
             self.dt = np.append(self.dt, self.delta_t[i])
             self.samples[i] = d_squared.mean(axis=1).flatten()
-        self.resampled_samples = _sample_until_normal(self.samples.T, self.displacements[0].shape[0], n_resamples, max_resamples, self.confidence_interval, random_state=random_state)
+        self.resampled_samples = _sample_until_normal(self.samples.T, self.displacements[0].shape[0], n_resamples, max_resamples, random_state=random_state)
         self.msd_std = np.sqrt(np.cov(self.resampled_samples).diagonal())
 
 
@@ -107,7 +101,6 @@ class DiffBootstrap(MSDBootstrap):
         delta_t (:py:attr:`array_like`): An array of the timestep values
         disp_3d (:py:attr:`list` of :py:attr:`array_like`): A list of arrays, where each array has the axes [atom, displacement observation, dimension]. There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as the number of observations is not necessary the same at each data point
         sub_sample_dt (:py:attr:`int`. optional): The frequency in observations to be sampled. Default is :py:attr:`1` (every observation)
-        confidence_interval (:py:attr:`array_like`, optional): The percentile points of the distribution that should be stored. Default is :py:attr:`[31.73, 68.27]` (a single standard deviation)
         n_resamples (:py:attr:`int`, optional): The initial number of resamples to be performed. Default is :py:attr:`1000`
         max_resamples (:py:attr:`int`, optional): The max number of resamples to be performed by the distribution is assumed to be normal. This is present to allow user control over the time taken for the resampling to occur. Default is :py:attr:`100000`
         use_ngp (:py:attr:`bool`, optional): Should the ngp max be used as the starting point for the diffusion fitting. Default is :py:attr:`True`
@@ -117,8 +110,8 @@ class DiffBootstrap(MSDBootstrap):
         random_state (:py:class:`numpy.random.mtrand.RandomState`, optional): A :py:code:`RandomState` object to be used to ensure reproducibility. Default is :py:code:`None`
         progress (:py:attr:`bool`, optional): Show tqdm progress for sampling. Default is :py:attr:`True`
     """
-    def __init__(self, delta_t, disp_3d, sub_sample_dt=1, confidence_interval=None, n_resamples=1000, max_resamples=100000, use_ngp=True, fit_intercept=True, n_walkers=32, n_samples=1000, random_state=None, progress=True):
-        super().__init__(delta_t, disp_3d, sub_sample_dt, confidence_interval, n_resamples, max_resamples, random_state, progress)
+    def __init__(self, delta_t, disp_3d, sub_sample_dt=1, n_resamples=1000, max_resamples=100000, use_ngp=True, fit_intercept=True, n_walkers=32, n_samples=1000, random_state=None, progress=True):
+        super().__init__(delta_t, disp_3d, sub_sample_dt, n_resamples, max_resamples, random_state, progress)
         max_ngp = np.argmax(self.ngp)
         if not use_ngp:
             max_ngp = 0
@@ -157,10 +150,10 @@ class DiffBootstrap(MSDBootstrap):
         pos = max_likelihood + max_likelihood * 1e-3 * np.random.randn(n_walkers, max_likelihood.size)
         self.sampler = EnsembleSampler(*pos.shape, log_likelihood)
         self.sampler.run_mcmc(pos, n_samples, progress=progress, progress_kwargs={'desc':"Likelihood Sampling"})
-        self.diffusion_coefficient = Distribution(self.sampler.flatchain[:, 0] / 6, ci_points=self.confidence_interval)
+        self.diffusion_coefficient = Distribution(self.sampler.flatchain[:, 0] / 6)
         self.intercept = None
         if fit_intercept:
-            self.intercept = Distribution(self.sampler.flatchain[:, 1], ci_points=self.confidence_interval)
+            self.intercept = Distribution(self.sampler.flatchain[:, 1])
 
     @property
     def D(self):
@@ -199,7 +192,7 @@ def _iterator(progress, loop):
     return loop
 
 
-def _sample_until_normal(array, n_samples, n_resamples, max_resamples, confidence_interval, random_state=None):
+def _sample_until_normal(array, n_samples, n_resamples, max_resamples, random_state=None):
     """
     Resample from the distribution until a normal distribution is obtained or a maximum is reached.
 
@@ -208,20 +201,19 @@ def _sample_until_normal(array, n_samples, n_resamples, max_resamples, confidenc
         n_samples (:py:attr:`int`): Number of samples.
         r_resamples (:py:attr:`int`): Number of resamples to perform initially.
         max_resamples (:py:attr:`int`): The maximum number of resamples to perform.
-        confidence_interval (:py:attr:`array_like`): The percentile points of the distribution that should be stored.
         random_state (:py:class:`numpy.random.mtrand.RandomState`, optional): A :py:code:`RandomState` object to be used to ensure reproducibility. Default is :py:code:`None`
 
     Returns:
         :py:attr:`array_like`: The resampled distribution.
     """
     resampled_samples = np.array(_bootstrap(array, n_samples, n_resamples, random_state)).T
-    distro = Distribution(resampled_samples[-1], ci_points=confidence_interval)
+    distro = Distribution(resampled_samples[-1])
     samples_so_far = n_resamples
     while (not distro.normal) and distro.size < max_resamples:
         resampled_samples = np.append(resampled_samples.T, np.array(_bootstrap(array, n_samples, n_resamples, random_state))).T
         samples_so_far += n_resamples
         resampled_samples = resampled_samples.reshape(samples_so_far, array.shape[1]).T
-        distro = Distribution(resampled_samples[-1], ci_points=confidence_interval)
+        distro = Distribution(resampled_samples[-1])
     if distro.size >= max_resamples:
         warnings.warn("The maximum number of covariance matrix has been reached, and the final distribution is not yet normal.")
     return resampled_samples

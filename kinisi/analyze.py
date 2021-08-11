@@ -15,19 +15,16 @@ from kinisi.parser import MDAnalysisParser, PymatgenParser
 
 class Analyzer:
     """
-    The :py:class:`kinisi.analyze.MSDAnalyzer` class evaluates the MSD of atoms in a material.
-    This is achieved through the application of a block bootstrapping methodology to obtain the most statistically accurate values for mean squared displacement and the associated uncertainty.
+    The :py:class:`kinisi.analyze.Analyzer` class manages the API to the MSDAnalyzer and DiffAnalyzer classes.
 
     Attributes:
-        dt (:py:attr:`array_like`):  Timestep values.
-        distributions (:py:attr:`list` or :py:class:`Distribution`): The distributions describing the MSD at each timestep.
-        msd_observed (:py:attr:`array_like`): The sample mean-squared displacements, found from the arithmetic average of the observations.
+        delta_t (:py:attr:`array_like`):  Timestep values.
+        msd (:py:attr:`array_like`): The sample mean-squared displacements, found from the arithmetic average of the observations.
         _diff (:py:class:`kinisi.diffusion.MSDBootstrap`): The :py:mod:`kinisi` bootstrap and diffusion object.
 
     Args:
         trajectory (:py:attr:`str` or :py:attr:`list` of :py:attr:`str` or :py:attr:`list` of :py:class:`pymatgen.core.structure.Structure` or :py:class:`MDAnalysis.core.Universe`): The file path(s) that should be read by either the :py:class:`pymatgen.io.vasp.Xdatcar` or :py:class:`MDAnalysis.core.universe.Universe` classes, a :py:attr:`list` of :py:class:`pymatgen.core.structure.Structure` objects ordered in sequence of run, or an :py:class:`MDAnalysis.core.universe.Universe` object.
         parser_params (:py:attr:`dict`): The parameters for the :py:mod:`kinisi.parser` object, which is either :py:class:`kinisi.parser.PymatgenParser` or :py:class:`kinisi.parser.MDAnalysisParser` depending on the input file format. See the appropriate documention for more guidance on this dictionary.
-        bootstrap_params (:py:attr:`dict`, optional): The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the appropriate documentation for more guidance on this. Default is the default bootstrap parameters.
         dtype (:py:attr:`str`, optional): The file format of the :py:attr:`trajectory`, for a trajectory file path to be read by :py:class:`pymatgen.io.vasp.Xdatcar` this should be :py:attr:`'Xdatcar'`, for multiple trajectory files that are of the same system (but simulated from a different starting random seed) to be read by :py:class:`pymatgen.io.vasp.Xdatcar` then :py:attr:`'IdenticalXdatcar'` should be used (this assumes that all files have the same number of steps and atoms), for a :py:attr:`list` of :py:class:`pymatgen.core.structure.Structure` objects this should be :py:attr:`'structures'`, for a trajectory file path to be read by :py:mod:`MDAnalysis` this should be the appropriate format to be passed to the :py:class:`MDAnalysis.core.universe.Universe`, and for a n :py:class:`MDAnalysis.core.universe.Universe` object this should be :py:attr:`'universe'`. Defaults to :py:attr:`'Xdatcar'`.
     """
     def __init__(self, trajectory, parser_params, dtype='Xdatcar'):  # pragma: no cover
@@ -156,12 +153,11 @@ class Analyzer:
 class MSDAnalyzer(Analyzer):
     """
     The :py:class:`kinisi.analyze.MSDAnalyzer` class evaluates the MSD of atoms in a material.
-    This is achieved through the application of a block bootstrapping methodology to obtain the most statistically accurate values for mean squared displacement and the associated uncertainty.
+    This is achieved through the application of a bootstrapping methodology to obtain the most statistically accurate values for mean squared displacement uncertainty and covariance.
 
     Attributes:
-        dt (:py:attr:`array_like`):  Timestep values.
-        distributions (:py:attr:`list` or :py:class:`Distribution`): The distributions describing the MSD at each timestep.
-        msd_observed (:py:attr:`array_like`): The sample mean-squared displacements, found from the arithmetic average of the observations.
+        delta_t (:py:attr:`array_like`):  Timestep values.
+        msd (:py:attr:`array_like`): The sample mean-squared displacements, found from the arithmetic average of the observations.
         _diff (:py:class:`kinisi.diffusion.MSDBootstrap`): The :py:mod:`kinisi` bootstrap and diffusion object.
 
     Args:
@@ -180,19 +176,16 @@ class MSDAnalyzer(Analyzer):
 class DiffAnalyzer(Analyzer):
     """
     The :py:class:`kinisi.analyze.DiffAnalyzer` class performs analysis of diffusion relationships in materials.
-    This is achieved through the application of a block bootstrapping methodology to obtain the most statistically accurate values for mean squared displacement and the associated uncertainty.
-    The time-scale dependence of the MSD is then modeled with a straight line Einstein relationship, and Markov chain Monte Carlo is used to quantify inverse uncertainties for this model.
+    This is achieved through the application of a bootstrapping methodology to obtain the most statistically accurate values for mean squared displacement uncertainty and covariance.
+    The time-dependence of the MSD is then modelled in a generalised least squares fashion to obtain the diffusion coefficient and offset using Markov chain Monte Carlo maximum likelihood sampling.
 
     Args:
         trajectory (:py:attr:`str` or :py:attr:`list` of :py:attr:`str` or :py:attr:`list` of :py:class:`pymatgen.core.structure.Structure` or :py:class:`MDAnalysis.core.Universe`): The file path(s) that should be read by either the :py:class:`pymatgen.io.vasp.Xdatcar` or :py:class:`MDAnalysis.core.universe.Universe` classes, a :py:attr:`list` of :py:class:`pymatgen.core.structure.Structure` objects ordered in sequence of run, or an :py:class:`MDAnalysis.core.universe.Universe` object.
         parser_params (:py:attr:`dict`): The parameters for the :py:mod:`kinisi.parser` object, which is either :py:class:`kinisi.parser.PymatgenParser` or :py:class:`kinisi.parser.MDAnalysisParser` depending on the input file format. See the appropriate documention for more guidance on this dictionary.
-        bootstrap_params (:py:attr:`dict`, optional): The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the appropriate documentation for more guidance on this. Default is the default bootstrap parameters.
+        bootstrap_params (:py:attr:`dict`, optional): The parameters for the :py:class:`kinisi.diffusion.DiffBootstrap` object. See the appropriate documentation for more guidance on this. Default is the default bootstrap parameters.
         dtype (:py:attr:`str`, optional): The file format of the :py:attr:`trajectory`, for a trajectory file path to be read by :py:class:`pymatgen.io.vasp.Xdatcar` this should be :py:attr:`'Xdatcar'`, for multiple trajectory files that are of the same system (but simulated from a different starting random seed) to be read by :py:class:`pymatgen.io.vasp.Xdatcar` then :py:attr:`'IdenticalXdatcar'` should be used (this assumes that all files have the same number of steps and atoms), for a :py:attr:`list` of :py:class:`pymatgen.core.structure.Structure` objects this should be :py:attr:`'structures'`, for a trajectory file path to be read by :py:mod:`MDAnalysis` this should be the appropriate format to be passed to the :py:class:`MDAnalysis.core.universe.Universe`, and for a n :py:class:`MDAnalysis.core.universe.Universe` object this should be :py:attr:`'universe'`. Defaults to :py:attr:`'Xdatcar'`.
-        n_samples_fit (:py:attr:`int`, optional): The number of samples in the random generator for the fitting of the linear relationship. Default is :py:attr:`10000`.
-        fit_intercept (:py:attr:`bool`, optional): Should the intercept of the diffusion relationship be fit. Default is :py:attr:`True`.
-        use_ngp (:py:attr:`bool`, optional): Should the ngp max be used as the starting point for the diffusion fitting. Default is :py:attr:`True`.
     """
-    def __init__(self, trajectory, parser_params, bootstrap_params=None, dtype='Xdatcar', fit_intercept=True, use_ngp=True):  # pragma: no cover
+    def __init__(self, trajectory, parser_params, bootstrap_params=None, dtype='Xdatcar'):  # pragma: no cover
         if bootstrap_params is None:
             bootstrap_params = {}
         super().__init__(trajectory, parser_params, dtype)
