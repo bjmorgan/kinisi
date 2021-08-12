@@ -80,6 +80,8 @@ class MSDBootstrap(Bootstrap):
             d_squared = np.sum(self.displacements[i] ** 2, axis=2)
             self.n_samples_msd = np.append(self.n_samples_msd, _n_samples(self.displacements[i].shape, self.max_obs))
             self.euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
+            if self.n_samples_msd[i] <= 1:
+                continue
             distro = _sample_until_normal(d_squared, self.n_samples_msd[i], n_resamples, max_resamples)
             self.distributions.append(distro)
             self.msd = np.append(self.msd, distro.n)
