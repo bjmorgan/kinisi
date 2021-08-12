@@ -21,7 +21,7 @@ class Parser:
 
     Attributes:
         time_step (:py:attr:`float`): Time step, in simulation units, between steps in trajectory.
-        step_step (:py:attr:`int`): Sampling freqency of the trajectory (time_step is multiplied by this number to get the real time between output from the simulation file).
+        step_skip (:py:attr:`int`): Sampling freqency of the trajectory (time_step is multiplied by this number to get the real time between output from the simulation file).
         indices (:py:attr:`array_like`): Indices for the atoms in the trajectory used in the diffusion calculation.
         delta_t (:py:attr:`array_like`):  Time intervals at which the MSD is determined.
         disp_3d (:py:attr:`list` of :py:attr:`array_like`): Each element in the :py:attr:`list` has the axes [atom, displacement observation, dimension] and there is one element for each delta_t value. *Note*: it is necessary to use a :py:attr:`list` of :py:attr:`array_like` as the number of observations is not necessary the same at each timestep point.
@@ -33,7 +33,7 @@ class Parser:
         indices (:py:attr:`array_like`): Indices for the atoms in the trajectory used in the diffusion calculation.
         framework_indices (:py:attr:`array_like`): Indices for the atoms in the trajectory that should not be used in the diffusion calculation.
         time_step (:py:attr:`float`): Time step, in simulation units, between steps in trajectory.
-        step_step (:py:attr:`int`): Sampling freqency of the trajectory (time_step is multiplied by this number to get the real time between output from the simulation file).
+        step_skip (:py:attr:`int`): Sampling freqency of the trajectory (time_step is multiplied by this number to get the real time between output from the simulation file).
         min_obs (:py:attr:`int`, optional): Minimum number of observations of an atom before including it in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times. Defaults to :py:attr:`30`.
         min_dt (:py:attr:`float`, optional): Minimum timestep to be evaluated, in the simulation units. Defaults to :py:attr:`100`.
         ndelta_t (:py:attr:`int`, optional): The number of :py:attr:`delta_t` values to calculate the MSD over. Defaults to :py:attr:`75`.
@@ -110,7 +110,7 @@ class PymatgenParser(Parser):
         structures (:py:attr:`list` or :py:class:`pymatgen.core.structure.Structure`): Structures ordered in sequence of run.
         specie (:py:class:`pymatgen.core.periodic_table.Element` or :py:class:`pymatgen.core.periodic_table.Specie`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
         time_step (:py:attr:`float`): Time step, in simulation units, between steps in trajectory.
-        step_step (:py:attr:`int`): Sampling freqency of the trajectory (time_step is multiplied by this number to get the real time between output from the simulation file).
+        step_skip (:py:attr:`int`): Sampling freqency of the trajectory (time_step is multiplied by this number to get the real time between output from the simulation file).
         min_obs (:py:attr:`int`, optional): Minimum number of observations of an atom before including it in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times. Defaults to :py:attr:`30`.
         sub_sample_traj (:py:attr:`float`, optional): Multiple of the :py:attr:`time_step` to sub sample at. Defaults to :py:attr:`1` where all timesteps are used.
         min_dt (:py:attr:`float`, optional): Minimum timestep to be evaluated, in the simulation units. Defaults to :py:attr:`100`.
@@ -133,7 +133,7 @@ class MDAnalysisParser(Parser):
         universe (:py:class:`MDAnalysis.core.universe.Universe`): The MDAnalysis object of interest.
         specie (:py:attr:`str`): Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
         time_step (:py:attr:`float`): Time step, in simulation units, between steps in trajectory.
-        step_step (:py:attr:`int`): Sampling freqency of the trajectory (time_step is multiplied by this number to get the real time between output from the simulation file).
+        step_skip (:py:attr:`int`): Sampling freqency of the trajectory (time_step is multiplied by this number to get the real time between output from the simulation file).
         min_obs (:py:attr:`int`, optional): Minimum number of observations of an atom before including it in the MSD vs dt calculation. E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times. Defaults to :py:attr:`30`.
         sub_sample_traj (:py:attr:`float`, optional): Multiple of the :py:attr:`time_step` to sub sample at. Defaults to :py:attr:`1` where all timesteps are used.
         min_dt (:py:attr:`float`, optional): Minimum timestep to be evaluated, in the simulation units. Defaults to :py:attr:`100`.
