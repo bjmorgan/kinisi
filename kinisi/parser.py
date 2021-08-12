@@ -25,7 +25,7 @@ class Parser:
         indices (:py:attr:`array_like`): Indices for the atoms in the trajectory used in the diffusion calculation.
         delta_t (:py:attr:`array_like`):  Time intervals at which the MSD is determined.
         disp_3d (:py:attr:`list` of :py:attr:`array_like`): Each element in the :py:attr:`list` has the axes [atom, displacement observation, dimension] and there is one element for each delta_t value. *Note*: it is necessary to use a :py:attr:`list` of :py:attr:`array_like` as the number of observations is not necessary the same at each timestep point.
-        min_dt (:py:attr:`float`, optional): Minimum time interval to be evaluated.
+        min_dt (:py:attr:`float`, optional): Minimum time interval to be evaluated. Defaults to 1.
         ndelta_t (:py:attr:`int`, optional): The number of :py:attr:`delta_t` values to calculate the MSD over. Defaults to :py:attr:`75`.
 
     Args:
