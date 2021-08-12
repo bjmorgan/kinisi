@@ -69,8 +69,15 @@ class Analyzer:
         elif dtype == 'Identicalstructures':
             u = [PymatgenParser(f, **parser_params) for f in trajectory]
             self.first_structure = trajectory[0][0]
-            dt = u.delta_t
-            disp_3d = u.disp_3d 
+            joint_disp_3d = []
+            for i in range(len(u[0].disp_3d)):
+                disp = np.zeros((u[0].disp_3d[i].shape[0] * len(u), u[0].disp_3d[i].shape[1], u[0].disp_3d[i].shape[2]))
+                disp[:u[0].disp_3d[i].shape[0]] = u[0].disp_3d[i]
+                for j in range(1, len(u)):
+                    disp[u[0].disp_3d[i].shape[0] * j:u[0].disp_3d[i].shape[0] * (j + 1)] = u[j].disp_3d[i]
+                joint_disp_3d.append(disp)
+            dt = u[0].delta_t
+            disp_3d = joint_disp_3d
         elif dtype == 'universe':
             u = MDAnalysisParser(trajectory, **parser_params)
             dt = u.delta_t
