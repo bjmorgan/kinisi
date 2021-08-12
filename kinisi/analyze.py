@@ -67,7 +67,10 @@ class Analyzer:
             dt = u.delta_t
             disp_3d = u.disp_3d
         elif dtype == 'Identicalstructures':
-            u = [PymatgenParser(f, **parser_params) for f in trajectory]  
+            u = [PymatgenParser(f, **parser_params) for f in trajectory]
+            self.first_structure = trajectory[0][0]
+            dt = u.delta_t
+            disp_3d = u.disp_3d 
         elif dtype == 'universe':
             u = MDAnalysisParser(trajectory, **parser_params)
             dt = u.delta_t
