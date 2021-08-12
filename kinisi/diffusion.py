@@ -103,14 +103,14 @@ class DiffBootstrap(MSDBootstrap):
         sub_sample_dt (:py:attr:`int`. optional): The frequency in observations to be sampled. Default is :py:attr:`1` (every observation)
         n_resamples (:py:attr:`int`, optional): The initial number of resamples to be performed. Default is :py:attr:`1000`
         max_resamples (:py:attr:`int`, optional): The max number of resamples to be performed by the distribution is assumed to be normal. This is present to allow user control over the time taken for the resampling to occur. Default is :py:attr:`100000`
-        use_ngp (:py:attr:`bool`, optional): Should the ngp max be used as the starting point for the diffusion fitting. Default is :py:attr:`True`
+        use_ngp (:py:attr:`bool`, optional): Should the ngp max be used as the starting point for the diffusion fitting. Default is :py:attr:`False`
         fit_intercept (:py:attr:`bool`, optional): Should the intercept of the diffusion relationship be fit. Default is :py:attr:`True`.
         n_walkers (:py:attr:`int`, optional): Number of MCMC walkers to use. Default is :py:attr:`32`.
         n_samples (:py:attr:`int`, optional): Number of MCMC samples to perform. Default is :py:attr:`1000`.
         random_state (:py:class:`numpy.random.mtrand.RandomState`, optional): A :py:code:`RandomState` object to be used to ensure reproducibility. Default is :py:code:`None`
         progress (:py:attr:`bool`, optional): Show tqdm progress for sampling. Default is :py:attr:`True`
     """
-    def __init__(self, delta_t, disp_3d, sub_sample_dt=1, n_resamples=1000, max_resamples=100000, use_ngp=True, fit_intercept=True, n_walkers=32, n_samples=1000, random_state=None, progress=True):
+    def __init__(self, delta_t, disp_3d, sub_sample_dt=1, n_resamples=1000, max_resamples=100000, use_ngp=False, fit_intercept=True, n_walkers=32, n_samples=1000, random_state=None, progress=True):
         super().__init__(delta_t, disp_3d, sub_sample_dt, n_resamples, max_resamples, random_state, progress)
         max_ngp = np.argmax(self.ngp)
         if not use_ngp:
