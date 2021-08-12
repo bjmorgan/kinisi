@@ -68,24 +68,26 @@ class MSDBootstrap(Bootstrap):
         random_state (:py:class:`numpy.random.mtrand.RandomState`, optional): A :py:code:`RandomState` object to be used to ensure reproducibility. Default is :py:code:`None`
         progress (:py:attr:`bool`, optional): Show tqdm progress for sampling. Default is :py:attr:`True`
     """
-    def __init__(self, delta_t, disp_3d, sub_sample_dt=1, n_resamples=1000, max_resamples=100000, random_state=None, progress=True):
+    def __init__(self, delta_t, disp_3d, sub_sample_dt=1, n_resamples=1000, max_resamples=10000, random_state=None, progress=True):
         super().__init__(delta_t, disp_3d, sub_sample_dt, progress)
         self.msd = np.array([])
+        self.msd_std = np.array([])
+        self.n_samples_msd = np.array([], dtype=int)
         self.ngp = np.array([])
-        self.ngp_err = None
+        self.distributions = []
         self.euclidian_displacements = []
-        self.samples = np.zeros((len(self.displacements), self.displacements[0].shape[0]))
         for i in self.iterator:
             d_squared = np.sum(self.displacements[i] ** 2, axis=2)
+            self.n_samples_msd = np.append(self.n_samples_msd, _n_samples(self.displacements[i].shape, self.max_obs))
             self.euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
-            self.msd = np.append(self.msd, np.mean(d_squared.flatten()))
+            distro = _sample_until_normal(d_squared, self.n_samples_msd[i], n_resamples, max_resamples)
+            self.distributions.append(distro)
+            self.msd = np.append(self.msd, distro.n)
+            self.msd_std = np.append(self.msd_std, np.std(distro.samples, ddof=1))
             top = np.mean(d_squared.flatten() * d_squared.flatten()) * 3
             bottom = np.square(np.mean(d_squared.flatten())) * 5
             self.ngp = np.append(self.ngp, top / bottom - 1)
             self.dt = np.append(self.dt, self.delta_t[i])
-            self.samples[i] = d_squared.mean(axis=1).flatten()
-        self.resampled_samples = _sample_until_normal(self.samples.T, self.displacements[0].shape[0], n_resamples, max_resamples, random_state=random_state)
-        self.msd_std = np.sqrt(np.cov(self.resampled_samples).diagonal())
 
 
 class DiffBootstrap(MSDBootstrap):
@@ -110,12 +112,18 @@ class DiffBootstrap(MSDBootstrap):
         random_state (:py:class:`numpy.random.mtrand.RandomState`, optional): A :py:code:`RandomState` object to be used to ensure reproducibility. Default is :py:code:`None`
         progress (:py:attr:`bool`, optional): Show tqdm progress for sampling. Default is :py:attr:`True`
     """
-    def __init__(self, delta_t, disp_3d, sub_sample_dt=1, n_resamples=1000, max_resamples=100000, use_ngp=False, fit_intercept=True, n_walkers=32, n_samples=1000, random_state=None, progress=True):
+    def __init__(self, delta_t, disp_3d, sub_sample_dt=1, n_resamples=1000, max_resamples=10000, use_ngp=False, fit_intercept=True, n_walkers=32, n_samples=1000, random_state=None, progress=True):
         super().__init__(delta_t, disp_3d, sub_sample_dt, n_resamples, max_resamples, random_state, progress)
         max_ngp = np.argmax(self.ngp)
         if not use_ngp:
             max_ngp = 0
-        self.covariance_matrix = np.cov(self.resampled_samples[max_ngp:])
+        self.covariance_matrix = np.zeros((self.dt.size, self.dt.size))
+        for i in range(0, self.dt.size):
+            for j in range(i, self.dt.size):
+                ratio = self.n_samples_msd[i] / self.n_samples_msd[j]
+                self.covariance_matrix[i, j] = np.var(self.distributions[i].samples) * ratio
+                self.covariance_matrix[j, i] = np.copy(self.covariance_matrix[i, j])
+        self.covariance_matrix = self.covariance_matrix[max_ngp:, max_ngp:]
         self.covariance_matrix = find_nearest_positive_definite(self.covariance_matrix)
 
         mv = multivariate_normal(self.msd[max_ngp:], self.covariance_matrix, allow_singular=True)
@@ -176,6 +184,26 @@ class DiffBootstrap(MSDBootstrap):
         return self.intercept
 
 
+def _n_samples(disp_shape, max_obs, bootstrap_multiplier=1):
+    """
+    Calculate the maximum number of independent observations.
+
+    Args:
+        disp_shape (:py:attr:`tuple`): The shape of the displacements array.
+        max_obs (:py:attr:`int`): The maximum number of observations for the trajectory.
+        bootstrap_multiplier (:py:attr:`int`, optional): The factor by which the number of bootstrap samples should be multiplied. The default is :py:attr:`1`, which is the maximum number of truely independent samples in a given timestep. This can be increase, however it is importance to note that when greater than 1 the sampling is no longer independent.
+
+    Returns:
+        :py:attr:`int`: Maximum number of independent observations.
+    """
+    n_obs = disp_shape[1]
+    n_atoms = disp_shape[0]
+    dt_int = max_obs - n_obs + 1
+    # approximate number of "non-overlapping" observations, allowing
+    # for partial overlap
+    return int(max_obs / dt_int * n_atoms) * bootstrap_multiplier
+
+
 def _iterator(progress, loop):
     """
     Get the iteration object, using :py:mod:`tqdm` as appropriate.
@@ -188,11 +216,11 @@ def _iterator(progress, loop):
         :py:attr:`tqdm` or :py:attr:`range`: Iterator object.
     """
     if progress:
-        return tqdm(loop, desc='Bootstrapping Trajectories')
+        return tqdm(loop, desc='Bootstrapping Displacements')
     return loop
 
 
-def _sample_until_normal(array, n_samples, n_resamples, max_resamples, random_state=None):
+def _sample_until_normal(array, n_samples, n_resamples, max_resamples):
     """
     Resample from the distribution until a normal distribution is obtained or a maximum is reached.
 
@@ -201,25 +229,20 @@ def _sample_until_normal(array, n_samples, n_resamples, max_resamples, random_st
         n_samples (:py:attr:`int`): Number of samples.
         r_resamples (:py:attr:`int`): Number of resamples to perform initially.
         max_resamples (:py:attr:`int`): The maximum number of resamples to perform.
-        random_state (:py:class:`numpy.random.mtrand.RandomState`, optional): A :py:code:`RandomState` object to be used to ensure reproducibility. Default is :py:code:`None`
+        confidence_interval (:py:attr:`array_like`): The percentile points of the distribution that should be stored.
 
     Returns:
-        :py:attr:`array_like`: The resampled distribution.
+        :py:class:`uravu.distribution.Distribution`: The resampled distribution.
     """
-    resampled_samples = np.array(_bootstrap(array, n_samples, n_resamples, random_state)).T
-    distro = Distribution(resampled_samples[-1])
-    samples_so_far = n_resamples
+    distro = Distribution(_bootstrap(array.flatten(), n_samples, n_resamples))
     while (not distro.normal) and distro.size < max_resamples:
-        resampled_samples = np.append(resampled_samples.T, np.array(_bootstrap(array, n_samples, n_resamples, random_state))).T
-        samples_so_far += n_resamples
-        resampled_samples = resampled_samples.reshape(samples_so_far, array.shape[1]).T
-        distro = Distribution(resampled_samples[-1])
+        distro.add_samples(_bootstrap(array.flatten(), n_samples, 100))
     if distro.size >= max_resamples:
-        warnings.warn("The maximum number of covariance matrix has been reached, and the final distribution is not yet normal.")
-    return resampled_samples
+        warnings.warn("The maximum number of resamples has been reached, and the distribution is not yet normal.")
+    return distro
 
 
-def _bootstrap(array, n_samples, n_resamples, random_state=None):
+def _bootstrap(array, n_samples, n_resamples):
     """
     Perform a set of resamples.
 
@@ -227,9 +250,8 @@ def _bootstrap(array, n_samples, n_resamples, random_state=None):
         array (:py:attr:`array_like`): The array to sample from.
         n_samples (:py:attr:`int`): Number of samples.
         r_resamples (:py:attr:`int`): Number of resamples to perform initially.
-        random_state (:py:class:`numpy.random.mtrand.RandomState`, optional): A :py:code:`RandomState` object to be used to ensure reproducibility. Default is :py:code:`None`
 
     Returns:
         :py:attr:`array_like`: Resampled values from the array.
     """
-    return [np.mean(resample(array, random_state=random_state, n_samples=n_samples), axis=0) for i in range(n_resamples)]
+    return [np.mean(resample(array.flatten(), n_samples=n_samples)) for j in range(n_resamples)]
