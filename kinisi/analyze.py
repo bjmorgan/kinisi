@@ -48,7 +48,10 @@ class Analyzer:
                 from pymatgen.io.vasp import Xdatcar
             except ModuleNotFoundError:
                 raise ModuleNotFoundError("To use the Xdatcar file parsing, pymatgen must be installed.")
-            u = [PymatgenParser(Xdatcar(f).structures, **parser_params) for f in trajectory]
+            if isinstance(trajectory[0], str):
+                u = [PymatgenParser(Xdatcar(f).structures, **parser_params) for f in trajectory]
+            elif isinstance(trajectory[0], Xdatcar):
+                u = [PymatgenParser(f.structures, **parser_params) for f in trajectory] 
             joint_disp_3d = []
             for i in range(len(u[0].disp_3d)):
                 disp = np.zeros((u[0].disp_3d[i].shape[0] * len(u), u[0].disp_3d[i].shape[1], u[0].disp_3d[i].shape[2]))
@@ -82,7 +85,7 @@ class Analyzer:
     @property
     def dt(self):
         """
-        Returns the timestep values that have been sampled. 
+        Returns the timestep values that have been sampled.
 
         Returns:
             :py:attr:`array_like`: Timestep values.
@@ -166,7 +169,7 @@ class MSDAnalyzer(Analyzer):
         bootstrap_params (:py:attr:`dict`, optional): The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the appropriate documentation for more guidance on this. Default is the default bootstrap parameters.
         dtype (:py:attr:`str`, optional): The file format of the :py:attr:`trajectory`, for a trajectory file path to be read by :py:class:`pymatgen.io.vasp.Xdatcar` this should be :py:attr:`'Xdatcar'`, for multiple trajectory files that are of the same system (but simulated from a different starting random seed) to be read by :py:class:`pymatgen.io.vasp.Xdatcar` then :py:attr:`'IdenticalXdatcar'` should be used (this assumes that all files have the same number of steps and atoms), for a :py:attr:`list` of :py:class:`pymatgen.core.structure.Structure` objects this should be :py:attr:`'structures'`, for a trajectory file path to be read by :py:mod:`MDAnalysis` this should be the appropriate format to be passed to the :py:class:`MDAnalysis.core.universe.Universe`, and for a n :py:class:`MDAnalysis.core.universe.Universe` object this should be :py:attr:`'universe'`. Defaults to :py:attr:`'Xdatcar'`.
     """
-    def __init__(self, trajectory, parser_params, bootstrap_params=None, dtype='Xdatcar'):  # pragma: no cover 
+    def __init__(self, trajectory, parser_params, bootstrap_params=None, dtype='Xdatcar'):  # pragma: no cover
         if bootstrap_params is None:
             bootstrap_params = {}
         super().__init__(trajectory, parser_params, dtype)
