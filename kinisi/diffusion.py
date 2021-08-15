@@ -196,7 +196,7 @@ class MSDBootstrap(Bootstrap):
             Returns:
                 (:py:attr:`float`): Log-likelihood value.
             """
-            model = straight_line(self.dt[max_ngp:], *theta)
+            model = _straight_line(self.dt[max_ngp:], *theta)
             logl = mv.logpdf(model)
             return logl
         ols = linregress(self.dt[max_ngp:], self.msd[max_ngp:])
@@ -283,7 +283,7 @@ def _bootstrap(array, n_samples, n_resamples, random_state=None):
     return [np.mean(resample(array.flatten(), n_samples=n_samples, random_state=random_state)) for j in range(n_resamples)]
 
 
-def straight_line(abscissa, gradient, intercept=0):
+def _straight_line(abscissa, gradient, intercept=0):
     """
     A one dimensional straight line function.
 
