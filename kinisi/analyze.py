@@ -32,13 +32,13 @@ class Analyzer:
             try:
                 from pymatgen.io.vasp import Xdatcar
                 from pymatgen.core.structure import Structure
-            except ModuleNotFoundError:
-                raise ModuleNotFoundError("To use the Xdatcar file parsing, pymatgen must be installed.")
+            except ModuleNotFoundError:  # pragma: no cover
+                raise ModuleNotFoundError("To use the Xdatcar file parsing, pymatgen must be installed.")  # pragma: no cover
             if isinstance(trajectory, list):   
                 if isinstance(trajectory[0], Structure):
                     u = PymatgenParser(trajectory, **parser_params)
-                    dt = u.delta_t
-                    disp_3d = u.disp_3d
+                    self.delta_t = u.delta_t
+                    self.disp_3d = u.disp_3d
                 elif 'identical' in dtype:
                     if isinstance(trajectory[0], Xdatcar):
                         u = [PymatgenParser(f.structures, **parser_params) for f in trajectory] 
@@ -46,8 +46,8 @@ class Analyzer:
                         u = [PymatgenParser(Xdatcar(f).structures, **parser_params) for f in trajectory]
                     elif isinstance(trajectory[0], list):
                         u = [PymatgenParser(f, **parser_params) for f in trajectory]
-                    dt = u[0].delta_t
-                    disp_3d = self.stack_trajectories(u)
+                    self.delta_t = u[0].delta_t
+                    self.disp_3d = self.stack_trajectories(u)
                 elif 'consecutive' in dtype:
                     if isinstance(trajectory[0], Xdatcar):
                         structures = _flatten_list([x.structures for x in trajectory])
@@ -57,34 +57,32 @@ class Analyzer:
                     elif isinstance(trajectory[0], list):
                         structures = _flatten_list([x for x in trajectory])
                     u = PymatgenParser(structures, **parser_params)
-                    dt = u.delta_t
-                    disp_3d = u.disp_3d 
+                    self.delta_t = u.delta_t
+                    self.disp_3d = u.disp_3d 
                 else:
                     raise ValueError("The structure of the input could not be recognised, please consult the documentation.")
             elif isinstance(trajectory, Xdatcar):
                 structures = trajectory.structures
                 u = PymatgenParser(structures, **parser_params)
-                dt = u.delta_t
-                disp_3d = u.disp_3d
+                self.delta_t = u.delta_t
+                self.disp_3d = u.disp_3d
             elif isinstance(trajectory, str):
                 structures = Xdatcar(trajectory).structures
                 u = PymatgenParser(structures, **parser_params)
-                dt = u.delta_t
-                disp_3d = u.disp_3d
+                self.delta_t = u.delta_t
+                self.disp_3d = u.disp_3d
             else:
                 raise ValueError("The structure of the input could not be recognised, please consult the documentation.")
         if 'mdanalysis' in dtype:
             try:
                 import MDAnalysis as mda
-            except ModuleNotFoundError:
-                raise ModuleNotFoundError("To use the MDAnalysis from file parsing, MDAnalysis must be installed.")
+            except ModuleNotFoundError:  # pragma: no cover
+                raise ModuleNotFoundError("To use the MDAnalysis from file parsing, MDAnalysis must be installed.")  # pragma: no cover
             if not isinstance(trajectory, mda.core.universe.Universe):
-                trajectory = mda.Universe(*trajectory, format=dtype)
+                raise ValueError('To use the MDAnalysis input, the trajectory must be an MDAnalysis.Universe.')
             u = MDAnalysisParser(trajectory, **parser_params)
-            dt = u.delta_t
-            disp_3d = u.disp_3d
-        self.delta_t = dt
-        self.disp_3d = disp_3d
+            self.delta_t = u.delta_t
+            self.disp_3d = u.disp_3d
 
     @staticmethod
     def stack_trajectories(u):
@@ -123,7 +121,7 @@ class MSDAnalyzer(Analyzer):
         bootstrap_params (:py:attr:`dict`, optional): The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the appropriate documentation for more guidance on this. Default is the default bootstrap parameters.
         dtype (:py:attr:`str`, optional): The file format of the :py:attr:`trajectory`, for a trajectory file path to be read by :py:class:`pymatgen.io.vasp.Xdatcar` this should be :py:attr:`'Xdatcar'`, for multiple trajectory files that are of the same system (but simulated from a different starting random seed) to be read by :py:class:`pymatgen.io.vasp.Xdatcar` then :py:attr:`'IdenticalXdatcar'` should be used (this assumes that all files have the same number of steps and atoms), for a :py:attr:`list` of :py:class:`pymatgen.core.structure.Structure` objects this should be :py:attr:`'structures'`, for a trajectory file path to be read by :py:mod:`MDAnalysis` this should be the appropriate format to be passed to the :py:class:`MDAnalysis.core.universe.Universe`, and for a n :py:class:`MDAnalysis.core.universe.Universe` object this should be :py:attr:`'universe'`. Defaults to :py:attr:`'Xdatcar'`.
     """
-    def __init__(self, trajectory, parser_params, bootstrap_params=None, dtype='Xdatcar'):  # pragma: no cover
+    def __init__(self, trajectory, parser_params, bootstrap_params=None, dtype='Xdatcar'): 
         if bootstrap_params is None:
             bootstrap_params = {}
         super().__init__(trajectory, parser_params, dtype)
@@ -199,7 +197,8 @@ class MSDAnalyzer(Analyzer):
         """
         return self._diff.intercept
 
-class DiffAnalyzer(Analyzer):
+
+class DiffAnalyzer(MSDAnalyzer):
     """
     The :py:class:`kinisi.analyze.DiffAnalyzer` class performs analysis of diffusion relationships in materials.
     This is achieved through the application of a bootstrapping methodology to obtain the most statistically accurate values for mean squared displacement uncertainty and covariance.
@@ -212,13 +211,13 @@ class DiffAnalyzer(Analyzer):
         diffusion_params (:py:attr:`dict`, optional): The parameters for the :py:class:`kinisi.diffusion.DiffBootstrap` object. See the appropriate documentation for more guidance on this. Default is the default bootstrap parameters.
         dtype (:py:attr:`str`, optional): The file format of the :py:attr:`trajectory`, for a trajectory file path to be read by :py:class:`pymatgen.io.vasp.Xdatcar` this should be :py:attr:`'Xdatcar'`, for multiple trajectory files that are of the same system (but simulated from a different starting random seed) to be read by :py:class:`pymatgen.io.vasp.Xdatcar` then :py:attr:`'IdenticalXdatcar'` should be used (this assumes that all files have the same number of steps and atoms), for a :py:attr:`list` of :py:class:`pymatgen.core.structure.Structure` objects this should be :py:attr:`'structures'`, for a trajectory file path to be read by :py:mod:`MDAnalysis` this should be the appropriate format to be passed to the :py:class:`MDAnalysis.core.universe.Universe`, and for a n :py:class:`MDAnalysis.core.universe.Universe` object this should be :py:attr:`'universe'`. Defaults to :py:attr:`'Xdatcar'`.
     """
-    def __init__(self, trajectory, parser_params, bootstrap_params=None, diffusion_params=None, dtype='Xdatcar'):  # pragma: no cover
+    def __init__(self, trajectory, parser_params, bootstrap_params=None, diffusion_params=None, dtype='Xdatcar'): 
         if bootstrap_params is None:
             bootstrap_params = {}
         if diffusion_params is None:
             diffusion_params = {}
-        super().__init__(trajectory, parser_params, dtype)
-        self._diff = diffusion.MSDBootstrap(self.delta_t, self.disp_3d, **bootstrap_params)
+        super().__init__(trajectory, parser_params, bootstrap_params, dtype)
+        # self._diff = diffusion.MSDBootstrap(self.delta_t, self.disp_3d, **bootstrap_params)
         self._diff.diffusion(**diffusion_params)
 
 
