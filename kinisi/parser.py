@@ -45,6 +45,7 @@ class Parser:
         self.indices = indices
         self.min_dt = min_dt
         self.ndelta_t = ndelta_t
+        self.volume = None
 
         drift_corrected = _correct_drift(framework_indices, disp)
 
@@ -122,7 +123,9 @@ class PymatgenParser(Parser):
 
         indices = _pmg_get_indices(structure, specie)
 
-        super().__init__(_get_disp(coords, latt), indices[0], indices[1], time_step, step_skip, min_obs, min_dt, ndelta_t, progress)
+        super().__init__(_get_disp(coords, latt), indices[0], indices[1], time_step, step_skip, min_obs=min_obs, min_dt=min_dt, ndelta_t=ndelta_t, progress=progress)
+        self.volume = structure.volume
+        self.delta_t *= 1e-3
 
 
 class MDAnalysisParser(Parser):
@@ -141,11 +144,12 @@ class MDAnalysisParser(Parser):
         progress (:py:attr:`bool`, optional): Print progress bars to screen. Defaults to :py:attr:`True`.
     """
     def __init__(self, universe, specie, time_step, step_skip, min_obs=30, sub_sample_traj=1, min_dt=100, ndelta_t=75, progress=True):
-        structure, coords, latt = _mda_get_structure_coords_latt(universe, sub_sample_traj, progress)
+        structure, coords, latt, volume = _mda_get_structure_coords_latt(universe, sub_sample_traj, progress)
 
         indices = _mda_get_indices(structure, specie)
 
         super().__init__(_get_disp(coords, latt), indices[0], indices[1], time_step, step_skip * sub_sample_traj, min_obs, min_dt, ndelta_t, progress)
+        self.volume = volume
 
 
 def _mda_get_structure_coords_latt(universe, sub_sample_traj=1, progress=True):
@@ -178,7 +182,7 @@ def _mda_get_structure_coords_latt(universe, sub_sample_traj=1, progress=True):
         latt.append(matrix)
     coords.insert(0, coords[0])
     latt.insert(0, latt[0])
-    return structure, coords, latt
+    return structure, coords, latt, timestep.volume
 
 
 def _get_matrix(dimensions):
@@ -235,7 +239,6 @@ def _pmg_get_structure_coords_latt(structures, sub_sample_traj=1, progress=True)
         latt.append(struct.lattice.matrix)
     coords.insert(0, coords[0])
     latt.insert(0, latt[0])
-
     return structure, coords, latt
 
 
@@ -258,7 +261,6 @@ def _get_disp(coords, latt):
     for i in f_disp:
         c_disp.append([np.dot(d, m) for d, m in zip(i, latt[1:])])
     disp = np.array(c_disp)
-
     return disp
 
 
@@ -279,7 +281,6 @@ def _correct_drift(framework_indices, disp):
         drift_corrected = disp - np.average(framework_disp, axis=0)[None, :, :]
     else:
         drift_corrected = disp
-
     return drift_corrected
 
 
