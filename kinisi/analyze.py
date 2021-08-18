@@ -115,7 +115,7 @@ class Analyzer:
         """
         Returns a list of :py:class:`uravu.distribution.Distribution` objects that describe the euclidian displacement at each :py:attr:`dt`.
 
-        Return:
+        Returns:
             :py:attr:`list` of :py:class:`uravu.distribution.Distribution`: euclidian displacements at each :py:attr:`dt`
         """
         return self._diff.euclidian_displacements
@@ -125,10 +125,20 @@ class Analyzer:
         """
         Returns the position in dt where the non-Gaussian parameter is maximised.
 
-        Return:
+        Returns:
             :py:attr:`float`: dt where NGP is max
         """
         return self.dt[self._diff.ngp.argmax()]
+
+    @property
+    def intercept(self):
+        """
+        Returns the distribution describing the intercept.
+
+        Returns:
+            :py:class:`uravu.distribution.Distribution`: Intercept
+        """
+        return self._diff.intercept
 
 
 class DiffusionAnalyzer(Analyzer):
