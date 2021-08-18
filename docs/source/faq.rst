@@ -3,7 +3,7 @@ FAQ
 
 - What are the units being used in :py:mod:`kinisi`?
 
-    When :py:mod:`kinisi` reads in a file, the units are modified such that distances are in angstrom and time in picoseconds, this means that values for the :py:attr:`msd` attribute are in units of squared-angstrom and the :py:attr:`dt` attribute are in units of picoseconds. However, the diffusion or jump-diffusion coefficient have units of centimetre per second and the conductivity is millisiemens per centimetre (these were chosen as they are common units for these parameters). 
+    When :py:mod:`kinisi` reads in a file, the units are modified such that distances are in **angstrom** and time in **picoseconds**, this means that values for the :py:attr:`msd` attribute are in units of **squared-angstrom** and the :py:attr:`dt` attribute are in units of **picoseconds**. However, the diffusion or jump-diffusion coefficient have units of **squared-centimetre per second** and the conductivity is **millisiemens per centimetre** (these were chosen as they are common units for these parameters). 
 
 - I have been using :py:mod:`kinisi` in my research and would like to cite the package, how should I do this?
 
