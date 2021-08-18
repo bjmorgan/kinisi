@@ -20,11 +20,6 @@ This uses a covariance matrix defined based on the bootstrapped uncertainties fo
 This approach allows an estimate of the true displacement to be found from an infinitely long simulation.
 **Note, this methodology is unpublished and results from it should be considered with caution**.
 
-**Uncertainty propagation**
-
-The :py:class:`uravu.relationship.Relationship` class is leveraged to propagate the uncertainty in the diffusion coefficient using Bayesian inference, allowing the determination of the uncertainty in the activation energy from either an Arrhenius or a `super-Arrhenius relationship`_.
-Finally, it is possible to use :py:mod:`uravu` to perform Bayesian model selection between the different temperature dependent relationships.
-
 Brief tutorials showing how :py:mod:`kinisi` may be used in the study of an `VASP Xdatcar`_ file can be found in the `tutorials`_.
 
 
