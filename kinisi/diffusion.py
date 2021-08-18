@@ -38,7 +38,7 @@ class Bootstrap:
         diffusion_coefficient (:py:class:`uravu.distribution.Distribution`): The estimated diffusion coefficient, based on the generalised least squares approach
         jump_diffusion_coefficient (:py:class:`uravu.distribution.Distribution`): The estimated jump diffusion coefficient, based on the generalised least squares approach
         sigma (:py:class:`uravu.distribution.Distribution`): The estimated conductivity, based on the generalised least squares approach
-        intercept (:py:class:`uravu.distribution.Distribution` or :py:attr:`None`): The estimated intercept. Note that if :py:attr:`fit_intercept` is :py:bool:`False` is the relavent method call, then this is :py:attr:`None`
+        intercept (:py:class:`uravu.distribution.Distribution` or :py:attr:`None`): The estimated intercept. Note that if :py:attr:`fit_intercept` is :py:attr:`False` is the relavent method call, then this is :py:attr:`None`
         covariance_matrix (:py:attr:`array_like`): The covariance matrix for the trajectories
 
     Args:
@@ -92,7 +92,7 @@ class Bootstrap:
             r_resamples (:py:attr:`int`): Number of resamples to perform initially
             max_resamples (:py:attr:`int`): The maximum number of resamples to perform
             alpha (:py:attr:`float`, optional): Level that p-value should be below in :py:func:`scipy.stats.normaltest` for the distribution to be normal. Default is :py:attr:`1e-3`
-            random_state (:py:class:`numpy.random.mtrand.RandomState`, optional): A :py:code:`RandomState` object to be used to ensure reproducibility. Default is :py:code:`None`
+            random_state (:py:class:`numpy.random.mtrand.RandomState`, optional): A :py:attr:`RandomState` object to be used to ensure reproducibility. Default is :py:attr:`None`
 
         Returns:
             :py:class:`uravu.distribution.Distribution`: The resampled distribution
@@ -142,12 +142,12 @@ class Bootstrap:
         Use the covariance matrix estimated from the resampled values to estimate the gradient and intercept using a generalised least squares approach.
 
         Args:
-            use_ngp (:py:attr:`bool`, optional): Should the ngp max be used as the starting point for the diffusion fitting. Default is :py:bool:`False`
-            dt_skip (:py:attr:`float`, optional): Values of :py:attr:`dt` that should be skipped, i.e. where the atoms are not diffusing. Note that if :py:attr:`use_ngp` is :py:bool:`True` this will be ignored. Defaults to :py:attr:`0`
+            use_ngp (:py:attr:`bool`, optional): Should the ngp max be used as the starting point for the diffusion fitting. Default is :py:attr:`False`
+            dt_skip (:py:attr:`float`, optional): Values of :py:attr:`dt` that should be skipped, i.e. where the atoms are not diffusing. Note that if :py:attr:`use_ngp` is :py:attr:`True` this will be ignored. Defaults to :py:attr:`0`
             fit_intercept (:py:attr:`bool`, optional): Should the intercept of the diffusion relationship be fit. Default is :py:attr:`True`
             n_walkers (:py:attr:`int`, optional): Number of MCMC walkers to use. Default is :py:attr:`32`
             n_samples (:py:attr:`int`, optional): Number of MCMC samples to perform. Default is :py:attr:`1000`
-            random_state (:py:class:`numpy.random.mtrand.RandomState`, optional): A :py:code:`RandomState` object to be used to ensure reproducibility. Default is :py:code:`None`
+            random_state (:py:class:`numpy.random.mtrand.RandomState`, optional): A :py:attr:`RandomState` object to be used to ensure reproducibility. Default is :py:attr:`None`
             progress (:py:attr:`bool`, optional): Show tqdm progress for sampling. Default is :py:attr:`True`
         """
         max_ngp = np.argwhere(self.dt > dt_skip)[0][0]
@@ -228,7 +228,7 @@ class MSDBootstrap(Bootstrap):
         s (:py:attr:`array_like`): The MSD standard deviation, as determined from the bootstrap resampling process
         v (:py:attr:`array_like`): The MSD variance as determined from the bootstrap resampling process
         diffusion_coefficient (:py:class:`uravu.distribution.Distribution`): The estimated diffusion coefficient, based on the generalised least squares approach, with units of cm^{2}s^{-1}
-        intercept (:py:class:`uravu.distribution.Distribution` or :py:attr:`None`): The estimated intercept, with units of Å^{2}ps^{-1}. Note that if :py:attr:`fit_intercept` is :py:bool:`False` is the relavent method call, then this is :py:attr:`None`
+        intercept (:py:class:`uravu.distribution.Distribution` or :py:attr:`None`): The estimated intercept, with units of Å^{2}ps^{-1}. Note that if :py:attr:`fit_intercept` is :py:attr:`False` is the relavent method call, then this is :py:attr:`None`
 
     Args:
         delta_t (:py:attr:`array_like`): An array of the timestep values
@@ -237,7 +237,7 @@ class MSDBootstrap(Bootstrap):
         n_resamples (:py:attr:`int`, optional): The initial number of resamples to be performed. Default is :py:attr:`1000`
         max_resamples (:py:attr:`int`, optional): The max number of resamples to be performed by the distribution is assumed to be normal. This is present to allow user control over the time taken for the resampling to occur. Default is :py:attr:`100000`
         alpha (:py:attr:`float`, optional): Value that p-value for the normal test must be greater than to accept. Default is :py:attr:`1e-3`
-        random_state (:py:class:`numpy.random.mtrand.RandomState`, optional): A :py:code:`RandomState` object to be used to ensure reproducibility. Default is :py:code:`None`
+        random_state (:py:class:`numpy.random.mtrand.RandomState`, optional): A :py:attr:`RandomState` object to be used to ensure reproducibility. Default is :py:attr:`None`
         progress (:py:attr:`bool`, optional): Show tqdm progress for sampling. Default is :py:attr:`True`
     """
     def __init__(self, delta_t, disp_3d, sub_sample_dt=1, n_resamples=1000, max_resamples=10000, alpha=1e-3, random_state=None, progress=True):
@@ -284,7 +284,7 @@ class TMSDBootstrap(Bootstrap):
         s (:py:attr:`array_like`): The TMSD standard deviation, as determined from the bootstrap resampling process
         v (:py:attr:`array_like`): The TMSD variance as determined from the bootstrap resampling process
         jump_diffusion_coefficient (:py:class:`uravu.distribution.Distribution`): The estimated jump diffusion coefficient, based on the generalised least squares approach, with units of cm^{2}s^{-1}
-        intercept (:py:class:`uravu.distribution.Distribution` or :py:attr:`None`): The estimated intercept, with units of Å^{2}ps^{-1}. Note that if :py:attr:`fit_intercept` is :py:bool:`False` is the relavent method call, then this is :py:attr:`None`
+        intercept (:py:class:`uravu.distribution.Distribution` or :py:attr:`None`): The estimated intercept, with units of Å^{2}ps^{-1}. Note that if :py:attr:`fit_intercept` is :py:attr:`False` is the relavent method call, then this is :py:attr:`None`
 
     Args:
         delta_t (:py:attr:`array_like`): An array of the timestep values
@@ -293,7 +293,7 @@ class TMSDBootstrap(Bootstrap):
         n_resamples (:py:attr:`int`, optional): The initial number of resamples to be performed. Default is :py:attr:`1000`
         max_resamples (:py:attr:`int`, optional): The max number of resamples to be performed by the distribution is assumed to be normal. This is present to allow user control over the time taken for the resampling to occur. Default is :py:attr:`100000`
         alpha (:py:attr:`float`, optional): Value that p-value for the normal test must be greater than to accept. Default is :py:attr:`1e-3`
-        random_state (:py:class:`numpy.random.mtrand.RandomState`, optional): A :py:code:`RandomState` object to be used to ensure reproducibility. Default is :py:code:`None`
+        random_state (:py:class:`numpy.random.mtrand.RandomState`, optional): A :py:attr:`RandomState` object to be used to ensure reproducibility. Default is :py:attr:`None`
         progress (:py:attr:`bool`, optional): Show tqdm progress for sampling. Default is :py:attr:`True`
     """
     def __init__(self, delta_t, disp_3d, sub_sample_dt=1, n_resamples=1000, max_resamples=10000, alpha=1e-3, random_state=None, progress=True):
@@ -341,7 +341,7 @@ class MSCDBootstrap(Bootstrap):
         s (:py:attr:`array_like`): The MSCD standard deviation, as determined from the bootstrap resampling process
         v (:py:attr:`array_like`): The MSCD variance as determined from the bootstrap resampling process
         sigma (:py:class:`uravu.distribution.Distribution`): The estimated conductivity, based on the generalised least squares approach, with units mS^{1}cm^{-1}
-        intercept (:py:class:`uravu.distribution.Distribution` or :py:attr:`None`): The estimated intercept, with units of Å^{2}ps^{-1}. Note that if :py:attr:`fit_intercept` is :py:bool:`False` is the relavent method call, then this is :py:attr:`None`
+        intercept (:py:class:`uravu.distribution.Distribution` or :py:attr:`None`): The estimated intercept, with units of Å^{2}ps^{-1}. Note that if :py:attr:`fit_intercept` is :py:attr:`False` is the relavent method call, then this is :py:attr:`None`
 
     Args:
         delta_t (:py:attr:`array_like`): An array of the timestep values
@@ -351,7 +351,7 @@ class MSCDBootstrap(Bootstrap):
         n_resamples (:py:attr:`int`, optional): The initial number of resamples to be performed. Default is :py:attr:`1000`
         max_resamples (:py:attr:`int`, optional): The max number of resamples to be performed by the distribution is assumed to be normal. This is present to allow user control over the time taken for the resampling to occur. Default is :py:attr:`100000`
         alpha (:py:attr:`float`, optional): Value that p-value for the normal test must be greater than to accept. Default is :py:attr:`1e-3`
-        random_state (:py:class:`numpy.random.mtrand.RandomState`, optional): A :py:code:`RandomState` object to be used to ensure reproducibility. Default is :py:code:`None`
+        random_state (:py:class:`numpy.random.mtrand.RandomState`, optional): A :py:attr:`RandomState` object to be used to ensure reproducibility. Default is :py:attr:`None`
         progress (:py:attr:`bool`, optional): Show tqdm progress for sampling. Default is :py:attr:`True`
     """
     def __init__(self, delta_t, disp_3d, ionic_charge, sub_sample_dt=1, n_resamples=1000, max_resamples=10000, alpha=1e-3, random_state=None, progress=True):
@@ -399,7 +399,7 @@ def _bootstrap(array, n_samples, n_resamples, random_state=None):
         array (:py:attr:`array_like`): The array to sample from
         n_samples (:py:attr:`int`): Number of samples
         n_resamples (:py:attr:`int`): Number of resamples to perform initially
-        random_state (:py:class:`numpy.random.mtrand.RandomState`, optional): A :py:code:`RandomState` object to be used to ensure reproducibility. Default is :py:code:`None`
+        random_state (:py:class:`numpy.random.mtrand.RandomState`, optional): A :py:attr:`RandomState` object to be used to ensure reproducibility. Default is :py:attr:`None`
 
     Returns:
         :py:attr:`array_like`: Resampled values from the array
