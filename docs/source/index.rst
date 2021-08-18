@@ -6,7 +6,7 @@
 Uncertainty quantification in diffusion
 =======================================
 
-:py:mod:`kinisi` is an open-source package focussed on accurately quantifying the uncertainty in atomic and molecular displacements, and using this to more completely understanding diffusion in materials.
+:py:mod:`kinisi` is an open-source package focussed on accurately quantifying the uncertainty in atomic and molecular displacements, and using this to more completely understand diffusion in materials.
 
 **Bootstrapping**
 
@@ -18,7 +18,7 @@ This resampling is performed until the distribution is found to be normal, or a 
 A diffusion distribution is evaluated using a generalised least squares approach to modelling the Einstein relation to the data.
 This uses a covariance matrix defined based on the bootstrapped uncertainties for each MSD. 
 This approach allows an estimate of the true displacement to be found from an infinitely long simulation.
-**Note, this methodology is unpublished and results from it should be considered with great caution**.
+**Note, this methodology is unpublished and results from it should be considered with caution**.
 
 **Uncertainty propagation**
 
