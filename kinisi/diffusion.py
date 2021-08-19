@@ -29,9 +29,9 @@ class Bootstrap:
         dt (:py:attr:`array_like`): Timestep values that were resampled
         distributions (:py:attr:`list` of :py:class:`uravu.distribution.Distribution`): Resampled mean squared distributions
         iterator (:py:attr:`tqdm` or :py:attr:`range`): The iteration object
-        n (:py:attr:`array_like`): The mean MSD/TMSD/MSCD, as determined from the bootstrap resampling process, in units Å^{2}
-        s (:py:attr:`array_like`): The MSD/TMSD/MSCD standard deviation, as determined from the bootstrap resampling process, in units Å^{2}
-        v (:py:attr:`array_like`): The MSD/TMSD/MSCD variance as determined from the bootstrap resampling process, in units Å^{4}
+        n (:py:attr:`array_like`): The mean MSD/TMSD/MSCD, as determined from the bootstrap resampling process, in units Å:sup:`2`
+        s (:py:attr:`array_like`): The MSD/TMSD/MSCD standard deviation, as determined from the bootstrap resampling process, in units Å:sup:`2`
+        v (:py:attr:`array_like`): The MSD/TMSD/MSCD variance as determined from the bootstrap resampling process, in units Å:sup:`4`
         n_i (:py:attr:`array_like`): The number of independent trajectories as a function of :py:attr:`dt`
         ngp (:py:attr:`array_like`): Non-Gaussian parameter as a function of dt
         euclidian_displacements (:py:attr:`list` of :py:class:`uravu.distribution.Distribution`): Displacements between particles at each dt
@@ -227,8 +227,8 @@ class MSDBootstrap(Bootstrap):
         n (:py:attr:`array_like`): The mean MSD, as determined from the bootstrap resampling process
         s (:py:attr:`array_like`): The MSD standard deviation, as determined from the bootstrap resampling process
         v (:py:attr:`array_like`): The MSD variance as determined from the bootstrap resampling process
-        diffusion_coefficient (:py:class:`uravu.distribution.Distribution`): The estimated diffusion coefficient, based on the generalised least squares approach, with units of cm^{2}s^{-1}
-        intercept (:py:class:`uravu.distribution.Distribution` or :py:attr:`None`): The estimated intercept, with units of Å^{2}ps^{-1}. Note that if :py:attr:`fit_intercept` is :py:attr:`False` is the relavent method call, then this is :py:attr:`None`
+        diffusion_coefficient (:py:class:`uravu.distribution.Distribution`): The estimated diffusion coefficient, based on the generalised least squares approach, with units of cm:sup:`2`s:sup:`-1`
+        intercept (:py:class:`uravu.distribution.Distribution` or :py:attr:`None`): The estimated intercept, with units of Å:sup:`2`ps:sup:`-1`. Note that if :py:attr:`fit_intercept` is :py:attr:`False` is the relavent method call, then this is :py:attr:`None`
 
     Args:
         delta_t (:py:attr:`array_like`): An array of the timestep values
@@ -270,7 +270,7 @@ class MSDBootstrap(Bootstrap):
         An alias for the diffusion coefficient Distribution.
 
         Returns:
-            (:py:class:`uravu.distribution.Distribution`): Diffusion coefficient, with units of cm^{2}s^{-1}
+            (:py:class:`uravu.distribution.Distribution`): Diffusion coefficient, with units of cm:sup:`2`s:sup:`-1`
         """
         return self.diffusion_coefficient
 
@@ -283,8 +283,8 @@ class TMSDBootstrap(Bootstrap):
         n (:py:attr:`array_like`): The mean TMSD, as determined from the bootstrap resampling process
         s (:py:attr:`array_like`): The TMSD standard deviation, as determined from the bootstrap resampling process
         v (:py:attr:`array_like`): The TMSD variance as determined from the bootstrap resampling process
-        jump_diffusion_coefficient (:py:class:`uravu.distribution.Distribution`): The estimated jump diffusion coefficient, based on the generalised least squares approach, with units of cm^{2}s^{-1}
-        intercept (:py:class:`uravu.distribution.Distribution` or :py:attr:`None`): The estimated intercept, with units of Å^{2}ps^{-1}. Note that if :py:attr:`fit_intercept` is :py:attr:`False` is the relavent method call, then this is :py:attr:`None`
+        jump_diffusion_coefficient (:py:class:`uravu.distribution.Distribution`): The estimated jump diffusion coefficient, based on the generalised least squares approach, with units of cm:sup:`2`s:sup:`-1`
+        intercept (:py:class:`uravu.distribution.Distribution` or :py:attr:`None`): The estimated intercept, with units of Å:sup:`2`ps:sup:`-1`. Note that if :py:attr:`fit_intercept` is :py:attr:`False` is the relavent method call, then this is :py:attr:`None`
 
     Args:
         delta_t (:py:attr:`array_like`): An array of the timestep values
@@ -327,7 +327,7 @@ class TMSDBootstrap(Bootstrap):
         Alias for the jump diffusion coefficient Distribution.
 
         Returns:
-            (:py:class:`uravu.distribution.Distribution`): Jump diffusion coefficient, with units of cm^{2}s^{-1}
+            (:py:class:`uravu.distribution.Distribution`): Jump diffusion coefficient, with units of cm:sup:`2`s:sup:`-1`
         """
         return self.jump_diffusion_coefficient
 
@@ -340,8 +340,8 @@ class MSCDBootstrap(Bootstrap):
         n (:py:attr:`array_like`): The mean MSCD, as determined from the bootstrap resampling process
         s (:py:attr:`array_like`): The MSCD standard deviation, as determined from the bootstrap resampling process
         v (:py:attr:`array_like`): The MSCD variance as determined from the bootstrap resampling process
-        sigma (:py:class:`uravu.distribution.Distribution`): The estimated conductivity, based on the generalised least squares approach, with units mS^{1}cm^{-1}
-        intercept (:py:class:`uravu.distribution.Distribution` or :py:attr:`None`): The estimated intercept, with units of Å^{2}ps^{-1}. Note that if :py:attr:`fit_intercept` is :py:attr:`False` is the relavent method call, then this is :py:attr:`None`
+        sigma (:py:class:`uravu.distribution.Distribution`): The estimated conductivity, based on the generalised least squares approach, with units mScm:sup:`-1`
+        intercept (:py:class:`uravu.distribution.Distribution` or :py:attr:`None`): The estimated intercept, with units of Å:sup:`2`ps:sup:`-1`. Note that if :py:attr:`fit_intercept` is :py:attr:`False` is the relavent method call, then this is :py:attr:`None`
 
     Args:
         delta_t (:py:attr:`array_like`): An array of the timestep values
@@ -378,7 +378,7 @@ class MSCDBootstrap(Bootstrap):
 
     def conductivity(self, temperature, volume, **kwargs):
         """
-        Use the bootstrap-GLS method to determine the ionic conductivity for the system, in units of mS^{1}cm^{-1}.
+        Use the bootstrap-GLS method to determine the ionic conductivity for the system, in units of mScm:sup:`-1`.
 
         Args:
             temperature (:py:attr:`float`): System temperature, in Kelvin
