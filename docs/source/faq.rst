@@ -7,7 +7,7 @@ FAQ
 
 - I have been using :py:mod:`kinisi` in my research and would like to cite the package, how should I do this?
 
-    Thanks for using :py:mod:`kinisi`, we are working on a paper that you can cite in the future, but for now please use the following citation: “A. R. McCluskey & B. J. Morgan. kinisi: Uncertainty quantification in diffusion. https://github.com/bjmorgan/kinisi.”
+    Thanks for using :py:mod:`kinisi`, we are working on a paper that you can cite in the future, but for now please use the following citation: “McCluskey, A. R., & Morgan, B. J. (2021). kinisi (Version 0.1.0) [Computer software]. https://github.com/bjmorgan/kinisi”
     
 - How does :py:mod:`kinisi` work?
 
