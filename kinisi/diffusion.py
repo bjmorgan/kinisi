@@ -231,7 +231,7 @@ class MSDBootstrap(Bootstrap):
         intercept (:py:class:`uravu.distribution.Distribution` or :py:attr:`None`): The estimated intercept, with units of Å:sup:`2`ps:sup:`-1`. Note that if :py:attr:`fit_intercept` is :py:attr:`False` is the relavent method call, then this is :py:attr:`None`
 
     Args:
-        delta_t (:py:attr:`array_like`): An array of the timestep values
+        delta_t (:py:attr:`array_like`): An array of the timestep values, units of ps
         disp_3d (:py:attr:`list` of :py:attr:`array_like`): A list of arrays, where each array has the axes [atom, displacement observation, dimension]. There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as the number of observations is not necessary the same at each data point
         sub_sample_dt (:py:attr:`int`. optional): The frequency in observations to be sampled. Default is :py:attr:`1` (every observation)
         n_resamples (:py:attr:`int`, optional): The initial number of resamples to be performed. Default is :py:attr:`1000`
