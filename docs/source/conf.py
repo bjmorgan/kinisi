@@ -20,7 +20,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'kinisi'
-copyright = '2020, Andrew R. McCluskey and Benjamin J. Morgan'
+copyright = '2021, Andrew R. McCluskey and Benjamin J. Morgan'
 author = 'Andrew R. McCluskey and Benjamin J. Morgan'
 
 from kinisi import __version__
