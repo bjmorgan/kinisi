@@ -88,7 +88,7 @@ class TestBootstrap(unittest.TestCase):
         assert result == 333
 
     def test_sample_until_normal(self):
-        distro1 = Bootstrap.sample_until_normal(RNG.randn(1000), 5, 100, 10000)
+        distro1 = Bootstrap.sample_until_normal(RNG.randn(1000), 5, 100, 10000, random_state=np.random.RandomState(1))
         assert distro1.size == 100
  
     def test_sample_until_normal_random(self):
