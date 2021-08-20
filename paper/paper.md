@@ -11,27 +11,25 @@ tags:
 authors:
   - name: Andrew R. McCluskey
     orcid: 0000-0003-3381-5911
-    affiliation: "1, 2, 3"
+    affiliation: "1, 2"
   - name: Samuel W. Coles
     orcid: 0000-0001-9722-5676
-    affiliation: 3
+    affiliation: 2
   - name: Benjamin J. Morgan
     orcid: 0000-0002-3056-8233
-    affiliation: 3
+    affiliation: 2
 affiliations:
- - name: Data Management and Software Centre, European Spallation Source ERIC, Ole Maaløes vej 3, 2200 København, Denmark
-   index: 1
  - name: European Spallation Source ERIC, SE-21100 Lund, Sweden
-   index: 2
+   index: 1
  - name: Department of Chemistry, University of Bath, Claverton Down, Bath, BA2 7AY, UK
-   index: 3
+   index: 2
 date: 18 July 2021
 bibliography: paper.bib
 ---
 
 # Summary
 
-Molecular dynamics simulation are a popular tool for the study of diffusion in materials. 
+Molecular dynamics simulation are a popular tool for the study of diffusion and conductivity in materials. 
 However, the computational cost of these simulations limit the ``real-world'' timescale and system size that can the investigated. 
 `kinisi` provides a straightforward interface, and compatibility with a variety of common simulation software packages, including VASP [@kresse_ab_1993,kresse_ab_1994,kresse_efficiency_1996,kresse_efficient_1996] and those compatible with MDAnalysis [@michaud_mdanalysis_2011,gowers_python_2016], for the accurate and statistically rigorous calculation of the mean-squared displacement and the associated uncertainty of atoms in a material.
 The use of a custom blockstrapping method allows the mean-squared displacement, uncertainty, and covariance may be obtained.
