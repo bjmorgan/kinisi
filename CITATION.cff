@@ -1,6 +1,6 @@
 abstract: "Uncertainty analysis and model comparison for atomistic molecular dynamics."
 authors: 
-  - affiliation: "Data Management and Software Centre, European Spallation Source ERIC; European Spallation Source ERIC; Department of Chemistry, University of Bath"
+  - affiliation: "European Spallation Source ERIC; Department of Chemistry, University of Bath"
     family-names: McCluskey
     given-names: "Andrew R."
     orcid: "https://orcid.org/0000-0003-3381-5911"
