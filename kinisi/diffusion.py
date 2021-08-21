@@ -362,7 +362,7 @@ class MSCDBootstrap(Bootstrap):
             ionic_charge = np.ones(self.displacements[0].shape[0]) * ionic_charge
         for i in self.iterator:
             d_squared = np.sum(self.displacements[i] ** 2, axis=2)
-            sq_chg_motion = np.sum((ionic_charge * const.e * self.displacements[i].T).T, axis=0) ** 2
+            sq_chg_motion = np.sum((ionic_charge * self.displacements[i].T).T, axis=0) ** 2
             n_samples_current = self.n_samples((1, self.displacements[i].shape[1]), self.max_obs)
             if n_samples_current <= 1:
                 continue
@@ -387,7 +387,7 @@ class MSCDBootstrap(Bootstrap):
         self.bootstrap_GLS(**kwargs)
         volume = volume * 1e-24  # cm^3
         D = self.gradient.samples / (2e4 * self.displacements[0].shape[-1])  # cm^2s^-1
-        conversion = 1000 * self.displacements[0].shape[0] / (volume * const.N_A) * (const.N_A * const.e) ** 2 / (const.R * temperature)
+        conversion = 1000 / (volume * const.N_A) * (const.N_A * const.e) ** 2 / (const.R * temperature)
         self.sigma = Distribution(D * conversion)
 
 
