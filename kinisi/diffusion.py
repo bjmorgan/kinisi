@@ -385,7 +385,7 @@ class MSCDBootstrap(Bootstrap):
             volume (:py:attr:`float`): System volume, in Å^{3}
         """
         self.bootstrap_GLS(**kwargs)
-        volume = volume * 1e-24  # cm^3
+        volume = volume * 1e-24 # cm^3
         D = self.gradient.samples / (2e4 * self.displacements[0].shape[-1])  # cm^2s^-1
         conversion = 1000 / (volume * const.N_A) * (const.N_A * const.e) ** 2 / (const.R * temperature)
         self.sigma = Distribution(D * conversion)
