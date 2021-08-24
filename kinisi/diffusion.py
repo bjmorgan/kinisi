@@ -299,19 +299,19 @@ class TMSDBootstrap(Bootstrap):
     def __init__(self, delta_t, disp_3d, sub_sample_dt=1, n_resamples=1000, max_resamples=10000, alpha=1e-3, random_state=None, progress=True):
         super().__init__(delta_t, disp_3d, sub_sample_dt, progress)
         for i in self.iterator:
-            d = np.sum(self.displacements[i], axis=2)
-            coll_motion = np.sum(d, axis=0) ** 2
+            d_squared = np.sum(self.displacements[i] ** 2, axis=2)
+            coll_motion = np.sum(np.sum(self.displacements[i], axis=0) ** 2, axis=-1)
             n_samples_current = self.n_samples((1, self.displacements[i].shape[1]), self.max_obs)
             if n_samples_current <= 1:
                 continue
             self.n_i = np.append(self.n_i, n_samples_current)
-            self.euclidian_displacements.append(Distribution(np.sqrt(d.flatten() ** 2)))
+            self.euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
             distro = self.sample_until_normal(coll_motion, self.n_i[i], n_resamples, max_resamples, alpha, random_state)
             self.distributions.append(distro)
             self.n = np.append(self.n, distro.n)
             self.s = np.append(self.s, np.std(distro.samples, ddof=1))
             self.v = np.append(self.v, np.var(distro.samples, ddof=1))
-            self.ngp = np.append(self.ngp, self.ngp_calculation(d.flatten() ** 2))
+            self.ngp = np.append(self.ngp, self.ngp_calculation(d_squared.flatten()))
             self.dt = np.append(self.dt, self.delta_t[i])
 
     def jump_diffusion(self, **kwargs):
@@ -361,19 +361,19 @@ class MSCDBootstrap(Bootstrap):
         except TypeError:
             ionic_charge = np.ones(self.displacements[0].shape[0]) * ionic_charge
         for i in self.iterator:
-            d = np.sum(self.displacements[i], axis=2)
-            sq_chg_motion = np.sum((ionic_charge * d.T).T, axis=0) ** 2
+            d_squared = np.sum(self.displacements[i] ** 2, axis=2)
+            sq_chg_motion = np.sum(np.sum((ionic_charge * self.displacements[i].T).T, axis=0) ** 2, axis=-1)
             n_samples_current = self.n_samples((1, self.displacements[i].shape[1]), self.max_obs)
             if n_samples_current <= 1:
                 continue
             self.n_i = np.append(self.n_i, n_samples_current)
-            self.euclidian_displacements.append(Distribution(np.sqrt(d.flatten() ** 2)))
+            self.euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
             distro = self.sample_until_normal(sq_chg_motion, self.n_i[i], n_resamples, max_resamples, alpha, random_state)
             self.distributions.append(distro)
             self.n = np.append(self.n, distro.n)
             self.s = np.append(self.s, np.std(distro.samples, ddof=1))
             self.v = np.append(self.v, np.var(distro.samples, ddof=1))
-            self.ngp = np.append(self.ngp, self.ngp_calculation(d.flatten() ** 2))
+            self.ngp = np.append(self.ngp, self.ngp_calculation(d_squared.flatten()))
             self.dt = np.append(self.dt, self.delta_t[i])
 
     def conductivity(self, temperature, volume, **kwargs):
