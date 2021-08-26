@@ -78,5 +78,4 @@ def super_arrhenius(abscissa, activation_energy, prefactor, t_zero):
     Returns:
         :py:attr:`array_like`: The diffusion coefficient data.
     """
-    return prefactor * np.exp(
-        -1 * activation_energy / (R_eV * (abscissa - t_zero)))
+    return prefactor * np.exp(-1 * activation_energy / (R_eV * (abscissa - t_zero)))
