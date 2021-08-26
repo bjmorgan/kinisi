@@ -10,7 +10,7 @@ Pronunciation: *kee-nee-si*
 
 ## Installation
 
-`kinisi` is available from the [PyPI](https://pypi.org/project/kinisi/) repository so can be [installed using `pip`](https://kinisi.readthedocs.io/en/latest/installation.html) or alternatively `clone` this repository and install the latest development build with the commands below.
+`kinisi` is available from the [PyPI](https://pypi.org/project/kinisi/) repository so can be installed using `pip` or alternatively `clone` [this repository](https://github.com/bjmorgan/kinisi) and install the latest development build with the commands below.
 
 ```
 pip install -r requirements.txt
