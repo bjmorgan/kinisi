@@ -1,11 +1,11 @@
 Installation
 ============
 
-:py:mod:`kinisi` can be installed from Github with :code:`pip` (we will be adding to PyPI soon):
+:py:mod:`kinisi` can be installed with :code:`pip`:
 
 .. code-block:: bash 
 
-   pip install git+https://github.com/bjmorgan/kinisi.git@master
+   pip install kinisi
 
 Alternatively, the latest development build can be found `Github`_, which can be installed by cloning the repository and installing with :code:`pip`:
 
