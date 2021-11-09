@@ -11,3 +11,4 @@ codeclimate-test-reporter
 nbsphinx
 jupyter-sphinx
 sphinx_rtd_theme
+sphinx_autodoc_typehints
