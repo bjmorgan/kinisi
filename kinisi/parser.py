@@ -37,7 +37,7 @@ class Parser:
     :param min_dt: Minimum timestep to be evaluated, in the simulation units. Optional, defaults to :py:attr:`100`.
     :param ndelta_t: The number of :py:attr:`delta_t` values to calculate the MSD over. Optional,
         defaults to :py:attr:`75`.
-    :param: progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
+    :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
     """
     def __init__(self,
                  disp: np.ndarray,
