@@ -168,10 +168,16 @@ class Bootstrap:
             Returns:
                 (:py:attr:`float`): Log-likelihood value
             """
+            if theta[0] < 0:
+                return -np.inf
             model = _straight_line(self.dt[max_ngp:], *theta)
             logl = mv.logpdf(model)
             return logl
         ols = linregress(self.dt[max_ngp:], self.n[max_ngp:])
+        slope = ols.slope
+        intercept = 1e-20
+        if slope < 0:
+            slope = 1e-20
 
         def nll(*args):
             """
@@ -182,17 +188,17 @@ class Bootstrap:
             """
             return -log_likelihood(*args)
         if fit_intercept:
-            max_likelihood = minimize(nll, np.array([ols.slope, ols.intercept])).x
+            max_likelihood = minimize(nll, np.array([slope, intercept])).x
         else:
-            max_likelihood = minimize(nll, np.array([ols.slope])).x
+            max_likelihood = minimize(nll, np.array([slope])).x
         pos = max_likelihood + max_likelihood * 1e-3 * np.random.randn(n_walkers, max_likelihood.size)
         sampler = EnsembleSampler(*pos.shape, log_likelihood)
         # Waiting on https://github.com/dfm/emcee/pull/376
         # if random_state is not None:
         #     pos = max_likelihood + max_likelihood * 1e-3 * random_state.randn(n_walkers, max_likelihood.size)
         #     sampler._random = random_state
-        sampler.run_mcmc(pos, n_samples, progress=progress, progress_kwargs={'desc': "Likelihood Sampling"})
-        flatchain = sampler.get_chain(flat=True)
+        sampler.run_mcmc(pos, n_samples + 500, progress=progress, progress_kwargs={'desc': "Likelihood Sampling"})
+        flatchain = sampler.get_chain(flat=True, discard=500)
         self.gradient = Distribution(flatchain[:, 0])
         self.intercept = None
         if fit_intercept:
