@@ -1,5 +1,6 @@
 """
-The modules is focused on tools for the evaluation of the mean squared displacement and resulting diffusion coefficient from a material.
+The modules is focused on tools for the evaluation of the mean squared displacement and resulting
+diffusion coefficient from a material.
 """
 
 # Copyright (c) Andrew R. McCluskey and Benjamin J. Morgan
@@ -7,11 +8,12 @@ The modules is focused on tools for the evaluation of the mean squared displacem
 # author: Andrew R. McCluskey (arm61)
 
 import warnings
+from typing import List, Tuple, Union
 import numpy as np
 from scipy.stats import linregress, multivariate_normal, normaltest
 from scipy.optimize import minimize
 import scipy.constants as const
-from tqdm import tqdm
+import tqdm
 from uravu.distribution import Distribution
 from sklearn.utils import resample
 from emcee import EnsembleSampler
@@ -22,80 +24,133 @@ class Bootstrap:
     """
     The top-level class for bootstrapping.
 
-    Attributes:
-        displacements (:py:attr:`list` of :py:attr:`array_like`): A list of arrays, where each array has the axes [atom, displacement observation, dimension]. There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as the number of observations is not necessary the same at each data point
-        delta_t (:py:attr:`array_like`): An array of the timestep values
-        max_obs (:py:attr:`int`): The maximum number of observations for the trajectory
-        dt (:py:attr:`array_like`): Timestep values that were resampled
-        distributions (:py:attr:`list` of :py:class:`uravu.distribution.Distribution`): Resampled mean squared distributions
-        iterator (:py:attr:`tqdm` or :py:attr:`range`): The iteration object
-        n (:py:attr:`array_like`): The mean MSD/TMSD/MSCD, as determined from the bootstrap resampling process, in units Å:sup:`2`
-        s (:py:attr:`array_like`): The MSD/TMSD/MSCD standard deviation, as determined from the bootstrap resampling process, in units Å:sup:`2`
-        v (:py:attr:`array_like`): The MSD/TMSD/MSCD variance as determined from the bootstrap resampling process, in units Å:sup:`4`
-        n_i (:py:attr:`array_like`): The number of independent trajectories as a function of :py:attr:`dt`
-        ngp (:py:attr:`array_like`): Non-Gaussian parameter as a function of dt
-        euclidian_displacements (:py:attr:`list` of :py:class:`uravu.distribution.Distribution`): Displacements between particles at each dt
-        diffusion_coefficient (:py:class:`uravu.distribution.Distribution`): The estimated diffusion coefficient, based on the generalised least squares approach
-        jump_diffusion_coefficient (:py:class:`uravu.distribution.Distribution`): The estimated jump diffusion coefficient, based on the generalised least squares approach
-        sigma (:py:class:`uravu.distribution.Distribution`): The estimated conductivity, based on the generalised least squares approach
-        intercept (:py:class:`uravu.distribution.Distribution` or :py:attr:`None`): The estimated intercept. Note that if :py:attr:`fit_intercept` is :py:attr:`False` is the relavent method call, then this is :py:attr:`None`
-        covariance_matrix (:py:attr:`array_like`): The covariance matrix for the trajectories
-
-    Args:
-        delta_t (:py:attr:`array_like`): An array of the timestep values
-        disp_3d (:py:attr:`list` of :py:attr:`array_like`): A list of arrays, where each array has the axes [atom, displacement observation, dimension]. There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as the number of observations is not necessary the same at each data point
-        sub_sample_dt (:py:attr:`int`. optional): The frequency in observations to be sampled. Default is :py:attr:`1` (every observation)
-        progress (:py:attr:`bool`, optional): Show tqdm progress for sampling. Default is :py:attr:`True`
+    :param delta_t: An array of the timestep values.
+    :param disp_3d: A list of arrays, where each array has the axes [atom, displacement observation, dimension].
+        There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as
+        the number of observations is not necessary the same at each data point.
+    :param sub_sample_dt: The frequency in observations to be sampled. Optional, default is :py:attr:`1` (every
+        observation).
+    :param progress: Show tqdm progress for sampling. Optional, default is :py:attr:`True`.
     """
-    def __init__(self, delta_t, disp_3d, sub_sample_dt=1, progress=True):
-        self.displacements = disp_3d[::sub_sample_dt]
-        self.delta_t = np.array(delta_t[::sub_sample_dt])
-        self.max_obs = self.displacements[0].shape[1]
-        self.distributions = []
-        self.dt = np.array([])
-        self.iterator = self.iterator(progress, range(len(self.displacements)))
-        self.n = np.array([])
-        self.s = np.array([])
-        self.v = np.array([])
-        self.n_i = np.array([], dtype=int)
-        self.ngp = np.array([])
-        self.euclidian_displacements = []
-        self.diffusion_coefficient = None
-        self.jump_diffusion_coeffiecient = None
-        self.sigma = None
-        self.intercept = None
+    def __init__(self, delta_t: np.ndarray, disp_3d: List[np.ndarray], sub_sample_dt: int = 1, progress: bool = True):
+        self._displacements = disp_3d[::sub_sample_dt]
+        self._delta_t = np.array(delta_t[::sub_sample_dt])
+        self._max_obs = self._displacements[0].shape[1]
+        self._distributions = []
+        self._dt = np.array([])
+        self._iterator = self.iterator(progress, range(len(self._displacements)))
+        self._n = np.array([])
+        self._s = np.array([])
+        self._v = np.array([])
+        self._n_i = np.array([], dtype=int)
+        self._ngp = np.array([])
+        self._euclidian_displacements = []
+        self._diffusion_coefficient = None
+        self._jump_diffusion_coeffiecient = None
+        self._sigma = None
+        self._intercept = None
+        self._covariance_matrix = None
+
+    @property
+    def dt(self) -> np.ndarray:
+        """
+        :return: Timestep values that were resampled.
+        """
+        return self._dt
+
+    @property
+    def n(self) -> np.ndarray:
+        """
+        :return: The mean MSD/TMSD/MSCD, as determined from the bootstrap resampling process, in units Å:sup:`2`.
+        """
+        return self._n
+
+    @property
+    def s(self) -> np.ndarray:
+        """
+        :return: The MSD/TMSD/MSCD standard deviation, as determined from the bootstrap resampling process, in
+            units Å:sup:`2`.
+        """
+        return self._s
+
+    @property
+    def v(self) -> np.ndarray:
+        """
+        :return: The MSD/TMSD/MSCD variance as determined from the bootstrap resampling process, in units Å:sup:`4`.
+        """
+        return self._v
+
+    @property
+    def euclidian_displacements(self) -> List[Distribution]:
+        """
+        :return: Displacements between particles at each dt.
+        """
+        return self._euclidian_displacements
+
+    @property
+    def ngp(self) -> np.ndarray:
+        """
+        :return: Non-Gaussian parameter as a function of :py:attr:`dt`.
+        """
+        return self._ngp
+
+    @property
+    def n_i(self) -> np.ndarray:
+        """
+        :return: The number of independent trajectories as a function of :py:attr:`dt`.
+        """
+        return self._n_i
+
+    @property
+    def intercept(self) -> Union[Distribution, None]:
+        """
+        :return: The estimated intercept. Note that if :py:attr:`fit_intercept` is :py:attr:`False` is the
+            relavent method call, then this is :py:attr:`None`
+        """
+        return self._intercept
+
+    @property
+    def covariance_matrix(self) -> np.ndarray:
+        """
+        :return: The covariance matrix for the trajectories.
+        """
+        return self._covariance_matrix
 
     @staticmethod
-    def iterator(progress, loop):
+    def iterator(progress: bool, loop: Union[list, range]) -> Union[tqdm.std.tqdm, range]:
         """
         Get the iteration object, using :py:mod:`tqdm` as appropriate.
 
-        Args:
-            progress (:py:attr:`bool`): Should :py:mod:`tqdm` be used to give a progress bar
-            loop (:py:attr:`list` or :py:attr:`range`): The object that should be looped over
+        :param progress: Should :py:mod:`tqdm` be used to give a progress bar.
+        :param loop: The object that should be looped over.
 
-        Returns:
-            :py:attr:`tqdm` or :py:attr:`range`: Iterator object
+        :return: Iterator object.
         """
         if progress:
-            return tqdm(loop, desc='Bootstrapping Displacements')
+            return tqdm.tqdm(loop, desc='Bootstrapping Displacements')
         return loop
 
     @staticmethod
-    def sample_until_normal(array, n_samples, n_resamples, max_resamples, alpha=1e-3, random_state=None):
+    def sample_until_normal(array: np.ndarray,
+                            n_samples: int,
+                            n_resamples: int,
+                            max_resamples: int,
+                            alpha: float = 1e-3,
+                            random_state: np.random.mtrand.RandomState = None) -> Distribution:
         """
         Resample from the distribution until a normal distribution is obtained or a maximum is reached.
 
         Args:
-            array (:py:attr:`array_like`): The array to sample from
-            n_samples (:py:attr:`int`): Number of samples
-            r_resamples (:py:attr:`int`): Number of resamples to perform initially
-            max_resamples (:py:attr:`int`): The maximum number of resamples to perform
-            alpha (:py:attr:`float`, optional): Level that p-value should be below in :py:func:`scipy.stats.normaltest` for the distribution to be normal. Default is :py:attr:`1e-3`
-            random_state (:py:class:`numpy.random.mtrand.RandomState`, optional): A :py:attr:`RandomState` object to be used to ensure reproducibility. Default is :py:attr:`None`
+        :param array: The array to sample from.
+        :param n_samples: Number of samples.
+        :param r_resamples: Number of resamples to perform initially.
+        :param max_resamples: The maximum number of resamples to perform.
+        :param alpha: Level that p-value should be below in :py:func:`scipy.stats.normaltest` for the distribution
+            to be normal. Optional, default is :py:attr:`1e-3`.
+        :param random_state: A :py:attr:`RandomState` object to be used to ensure reproducibility. Optional,
+            default is :py:attr:`None`.
 
-        Returns:
-            :py:class:`uravu.distribution.Distribution`: The resampled distribution
+        :return: The resampled distribution.
         """
         values = _bootstrap(array.flatten(), n_samples, n_resamples, random_state)
         p_value = normaltest(values)[1]
@@ -106,16 +161,14 @@ class Bootstrap:
         return Distribution(values)
 
     @staticmethod
-    def n_samples(disp_shape, max_obs):
+    def n_samples(disp_shape: Tuple[float, float], max_obs: int) -> int:
         """
-        Calculate the maximum number of independent observations
+        Calculate the maximum number of independent observations.
 
-        Args:
-            disp_shape (:py:attr:`tuple`): The shape of the displacements array
-            max_obs (:py:attr:`int`): The maximum number of observations for the trajectory
+        :param disp_shape:: The shape of the displacements array.
+        :param max_obs: The maximum number of observations for the trajectory.
 
-        Returns:
-            :py:attr:`int`: Maximum number of independent observations
+        :return: Maximum number of independent observations.
         """
         n_obs = disp_shape[1]
         n_atoms = disp_shape[0]
@@ -123,70 +176,80 @@ class Bootstrap:
         return int(max_obs / dt_int * n_atoms)
 
     @staticmethod
-    def ngp_calculation(d_squared):
+    def ngp_calculation(d_squared: np.ndarray) -> float:
         """
-        Determine the non-Gaussian parameter, from S. Song et al, "Transport dynamics of complex fluids" (2019): 10.1073/pnas.1900239116
+        Determine the non-Gaussian parameter, from S. Song et al, "Transport dynamics of complex fluids"
+        (2019): 10.1073/pnas.1900239116
 
-        Args:
-            d_squared (:py:attr:`array_like`): Squared displacement values
+        :param d_squared: Squared displacement values.
 
-        Returns:
-            :py:attr:`float`: Value of non-Gaussian parameter
+        :return: Value of non-Gaussian parameter.
         """
         top = np.mean(d_squared * d_squared) * 3
         bottom = np.square(np.mean(d_squared)) * 5
         return top / bottom - 1
 
-    def bootstrap_GLS(self, use_ngp=False, dt_skip=0, fit_intercept=True, n_walkers=32, n_samples=1000, random_state=None, progress=True):
+    def bootstrap_GLS(self,
+                      use_ngp: bool = False,
+                      dt_skip: float = 0,
+                      fit_intercept: bool = True,
+                      n_walkers: int = 32,
+                      n_samples: int = 1000,
+                      random_state: np.random.mtrand.RandomState = None,
+                      progress: bool = True):
         """
-        Use the covariance matrix estimated from the resampled values to estimate the gradient and intercept using a generalised least squares approach.
+        Use the covariance matrix estimated from the resampled values to estimate the gradient and intercept
+        using a generalised least squares approach.
 
-        Args:
-            use_ngp (:py:attr:`bool`, optional): Should the ngp max be used as the starting point for the diffusion fitting. Default is :py:attr:`False`
-            dt_skip (:py:attr:`float`, optional): Values of :py:attr:`dt` that should be skipped, i.e. where the atoms are not diffusing. Note that if :py:attr:`use_ngp` is :py:attr:`True` this will be ignored. Defaults to :py:attr:`0`
-            fit_intercept (:py:attr:`bool`, optional): Should the intercept of the diffusion relationship be fit. Default is :py:attr:`True`
-            n_walkers (:py:attr:`int`, optional): Number of MCMC walkers to use. Default is :py:attr:`32`
-            n_samples (:py:attr:`int`, optional): Number of MCMC samples to perform. Default is :py:attr:`1000`
-            random_state (:py:class:`numpy.random.mtrand.RandomState`, optional): A :py:attr:`RandomState` object to be used to ensure reproducibility. Default is :py:attr:`None`
-            progress (:py:attr:`bool`, optional): Show tqdm progress for sampling. Default is :py:attr:`True`
+        :param use_ngp: Should the ngp max be used as the starting point for the diffusion fitting. Optional,
+            default is :py:attr:`False`.
+        :param dt_skip: Values of :py:attr:`dt` that should be skipped, i.e. where the atoms are not diffusing.
+            Note that if :py:attr:`use_ngp` is :py:attr:`True` this will be ignored. Optional, defaults
+            to :py:attr:`0`.
+        :param fit_intercept: Should the intercept of the diffusion relationship be fit. Optional, default
+            is :py:attr:`True`.
+        :param n_walkers: Number of MCMC walkers to use. Optional, default is :py:attr:`32`.
+        :param n_samples: Number of MCMC samples to perform. Optional, default is :py:attr:`1000`.
+        :param random_state: A :py:attr:`RandomState` object to be used to ensure reproducibility. Optional,
+            default is :py:attr:`None`.
+        :param progress: Show tqdm progress for sampling. Optional, default is :py:attr:`True`.
         """
-        max_ngp = np.argwhere(self.dt > dt_skip)[0][0]
+        max_ngp = np.argwhere(self._dt > dt_skip)[0][0]
         if use_ngp:
-            max_ngp = np.argmax(self.ngp)
-        self.covariance_matrix = self.populate_covariance_matrix(self.v, self.n_i)[max_ngp:, max_ngp:]
-        self.covariance_matrix = find_nearest_positive_definite(self.covariance_matrix)
+            max_ngp = np.argmax(self._ngp)
+        self._covariance_matrix = self.populate_covariance_matrix(self._v, self._n_i)[max_ngp:, max_ngp:]
+        self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix)
 
-        mv = multivariate_normal(self.n[max_ngp:], self.covariance_matrix, allow_singular=True, seed=random_state)
+        mv = multivariate_normal(self._n[max_ngp:], self._covariance_matrix, allow_singular=True, seed=random_state)
 
-        def log_likelihood(theta):
+        def log_likelihood(theta: np.ndarray) -> float:
             """
             Get the log likelihood for multivariate normal distribution.
 
-            Args:
-                theta (:py:attr:`array_like`): Value of the gradient and intercept of the straight line
+            :param theta: Value of the gradient and intercept of the straight line.
 
-            Returns:
-                (:py:attr:`float`): Log-likelihood value
+            :return: Log-likelihood value.
             """
             if theta[0] < 0:
                 return -np.inf
-            model = _straight_line(self.dt[max_ngp:], *theta)
+            model = _straight_line(self._dt[max_ngp:], *theta)
             logl = mv.logpdf(model)
             return logl
-        ols = linregress(self.dt[max_ngp:], self.n[max_ngp:])
+
+        ols = linregress(self._dt[max_ngp:], self._n[max_ngp:])
         slope = ols.slope
         intercept = 1e-20
         if slope < 0:
             slope = 1e-20
 
-        def nll(*args):
+        def nll(*args) -> float:
             """
             General purpose negative log-likelihood.
 
-            Returns:
-                (:py:attr:`float`): Negative log-likelihood
+            :return: Negative log-likelihood
             """
             return -log_likelihood(*args)
+
         if fit_intercept:
             max_likelihood = minimize(nll, np.array([slope, intercept])).x
         else:
@@ -200,21 +263,19 @@ class Bootstrap:
         sampler.run_mcmc(pos, n_samples + 500, progress=progress, progress_kwargs={'desc': "Likelihood Sampling"})
         flatchain = sampler.get_chain(flat=True, discard=500)
         self.gradient = Distribution(flatchain[:, 0])
-        self.intercept = None
+        self._intercept = None
         if fit_intercept:
-            self.intercept = Distribution(flatchain[:, 1])
+            self._intercept = Distribution(flatchain[:, 1])
 
     @staticmethod
-    def populate_covariance_matrix(variances, n_samples):
+    def populate_covariance_matrix(variances: np.ndarray, n_samples: np.ndarray) -> np.ndarray:
         """
         Populate the covariance matrix for the generalised least squares methodology.
 
-        Args:
-            variances (:py:attr:`array_like`): The variances for each timestep
-            n_samples (:py:attr:`array_like`): Number of independent trajectories for each timestep
+        :param variances: The variances for each timestep
+        :param n_samples: Number of independent trajectories for each timestep
 
-        Returns:
-            :py:attr:`array_like`: An estimated covariance matrix for the system
+        :return: An estimated covariance matrix for the system
         """
         covariance_matrix = np.zeros((variances.size, variances.size))
         for i in range(0, variances.size):
@@ -227,202 +288,240 @@ class Bootstrap:
 
 class MSDBootstrap(Bootstrap):
     """
-    Perform a bootstrap resampling to obtain accurate estimates for the mean and uncertainty for the mean squared displacements.
+    Perform a bootstrap resampling to obtain accurate estimates for the mean and uncertainty for the mean
+    squared displacements.
 
-    Attributes:
-        n (:py:attr:`array_like`): The mean MSD, as determined from the bootstrap resampling process
-        s (:py:attr:`array_like`): The MSD standard deviation, as determined from the bootstrap resampling process
-        v (:py:attr:`array_like`): The MSD variance as determined from the bootstrap resampling process
-        diffusion_coefficient (:py:class:`uravu.distribution.Distribution`): The estimated diffusion coefficient, based on the generalised least squares approach, with units of cm:sup:`2`s:sup:`-1`
-        intercept (:py:class:`uravu.distribution.Distribution` or :py:attr:`None`): The estimated intercept, with units of Å:sup:`2`ps:sup:`-1`. Note that if :py:attr:`fit_intercept` is :py:attr:`False` is the relavent method call, then this is :py:attr:`None`
-
-    Args:
-        delta_t (:py:attr:`array_like`): An array of the timestep values, units of ps
-        disp_3d (:py:attr:`list` of :py:attr:`array_like`): A list of arrays, where each array has the axes [atom, displacement observation, dimension]. There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as the number of observations is not necessary the same at each data point
-        sub_sample_dt (:py:attr:`int`. optional): The frequency in observations to be sampled. Default is :py:attr:`1` (every observation)
-        n_resamples (:py:attr:`int`, optional): The initial number of resamples to be performed. Default is :py:attr:`1000`
-        max_resamples (:py:attr:`int`, optional): The max number of resamples to be performed by the distribution is assumed to be normal. This is present to allow user control over the time taken for the resampling to occur. Default is :py:attr:`100000`
-        alpha (:py:attr:`float`, optional): Value that p-value for the normal test must be greater than to accept. Default is :py:attr:`1e-3`
-        random_state (:py:class:`numpy.random.mtrand.RandomState`, optional): A :py:attr:`RandomState` object to be used to ensure reproducibility. Default is :py:attr:`None`
-        progress (:py:attr:`bool`, optional): Show tqdm progress for sampling. Default is :py:attr:`True`
+    :param delta_t: An array of the timestep values, units of ps
+    :param disp_3d: A list of arrays, where each array has the axes
+        :py:code:`[atom, displacement observation, dimension]`. There is one array in the list for each
+        delta_t value. Note: it is necessary to use a list of arrays as the number of observations is
+        not necessary the same at each data point.
+    :param sub_sample_dt: The frequency in observations to be sampled. Default is :py:attr:`1` (every observation)
+    :param n_resamples: The initial number of resamples to be performed. Default is :py:attr:`1000`
+    :param max_resamples: The max number of resamples to be performed by the distribution is assumed to be normal.
+        This is present to allow user control over the time taken for the resampling to occur. Default
+        is :py:attr:`100000`
+    :param alpha: Value that p-value for the normal test must be greater than to accept. Default is :py:attr:`1e-3`
+    :param random_state : A :py:attr:`RandomState` object to be used to ensure reproducibility. Default
+        is :py:attr:`None`
+    :param progress: Show tqdm progress for sampling. Default is :py:attr:`True`
     """
-    def __init__(self, delta_t, disp_3d, sub_sample_dt=1, n_resamples=1000, max_resamples=10000, alpha=1e-3, random_state=None, progress=True):
+    def __init__(self,
+                 delta_t: np.ndarray,
+                 disp_3d: List[np.ndarray],
+                 sub_sample_dt: int = 1,
+                 n_resamples: int = 1000,
+                 max_resamples: int = 10000,
+                 alpha: float = 1e-3,
+                 random_state: np.random.mtrand.RandomState = None,
+                 progress: bool = True):
         super().__init__(delta_t, disp_3d, sub_sample_dt, progress)
-        for i in self.iterator:
-            d_squared = np.sum(self.displacements[i] ** 2, axis=2)
-            n_samples_current = self.n_samples(self.displacements[i].shape, self.max_obs)
+        for i in self._iterator:
+            d_squared = np.sum(self._displacements[i]**2, axis=2)
+            n_samples_current = self.n_samples(self._displacements[i].shape, self._max_obs)
             if n_samples_current <= 1:
                 continue
-            self.n_i = np.append(self.n_i, n_samples_current)
-            self.euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
-            distro = self.sample_until_normal(d_squared, self.n_i[i], n_resamples, max_resamples, alpha, random_state)
-            self.distributions.append(distro)
-            self.n = np.append(self.n, distro.n)
-            self.s = np.append(self.s, np.std(distro.samples, ddof=1))
-            self.v = np.append(self.v, np.var(distro.samples, ddof=1))
-            self.ngp = np.append(self.ngp, self.ngp_calculation(d_squared))
-            self.dt = np.append(self.dt, self.delta_t[i])
+            self._n_i = np.append(self._n_i, n_samples_current)
+            self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
+            distro = self.sample_until_normal(d_squared, self._n_i[i], n_resamples, max_resamples, alpha, random_state)
+            self._distributions.append(distro)
+            self._n = np.append(self._n, distro.n)
+            self._s = np.append(self._s, np.std(distro.samples, ddof=1))
+            self._v = np.append(self._v, np.var(distro.samples, ddof=1))
+            self._ngp = np.append(self._ngp, self.ngp_calculation(d_squared))
+            self._dt = np.append(self._dt, self._delta_t[i])
 
     def diffusion(self, **kwargs):
         """
-        Use the bootstrap-GLS method to determine the diffusivity for the system.
+        Use the bootstrap-GLS method to determine the diffusivity for the system. Keyword arguments will be
+        passed of the :py:func:`bootstrap_GLS` method.
         """
         self.bootstrap_GLS(**kwargs)
-        self.diffusion_coefficient = Distribution(self.gradient.samples / (2e4 * self.displacements[0].shape[-1]))
+        self._diffusion_coefficient = Distribution(self.gradient.samples / (2e4 * self._displacements[0].shape[-1]))
 
     @property
-    def D(self):
+    def D(self) -> Union[Distribution, None]:
         """
         An alias for the diffusion coefficient Distribution.
 
-        Returns:
-            (:py:class:`uravu.distribution.Distribution`): Diffusion coefficient, with units of cm:sup:`2`s:sup:`-1`
+        :return: Diffusion coefficient, with units of cm:sup:`2`s:sup:`-1`.
         """
-        return self.diffusion_coefficient
+        return self._diffusion_coefficient
 
 
 class TMSDBootstrap(Bootstrap):
     """
-    Perform a bootstrap resampling to obtain accurate estimates for the mean and uncertainty for the total mean squared displacements.
+    Perform a bootstrap resampling to obtain accurate estimates for the mean and uncertainty for the total
+    mean squared displacements.
 
-    Attributes:
-        n (:py:attr:`array_like`): The mean TMSD, as determined from the bootstrap resampling process
-        s (:py:attr:`array_like`): The TMSD standard deviation, as determined from the bootstrap resampling process
-        v (:py:attr:`array_like`): The TMSD variance as determined from the bootstrap resampling process
-        jump_diffusion_coefficient (:py:class:`uravu.distribution.Distribution`): The estimated jump diffusion coefficient, based on the generalised least squares approach, with units of cm:sup:`2`s:sup:`-1`
-        intercept (:py:class:`uravu.distribution.Distribution` or :py:attr:`None`): The estimated intercept, with units of Å:sup:`2`ps:sup:`-1`. Note that if :py:attr:`fit_intercept` is :py:attr:`False` is the relavent method call, then this is :py:attr:`None`
-
-    Args:
-        delta_t (:py:attr:`array_like`): An array of the timestep values
-        disp_3d (:py:attr:`list` of :py:attr:`array_like`): A list of arrays, where each array has the axes [atom, displacement observation, dimension]. There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as the number of observations is not necessary the same at each data point
-        sub_sample_dt (:py:attr:`int`. optional): The frequency in observations to be sampled. Default is :py:attr:`1` (every observation)
-        n_resamples (:py:attr:`int`, optional): The initial number of resamples to be performed. Default is :py:attr:`1000`
-        max_resamples (:py:attr:`int`, optional): The max number of resamples to be performed by the distribution is assumed to be normal. This is present to allow user control over the time taken for the resampling to occur. Default is :py:attr:`100000`
-        alpha (:py:attr:`float`, optional): Value that p-value for the normal test must be greater than to accept. Default is :py:attr:`1e-3`
-        random_state (:py:class:`numpy.random.mtrand.RandomState`, optional): A :py:attr:`RandomState` object to be used to ensure reproducibility. Default is :py:attr:`None`
-        progress (:py:attr:`bool`, optional): Show tqdm progress for sampling. Default is :py:attr:`True`
+    :param delta_t: An array of the timestep values.
+    :param disp_3d: A list of arrays, where each array has the axes
+        :py:code:`[atom, displacement observation, dimension]`. There is one array in the list for each
+        delta_t value. Note: it is necessary to use a list of arrays as the number of observations is
+        not necessary the same at each data point.
+    :param sub_sample_dt: The frequency in observations to be sampled. Optional, default
+        is :py:attr:`1` (every observation)
+    :param n_resamples: The initial number of resamples to be performed. Optional, default
+        is :py:attr:`1000`
+    :param max_resamples: The max number of resamples to be performed by the distribution is assumed to be
+        normal. This is present to allow user control over the time taken for the resampling to occur.
+        Optional, default is :py:attr:`100000`
+    :param alpha: Value that p-value for the normal test must be greater than to accept. Optional, default
+        is :py:attr:`1e-3`
+    :param random_state : A :py:attr:`RandomState` object to be used to ensure reproducibility. Optional,
+        default is :py:attr:`None`
+    :param progress: Show tqdm progress for sampling. Optional, default is :py:attr:`True`
     """
-    def __init__(self, delta_t, disp_3d, sub_sample_dt=1, n_resamples=1000, max_resamples=10000, alpha=1e-3, random_state=None, progress=True):
+    def __init__(self,
+                 delta_t: np.ndarray,
+                 disp_3d: List[np.ndarray],
+                 sub_sample_dt: int=1,
+                 n_resamples: int=1000,
+                 max_resamples: int=10000,
+                 alpha: float=1e-3,
+                 random_state: np.random.mtrand.RandomState=None,
+                 progress: bool=True):
         super().__init__(delta_t, disp_3d, sub_sample_dt, progress)
-        for i in self.iterator:
-            d_squared = np.sum(self.displacements[i] ** 2, axis=2)
-            coll_motion = np.sum(np.sum(self.displacements[i], axis=0) ** 2, axis=-1)
-            n_samples_current = self.n_samples((1, self.displacements[i].shape[1]), self.max_obs)
+        for i in self._iterator:
+            d_squared = np.sum(self._displacements[i]**2, axis=2)
+            coll_motion = np.sum(np.sum(self._displacements[i], axis=0)**2, axis=-1)
+            n_samples_current = self.n_samples((1, self._displacements[i].shape[1]), self._max_obs)
             if n_samples_current <= 1:
                 continue
-            self.n_i = np.append(self.n_i, n_samples_current)
-            self.euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
-            distro = self.sample_until_normal(coll_motion, self.n_i[i], n_resamples, max_resamples, alpha, random_state)
-            self.distributions.append(distro)
-            self.n = np.append(self.n, distro.n)
-            self.s = np.append(self.s, np.std(distro.samples, ddof=1))
-            self.v = np.append(self.v, np.var(distro.samples, ddof=1))
-            self.ngp = np.append(self.ngp, self.ngp_calculation(d_squared.flatten()))
-            self.dt = np.append(self.dt, self.delta_t[i])
+            self._n_i = np.append(self._n_i, n_samples_current)
+            self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
+            distro = self.sample_until_normal(coll_motion, self._n_i[i], n_resamples, max_resamples, alpha,
+                                              random_state)
+            self._distributions.append(distro)
+            self._n = np.append(self._n, distro.n)
+            self._s = np.append(self._s, np.std(distro.samples, ddof=1))
+            self._v = np.append(self._v, np.var(distro.samples, ddof=1))
+            self._ngp = np.append(self._ngp, self.ngp_calculation(d_squared.flatten()))
+            self._dt = np.append(self._dt, self._delta_t[i])
 
     def jump_diffusion(self, **kwargs):
         """
-        Use the bootstrap-GLS method to determine the jump diffusivity for the system.
+        Use the bootstrap-GLS method to determine the jump diffusivity for the system. Keyword arguments
+        will be passed of the :py:func:`bootstrap_GLS` method.
         """
         self.bootstrap_GLS(**kwargs)
-        self.jump_diffusion_coefficient = Distribution(self.gradient.samples / (2e4 * self.displacements[0].shape[-1] * self.displacements[0].shape[0]))
+        self._jump_diffusion_coefficient = Distribution(
+            self.gradient.samples / (2e4 * self._displacements[0].shape[-1] * self._displacements[0].shape[0]))
 
     @property
-    def D_J(self):
+    def D_J(self) -> Union[Distribution, None]:
         """
         Alias for the jump diffusion coefficient Distribution.
 
-        Returns:
-            (:py:class:`uravu.distribution.Distribution`): Jump diffusion coefficient, with units of cm:sup:`2`s:sup:`-1`
+        :return: Jump diffusion coefficient, with units of cm:sup:`2`s:sup:`-1`.
         """
-        return self.jump_diffusion_coefficient
+        return self._jump_diffusion_coefficient
 
 
 class MSCDBootstrap(Bootstrap):
     """
-    Perform a bootstrap resampling to obtain accurate estimates for the mean and uncertainty for the mean squared charge displacements.
+    Perform a bootstrap resampling to obtain accurate estimates for the mean and uncertainty for the mean
+    squared charge displacements.
 
-    Attributes:
-        n (:py:attr:`array_like`): The mean MSCD, as determined from the bootstrap resampling process
-        s (:py:attr:`array_like`): The MSCD standard deviation, as determined from the bootstrap resampling process
-        v (:py:attr:`array_like`): The MSCD variance as determined from the bootstrap resampling process
-        sigma (:py:class:`uravu.distribution.Distribution`): The estimated conductivity, based on the generalised least squares approach, with units mScm:sup:`-1`
-        intercept (:py:class:`uravu.distribution.Distribution` or :py:attr:`None`): The estimated intercept, with units of Å:sup:`2`ps:sup:`-1`. Note that if :py:attr:`fit_intercept` is :py:attr:`False` is the relavent method call, then this is :py:attr:`None`
-
-    Args:
-        delta_t (:py:attr:`array_like`): An array of the timestep values
-        disp_3d (:py:attr:`list` of :py:attr:`array_like`): A list of arrays, where each array has the axes [atom, displacement observation, dimension]. There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as the number of observations is not necessary the same at each data point
-        ionic_charge (:py:attr:`array_like` or :py:attr:`int`): The charge on the mobile ions, either an array with a value for each ion or a scalar if all values are the same
-        sub_sample_dt (:py:attr:`int`. optional): The frequency in observations to be sampled. Default is :py:attr:`1` (every observation)
-        n_resamples (:py:attr:`int`, optional): The initial number of resamples to be performed. Default is :py:attr:`1000`
-        max_resamples (:py:attr:`int`, optional): The max number of resamples to be performed by the distribution is assumed to be normal. This is present to allow user control over the time taken for the resampling to occur. Default is :py:attr:`100000`
-        alpha (:py:attr:`float`, optional): Value that p-value for the normal test must be greater than to accept. Default is :py:attr:`1e-3`
-        random_state (:py:class:`numpy.random.mtrand.RandomState`, optional): A :py:attr:`RandomState` object to be used to ensure reproducibility. Default is :py:attr:`None`
-        progress (:py:attr:`bool`, optional): Show tqdm progress for sampling. Default is :py:attr:`True`
+    :param delta_t: An array of the timestep values.
+    :param disp_3d: A list of arrays, where each array has the axes
+        :py:code:`[atom, displacement observation, dimension]`. There is one array in the list for each
+        delta_t value. Note: it is necessary to use a list of arrays as the number of observations is
+        not necessary the same at each data point.
+    :param ionic_charge: The charge on the mobile ions, either an array with a value for each ion or a scalar
+        if all values are the same.
+    :param sub_sample_dt: The frequency in observations to be sampled. Optional, default is :py:attr:`1`
+        (every observation).
+    :param n_resamples: The initial number of resamples to be performed. Optional, default is :py:attr:`1000`.
+    :param max_resamples: The max number of resamples to be performed by the distribution is assumed to be normal.
+        This is present to allow user control over the time taken for the resampling to occur. Optional, default
+        is :py:attr:`100000`.
+    :param alpha: Value that p-value for the normal test must be greater than to accept. Optional, default
+        is :py:attr:`1e-3`.
+    :param random_state: A :py:attr:`RandomState` object to be used to ensure reproducibility. Optional,
+        default is :py:attr:`None`.
+    :param progress: Show tqdm progress for sampling. Optional, default is :py:attr:`True`.
     """
-    def __init__(self, delta_t, disp_3d, ionic_charge, sub_sample_dt=1, n_resamples=1000, max_resamples=10000, alpha=1e-3, random_state=None, progress=True):
+    def __init__(self,
+                 delta_t: np.ndarray,
+                 disp_3d: List[np.ndarray],
+                 ionic_charge: Union[np.ndarray, int],
+                 sub_sample_dt: int = 1,
+                 n_resamples: int = 1000,
+                 max_resamples: int = 10000,
+                 alpha: float = 1e-3,
+                 random_state: np.random.mtrand.RandomState = None,
+                 progress: bool = True):
         super().__init__(delta_t, disp_3d, sub_sample_dt, progress)
         try:
             _ = len(ionic_charge)
         except TypeError:
-            ionic_charge = np.ones(self.displacements[0].shape[0]) * ionic_charge
-        for i in self.iterator:
-            d_squared = np.sum(self.displacements[i] ** 2, axis=2)
-            sq_chg_motion = np.sum(np.sum((ionic_charge * self.displacements[i].T).T, axis=0) ** 2, axis=-1)
-            n_samples_current = self.n_samples((1, self.displacements[i].shape[1]), self.max_obs)
+            ionic_charge = np.ones(self._displacements[0].shape[0]) * ionic_charge
+        for i in self._iterator:
+            d_squared = np.sum(self._displacements[i]**2, axis=2)
+            sq_chg_motion = np.sum(np.sum((ionic_charge * self._displacements[i].T).T, axis=0)**2, axis=-1)
+            n_samples_current = self.n_samples((1, self._displacements[i].shape[1]), self._max_obs)
             if n_samples_current <= 1:
                 continue
-            self.n_i = np.append(self.n_i, n_samples_current)
-            self.euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
-            distro = self.sample_until_normal(sq_chg_motion, self.n_i[i], n_resamples, max_resamples, alpha, random_state)
-            self.distributions.append(distro)
-            self.n = np.append(self.n, distro.n)
-            self.s = np.append(self.s, np.std(distro.samples, ddof=1))
-            self.v = np.append(self.v, np.var(distro.samples, ddof=1))
-            self.ngp = np.append(self.ngp, self.ngp_calculation(d_squared.flatten()))
-            self.dt = np.append(self.dt, self.delta_t[i])
+            self._n_i = np.append(self._n_i, n_samples_current)
+            self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
+            distro = self.sample_until_normal(sq_chg_motion, self._n_i[i], n_resamples, max_resamples, alpha,
+                                              random_state)
+            self._distributions.append(distro)
+            self._n = np.append(self._n, distro.n)
+            self._s = np.append(self._s, np.std(distro.samples, ddof=1))
+            self._v = np.append(self._v, np.var(distro.samples, ddof=1))
+            self._ngp = np.append(self._ngp, self.ngp_calculation(d_squared.flatten()))
+            self._dt = np.append(self._dt, self._delta_t[i])
 
-    def conductivity(self, temperature, volume, **kwargs):
+    def conductivity(self, temperature: float, volume: float, **kwargs):
         """
         Use the bootstrap-GLS method to determine the ionic conductivity for the system, in units of mScm:sup:`-1`.
+        Keyword arguments will be passed of the :py:func:`bootstrap_GLS` method.
 
-        Args:
-            temperature (:py:attr:`float`): System temperature, in Kelvin
-            volume (:py:attr:`float`): System volume, in Å^{3}
+        :param temperature: System temperature, in Kelvin.
+        :param volume: System volume, in Å^{3}.
         """
         self.bootstrap_GLS(**kwargs)
-        volume = volume * 1e-24 # cm^3
-        D = self.gradient.samples / (2e4 * self.displacements[0].shape[-1])  # cm^2s^-1
-        conversion = 1000 / (volume * const.N_A) * (const.N_A * const.e) ** 2 / (const.R * temperature)
-        self.sigma = Distribution(D * conversion)
+        volume = volume * 1e-24  # cm^3
+        D = self.gradient.samples / (2e4 * self._displacements[0].shape[-1])  # cm^2s^-1
+        conversion = 1000 / (volume * const.N_A) * (const.N_A * const.e)**2 / (const.R * temperature)
+        self._sigma = Distribution(D * conversion)
+
+    @property
+    def sigma(self) -> Union[Distribution, None]:
+        """
+        :return: The estimated conductivity, based on the generalised least squares approach, with
+            units mScm:sup:`-1`.
+        """
+        return self._sigma
 
 
-def _bootstrap(array, n_samples, n_resamples, random_state=None):
+def _bootstrap(array: np.ndarray, n_samples: int, n_resamples: int, random_state: np.random.mtrand.RandomState = None):
     """
     Perform a set of resamples.
 
-    Args:
-        array (:py:attr:`array_like`): The array to sample from
-        n_samples (:py:attr:`int`): Number of samples
-        n_resamples (:py:attr:`int`): Number of resamples to perform initially
-        random_state (:py:class:`numpy.random.mtrand.RandomState`, optional): A :py:attr:`RandomState` object to be used to ensure reproducibility. Default is :py:attr:`None`
+    :param array: The array to sample from.
+    :param n_samples: Number of samples.
+    :param n_resamples: Number of resamples to perform initially.
+    :param random_state: A :py:attr:`RandomState` object to be used to ensure reproducibility. Optional,
+        default is :py:attr:`None`
 
-    Returns:
-        :py:attr:`array_like`: Resampled values from the array
+    :return: Resampled values from the array
     """
-    return [np.mean(resample(array.flatten(), n_samples=n_samples, random_state=random_state)) for j in range(n_resamples)]
+    return [
+        np.mean(resample(array.flatten(), n_samples=n_samples, random_state=random_state)) for j in range(n_resamples)
+    ]
 
 
-def _straight_line(abscissa, gradient, intercept=0):
+def _straight_line(abscissa: np.ndarray, gradient: float, intercept: float = 0.0) -> np.ndarray:
     """
     A one dimensional straight line function.
 
-    Args:
-        abscissa (:py:attr:`array_like`): The abscissa data
-        gradient (:py:attr:`float`): The slope of the line
-        intercept (:py:attr:`float`): The y-intercept of the line
+    :param abscissa: The abscissa data.
+    :param gradient: The slope of the line.
+    :param intercept: The y-intercept of the line. Optional, default is :py:attr:`0.0`.
 
-    Returns:
-        :py:attr:`array_like`: The resulting ordinate
+    :return: The resulting ordinate.
     """
     return gradient * abscissa + intercept
