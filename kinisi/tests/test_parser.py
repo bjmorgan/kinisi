@@ -1,24 +1,11 @@
 """
 Tests for parser module
-
-Copyright (c) Andrew R. McCluskey and Benjamin J. Morgan
-
-Distributed under the terms of the MIT License
-
-@author: Andrew R. McCluskey
 """
 
+# Copyright (c) Andrew R. McCluskey and Benjamin J. Morgan
+# Distributed under the terms of the MIT License
+# author: Andrew R. McCluskey (arm61)
 # pylint: disable=R0201
-
-# This parser borrows heavily from the
-# pymatgen.analysis.diffusion_analyzer.DiffusionAnalyzer
-# class, originally authored by Will Richards
-# (wrichard@mit.edu) and Shyue Ping Ong.
-# We include this statement to not that we make
-# no claim to authorship of that code and make
-# no attack on the original authors.
-#
-# In fact, we love pymatgen!
 
 import unittest
 import numpy as np
@@ -28,7 +15,6 @@ from pymatgen.io.vasp import Xdatcar
 import os
 import kinisi
 from kinisi import parser
-
 
 dc = np.random.random(size=(100, 100, 3))
 indices = np.arange(0, 100, 1, dtype=int)
@@ -84,14 +70,14 @@ class TestParser(unittest.TestCase):
         assert_equal(timesteps, np.arange(1, 100, 1))
 
     def test_correct_drift_no_framework(self):
-        corrected = parser._correct_drift([], dc)
+        corrected = parser.Parser.correct_drift([], dc)
         assert_equal(len(corrected), 100)
         for i, d in enumerate(corrected):
             assert_equal(d.shape[0], 100)
             assert_equal(d.shape[1], 3)
 
     def test_correct_drift_framework(self):
-        corrected = parser._correct_drift([], dc)
+        corrected = parser.Parser.correct_drift([], dc)
         assert_equal(len(corrected), 100)
         for i, d in enumerate(corrected):
             assert_equal(d.shape[0], 100)
@@ -109,10 +95,7 @@ class TestParser(unittest.TestCase):
 
     def test_pymatgen_init(self):
         xd = Xdatcar(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_XDATCAR.gz'))
-        da_params = {'specie': 'Li',
-                     'time_step': 2.0,
-                     'step_skip': 50,
-                     'min_obs': 50}
+        da_params = {'specie': 'Li', 'time_step': 2.0, 'step_skip': 50, 'min_obs': 50}
         data = parser.PymatgenParser(xd.structures, **da_params)
         assert_almost_equal(data.time_step, 2.0)
         assert_almost_equal(data.step_skip, 50)
@@ -120,10 +103,7 @@ class TestParser(unittest.TestCase):
 
     def test_pymatgen_big_timestep(self):
         xd = Xdatcar(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_XDATCAR.gz'))
-        da_params = {'specie': 'Li',
-                     'time_step': 20.0,
-                     'step_skip': 100,
-                     'min_obs': 50}
+        da_params = {'specie': 'Li', 'time_step': 20.0, 'step_skip': 100, 'min_obs': 50}
         data = parser.PymatgenParser(xd.structures, **da_params)
         assert_almost_equal(data.time_step, 20.0)
         assert_almost_equal(data.step_skip, 100)
@@ -131,11 +111,9 @@ class TestParser(unittest.TestCase):
 
     def test_mda_init(self):
         xd = mda.Universe(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS.data'),
-                          os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS.dcd'), format='LAMMPS')
-        da_params = {'specie': '1',
-                     'time_step': 0.005,
-                     'step_skip': 250,
-                     'min_obs': 50}
+                          os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS.dcd'),
+                          format='LAMMPS')
+        da_params = {'specie': '1', 'time_step': 0.005, 'step_skip': 250, 'min_obs': 50}
         data = parser.MDAnalysisParser(xd, **da_params)
         assert_almost_equal(data.time_step, 0.005)
         assert_almost_equal(data.step_skip, 250)

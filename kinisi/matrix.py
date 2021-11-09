@@ -10,21 +10,20 @@ import warnings
 import numpy as np
 
 
-def find_nearest_positive_definite(matrix):
+def find_nearest_positive_definite(matrix: np.ndarray) -> np.ndarray:
     """
-    Find the nearest positive-definite matrix to that given, using the method from
-    N.J. Higham, "Computing a nearest symmetric positive semidefinite matrix" (1988): 10.1016/0024-3795(88)90223-6
+    Find the nearest positive-definite matrix to that given, using the method from N.J. Higham, "Computing a nearest
+    symmetric positive semidefinite matrix" (1988): 10.1016/0024-3795(88)90223-6
 
-    Args:
-        matrix (:py:attr:`array_like`): Matrix to find nearest positive-definite for.
-    Returns:
-        :py:attr:`array_like`: Nearest positive-definite matrix.
+    :param matrix: Matrix to find nearest positive-definite for.
+    :return: Nearest positive-definite matrix.
     """
 
     if check_positive_definite(matrix):
         return matrix
 
-    warnings.warn("The estimated covariance matrix was not positive definite, the nearest positive definite matrix has been found and will be used.")
+    warnings.warn("The estimated covariance matrix was not positive definite, the nearest positive "
+                  "definite matrix has been found and will be used.")
 
     B = (matrix + matrix.T) / 2
     _, s, V = np.linalg.svd(B)
@@ -46,17 +45,13 @@ def find_nearest_positive_definite(matrix):
     return A3
 
 
-def check_positive_definite(matrix):
+def check_positive_definite(matrix: np.ndarray) -> bool:
     """
     Checks if a matrix is positive-definite via Cholesky decomposition.
 
-    Args:
-        matrix (:py:attr:`array_like`): Matrix to check.
-    Returns:
-        :py_attr:`bool`: True for a positive-definite matrix.
-
-
-    Returns true when input is positive-definite, via Cholesky"""
+    :param matrix: Matrix to check.
+    :return: True for a positive-definite matrix.
+    """
     try:
         _ = np.linalg.cholesky(matrix)
         return True
