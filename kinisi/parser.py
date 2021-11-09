@@ -304,7 +304,7 @@ class MDAnalysisParser(Parser):
 
     @staticmethod
     def get_structure_coords_latt(
-            universe: "MDAnalysis.universe.Universe",
+            universe: "MDAnalysis.core.universe.Universe",
             sub_sample_atoms: int = 1,
             sub_sample_traj: int = 1,
             progress: bool = True
