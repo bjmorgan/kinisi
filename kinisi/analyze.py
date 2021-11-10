@@ -2,6 +2,7 @@
 This module contains the API classes for :py:mod:`kinisi`.
 It is anticipated that this is where the majority of interaction with the package will occur.
 This module includes:
+
 * the :py:class:`kinisi.analyze.DiffusionAnalyzer` class for MSD and diffusion analysis;
 * the :py:class:`kinisi.analyze.JumpDiffusionAnalyzer` class for TMSD and collective diffusion analysis; and
 * the :py:class:`kinisi.analyze.ConductivityAnalyzer` class for MSCD and conductivity analysis.
