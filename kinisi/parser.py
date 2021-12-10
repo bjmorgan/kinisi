@@ -143,7 +143,7 @@ class Parser:
         :param drift_corrected: Drift of framework corrected disp.
         :param progress: Print progress bars to screen. Defaults to :py:attr:`True`.
 
-        :return: Tuple containing: time step intervals and raw squared displacement.
+        :return: Tuple containing: time step intervals and raw displacement.
         """
         delta_t = timesteps * self.time_step * self.step_skip
         disp_3d = []
