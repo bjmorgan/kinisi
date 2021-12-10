@@ -16,102 +16,153 @@ These are all compatible with VASP Xdatcar output files, pymatgen structures and
 
 from typing import Union, List
 import numpy as np
+from numpy.typing import ArrayLike
 from kinisi import diffusion
 from kinisi.parser import MDAnalysisParser, PymatgenParser
 
 
 class Analyzer:
     """
-    The :py:class:`kinisi.analyze.Analyzer` class manages the API to the MSDAnalyzer and DiffAnalyzer classes.
+    The :py:class:`kinisi.analyze.Analyzer` class manages the API to the
+    :py:class:`kinisi.analyze.DiffusionAnalyzer`, :py:class:`kinisi.analyze.JumpDiffusionAnalyzer`
+    and :py:class:`kinisi.analyze.ConductivityAnalyzer` classes.
 
-    Attributes:
-        volume (:py:attr:`float`): System volume
-
-    :param trajectory: The trajectory/ies to be analysed, supported trajectories are those from VASP (as file paths
-        to be read, :py:class:`pymatgen.io.vasp.outputs.Xdatcar` objects, or a :py:attr:`list` of
-        :py:class:`pymatgen.core.structure.Structure` objects) or in the format of an
-        :py:class:`MDAnalysis.core.Universe` (:py:attr:`dtype` should contain :py:attr:`'vasp'` or
-        :py:attr:`'mdanalysis'` as appropriate). Additionally, for VASP trajectories, a list of identical
-        starting points can be passed by using :py:attr:`dtype='identicalvasp'` and consecutive VASP trajectories
-        using :py:attr:`dtype='consecutivevasp'`.
-    :param parser_params: The parameters for the :py:mod:`kinisi.parser` object, which is either
-        :py:class:`kinisi.parser.PymatgenParser` or :py:class:`kinisi.parser.MDAnalysisParser` depending on
-        the input file format. See the appropriate documention for more guidance on this dictionary.
-        dtype: The file format of the :py:attr:`trajectory`, see documentation for :py:attr:`trajectory` above.
-            Optional, defaults to :py:attr:`'vasp'`
+    :param delta_t: An array of the timestep values.
+    :param disp_3d: A list of arrays, where each array has the axes [atom, displacement observation, dimension].
+        There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as
+        the number of observations is not necessary the same at each data point.
+    :param volume: The volume of the simulation cell.
     """
-    def __init__(self,
-                 trajectory: Union[str, 'pymatgen.io.vasp.outputs.Xdatcar', 'MDAnalysis.core.Universe',
-                                   List[Union['pymatgen.core.structure.Structure', str,
-                                              'pymatgen.io.vasp.outputs.Xdatcar',
-                                              List['pymatgen.core.structure.Structure']]]],
-                 parser_params: dict,
-                 dtype: str = 'vasp'):
-        if 'vasp' in dtype:
-            try:
-                from pymatgen.io.vasp import Xdatcar
-                from pymatgen.core.structure import Structure
-            except ModuleNotFoundError:  # pragma: no cover
-                raise ModuleNotFoundError(
-                    "To use the Xdatcar file parsing, pymatgen must be installed.")  # pragma: no cover
-            if isinstance(trajectory, list):
-                if isinstance(trajectory[0], Structure):
-                    u = PymatgenParser(trajectory, **parser_params)
-                    self._delta_t = u.delta_t
-                    self._disp_3d = u.disp_3d
-                    self._volume = u.volume
-                elif 'identical' in dtype:
-                    if isinstance(trajectory[0], Xdatcar):
-                        u = [PymatgenParser(f.structures, **parser_params) for f in trajectory]
-                    elif isinstance(trajectory[0], str):
-                        u = [PymatgenParser(Xdatcar(f).structures, **parser_params) for f in trajectory]
-                    elif isinstance(trajectory[0], list):
-                        u = [PymatgenParser(f, **parser_params) for f in trajectory]
-                    self._delta_t = u[0].delta_t
-                    self._disp_3d = self.stack_trajectories(u)
-                    self._volume = u[0].volume
-                elif 'consecutive' in dtype:
-                    if isinstance(trajectory[0], Xdatcar):
-                        structures = _flatten_list([x.structures for x in trajectory])
-                    elif isinstance(trajectory[0], str):
-                        trajectory_list = (Xdatcar(f) for f in trajectory)
-                        structures = _flatten_list([x.structures for x in trajectory_list])
-                    elif isinstance(trajectory[0], list):
-                        structures = _flatten_list([x for x in trajectory])
-                    u = PymatgenParser(structures, **parser_params)
-                    self._delta_t = u.delta_t
-                    self._disp_3d = u.disp_3d
-                    self._volume = u.volume
-                else:
-                    raise ValueError(
-                        "The structure of the input could not be recognised, please consult the documentation.")
-            elif isinstance(trajectory, Xdatcar):
-                structures = trajectory.structures
-                u = PymatgenParser(structures, **parser_params)
-                self._delta_t = u.delta_t
-                self._disp_3d = u.disp_3d
-                self._volume = u.volume
-            elif isinstance(trajectory, str):
-                structures = Xdatcar(trajectory).structures
-                u = PymatgenParser(structures, **parser_params)
-                self._delta_t = u.delta_t
-                self._disp_3d = u.disp_3d
-                self._volume = u.volume
-            else:
-                raise ValueError(
-                    "The structure of the input could not be recognised, please consult the documentation.")
-        if 'mdanalysis' in dtype:
-            try:
-                import MDAnalysis as mda
-            except ModuleNotFoundError:  # pragma: no cover
-                raise ModuleNotFoundError(
-                    "To use the MDAnalysis from file parsing, MDAnalysis must be installed.")  # pragma: no cover
-            if not isinstance(trajectory, mda.core.universe.Universe):
-                raise ValueError('To use the MDAnalysis input, the trajectory must be an MDAnalysis.Universe.')
-            u = MDAnalysisParser(trajectory, **parser_params)
-            self._delta_t = u.delta_t
-            self._disp_3d = u.disp_3d
-            self._volume = u.volume
+    def __init__(self, delta_t: ArrayLike, disp_3d: List[ArrayLike], volume: float):
+        self._delta_t = delta_t
+        self._disp_3d = disp_3d
+        self._volume = volume
+
+    @classmethod
+    def from_pymatgen(cls,
+                      trajectory: List[Union['pymatgen.core.structure.Structure',
+                                             List['pymatgen.core.structure.Structure']]],
+                      parser_params: dict,
+                      dtype: str = None,
+                      **kwargs):
+        """
+        Create a :py:class:`Analyzer` object from a list or nested list of
+        :py:class:`pymatgen.core.structure.Structure` objects.
+
+        :param trajectory: The list or nested list of structures to be analysed.
+        :param parser_params: The parameters for the :py:class:`kinisi.parser.PymatgenParser` object.
+            See the appropriate documentation for more guidance on this dictionary.
+        :param dtype: If :py:attr:`trajectory` is a list of :py:class:`pymatgen.core.structure.Structure`
+            objects, this should be :py:attr:`None`. However, if a list of lists is passed, then it is necessary
+            to identify if these constitute a series of :py:attr:`consecutive` trajectories or a series of
+            :py:attr:`identical` starting points with different random seeds, in which case the `dtype` should
+            be either :py:attr:`consecutive` or :py:attr:`identical`.
+
+        :return: Relevant :py:class:`Analyzer` object.
+        """
+        if dtype is None:
+            u = PymatgenParser(trajectory, **parser_params)
+            return cls(u.delta_t, u.disp_3d, u.volume, **kwargs)
+        elif dtype == 'identical':
+            u = [PymatgenParser(f, **parser_params) for f in trajectory]
+            return cls(u[0].delta_t, cls.stack_trajectories(u), u[0].volume, **kwargs)
+        elif dtype == 'consecutive':
+            structures = _flatten_list([x for x in trajectory])
+            u = PymatgenParser(structures, **parser_params)
+            return cls(u.delta_t, u.disp_3d, u.volume, **kwargs)
+        else:
+            raise ValueError('The dtype specified was not recognised, please consult the kinisi documentation.')
+
+    @classmethod
+    def from_Xdatcar(cls,
+                     trajectory: Union['pymatgen.io.vasp.outputs.Xdatcar', List['pymatgen.io.vasp.outputs.Xdatcar']],
+                     parser_params: dict,
+                     dtype: str = None,
+                     **kwargs):
+        """
+        Create a :py:class:`Analyzer` object from a single or a list of
+        :py:class:`pymatgen.io.vasp.outputs.Xdatcar` objects.
+
+        :param trajectory: The Xdatcar or list of Xdatcar objects to be analysed.
+        :param parser_params: The parameters for the :py:class:`kinisi.parser.PymatgenParser` object. See the
+            appropriate documentation for more guidance on this dictionary.
+        :param dtype: If :py:attr:`trajectory` is a :py:class:`pymatgen.io.vasp.outputs.Xdatcar` object, this
+            should be :py:attr:`None`. However, if a list of :py:class:`pymatgen.io.vasp.outputs.Xdatcar` objects is
+            passed, then it is necessary to identify if these constitute a series of :py:attr:`consecutive`
+            trajectories or a series of :py:attr:`identical` starting points with different random seeds, in which
+            case the `dtype` should be either :py:attr:`consecutive` or :py:attr:`identical`.
+
+        :return: Relevant :py:class:`Analyzer` object.
+        """
+        if dtype is None:
+            structures = trajectory.structures
+            u = PymatgenParser(structures, **parser_params)
+            return cls(u.delta_t, u.disp_3d, u.volume, **kwargs)
+        elif dtype == 'identical':
+            u = [PymatgenParser(f.structures, **parser_params) for f in trajectory]
+            return cls(u[0].delta_t, cls.stack_trajectories(u), u[0].volume, **kwargs)
+        elif dtype == 'consecutive':
+            structures = _flatten_list([x.structures for x in trajectory])
+            u = PymatgenParser(structures, **parser_params)
+            return cls(u.delta_t, u.disp_3d, u.volume, **kwargs)
+        else:
+            raise ValueError('The dtype specified was not recognised, please consult the kinisi documentation.')
+
+    @classmethod
+    def from_file(cls, trajectory: Union[str, List[str]], parser_params: dict, dtype: str = None, **kwargs):
+        """
+        Create a :py:class:`Analyzer` object from a single or a list of Xdatcar file(s).
+
+        :param trajectory: The file or list of Xdatcar files to be analysed.
+        :param parser_params: The parameters for the :py:class:`kinisi.parser.PymatgenParser` object. See the
+            appropriate documentation for more guidance on this dictionary.
+        :param dtype: If :py:attr:`trajectory` is a single file, this should be :py:attr:`None`. However, if a
+            list of files is passed, then it is necessary to identify if these constitute a series of
+            :py:attr:`consecutive` trajectories or a series of :py:attr:`identical` starting points with different
+            random seeds, in which case the `dtype` should be either :py:attr:`consecutive` or :py:attr:`identical`.
+
+        :return: Relevant :py:class:`Analyzer` object.
+        """
+        try:
+            from pymatgen.io.vasp import Xdatcar
+        except ModuleNotFoundError:  # pragma: no cover
+            raise ModuleNotFoundError(
+                "To use the from_pymatgen method, pymatgen must be installed.")  # pragma: no cover
+        if dtype is None:
+            structures = Xdatcar(trajectory).structures
+            u = PymatgenParser(structures, **parser_params)
+            return cls(u.delta_t, u.disp_3d, u.volume, **kwargs)
+        elif dtype == 'identical':
+            u = [PymatgenParser(Xdatcar(f).structures, **parser_params) for f in trajectory]
+            return cls(u[0].delta_t, cls.stack_trajectories(u), u[0].volume, **kwargs)
+        elif dtype == 'consecutive':
+            trajectory_list = (Xdatcar(f) for f in trajectory)
+            structures = _flatten_list([x.structures for x in trajectory_list])
+            u = PymatgenParser(structures, **parser_params)
+            return cls(u.delta_t, u.disp_3d, u.volume, **kwargs)
+        else:
+            raise ValueError('The dtype specified was not recognised, please consult the kinisi documentation.')
+
+    @classmethod
+    def from_universe(cls, trajectory: 'MDAnalysis.core.universe.Universe', parser_params: dict, **kwargs):
+        """
+        Create an :py:class:`Analyzer` object from an :py:class:`MDAnalysis.core.universe.Universe` object.
+
+        :param trajectory: The universe to be analysed.
+        :param parser_params: The parameters for the :py:class:`kinisi.parser.MDAnalysisParser` object.
+            See the appropriate documention for more guidance on this dictionary.
+
+        :return: Relevant :py:class:`Analyzer` object.
+        """
+        try:
+            import MDAnalysis as mda
+        except ModuleNotFoundError:  # pragma: no cover
+            raise ModuleNotFoundError(
+                "To use the MDAnalysis from file parsing, MDAnalysis must be installed.")  # pragma: no cover
+        if not isinstance(trajectory, mda.core.universe.Universe):
+            raise ValueError('To use the from_universe method, the trajectory must be an MDAnalysis Universe.')
+        u = MDAnalysisParser(trajectory, **parser_params)
+        return cls(u.delta_t, u.disp_3d, u.volume, **kwargs)
 
     @staticmethod
     def stack_trajectories(u: Union[MDAnalysisParser, PymatgenParser]) -> List[np.ndarray]:
@@ -178,33 +229,119 @@ class DiffusionAnalyzer(Analyzer):
     The time-dependence of the MSD is then modelled in a generalised least squares fashion to obtain the diffusion
     coefficient and offset using Markov chain Monte Carlo maximum likelihood sampling.
 
-    :param trajectory: The trajectory/ies to be analysed, supported trajectories are those from VASP (as file paths
-        to be read, :py:class:`pymatgen.io.vasp.outputs.Xdatcar` objects, or a :py:attr:`list` of
-        :py:class:`pymatgen.core.structure.Structure` objects) or in the format of an
-        :py:class:`MDAnalysis.core.Universe` (:py:attr:`dtype` should contain :py:attr:`'vasp'` or
-        :py:attr:`'mdanalysis'` as appropriate). Additionally, for VASP trajectories, a list of identical
-        starting points can be passed by using :py:attr:`dtype='identicalvasp'` and consecutive VASP trajectories
-        using :py:attr:`dtype='consecutivevasp'`.
-    :param parser_params: The parameters for the :py:mod:`kinisi.parser` object, which is either
-        :py:class:`kinisi.parser.PymatgenParser` or :py:class:`kinisi.parser.MDAnalysisParser` depending on the
-        input file format. See the appropriate documention for more guidance on this dictionary.
+    :param delta_t: An array of the timestep values.
+    :param disp_3d: A list of arrays, where each array has the axes [atom, displacement observation, dimension].
+        There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as
+        the number of observations is not necessary the same at each data point.
+    :param volume: The volume of the simulation cell.
     :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.DiffBootstrap` object. See
         the appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
-    :param dtype: The file format of the :py:attr:`trajectory`, see documentation for :py:attr:`trajectory` above.
-        Optional, defaults to :py:attr:`'vasp'`.
     """
     def __init__(self,
-                 trajectory: Union[str, 'pymatgen.io.vasp.outputs.Xdatcar', 'MDAnalysis.core.Universe',
-                                   List[Union['pymatgen.core.structure.Structure', str,
-                                              'pymatgen.io.vasp.outputs.Xdatcar',
-                                              List['pymatgen.core.structure.Structure']]]],
-                 parser_params: dict,
-                 bootstrap_params: Union[dict, None] = None,
-                 dtype: str = 'vasp'):
+                 delta_t: np.typing.ArrayLike,
+                 disp_3d: List[np.typing.ArrayLike],
+                 volume: float,
+                 bootstrap_params: Union[dict, None] = None):
         if bootstrap_params is None:
             bootstrap_params = {}
-        super().__init__(trajectory, parser_params, dtype)
+        super().__init__(delta_t, disp_3d, volume)
         self._diff = diffusion.MSDBootstrap(self._delta_t, self._disp_3d, **bootstrap_params)
+
+    @classmethod
+    def from_pymatgen(cls,
+                      trajectory: List[Union['pymatgen.core.structure.Structure',
+                                             List['pymatgen.core.structure.Structure']]],
+                      parser_params: dict,
+                      dtype: str = None,
+                      bootstrap_params: dict = None):
+        """
+        Create a :py:class:`DiffusionAnalyzer` object from a list or nested list of
+        :py:class:`pymatgen.core.structure.Structure` objects.
+
+        :param trajectory: The list or nested list of structures to be analysed.
+        :param parser_params: The parameters for the :py:class:`kinisi.parser.PymatgenParser` object. See the
+            appropriate documentation for more guidance on this dictionary.
+        :param dtype: If :py:attr:`trajectory` is a list of :py:class:`pymatgen.core.structure.Structure` objects,
+            this should be :py:attr:`None`. However, if a list of lists is passed, then it is necessary to identify if
+            these constitute a series of :py:attr:`consecutive` trajectories or a series of :py:attr:`identical`
+            starting points with different random seeds, in which case the `dtype` should be either
+            :py:attr:`consecutive` or :py:attr:`identical`.
+        :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
+            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+
+        :return: Relevant :py:class:`DiffusionAnalyzer` object.
+        """
+        # This exists to offer better documentation, in particular for the boostrap_params kwarg.
+        return super().from_pymatgen(trajectory, parser_params, dtype=dtype, bootstrap_params=bootstrap_params)
+
+    @classmethod
+    def from_Xdatcar(cls,
+                     trajectory: Union['pymatgen.io.vasp.outputs.Xdatcar', List['pymatgen.io.vasp.outputs.Xdatcar']],
+                     parser_params: dict,
+                     dtype: str = None,
+                     bootstrap_params: dict = None):
+        """
+        Create a :py:class:`DiffusionAnalyzer` object from a single or a list of
+        :py:class:`pymatgen.io.vasp.outputs.Xdatcar` objects.
+
+        :param trajectory: The Xdatcar or list of Xdatcar objects to be analysed.
+        :param parser_params: The parameters for the :py:class:`kinisi.parser.PymatgenParser` object. See the
+            appropriate documentation for more guidance on this dictionary.
+        :param dtype: If :py:attr:`trajectory` is a :py:class:`pymatgen.io.vasp.outputs.Xdatcar` object, this should
+            be :py:attr:`None`. However, if a list of :py:class:`pymatgen.io.vasp.outputs.Xdatcar` objects is passed,
+            then it is necessary to identify if these constitute a series of :py:attr:`consecutive` trajectories or a
+            series of :py:attr:`identical` starting points with different random seeds, in which case the `dtype`
+            should be either :py:attr:`consecutive` or :py:attr:`identical`.
+        :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
+            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+
+        :return: Relevant :py:class:`DiffusionAnalyzer` object.
+        """
+        # This exists to offer better documentation, in particular for the boostrap_params kwarg.
+        return super().from_Xdatcar(trajectory, parser_params, dtype=dtype, bootstrap_params=bootstrap_params)
+
+    @classmethod
+    def from_file(cls,
+                   trajectory: Union[str, List[str]],
+                   parser_params: dict,
+                   dtype: str = None,
+                   bootstrap_params: dict = None):
+        """
+        Create a :py:class:`DiffusionAnalyzer` object from a single or a list of Xdatcar file(s).
+
+        :param trajectory: The file or list of Xdatcar files to be analysed.
+        :param parser_params: The parameters for the :py:class:`kinisi.parser.PymatgenParser` object. See the
+            appropriate documentation for more guidance on this dictionary.
+        :param dtype: If :py:attr:`trajectory` is a single file, this should be :py:attr:`None`. However, if a
+            list of files is passed, then it is necessary to identify if these constitute a series of
+            :py:attr:`consecutive` trajectories or a series of :py:attr:`identical` starting points with different
+            random seeds, in which case the `dtype` should be either :py:attr:`consecutive` or :py:attr:`identical`.
+        :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
+            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+
+        :return: Relevant :py:class:`DiffusionAnalyzer` object.
+        """
+        # This exists to offer better documentation, in particular for the boostrap_params kwarg.
+        return super().from_file(trajectory, parser_params, dtype=dtype, bootstrap_params=bootstrap_params)
+
+    @classmethod
+    def from_universe(cls,
+                      trajectory: 'MDAnalysis.core.universe.Universe',
+                      parser_params: dict,
+                      bootstrap_params: dict = None):
+        """
+        Create an :py:class:`DiffusionAnalyzer` object from an :py:class:`MDAnalysis.core.universe.Universe` object.
+
+        :param trajectory: The universe to be analysed.
+        :param parser_params: The parameters for the :py:class:`kinisi.parser.MDAnalysisParser` object.
+            See the appropriate documention for more guidance on this dictionary.
+        :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
+            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+
+        :return: Relevant :py:class:`DiffusionAnalyzer` object.
+        """
+        # This exists to offer better documentation, in particular for the boostrap_params kwarg.
+        return super().from_universe(trajectory, parser_params, bootstrap_params=bootstrap_params)
 
     def diffusion(self, diffusion_params: Union[dict, None] = None):
         """
@@ -250,33 +387,119 @@ class JumpDiffusionAnalyzer(Analyzer):
     The time-dependence of the TMSD is then modelled in a generalised least squares fashion to obtain the jump
     diffusion coefficient and offset using Markov chain Monte Carlo maximum likelihood sampling.
 
-    :param trajectory: The trajectory/ies to be analysed, supported trajectories are those from VASP (as file paths
-        to be read, :py:class:`pymatgen.io.vasp.outputs.Xdatcar` objects, or a :py:attr:`list` of
-        :py:class:`pymatgen.core.structure.Structure` objects) or in the format of an
-        :py:class:`MDAnalysis.core.Universe` (:py:attr:`dtype` should contain :py:attr:`'vasp'` or
-        :py:attr:`'mdanalysis'` as appropriate). Additionally, for VASP trajectories, a list of identical
-        starting points can be passed by using :py:attr:`dtype='identicalvasp'` and consecutive VASP trajectories
-        using :py:attr:`dtype='consecutivevasp'`.
-    :param parser_params: The parameters for the :py:mod:`kinisi.parser` object, which is either
-        :py:class:`kinisi.parser.PymatgenParser` or :py:class:`kinisi.parser.MDAnalysisParser` depending on the
-        input file format. See the appropriate documention for more guidance on this dictionary.
+    :param delta_t: An array of the timestep values.
+    :param disp_3d: A list of arrays, where each array has the axes [atom, displacement observation, dimension].
+        There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as
+        the number of observations is not necessary the same at each data point.
+    :param volume: The volume of the simulation cell.
     :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.DiffBootstrap` object. See
         the appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
-    :param dtype: The file format of the :py:attr:`trajectory`, see documentation for :py:attr:`trajectory` above.
-        Optional, defaults to :py:attr:`'vasp'`.
     """
     def __init__(self,
-                 trajectory: Union[str, 'pymatgen.io.vasp.outputs.Xdatcar', 'MDAnalysis.core.Universe',
-                                   List[Union['pymatgen.core.structure.Structure', str,
-                                              'pymatgen.io.vasp.outputs.Xdatcar',
-                                              List['pymatgen.core.structure.Structure']]]],
-                 parser_params: dict,
-                 bootstrap_params: Union[dict, None] = None,
-                 dtype: str = 'vasp'):
+                 delta_t: np.typing.ArrayLike,
+                 disp_3d: List[np.typing.ArrayLike],
+                 volume: float,
+                 bootstrap_params: Union[dict, None] = None):
         if bootstrap_params is None:
             bootstrap_params = {}
-        super().__init__(trajectory, parser_params, dtype)
+        super().__init__(delta_t, disp_3d, volume)
         self._diff = diffusion.TMSDBootstrap(self._delta_t, self._disp_3d, **bootstrap_params)
+
+    @classmethod
+    def from_pymatgen(cls,
+                      trajectory: List[Union['pymatgen.core.structure.Structure',
+                                             List['pymatgen.core.structure.Structure']]],
+                      parser_params: dict,
+                      dtype: str = None,
+                      bootstrap_params: dict = None):
+        """
+        Create a :py:class:`JumpDiffusionAnalyzer` object from a list or nested list of
+        :py:class:`pymatgen.core.structure.Structure` objects.
+
+        :param trajectory: The list or nested list of structures to be analysed.
+        :param parser_params: The parameters for the :py:class:`kinisi.parser.PymatgenParser` object. See the
+            appropriate documentation for more guidance on this dictionary.
+        :param dtype: If :py:attr:`trajectory` is a list of :py:class:`pymatgen.core.structure.Structure` objects,
+            this should be :py:attr:`None`. However, if a list of lists is passed, then it is necessary to identify if
+            these constitute a series of :py:attr:`consecutive` trajectories or a series of :py:attr:`identical`
+            starting points with different random seeds, in which case the `dtype` should be either
+            :py:attr:`consecutive` or :py:attr:`identical`.
+        :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
+            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+
+        :return: Relevant :py:class:`JumpDiffusionAnalyzer` object.
+        """
+        # This exists to offer better documentation, in particular for the boostrap_params kwarg.
+        return super().from_pymatgen(trajectory, parser_params, dtype=dtype, bootstrap_params=bootstrap_params)
+
+    @classmethod
+    def from_Xdatcar(cls,
+                     trajectory: Union['pymatgen.io.vasp.outputs.Xdatcar', List['pymatgen.io.vasp.outputs.Xdatcar']],
+                     parser_params: dict,
+                     dtype: str = None,
+                     bootstrap_params: dict = None):
+        """
+        Create a :py:class:`JumpDiffusionAnalyzer` object from a single or a list of
+        :py:class:`pymatgen.io.vasp.outputs.Xdatcar` objects.
+
+        :param trajectory: The Xdatcar or list of Xdatcar objects to be analysed.
+        :param parser_params: The parameters for the :py:class:`kinisi.parser.PymatgenParser` object. See the
+            appropriate documentation for more guidance on this dictionary.
+        :param dtype: If :py:attr:`trajectory` is a :py:class:`pymatgen.io.vasp.outputs.Xdatcar` object, this should
+            be :py:attr:`None`. However, if a list of :py:class:`pymatgen.io.vasp.outputs.Xdatcar` objects is passed,
+            then it is necessary to identify if these constitute a series of :py:attr:`consecutive` trajectories or a
+            series of :py:attr:`identical` starting points with different random seeds, in which case the `dtype`
+            should be either :py:attr:`consecutive` or :py:attr:`identical`.
+        :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
+            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+
+        :return: Relevant :py:class:`JumpDiffusionAnalyzer` object.
+        """
+        # This exists to offer better documentation, in particular for the boostrap_params kwarg.
+        return super().from_Xdatcar(trajectory, parser_params, dtype=dtype, bootstrap_params=bootstrap_params)
+
+    @classmethod
+    def from_file(cls,
+                   trajectory: Union[str, List[str]],
+                   parser_params: dict,
+                   dtype: str = None,
+                   bootstrap_params: dict = None):
+        """
+        Create a :py:class:`JumpDiffusionAnalyzer` object from a single or a list of Xdatcar file(s).
+
+        :param trajectory: The file or list of Xdatcar files to be analysed.
+        :param parser_params: The parameters for the :py:class:`kinisi.parser.PymatgenParser` object. See the
+            appropriate documentation for more guidance on this dictionary.
+        :param dtype: If :py:attr:`trajectory` is a single file, this should be :py:attr:`None`. However, if a
+            list of files is passed, then it is necessary to identify if these constitute a series of
+            :py:attr:`consecutive` trajectories or a series of :py:attr:`identical` starting points with different
+            random seeds, in which case the `dtype` should be either :py:attr:`consecutive` or :py:attr:`identical`.
+        :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
+            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+
+        :return: Relevant :py:class:`JumpDiffusionAnalyzer` object.
+        """
+        # This exists to offer better documentation, in particular for the boostrap_params kwarg.
+        return super().from_file(trajectory, parser_params, dtype=dtype, bootstrap_params=bootstrap_params)
+
+    @classmethod
+    def from_universe(cls,
+                      trajectory: 'MDAnalysis.core.universe.Universe',
+                      parser_params: dict,
+                      bootstrap_params: dict = None):
+        """
+        Create an :py:class:`JumpDiffusionAnalyzer` object from an :py:class:`MDAnalysis.core.universe.Universe` object.
+
+        :param trajectory: The universe to be analysed.
+        :param parser_params: The parameters for the :py:class:`kinisi.parser.MDAnalysisParser` object.
+            See the appropriate documention for more guidance on this dictionary.
+        :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
+            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+
+        :return: Relevant :py:class:`JumpDiffusionAnalyzer` object.
+        """
+        # This exists to offer better documentation, in particular for the boostrap_params kwarg.
+        return super().from_universe(trajectory, parser_params, bootstrap_params=bootstrap_params)
 
     def jump_diffusion(self, jump_diffusion_params: Union[dict, None] = None):
         """
@@ -322,36 +545,149 @@ class ConductivityAnalyzer(Analyzer):
     The time-dependence of the MSCD is then modelled in a generalised least squares fashion to obtain the jump
     diffusion coefficient and offset using Markov chain Monte Carlo maximum likelihood sampling.
 
-    :param trajectory: The trajectory/ies to be analysed, supported trajectories are those from VASP (as file paths
-        to be read, :py:class:`pymatgen.io.vasp.outputs.Xdatcar` objects, or a :py:attr:`list` of
-        :py:class:`pymatgen.core.structure.Structure` objects) or in the format of an
-        :py:class:`MDAnalysis.core.Universe` (:py:attr:`dtype` should contain :py:attr:`'vasp'` or
-        :py:attr:`'mdanalysis'` as appropriate). Additionally, for VASP trajectories, a list of identical
-        starting points can be passed by using :py:attr:`dtype='identicalvasp'` and consecutive VASP trajectories
-        using :py:attr:`dtype='consecutivevasp'`.
-    :param ionic_charge: The charge on the mobile ions, either an array with a value for each ion or a scalar
-        if all values are the same
-    :param parser_params: The parameters for the :py:mod:`kinisi.parser` object, which is either
-        :py:class:`kinisi.parser.PymatgenParser` or :py:class:`kinisi.parser.MDAnalysisParser` depending on the
-        input file format. See the appropriate documention for more guidance on this dictionary.
+    :param delta_t: An array of the timestep values.
+    :param disp_3d: A list of arrays, where each array has the axes [atom, displacement observation, dimension].
+        There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as
+        the number of observations is not necessary the same at each data point.
+    :param volume: The volume of the simulation cell.
     :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.DiffBootstrap` object. See
         the appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
-    :param dtype: The file format of the :py:attr:`trajectory`, see documentation for :py:attr:`trajectory` above.
-        Optional, defaults to :py:attr:`'vasp'`.
+    :param ionic_charge: The charge on the mobile ions, either an array with a value for each ion or a scalar
+        if all values are the same. Optional, default is :py:attr:`1`.
     """
     def __init__(self,
-                 trajectory: Union[str, 'pymatgen.io.vasp.outputs.Xdatcar', 'MDAnalysis.core.Universe',
-                                   List[Union['pymatgen.core.structure.Structure', str,
-                                              'pymatgen.io.vasp.outputs.Xdatcar',
-                                              List['pymatgen.core.structure.Structure']]]],
-                 ionic_charge: Union[np.ndarray, int],
-                 parser_params: dict,
+                 delta_t: np.typing.ArrayLike,
+                 disp_3d: List[np.typing.ArrayLike],
+                 volume: float,
                  bootstrap_params: Union[dict, None] = None,
-                 dtype: str = 'vasp'):
+                 ionic_charge: Union[ArrayLike, int] = 1):
         if bootstrap_params is None:
             bootstrap_params = {}
-        super().__init__(trajectory, parser_params, dtype)
+        super().__init__(delta_t, disp_3d, volume)
         self._diff = diffusion.MSCDBootstrap(self._delta_t, self._disp_3d, ionic_charge, **bootstrap_params)
+
+    @classmethod
+    def from_pymatgen(cls,
+                      trajectory: List[Union['pymatgen.core.structure.Structure',
+                                             List['pymatgen.core.structure.Structure']]],
+                      parser_params: dict,
+                      dtype: str = None,
+                      bootstrap_params: dict = None,
+                      ionic_charge: Union[ArrayLike, int] = 1):
+        """
+        Create a :py:class:`ConductivityAnalyzer` object from a list or nested list of
+        :py:class:`pymatgen.core.structure.Structure` objects.
+
+        :param trajectory: The list or nested list of structures to be analysed.
+        :param parser_params: The parameters for the :py:class:`kinisi.parser.PymatgenParser` object. See the
+            appropriate documentation for more guidance on this dictionary.
+        :param dtype: If :py:attr:`trajectory` is a list of :py:class:`pymatgen.core.structure.Structure` objects,
+            this should be :py:attr:`None`. However, if a list of lists is passed, then it is necessary to identify if
+            these constitute a series of :py:attr:`consecutive` trajectories or a series of :py:attr:`identical`
+            starting points with different random seeds, in which case the `dtype` should be either
+            :py:attr:`consecutive` or :py:attr:`identical`.
+        :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
+            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+        :param ionic_charge: The charge on the mobile ions, either an array with a value for each ion or a scalar
+            if all values are the same. Optional, default is :py:attr:`1`.
+
+        :return: Relevant :py:class:`ConductivityAnalyzer` object.
+        """
+        # This exists to offer better documentation, in particular for the boostrap_params kwarg.
+        return super().from_pymatgen(trajectory,
+                                     parser_params,
+                                     dtype=dtype,
+                                     bootstrap_params=bootstrap_params,
+                                     ionic_charge=ionic_charge)
+
+    @classmethod
+    def from_Xdatcar(cls,
+                     trajectory: Union['pymatgen.io.vasp.outputs.Xdatcar', List['pymatgen.io.vasp.outputs.Xdatcar']],
+                     parser_params: dict,
+                     dtype: str = None,
+                     bootstrap_params: dict = None,
+                     ionic_charge: Union[ArrayLike, int] = 1):
+        """
+        Create a :py:class:`ConductivityAnalyzer` object from a single or a list of
+        :py:class:`pymatgen.io.vasp.outputs.Xdatcar` objects.
+
+        :param trajectory: The Xdatcar or list of Xdatcar objects to be analysed.
+        :param parser_params: The parameters for the :py:class:`kinisi.parser.PymatgenParser` object. See the
+            appropriate documentation for more guidance on this dictionary.
+        :param dtype: If :py:attr:`trajectory` is a :py:class:`pymatgen.io.vasp.outputs.Xdatcar` object, this should
+            be :py:attr:`None`. However, if a list of :py:class:`pymatgen.io.vasp.outputs.Xdatcar` objects is passed,
+            then it is necessary to identify if these constitute a series of :py:attr:`consecutive` trajectories or a
+            series of :py:attr:`identical` starting points with different random seeds, in which case the `dtype`
+            should be either :py:attr:`consecutive` or :py:attr:`identical`.
+        :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
+            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+        :param ionic_charge: The charge on the mobile ions, either an array with a value for each ion or a scalar
+            if all values are the same. Optional, default is :py:attr:`1`.
+
+        :return: Relevant :py:class:`ConductivityAnalyzer` object.
+        """
+        # This exists to offer better documentation, in particular for the boostrap_params kwarg.
+        return super().from_Xdatcar(trajectory,
+                                    parser_params,
+                                    dtype=dtype,
+                                    bootstrap_params=bootstrap_params,
+                                    ionic_charge=ionic_charge)
+
+    @classmethod
+    def from_file(cls,
+                   trajectory: Union[str, List[str]],
+                   parser_params: dict,
+                   dtype: str = None,
+                   bootstrap_params: dict = None,
+                   ionic_charge: Union[ArrayLike, int] = 1):
+        """
+        Create a :py:class:`ConductivityAnalyzer` object from a single or a list of Xdatcar file(s).
+
+        :param trajectory: The file or list of Xdatcar files to be analysed.
+        :param parser_params: The parameters for the :py:class:`kinisi.parser.PymatgenParser` object. See the
+            appropriate documentation for more guidance on this dictionary.
+        :param dtype: If :py:attr:`trajectory` is a single file, this should be :py:attr:`None`. However, if a
+            list of files is passed, then it is necessary to identify if these constitute a series of
+            :py:attr:`consecutive` trajectories or a series of :py:attr:`identical` starting points with different
+            random seeds, in which case the `dtype` should be either :py:attr:`consecutive` or :py:attr:`identical`.
+        :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
+            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+        :param ionic_charge: The charge on the mobile ions, either an array with a value for each ion or a scalar
+            if all values are the same. Optional, default is :py:attr:`1`.
+
+        :return: Relevant :py:class:`ConductivityAnalyzer` object.
+        """
+        # This exists to offer better documentation, in particular for the boostrap_params and ionic_charge kwarg.
+        return super().from_file(trajectory,
+                                  parser_params,
+                                  dtype=dtype,
+                                  bootstrap_params=bootstrap_params,
+                                  ionic_charge=ionic_charge)
+
+    @classmethod
+    def from_universe(cls,
+                      trajectory: 'MDAnalysis.core.universe.Universe',
+                      parser_params: dict,
+                      bootstrap_params: dict = None,
+                      ionic_charge: Union[ArrayLike, int] = 1):
+        """
+        Create an :py:class:`ConductivityAnalyzer` object from an :py:class:`MDAnalysis.core.universe.Universe` object.
+
+        :param trajectory: The universe to be analysed.
+        :param parser_params: The parameters for the :py:class:`kinisi.parser.MDAnalysisParser` object.
+            See the appropriate documention for more guidance on this dictionary.
+        :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
+            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+        :param ionic_charge: The charge on the mobile ions, either an array with a value for each ion or a scalar
+            if all values are the same. Optional, default is :py:attr:`1`.
+
+        :return: Relevant :py:class:`ConductivityAnalyzer` object.
+        """
+        # This exists to offer better documentation, in particular for the boostrap_params kwarg.
+        return super().from_universe(trajectory,
+                                     parser_params,
+                                     bootstrap_params=bootstrap_params,
+                                     ionic_charge=ionic_charge)
 
     def conductivity(self, temperature: float, conductivity_params: Union[dict, None] = None):
         """
