@@ -375,12 +375,12 @@ class TMSDBootstrap(Bootstrap):
     def __init__(self,
                  delta_t: np.ndarray,
                  disp_3d: List[np.ndarray],
-                 sub_sample_dt: int=1,
-                 n_resamples: int=1000,
-                 max_resamples: int=10000,
-                 alpha: float=1e-3,
-                 random_state: np.random.mtrand.RandomState=None,
-                 progress: bool=True):
+                 sub_sample_dt: int = 1,
+                 n_resamples: int = 1000,
+                 max_resamples: int = 10000,
+                 alpha: float = 1e-3,
+                 random_state: np.random.mtrand.RandomState = None,
+                 progress: bool = True):
         super().__init__(delta_t, disp_3d, sub_sample_dt, progress)
         for i in self._iterator:
             d_squared = np.sum(self._displacements[i]**2, axis=2)
