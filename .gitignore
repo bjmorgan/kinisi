@@ -8,4 +8,5 @@ kinisi.egg-info
 .coverage
 htmlcov
 **/.ipynb_checkpoints
+**/Untitled.ipynb
 abstracts
