@@ -25,7 +25,7 @@ Examples of some of these analyses are shown in the `tutorials`_, also given the
   and the estimate of the start of the diffusive regime using the maximum of the non-Gaussian parameter (green vertical line).
 
 Contributors
-------------
+============
 
 `Andrew R. McCluskey`_ | `Benjamin J. Morgan`_
 
