@@ -16,35 +16,34 @@ These are all compatible with VASP Xdatcar output files, pymatgen structures and
 
 from typing import Union, List
 import numpy as np
-from numpy.typing import ArrayLike
 from kinisi import diffusion
 from kinisi.parser import MDAnalysisParser, PymatgenParser
 
 
 class Analyzer:
     """
-    The :py:class:`kinisi.analyze.Analyzer` class manages the API to the
-    :py:class:`kinisi.analyze.DiffusionAnalyzer`, :py:class:`kinisi.analyze.JumpDiffusionAnalyzer`
-    and :py:class:`kinisi.analyze.ConductivityAnalyzer` classes.
+    This class is the superclass for the :py:class:`kinisi.analyze.DiffusionAnalyzer`, 
+    :py:class:`kinisi.analyze.JumpDiffusionAnalyzer` and :py:class:`kinisi.analyze.ConductivityAnalyzer` classes. 
+    Therefore all of the properties here are available to these other classes. 
 
     :param delta_t: An array of the timestep values.
-    :param disp_3d: A list of arrays, where each array has the axes [atom, displacement observation, dimension].
-        There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as
-        the number of observations is not necessary the same at each data point.
+    :param disp_3d: A list of arrays, where each array has the axes :code:`[atom, displacement observation,
+        dimension]`. There is one array in the list for each delta_t value. Note: it is necessary to use a
+        list of arrays as the number of observations is not necessary the same at each data point.
     :param volume: The volume of the simulation cell.
     """
-    def __init__(self, delta_t: ArrayLike, disp_3d: List[ArrayLike], volume: float):
+    def __init__(self, delta_t: np.ndarray, disp_3d: List[np.ndarray], volume: float):
         self._delta_t = delta_t
         self._disp_3d = disp_3d
         self._volume = volume
 
     @classmethod
-    def from_pymatgen(cls,
-                      trajectory: List[Union['pymatgen.core.structure.Structure',
-                                             List['pymatgen.core.structure.Structure']]],
-                      parser_params: dict,
-                      dtype: str = None,
-                      **kwargs):
+    def _from_pymatgen(cls,
+                       trajectory: List[Union['pymatgen.core.structure.Structure',
+                                              List['pymatgen.core.structure.Structure']]],
+                       parser_params: dict,
+                       dtype: str = None,
+                       **kwargs):
         """
         Create a :py:class:`Analyzer` object from a list or nested list of
         :py:class:`pymatgen.core.structure.Structure` objects.
@@ -65,7 +64,7 @@ class Analyzer:
             return cls(u.delta_t, u.disp_3d, u.volume, **kwargs)
         elif dtype == 'identical':
             u = [PymatgenParser(f, **parser_params) for f in trajectory]
-            return cls(u[0].delta_t, cls.stack_trajectories(u), u[0].volume, **kwargs)
+            return cls(u[0].delta_t, cls._stack_trajectories(u), u[0].volume, **kwargs)
         elif dtype == 'consecutive':
             structures = _flatten_list([x for x in trajectory])
             u = PymatgenParser(structures, **parser_params)
@@ -74,11 +73,11 @@ class Analyzer:
             raise ValueError('The dtype specified was not recognised, please consult the kinisi documentation.')
 
     @classmethod
-    def from_Xdatcar(cls,
-                     trajectory: Union['pymatgen.io.vasp.outputs.Xdatcar', List['pymatgen.io.vasp.outputs.Xdatcar']],
-                     parser_params: dict,
-                     dtype: str = None,
-                     **kwargs):
+    def _from_Xdatcar(cls,
+                      trajectory: Union['pymatgen.io.vasp.outputs.Xdatcar', List['pymatgen.io.vasp.outputs.Xdatcar']],
+                      parser_params: dict,
+                      dtype: str = None,
+                      **kwargs):
         """
         Create a :py:class:`Analyzer` object from a single or a list of
         :py:class:`pymatgen.io.vasp.outputs.Xdatcar` objects.
@@ -100,7 +99,7 @@ class Analyzer:
             return cls(u.delta_t, u.disp_3d, u.volume, **kwargs)
         elif dtype == 'identical':
             u = [PymatgenParser(f.structures, **parser_params) for f in trajectory]
-            return cls(u[0].delta_t, cls.stack_trajectories(u), u[0].volume, **kwargs)
+            return cls(u[0].delta_t, cls._stack_trajectories(u), u[0].volume, **kwargs)
         elif dtype == 'consecutive':
             structures = _flatten_list([x.structures for x in trajectory])
             u = PymatgenParser(structures, **parser_params)
@@ -109,7 +108,7 @@ class Analyzer:
             raise ValueError('The dtype specified was not recognised, please consult the kinisi documentation.')
 
     @classmethod
-    def from_file(cls, trajectory: Union[str, List[str]], parser_params: dict, dtype: str = None, **kwargs):
+    def _from_file(cls, trajectory: Union[str, List[str]], parser_params: dict, dtype: str = None, **kwargs):
         """
         Create a :py:class:`Analyzer` object from a single or a list of Xdatcar file(s).
 
@@ -126,15 +125,14 @@ class Analyzer:
         try:
             from pymatgen.io.vasp import Xdatcar
         except ModuleNotFoundError:  # pragma: no cover
-            raise ModuleNotFoundError(
-                "To use the from_pymatgen method, pymatgen must be installed.")  # pragma: no cover
+            raise ModuleNotFoundError("To use the from_file method, pymatgen must be installed.")  # pragma: no cover
         if dtype is None:
             structures = Xdatcar(trajectory).structures
             u = PymatgenParser(structures, **parser_params)
             return cls(u.delta_t, u.disp_3d, u.volume, **kwargs)
         elif dtype == 'identical':
             u = [PymatgenParser(Xdatcar(f).structures, **parser_params) for f in trajectory]
-            return cls(u[0].delta_t, cls.stack_trajectories(u), u[0].volume, **kwargs)
+            return cls(u[0].delta_t, cls._stack_trajectories(u), u[0].volume, **kwargs)
         elif dtype == 'consecutive':
             trajectory_list = (Xdatcar(f) for f in trajectory)
             structures = _flatten_list([x.structures for x in trajectory_list])
@@ -144,7 +142,7 @@ class Analyzer:
             raise ValueError('The dtype specified was not recognised, please consult the kinisi documentation.')
 
     @classmethod
-    def from_universe(cls, trajectory: 'MDAnalysis.core.universe.Universe', parser_params: dict, **kwargs):
+    def _from_universe(cls, trajectory: 'MDAnalysis.core.universe.Universe', parser_params: dict, **kwargs):
         """
         Create an :py:class:`Analyzer` object from an :py:class:`MDAnalysis.core.universe.Universe` object.
 
@@ -165,7 +163,7 @@ class Analyzer:
         return cls(u.delta_t, u.disp_3d, u.volume, **kwargs)
 
     @staticmethod
-    def stack_trajectories(u: Union[MDAnalysisParser, PymatgenParser]) -> List[np.ndarray]:
+    def _stack_trajectories(u: Union[MDAnalysisParser, PymatgenParser]) -> List[np.ndarray]:
         """
         If more than one trajectory is given, then they are stacked to give the appearence that there are
         additional atoms in the trajectory.
@@ -193,7 +191,7 @@ class Analyzer:
     @property
     def dr(self) -> List['uravu.distribution.Distribution']:
         """
-        :return: a list of :py:class:`uravu.distribution.Distribution` objects that describe the euclidian
+        :return: A list of :py:class:`uravu.distribution.Distribution` objects that describe the euclidian
             displacement at each :py:attr:`dt`.
         """
         return self._diff.euclidian_displacements
@@ -225,7 +223,7 @@ class DiffusionAnalyzer(Analyzer):
     The :py:class:`kinisi.analyze.DiffusionAnalyzer` class performs analysis of diffusion relationships in
     materials.
     This is achieved through the application of a bootstrapping methodology to obtain the most statistically
-    accurate values for mean squared displacement uncertainty and covariance.
+    accurate values for mean squared displacement uncertainty and estimating the covariance.
     The time-dependence of the MSD is then modelled in a generalised least squares fashion to obtain the diffusion
     coefficient and offset using Markov chain Monte Carlo maximum likelihood sampling.
 
@@ -238,8 +236,8 @@ class DiffusionAnalyzer(Analyzer):
         the appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
     """
     def __init__(self,
-                 delta_t: np.typing.ArrayLike,
-                 disp_3d: List[np.typing.ArrayLike],
+                 delta_t: np.ndarray,
+                 disp_3d: List[np.ndarray],
                  volume: float,
                  bootstrap_params: Union[dict, None] = None):
         if bootstrap_params is None:
@@ -259,6 +257,7 @@ class DiffusionAnalyzer(Analyzer):
         :py:class:`pymatgen.core.structure.Structure` objects.
 
         :param trajectory: The list or nested list of structures to be analysed.
+        :dtype trajectory: List[Union['pymatgen.core.structure.Structure', List['pymatgen.core.structure.Structure']]]
         :param parser_params: The parameters for the :py:class:`kinisi.parser.PymatgenParser` object. See the
             appropriate documentation for more guidance on this dictionary.
         :param dtype: If :py:attr:`trajectory` is a list of :py:class:`pymatgen.core.structure.Structure` objects,
@@ -272,7 +271,7 @@ class DiffusionAnalyzer(Analyzer):
         :return: Relevant :py:class:`DiffusionAnalyzer` object.
         """
         # This exists to offer better documentation, in particular for the boostrap_params kwarg.
-        return super().from_pymatgen(trajectory, parser_params, dtype=dtype, bootstrap_params=bootstrap_params)
+        return super()._from_pymatgen(trajectory, parser_params, dtype=dtype, bootstrap_params=bootstrap_params)
 
     @classmethod
     def from_Xdatcar(cls,
@@ -298,14 +297,14 @@ class DiffusionAnalyzer(Analyzer):
         :return: Relevant :py:class:`DiffusionAnalyzer` object.
         """
         # This exists to offer better documentation, in particular for the boostrap_params kwarg.
-        return super().from_Xdatcar(trajectory, parser_params, dtype=dtype, bootstrap_params=bootstrap_params)
+        return super()._from_Xdatcar(trajectory, parser_params, dtype=dtype, bootstrap_params=bootstrap_params)
 
     @classmethod
     def from_file(cls,
-                   trajectory: Union[str, List[str]],
-                   parser_params: dict,
-                   dtype: str = None,
-                   bootstrap_params: dict = None):
+                  trajectory: Union[str, List[str]],
+                  parser_params: dict,
+                  dtype: str = None,
+                  bootstrap_params: dict = None):
         """
         Create a :py:class:`DiffusionAnalyzer` object from a single or a list of Xdatcar file(s).
 
@@ -322,7 +321,7 @@ class DiffusionAnalyzer(Analyzer):
         :return: Relevant :py:class:`DiffusionAnalyzer` object.
         """
         # This exists to offer better documentation, in particular for the boostrap_params kwarg.
-        return super().from_file(trajectory, parser_params, dtype=dtype, bootstrap_params=bootstrap_params)
+        return super()._from_file(trajectory, parser_params, dtype=dtype, bootstrap_params=bootstrap_params)
 
     @classmethod
     def from_universe(cls,
@@ -341,7 +340,7 @@ class DiffusionAnalyzer(Analyzer):
         :return: Relevant :py:class:`DiffusionAnalyzer` object.
         """
         # This exists to offer better documentation, in particular for the boostrap_params kwarg.
-        return super().from_universe(trajectory, parser_params, bootstrap_params=bootstrap_params)
+        return super()._from_universe(trajectory, parser_params, bootstrap_params=bootstrap_params)
 
     def diffusion(self, diffusion_params: Union[dict, None] = None):
         """
@@ -396,8 +395,8 @@ class JumpDiffusionAnalyzer(Analyzer):
         the appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
     """
     def __init__(self,
-                 delta_t: np.typing.ArrayLike,
-                 disp_3d: List[np.typing.ArrayLike],
+                 delta_t: np.ndarray,
+                 disp_3d: List[np.ndarray],
                  volume: float,
                  bootstrap_params: Union[dict, None] = None):
         if bootstrap_params is None:
@@ -430,7 +429,7 @@ class JumpDiffusionAnalyzer(Analyzer):
         :return: Relevant :py:class:`JumpDiffusionAnalyzer` object.
         """
         # This exists to offer better documentation, in particular for the boostrap_params kwarg.
-        return super().from_pymatgen(trajectory, parser_params, dtype=dtype, bootstrap_params=bootstrap_params)
+        return super()._from_pymatgen(trajectory, parser_params, dtype=dtype, bootstrap_params=bootstrap_params)
 
     @classmethod
     def from_Xdatcar(cls,
@@ -456,14 +455,14 @@ class JumpDiffusionAnalyzer(Analyzer):
         :return: Relevant :py:class:`JumpDiffusionAnalyzer` object.
         """
         # This exists to offer better documentation, in particular for the boostrap_params kwarg.
-        return super().from_Xdatcar(trajectory, parser_params, dtype=dtype, bootstrap_params=bootstrap_params)
+        return super()._from_Xdatcar(trajectory, parser_params, dtype=dtype, bootstrap_params=bootstrap_params)
 
     @classmethod
     def from_file(cls,
-                   trajectory: Union[str, List[str]],
-                   parser_params: dict,
-                   dtype: str = None,
-                   bootstrap_params: dict = None):
+                  trajectory: Union[str, List[str]],
+                  parser_params: dict,
+                  dtype: str = None,
+                  bootstrap_params: dict = None):
         """
         Create a :py:class:`JumpDiffusionAnalyzer` object from a single or a list of Xdatcar file(s).
 
@@ -480,7 +479,7 @@ class JumpDiffusionAnalyzer(Analyzer):
         :return: Relevant :py:class:`JumpDiffusionAnalyzer` object.
         """
         # This exists to offer better documentation, in particular for the boostrap_params kwarg.
-        return super().from_file(trajectory, parser_params, dtype=dtype, bootstrap_params=bootstrap_params)
+        return super()._from_file(trajectory, parser_params, dtype=dtype, bootstrap_params=bootstrap_params)
 
     @classmethod
     def from_universe(cls,
@@ -499,7 +498,7 @@ class JumpDiffusionAnalyzer(Analyzer):
         :return: Relevant :py:class:`JumpDiffusionAnalyzer` object.
         """
         # This exists to offer better documentation, in particular for the boostrap_params kwarg.
-        return super().from_universe(trajectory, parser_params, bootstrap_params=bootstrap_params)
+        return super()._from_universe(trajectory, parser_params, bootstrap_params=bootstrap_params)
 
     def jump_diffusion(self, jump_diffusion_params: Union[dict, None] = None):
         """
@@ -556,11 +555,11 @@ class ConductivityAnalyzer(Analyzer):
         if all values are the same. Optional, default is :py:attr:`1`.
     """
     def __init__(self,
-                 delta_t: np.typing.ArrayLike,
-                 disp_3d: List[np.typing.ArrayLike],
+                 delta_t: np.ndarray,
+                 disp_3d: List[np.ndarray],
                  volume: float,
                  bootstrap_params: Union[dict, None] = None,
-                 ionic_charge: Union[ArrayLike, int] = 1):
+                 ionic_charge: Union[np.ndarray, int] = 1):
         if bootstrap_params is None:
             bootstrap_params = {}
         super().__init__(delta_t, disp_3d, volume)
@@ -573,7 +572,7 @@ class ConductivityAnalyzer(Analyzer):
                       parser_params: dict,
                       dtype: str = None,
                       bootstrap_params: dict = None,
-                      ionic_charge: Union[ArrayLike, int] = 1):
+                      ionic_charge: Union[np.ndarray, int] = 1):
         """
         Create a :py:class:`ConductivityAnalyzer` object from a list or nested list of
         :py:class:`pymatgen.core.structure.Structure` objects.
@@ -594,11 +593,11 @@ class ConductivityAnalyzer(Analyzer):
         :return: Relevant :py:class:`ConductivityAnalyzer` object.
         """
         # This exists to offer better documentation, in particular for the boostrap_params kwarg.
-        return super().from_pymatgen(trajectory,
-                                     parser_params,
-                                     dtype=dtype,
-                                     bootstrap_params=bootstrap_params,
-                                     ionic_charge=ionic_charge)
+        return super()._from_pymatgen(trajectory,
+                                      parser_params,
+                                      dtype=dtype,
+                                      bootstrap_params=bootstrap_params,
+                                      ionic_charge=ionic_charge)
 
     @classmethod
     def from_Xdatcar(cls,
@@ -606,7 +605,7 @@ class ConductivityAnalyzer(Analyzer):
                      parser_params: dict,
                      dtype: str = None,
                      bootstrap_params: dict = None,
-                     ionic_charge: Union[ArrayLike, int] = 1):
+                     ionic_charge: Union[np.ndarray, int] = 1):
         """
         Create a :py:class:`ConductivityAnalyzer` object from a single or a list of
         :py:class:`pymatgen.io.vasp.outputs.Xdatcar` objects.
@@ -627,19 +626,19 @@ class ConductivityAnalyzer(Analyzer):
         :return: Relevant :py:class:`ConductivityAnalyzer` object.
         """
         # This exists to offer better documentation, in particular for the boostrap_params kwarg.
-        return super().from_Xdatcar(trajectory,
-                                    parser_params,
-                                    dtype=dtype,
-                                    bootstrap_params=bootstrap_params,
-                                    ionic_charge=ionic_charge)
+        return super()._from_Xdatcar(trajectory,
+                                     parser_params,
+                                     dtype=dtype,
+                                     bootstrap_params=bootstrap_params,
+                                     ionic_charge=ionic_charge)
 
     @classmethod
     def from_file(cls,
-                   trajectory: Union[str, List[str]],
-                   parser_params: dict,
-                   dtype: str = None,
-                   bootstrap_params: dict = None,
-                   ionic_charge: Union[ArrayLike, int] = 1):
+                  trajectory: Union[str, List[str]],
+                  parser_params: dict,
+                  dtype: str = None,
+                  bootstrap_params: dict = None,
+                  ionic_charge: Union[np.ndarray, int] = 1):
         """
         Create a :py:class:`ConductivityAnalyzer` object from a single or a list of Xdatcar file(s).
 
@@ -658,7 +657,7 @@ class ConductivityAnalyzer(Analyzer):
         :return: Relevant :py:class:`ConductivityAnalyzer` object.
         """
         # This exists to offer better documentation, in particular for the boostrap_params and ionic_charge kwarg.
-        return super().from_file(trajectory,
+        return super()._from_file(trajectory,
                                   parser_params,
                                   dtype=dtype,
                                   bootstrap_params=bootstrap_params,
@@ -669,7 +668,7 @@ class ConductivityAnalyzer(Analyzer):
                       trajectory: 'MDAnalysis.core.universe.Universe',
                       parser_params: dict,
                       bootstrap_params: dict = None,
-                      ionic_charge: Union[ArrayLike, int] = 1):
+                      ionic_charge: Union[np.ndarray, int] = 1):
         """
         Create an :py:class:`ConductivityAnalyzer` object from an :py:class:`MDAnalysis.core.universe.Universe` object.
 
@@ -684,10 +683,10 @@ class ConductivityAnalyzer(Analyzer):
         :return: Relevant :py:class:`ConductivityAnalyzer` object.
         """
         # This exists to offer better documentation, in particular for the boostrap_params kwarg.
-        return super().from_universe(trajectory,
-                                     parser_params,
-                                     bootstrap_params=bootstrap_params,
-                                     ionic_charge=ionic_charge)
+        return super()._from_universe(trajectory,
+                                      parser_params,
+                                      bootstrap_params=bootstrap_params,
+                                      ionic_charge=ionic_charge)
 
     def conductivity(self, temperature: float, conductivity_params: Union[dict, None] = None):
         """

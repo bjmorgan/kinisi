@@ -33,7 +33,7 @@ class TestAnalyzer(unittest.TestCase):
     Tests for the Analyzer base class.
     """
     def test_structure_pmg(self):
-        a = Analyzer.from_pymatgen(xd.structures, parser_params=da_params)
+        a = Analyzer._from_pymatgen(xd.structures, parser_params=da_params)
         assert a._delta_t.size == 139
         assert_almost_equal(a._delta_t.max(), 13.9)
         assert len(a._disp_3d) == 139
@@ -41,7 +41,7 @@ class TestAnalyzer(unittest.TestCase):
         assert a._disp_3d[-1].shape == (192, 1, 3)
 
     def test_xdatcar_pmg(self):
-        a = Analyzer.from_Xdatcar(xd, parser_params=da_params)
+        a = Analyzer._from_Xdatcar(xd, parser_params=da_params)
         assert a._delta_t.size == 139
         assert_almost_equal(a._delta_t.max(), 13.9)
         assert len(a._disp_3d) == 139
@@ -49,7 +49,7 @@ class TestAnalyzer(unittest.TestCase):
         assert a._disp_3d[-1].shape == (192, 1, 3)
 
     def test_file_path_pmg(self):
-        a = Analyzer.from_file(file_path, parser_params=da_params)
+        a = Analyzer._from_file(file_path, parser_params=da_params)
         assert a._delta_t.size == 139
         assert_almost_equal(a._delta_t.max(), 13.9)
         assert len(a._disp_3d) == 139
@@ -57,7 +57,7 @@ class TestAnalyzer(unittest.TestCase):
         assert a._disp_3d[-1].shape == (192, 1, 3)
 
     def test_identical_structure_pmg(self):
-        a = Analyzer.from_pymatgen([xd.structures, xd.structures], parser_params=da_params, dtype='identical')
+        a = Analyzer._from_pymatgen([xd.structures, xd.structures], parser_params=da_params, dtype='identical')
         assert a._delta_t.size == 139
         assert_almost_equal(a._delta_t.max(), 13.9)
         assert len(a._disp_3d) == 139
@@ -65,7 +65,7 @@ class TestAnalyzer(unittest.TestCase):
         assert a._disp_3d[-1].shape == (384, 1, 3)
 
     def test_identical_xdatcar_pmg(self):
-        a = Analyzer.from_Xdatcar([xd, xd], parser_params=da_params, dtype='identical')
+        a = Analyzer._from_Xdatcar([xd, xd], parser_params=da_params, dtype='identical')
         assert a._delta_t.size == 139
         assert_almost_equal(a._delta_t.max(), 13.9)
         assert len(a._disp_3d) == 139
@@ -73,7 +73,7 @@ class TestAnalyzer(unittest.TestCase):
         assert a._disp_3d[-1].shape == (384, 1, 3)
 
     def test_identical_file_path_pmg(self):
-        a = Analyzer.from_file([file_path, file_path], parser_params=da_params, dtype='identical')
+        a = Analyzer._from_file([file_path, file_path], parser_params=da_params, dtype='identical')
         assert a._delta_t.size == 139
         assert a._delta_t.max() == 13.90
         assert len(a._disp_3d) == 139
@@ -81,7 +81,7 @@ class TestAnalyzer(unittest.TestCase):
         assert a._disp_3d[-1].shape == (384, 1, 3)
 
     def test_consecutive_structure_pmg(self):
-        a = Analyzer.from_pymatgen([xd.structures, xd.structures], parser_params=da_params, dtype='consecutive')
+        a = Analyzer._from_pymatgen([xd.structures, xd.structures], parser_params=da_params, dtype='consecutive')
         assert a._delta_t.size == 93
         assert_almost_equal(a._delta_t.max(), 27.7)
         assert len(a._disp_3d) == 93
@@ -89,7 +89,7 @@ class TestAnalyzer(unittest.TestCase):
         assert a._disp_3d[-1].shape == (192, 3, 3)
 
     def test_consecutive_xdatcar_pmg(self):
-        a = Analyzer.from_Xdatcar([xd, xd], parser_params=da_params, dtype='consecutive')
+        a = Analyzer._from_Xdatcar([xd, xd], parser_params=da_params, dtype='consecutive')
         assert a._delta_t.size == 93
         assert_almost_equal(a._delta_t.max(), 27.7)
         assert len(a._disp_3d) == 93
@@ -97,7 +97,7 @@ class TestAnalyzer(unittest.TestCase):
         assert a._disp_3d[-1].shape == (192, 3, 3)
 
     def test_consecutive_file_path_pmg(self):
-        a = Analyzer.from_file([file_path, file_path], parser_params=da_params, dtype='consecutive')
+        a = Analyzer._from_file([file_path, file_path], parser_params=da_params, dtype='consecutive')
         assert a._delta_t.size == 93
         assert_almost_equal(a._delta_t.max(), 27.7)
         assert len(a._disp_3d) == 93
@@ -105,7 +105,7 @@ class TestAnalyzer(unittest.TestCase):
         assert a._disp_3d[-1].shape == (192, 3, 3)
 
     def test_mdauniverse(self):
-        a = Analyzer.from_universe(md, parser_params=db_params)
+        a = Analyzer._from_universe(md, parser_params=db_params)
         assert a._delta_t.size == 120
         assert_almost_equal(a._delta_t.max(), 248.75)
         assert len(a._disp_3d) == 120
@@ -114,11 +114,11 @@ class TestAnalyzer(unittest.TestCase):
 
     def test_list_bad_input(self):
         with self.assertRaises(ValueError):
-            a = Analyzer.from_file([file_path, file_path], parser_params=da_params, dtype='consecutie')
+            a = Analyzer._from_file([file_path, file_path], parser_params=da_params, dtype='consecutie')
 
     def test_list_bad_mda(self):
         with self.assertRaises(ValueError):
-            a = Analyzer.from_universe(file_path, parser_params=db_params)
+            a = Analyzer._from_universe(file_path, parser_params=db_params)
 
 
 class TestDiffusionAnalyzer(unittest.TestCase):
@@ -128,8 +128,8 @@ class TestDiffusionAnalyzer(unittest.TestCase):
     def test_properties(self):
         with warnings.catch_warnings(record=True) as w:
             a = DiffusionAnalyzer.from_pymatgen(xd.structures,
-                                  parser_params=da_params,
-                                  bootstrap_params={'random_state': np.random.RandomState(0)})
+                                                parser_params=da_params,
+                                                bootstrap_params={'random_state': np.random.RandomState(0)})
             assert_almost_equal(a.dt, a._diff.dt)
             assert_almost_equal(a.msd, a._diff.n)
             assert_almost_equal(a.msd_std, a._diff.s)
@@ -143,8 +143,8 @@ class TestDiffusionAnalyzer(unittest.TestCase):
     def test_diffusion(self):
         with warnings.catch_warnings(record=True) as w:
             a = DiffusionAnalyzer.from_pymatgen(xd.structures,
-                                  parser_params=da_params,
-                                  bootstrap_params={'random_state': np.random.RandomState(0)})
+                                                parser_params=da_params,
+                                                bootstrap_params={'random_state': np.random.RandomState(0)})
             assert_almost_equal(a.dt, a._diff.dt)
             assert_almost_equal(a.msd, a._diff.n)
             assert_almost_equal(a.msd_std, a._diff.s)
@@ -164,8 +164,8 @@ class TestJumpDiffusionAnalyzer(unittest.TestCase):
     def test_properties(self):
         with warnings.catch_warnings(record=True) as w:
             a = JumpDiffusionAnalyzer.from_pymatgen(xd.structures,
-                                      parser_params=da_params,
-                                      bootstrap_params={'random_state': np.random.RandomState(0)})
+                                                    parser_params=da_params,
+                                                    bootstrap_params={'random_state': np.random.RandomState(0)})
             assert_almost_equal(a.dt, a._diff.dt)
             assert_almost_equal(a.tmsd, a._diff.n)
             assert_almost_equal(a.tmsd_std, a._diff.s)
@@ -178,8 +178,8 @@ class TestJumpDiffusionAnalyzer(unittest.TestCase):
     def test_diffusion(self):
         with warnings.catch_warnings(record=True) as w:
             a = JumpDiffusionAnalyzer.from_pymatgen(xd.structures,
-                                      parser_params=da_params,
-                                      bootstrap_params={'random_state': np.random.RandomState(0)})
+                                                    parser_params=da_params,
+                                                    bootstrap_params={'random_state': np.random.RandomState(0)})
             assert_almost_equal(a.dt, a._diff.dt)
             assert_almost_equal(a.tmsd, a._diff.n)
             assert_almost_equal(a.tmsd_std, a._diff.s)
@@ -199,9 +199,9 @@ class TestConductivityAnalyzer(unittest.TestCase):
     def test_properties(self):
         with warnings.catch_warnings(record=True) as w:
             a = ConductivityAnalyzer.from_pymatgen(xd.structures,
-                                     parser_params=da_params,
-                                     bootstrap_params={'random_state': np.random.RandomState(0)},
-                                     ionic_charge=1)
+                                                   parser_params=da_params,
+                                                   bootstrap_params={'random_state': np.random.RandomState(0)},
+                                                   ionic_charge=1)
             assert_almost_equal(a.dt, a._diff.dt)
             assert_almost_equal(a.mscd, a._diff.n)
             assert_almost_equal(a.mscd_std, a._diff.s)
@@ -214,9 +214,9 @@ class TestConductivityAnalyzer(unittest.TestCase):
     def test_diffusion(self):
         with warnings.catch_warnings(record=True) as w:
             a = ConductivityAnalyzer.from_pymatgen(xd.structures,
-                                     parser_params=da_params,
-                                     bootstrap_params={'random_state': np.random.RandomState(0)},
-                                     ionic_charge=1)
+                                                   parser_params=da_params,
+                                                   bootstrap_params={'random_state': np.random.RandomState(0)},
+                                                   ionic_charge=1)
             assert_almost_equal(a.dt, a._diff.dt)
             assert_almost_equal(a.mscd, a._diff.n)
             assert_almost_equal(a.mscd_std, a._diff.s)
