@@ -51,8 +51,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.imgmath',
     'sphinx_autodoc_typehints',
-    'myst_nb',
-    'jupyter_sphinx'
+    'myst_nb'
 ]
 
 source_suffix = {
