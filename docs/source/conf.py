@@ -54,6 +54,8 @@ extensions = [
     'myst_nb'
 ]
 
+nbsphinx_timeout = 900
+
 source_suffix = {
     '.ipynb': 'myst-nb',
 }
