@@ -42,10 +42,24 @@ class StandardArrhenius(Relationship):
     def __init__(self,
                  temperature: np.ndarray,
                  diffusion: Union[List['uravu.distribution.Distribution'], np.ndarray],
-                 bounds: Tuple[Tuple[float, float], Tuple[float, float]],
+                 bounds: Tuple[Tuple[float, float], Tuple[float, float]] = ((0, 1), (0, 1e20)),
                  diffusion_error: np.ndarray = None,
                  ci_points: Tuple[float, float] = None):
         super().__init__(arrhenius, temperature, diffusion, bounds, ordinate_error=diffusion_error, ci_points=None)
+    
+    @property
+    def activation_energy(self) -> 'uravu.distribution.Distribution':
+        """
+        :return: Activated energy distribution.
+        """
+        return self.variables[0]
+
+    @property
+    def preexponential_factor(self) -> 'uravu.distribution.Distribution':
+        """
+        :return: Preexponential factor.
+        """
+        return self.variables[1]
 
 
 def arrhenius(abscissa: np.ndarray, activation_energy: float, prefactor: float) -> np.ndarray:
@@ -84,15 +98,38 @@ class SuperArrhenius(Relationship):
     def __init__(self,
                  temperature: np.ndarray,
                  diffusion: Union[List['uravu.distribution.Distribution'], np.ndarray],
-                 bounds: Tuple[Tuple[float, float], Tuple[float, float], Tuple[float, float]],
+                 bounds: Tuple[Tuple[float, float], Tuple[float, float], Tuple[float, float]] = [(0, 1), (0, 1e20), (0, None)],
                  diffusion_error: np.ndarray = None,
                  ci_points: Tuple[float, float] = None):
+        if bounds[2][1] is None:
+            bounds[2] = (0, temperature[0])
         super().__init__(super_arrhenius,
                          temperature,
                          diffusion,
                          bounds,
                          ordinate_error=diffusion_error,
                          ci_points=None)
+
+    @property
+    def activation_energy(self) -> 'uravu.distribution.Distribution':
+        """
+        :return: Activated energy distribution.
+        """
+        return self.variables[0]
+
+    @property
+    def preexponential_factor(self) -> 'uravu.distribution.Distribution':
+        """
+        :return: Preexponential factor.
+        """
+        return self.variables[1]
+
+    @property
+    def T0(self) -> 'uravu.distribution.Distribution':
+        """
+        :return: Temperature factor for the VTF equation.
+        """
+        return self.variables[2]
 
 
 def super_arrhenius(abscissa: np.ndarray, activation_energy: float, prefactor: float, t_zero: float) -> np.ndarray:
