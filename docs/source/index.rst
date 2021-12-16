@@ -3,25 +3,26 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+
 Uncertainty quantification in diffusion
 =======================================
 
-:py:mod:`kinisi` is an open-source package focussed on accurately quantifying the uncertainty in atomic and molecular displacements, and using this to more completely understand diffusion in materials.
+:py:mod:`kinisi` is an open-source Python package focussed on accurately quantifying the uncertainty in diffusion processes in atomic and molecular systems.
 
-**Bootstrapping**
+The approach used by :py:mod:`kinisi` ensured an accurate and `statisically efficient`_ estimation of the diffusion coefficient and ordinate offset. 
+More information about *how* :py:mod:`kinisi` determines the diffusion coefficient can be found in the detailed `methodology`_.
 
-:py:mod:`kinisi` uses a custom bootstrapping method to evaluate distribution of the mean-squared displacement at a particular timestep length.
-This resampling is performed until the distribution is found to be normal, or a user-controlled threshold is reached.
+:py:mod:`kinisi` can handle simulation trajectories from many common molecular dynamics packages, including `VASP`_ and those that can be read by `MDAnalysis`_.
+Examples of some of these analyses are shown in the `tutorials`_, also given there is an example of using :py:mod:`kinisi` to investigate the Arrhenius relationship of diffusion as a function of temperature.
 
-**Diffusion estimation**
+.. figure:: _static/example.pdf
+  :width: 450
+  :align: center
+  :alt: An example of the kinisi analysis for the diffusion of lithium in a superionic material. 
 
-A diffusion distribution is evaluated using a generalised least squares approach to modelling the Einstein relation to the data.
-This uses a covariance matrix defined based on the bootstrapped uncertainties for each MSD. 
-This approach allows an estimate of the true displacement to be found from an infinitely long simulation.
-**Note, this methodology is unpublished and results from it should be considered with caution**.
-
-Brief tutorials showing how :py:mod:`kinisi` may be used in the study of an `VASP Xdatcar`_ file can be found in the `tutorials`_.
-
+  An example of the output from a :py:mod:`kinisi` analysis; showing the determined mean-squared displacements (blue points with error bars), 
+  the estimated Einstein diffusion relationship (black line representing a probability distribution), 
+  and the estimate of the start of the diffusive regime using the maximum of the non-Gaussian parameter (green vertical line).
 
 Contributors
 ------------
@@ -30,9 +31,11 @@ Contributors
 
 .. _Andrew R. McCluskey: https://www.mccluskey.scot
 .. _Benjamin J. Morgan: http://analysisandsynthesis.com
-.. _super-Arrhenius relationship: https://doi.org/10.1103/PhysRevB.74.134202
-.. _VASP Xdatcar: https://www.vasp.at/wiki/index.php/XDATCAR
+.. _VASP: https://www.vasp.at/wiki/index.php/XDATCAR
+.. _MDAnalysis: https://userguide.mdanalysis.org/stable/reading_and_writing.html
 .. _tutorials: ./tutorials.html
+.. _statisically efficient: https://en.wikipedia.org/wiki/Efficiency_(statistics)
+.. _methodology: ./methodology.html
 
 
 .. toctree::
@@ -40,6 +43,7 @@ Contributors
    :maxdepth: 2
 
    installation
+   methodology
    tutorials
    faq
    modules
