@@ -1,4 +1,5 @@
 derivation*
+.traj_*.npz
 
 !derivation.pdf
 !derivation.tex
