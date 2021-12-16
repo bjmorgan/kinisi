@@ -26,14 +26,11 @@ class StandardArrhenius(Relationship):
     """
     Evaluate the data with a standard Arrhenius relationship.
     For attributes associated with the :py:class:`uravu.relationship.Relationship` class see that documentation.
-    The :py:attr:`uravu.relationship.Relationship.variables` for this model is a :py:attr:`list` of length 2,
-    where :py:attr:`kinisi.arrhenius.StandardArrhenius.variables[0]` is the activation energy (in eV) and
-    :py:attr:`kinisi.arrhenius.StandardArrhenius.variables[1]` is the prefactor of the Arrhenius equation.
 
     Args:
-        temperature (:py:attr:`array_like`): Temperature data.
-        diffusion (:py:attr:`array_like`): Diffusion coefficient data.
-        bounds (:py:attr:`tuple`): The minimum and maximum values for each parameters. Defaults to :py:attr:`None`.
+        temperature (:py:attr:`array_like`): Temperature data in kelvin.
+        diffusion (:py:attr:`array_like`): Diffusion coefficient data in cm^2s^{-1}.
+        bounds (:py:attr:`tuple`): The minimum and maximum values for each parameters. Defaults to :py:attr:`((0, 1), (0, 1e20))`.
         diffusion_error (:py:attr:`array_like`): Uncertainty in the diffusion coefficient data. Not necessary
             if :py:attr:`diffusion` is :py:attr:`list` of :py:class:`uravu.distribution.Distribution` objects.
         ci_points (:py:attr:`array_like`, optional): The two percentiles at which confidence intervals should be
@@ -50,7 +47,7 @@ class StandardArrhenius(Relationship):
     @property
     def activation_energy(self) -> 'uravu.distribution.Distribution':
         """
-        :return: Activated energy distribution.
+        :return: Activated energy distribution in electronvolt.
         """
         return self.variables[0]
 
@@ -81,15 +78,12 @@ class SuperArrhenius(Relationship):
     """
     Evaluate the data with a super-Arrhenius relationship. For attributes associated with the
     :py:class:`uravu.relationship.Relationship` class see that documentation.
-    This :py:attr:`uravu.relationship.Relationship.variables` for this model is a :py:attr:`list` of length 3,
-    where :py:attr:`~uravu.relationship.Relationship.variables[0]` is the activation energy (in eV),
-    :py:attr:`~uravu.relationship.Relationship.variables[1]` is the prefactor of the Arrhenius equation, and
-    :py:attr:`~uravu.relationship.Relationship.variables[2]` is the temperature offset (in Kelvin).
 
     Args:
-        temperature (:py:attr:`array_like`): Temperature data.
-        diffusion (:py:attr:`array_like`): Diffusion coefficient data.
-        bounds (:py:attr:`tuple`): The minimum and maximum values for each parameters. Defaults to :py:attr:`None`.
+        temperature (:py:attr:`array_like`): Temperature data in kelvin.
+        diffusion (:py:attr:`array_like`): Diffusion coefficient data in cm^2s^{-1}.
+        bounds (:py:attr:`tuple`): The minimum and maximum values for each parameters. Defaults to 
+            :py:attr:`[(0, 1), (0, 1e20), (0, temperature[0])]`.
         diffusion_error (:py:attr:`array_like`): Uncertainty in the diffusion coefficient data. Not necessary
             if :py:attr:`diffusion` is :py:attr:`list` of :py:class:`uravu.distribution.Distribution` objects.
         ci_points (:py:attr:`array_like`, optional): The two percentiles at which confidence intervals should be
@@ -113,7 +107,7 @@ class SuperArrhenius(Relationship):
     @property
     def activation_energy(self) -> 'uravu.distribution.Distribution':
         """
-        :return: Activated energy distribution.
+        :return: Activated energy distribution in electronvolt.
         """
         return self.variables[0]
 
@@ -127,7 +121,7 @@ class SuperArrhenius(Relationship):
     @property
     def T0(self) -> 'uravu.distribution.Distribution':
         """
-        :return: Temperature factor for the VTF equation.
+        :return: Temperature factor for the VTF equation in kelvin.
         """
         return self.variables[2]
 
