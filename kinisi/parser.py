@@ -274,6 +274,8 @@ class MDAnalysisParser(Parser):
         E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated
         up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated
         times. Optional, defaults to :py:attr:`30`.
+    :param sub_sample_atoms: The sampling rate to sample the atoms in the system. Optional, defaults 
+        to :py:attr:`1` where all atoms are used.
     :param sub_sample_traj: Multiple of the :py:attr:`time_step` to sub sample at. Optional,
         defaults to :py:attr:`1` where all timesteps are used.
     :param min_dt: Minimum timestep to be evaluated, in the simulation units. Optional,
