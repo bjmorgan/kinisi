@@ -8,6 +8,7 @@ MDAnalysis
 emcee>=3.1.1
 coverage
 codeclimate-test-reporter
+ipykernel
 nbsphinx
 corner
 sphinx_book_theme

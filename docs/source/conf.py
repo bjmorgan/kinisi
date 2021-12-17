@@ -60,6 +60,9 @@ mathjax3_config = {
 
 nbsphinx_timeout = 900
 
+# Use this kernel instead of the one stored in the notebook metadata:
+nbsphinx_kernel_name = 'python3'
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
