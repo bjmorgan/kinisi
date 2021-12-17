@@ -9,7 +9,7 @@ Uncertainty quantification in diffusion
 
 :py:mod:`kinisi` is an open-source Python package focussed on accurately quantifying the uncertainty in diffusion processes in atomic and molecular systems.
 
-The approach used by :py:mod:`kinisi` ensured an accurate and `statisically efficient`_ estimation of the diffusion coefficient and ordinate offset. 
+The approach used by :py:mod:`kinisi` ensured an accurate and `statistically efficient`_ estimation of the diffusion coefficient and ordinate offset. 
 More information about *how* :py:mod:`kinisi` determines the diffusion coefficient can be found in the detailed `methodology`_.
 
 :py:mod:`kinisi` can handle simulation trajectories from many common molecular dynamics packages, including `VASP`_ and those that can be read by `MDAnalysis`_.
@@ -34,7 +34,7 @@ Contributors
 .. _VASP: https://www.vasp.at/wiki/index.php/XDATCAR
 .. _MDAnalysis: https://userguide.mdanalysis.org/stable/reading_and_writing.html
 .. _tutorials: ./tutorials.html
-.. _statisically efficient: https://en.wikipedia.org/wiki/Efficiency_(statistics)
+.. _statistically efficient: https://en.wikipedia.org/wiki/Efficiency_(statistics)
 .. _methodology: ./methodology.html
 
 
@@ -52,3 +52,4 @@ Searching
 =========
 
 :ref:`genindex` | :ref:`modindex` | :ref:`search`
+

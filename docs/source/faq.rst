@@ -8,7 +8,7 @@ FAQ
     to picoseconds on parsing), this means that time objects in the :py:attr:`parser_params` should use in the input unit 
     (i.e. femtoseconds VASP objects or picoseconds for MDAnalysis objects). 
     The :py:attr:`msd` attribute are in units of **squared-angstrom** and the :py:attr:`dt` attribute are in units of **picoseconds**. 
-    The diffusion or jump-diffusion coefficient have units of **squared-centimetre per second** and the conductivity is 
+    The diffusion or jump-diffusion coefficient has units of **squared-centimetre per second** and the conductivity is 
     **millisiemens per centimetre** (these were chosen as they are common units for these parameters). 
 
 - I have been using :py:mod:`kinisi` in my research and would like to cite the package, how should I do this?
