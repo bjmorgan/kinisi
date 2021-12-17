@@ -41,7 +41,6 @@ release = __version__
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx_rtd_theme',
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.todo',
@@ -50,19 +49,16 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.intersphinx',
     'sphinx.ext.imgmath',
+    'sphinx.ext.mathjax',
     'sphinx_autodoc_typehints',
-    'myst_nb'
+    'nbsphinx'
 ]
 
-execution_timeout = 900
-
-source_suffix = {
-    '.ipynb': 'myst-nb',
+mathjax3_config = {
+    'tex': {'tags': 'ams', 'useLabelIds': True},
 }
 
-myst_enable_extensions = [
-    'dollarmath'
-]
+nbsphinx_timeout = 900
 
 # Use this kernel instead of the one stored in the notebook metadata:
 nbsphinx_kernel_name = 'python3'
