@@ -8,7 +8,7 @@ MDAnalysis
 emcee>=3.1.1
 coverage
 codeclimate-test-reporter
-myst-nb
+nbsphinx
 corner
 sphinx_book_theme
 sphinx_autodoc_typehints

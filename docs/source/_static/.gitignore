@@ -1,5 +1,7 @@
 derivation*
 .traj_*.npz
+poster_kinisi*
+llzo_poster.pdf
 
 !derivation.pdf
 !derivation.tex
