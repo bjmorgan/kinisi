@@ -153,6 +153,7 @@ class TestDiffusionAnalyzer(unittest.TestCase):
             a.diffusion()
             assert a.ngp_max == a._diff.dt[a._diff.ngp.argmax()]
             assert isinstance(a.D, Distribution)
+            assert a.flatchain.shape == (32000, 2)
             assert issubclass(w[0].category, UserWarning)
             assert "maximum" in str(w[0].message)
 
@@ -188,6 +189,7 @@ class TestJumpDiffusionAnalyzer(unittest.TestCase):
             a.jump_diffusion()
             assert a.ngp_max == a._diff.dt[a._diff.ngp.argmax()]
             assert isinstance(a.D_J, Distribution)
+            assert a.flatchain.shape == (32000, 2)
             assert issubclass(w[0].category, UserWarning)
             assert "maximum" in str(w[0].message)
 
@@ -225,6 +227,7 @@ class TestConductivityAnalyzer(unittest.TestCase):
             a.conductivity(100)
             assert a.ngp_max == a._diff.dt[a._diff.ngp.argmax()]
             assert isinstance(a.sigma, Distribution)
+            assert a.flatchain.shape == (32000, 2)
             assert issubclass(w[0].category, UserWarning)
             assert "maximum" in str(w[0].message)
 

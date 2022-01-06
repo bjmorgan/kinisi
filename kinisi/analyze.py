@@ -376,6 +376,14 @@ class DiffusionAnalyzer(Analyzer):
         """
         return self._diff.D
 
+    @property
+    def flatchain(self) -> np.ndarray:
+        """
+        :return: sampling flatchain
+        """
+        return np.array([self.D.samples, self.intercept.samples]).T
+
+
 
 class JumpDiffusionAnalyzer(Analyzer):
     """
@@ -533,6 +541,13 @@ class JumpDiffusionAnalyzer(Analyzer):
         :return: Jump diffusion coefficient
         """
         return self._diff.D_J
+    
+    @property
+    def flatchain(self) -> np.ndarray:
+        """
+        :return: sampling flatchain
+        """
+        return np.array([self.D_J.samples, self.intercept.samples]).T
 
 
 class ConductivityAnalyzer(Analyzer):
@@ -722,6 +737,13 @@ class ConductivityAnalyzer(Analyzer):
         :returns: Conductivity, in mS^{1}cm^{-1}.
         """
         return self._diff.sigma
+    
+    @property
+    def flatchain(self) -> np.ndarray:
+        """
+        :return: sampling flatchain
+        """
+        return np.array([self.sigma.samples, self.intercept.samples]).T
 
 
 def _flatten_list(this_list: list) -> list:
