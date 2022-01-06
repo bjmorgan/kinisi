@@ -3,7 +3,7 @@ FAQ
 
 - What are the units being used in :py:mod:`kinisi`?
 
-    When :py:mod:`kinisi` reads in a file, the units are modified such that distances are in **angstrom** and time in **picoseconds** 
+    After :py:mod:`kinisi` reads in a file, the units are modified such that distances are in **angstrom** and time in **picoseconds** 
     (these are the standard units for length and time in `MDAnalysis objects`_, while for VASP we internally convert from femtoseconds 
     to picoseconds on parsing), this means that time objects in the :py:attr:`parser_params` should use in the input unit 
     (i.e. femtoseconds VASP objects or picoseconds for MDAnalysis objects). 
