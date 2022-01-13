@@ -112,13 +112,21 @@ class TestAnalyzer(unittest.TestCase):
         assert a._disp_3d[0].shape == (204, 120, 3)
         assert a._disp_3d[-1].shape == (204, 1, 3)
 
+    def test_identical_mdauniverse(self):
+        a = Analyzer._from_universe([md, md], parser_params=db_params, dtype='identical')
+        assert a._delta_t.size == 120
+        assert_almost_equal(a._delta_t.max(), 248.75)
+        assert len(a._disp_3d) == 120
+        assert a._disp_3d[0].shape == (408, 120, 3)
+        assert a._disp_3d[-1].shape == (408, 1, 3)
+
     def test_list_bad_input(self):
         with self.assertRaises(ValueError):
             a = Analyzer._from_file([file_path, file_path], parser_params=da_params, dtype='consecutie')
 
     def test_list_bad_mda(self):
         with self.assertRaises(ValueError):
-            a = Analyzer._from_universe(file_path, parser_params=db_params)
+            a = Analyzer._from_universe(file_path, parser_params=db_params, dtype='consecutie')
 
 
 class TestDiffusionAnalyzer(unittest.TestCase):

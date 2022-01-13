@@ -142,13 +142,18 @@ class Analyzer:
             raise ValueError('The dtype specified was not recognised, please consult the kinisi documentation.')
 
     @classmethod
-    def _from_universe(cls, trajectory: 'MDAnalysis.core.universe.Universe', parser_params: dict, **kwargs):
+    def _from_universe(cls, trajectory: 'MDAnalysis.core.universe.Universe', parser_params: dict, dtype: str = None, **kwargs):
         """
         Create an :py:class:`Analyzer` object from an :py:class:`MDAnalysis.core.universe.Universe` object.
 
         :param trajectory: The universe to be analysed.
         :param parser_params: The parameters for the :py:class:`kinisi.parser.MDAnalysisParser` object.
             See the appropriate documention for more guidance on this dictionary.
+        :param dtype: If :py:attr:`trajectory` is a single file, this should be :py:attr:`None`. However, if a
+            list of files is passed, then it is necessary to identify that these constitute a series of
+            :py:attr:`identical` starting points with different random seeds, in which case the `dtype` should
+            be :py:attr:`identical`. For a series of consecutive trajectories, please construct the relevant
+            object using :py:mod:`MDAnalysis`.
 
         :return: Relevant :py:class:`Analyzer` object.
         """
@@ -157,10 +162,14 @@ class Analyzer:
         except ModuleNotFoundError:  # pragma: no cover
             raise ModuleNotFoundError(
                 "To use the MDAnalysis from file parsing, MDAnalysis must be installed.")  # pragma: no cover
-        if not isinstance(trajectory, mda.core.universe.Universe):
-            raise ValueError('To use the from_universe method, the trajectory must be an MDAnalysis Universe.')
-        u = MDAnalysisParser(trajectory, **parser_params)
-        return cls(u.delta_t, u.disp_3d, u.volume, **kwargs)
+        if dtype is None:
+            u = MDAnalysisParser(trajectory, **parser_params)
+            return cls(u.delta_t, u.disp_3d, u.volume, **kwargs)
+        elif dtype == 'identical':
+            u = [MDAnalysisParser(t, **parser_params) for t in trajectory]
+            return cls(u[0].delta_t, cls._stack_trajectories(u), u[0].volume, **kwargs)
+        else:
+            raise ValueError('The dtype specified was not recognised, please consult the kinisi documentation.')
 
     @staticmethod
     def _stack_trajectories(u: Union[MDAnalysisParser, PymatgenParser]) -> List[np.ndarray]:
@@ -326,7 +335,8 @@ class DiffusionAnalyzer(Analyzer):
     @classmethod
     def from_universe(cls,
                       trajectory: 'MDAnalysis.core.universe.Universe',
-                      parser_params: dict,
+                      parser_params: dict, 
+                      dtype: str = None,
                       bootstrap_params: dict = None):
         """
         Create an :py:class:`DiffusionAnalyzer` object from an :py:class:`MDAnalysis.core.universe.Universe` object.
@@ -334,13 +344,18 @@ class DiffusionAnalyzer(Analyzer):
         :param trajectory: The universe to be analysed.
         :param parser_params: The parameters for the :py:class:`kinisi.parser.MDAnalysisParser` object.
             See the appropriate documention for more guidance on this dictionary.
+        :param dtype: If :py:attr:`trajectory` is a single file, this should be :py:attr:`None`. However, if a
+            list of files is passed, then it is necessary to identify that these constitute a series of
+            :py:attr:`identical` starting points with different random seeds, in which case the `dtype` should
+            be :py:attr:`identical`. For a series of consecutive trajectories, please construct the relevant
+            object using :py:mod:`MDAnalysis`.
         :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
             appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
 
         :return: Relevant :py:class:`DiffusionAnalyzer` object.
         """
         # This exists to offer better documentation, in particular for the boostrap_params kwarg.
-        return super()._from_universe(trajectory, parser_params, bootstrap_params=bootstrap_params)
+        return super()._from_universe(trajectory, parser_params, dtype=dtype, bootstrap_params=bootstrap_params)
 
     def diffusion(self, diffusion_params: Union[dict, None] = None):
         """
@@ -493,6 +508,7 @@ class JumpDiffusionAnalyzer(Analyzer):
     def from_universe(cls,
                       trajectory: 'MDAnalysis.core.universe.Universe',
                       parser_params: dict,
+                      dtype: str = None,
                       bootstrap_params: dict = None):
         """
         Create an :py:class:`JumpDiffusionAnalyzer` object from an :py:class:`MDAnalysis.core.universe.Universe` object.
@@ -500,13 +516,18 @@ class JumpDiffusionAnalyzer(Analyzer):
         :param trajectory: The universe to be analysed.
         :param parser_params: The parameters for the :py:class:`kinisi.parser.MDAnalysisParser` object.
             See the appropriate documention for more guidance on this dictionary.
+        :param dtype: If :py:attr:`trajectory` is a single file, this should be :py:attr:`None`. However, if a
+            list of files is passed, then it is necessary to identify that these constitute a series of
+            :py:attr:`identical` starting points with different random seeds, in which case the `dtype` should
+            be :py:attr:`identical`. For a series of consecutive trajectories, please construct the relevant
+            object using :py:mod:`MDAnalysis`.
         :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
             appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
 
         :return: Relevant :py:class:`JumpDiffusionAnalyzer` object.
         """
         # This exists to offer better documentation, in particular for the boostrap_params kwarg.
-        return super()._from_universe(trajectory, parser_params, bootstrap_params=bootstrap_params)
+        return super()._from_universe(trajectory, parser_params, dtype=dtype, bootstrap_params=bootstrap_params)
 
     def jump_diffusion(self, jump_diffusion_params: Union[dict, None] = None):
         """
@@ -682,6 +703,7 @@ class ConductivityAnalyzer(Analyzer):
     def from_universe(cls,
                       trajectory: 'MDAnalysis.core.universe.Universe',
                       parser_params: dict,
+                      dtype: str = None,
                       bootstrap_params: dict = None,
                       ionic_charge: Union[np.ndarray, int] = 1):
         """
@@ -690,6 +712,11 @@ class ConductivityAnalyzer(Analyzer):
         :param trajectory: The universe to be analysed.
         :param parser_params: The parameters for the :py:class:`kinisi.parser.MDAnalysisParser` object.
             See the appropriate documention for more guidance on this dictionary.
+        :param dtype: If :py:attr:`trajectory` is a single file, this should be :py:attr:`None`. However, if a
+            list of files is passed, then it is necessary to identify that these constitute a series of
+            :py:attr:`identical` starting points with different random seeds, in which case the `dtype` should
+            be :py:attr:`identical`. For a series of consecutive trajectories, please construct the relevant
+            object using :py:mod:`MDAnalysis`.
         :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
             appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
         :param ionic_charge: The charge on the mobile ions, either an array with a value for each ion or a scalar
@@ -700,6 +727,7 @@ class ConductivityAnalyzer(Analyzer):
         # This exists to offer better documentation, in particular for the boostrap_params kwarg.
         return super()._from_universe(trajectory,
                                       parser_params,
+                                      dtype=dtype,
                                       bootstrap_params=bootstrap_params,
                                       ionic_charge=ionic_charge)
 
