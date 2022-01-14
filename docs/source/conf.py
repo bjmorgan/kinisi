@@ -20,7 +20,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'kinisi'
-copyright = '2021, Andrew R. McCluskey and Benjamin J. Morgan'
+copyright = '2022, Andrew R. McCluskey and Benjamin J. Morgan'
 author = 'Andrew R. McCluskey and Benjamin J. Morgan'
 
 from kinisi import __version__
@@ -225,5 +225,4 @@ intersphinx_mapping = {
     'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
     'MDAnalysis': ('https://www.mdanalysis.org/docs/', None),
     'pymatgen': ('https://pymatgen.org/', None),
-    'uncertainties': ('https://uncertainties-python-package.readthedocs.io/en/latest/', None),
 }
