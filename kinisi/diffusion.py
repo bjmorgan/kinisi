@@ -195,6 +195,7 @@ class Bootstrap:
                       fit_intercept: bool = True,
                       n_walkers: int = 32,
                       n_samples: int = 1000,
+                      n_burn: int = 500,
                       random_state: np.random.mtrand.RandomState = None,
                       progress: bool = True):
         """
@@ -210,6 +211,7 @@ class Bootstrap:
             is :py:attr:`True`.
         :param n_walkers: Number of MCMC walkers to use. Optional, default is :py:attr:`32`.
         :param n_samples: Number of MCMC samples to perform. Optional, default is :py:attr:`1000`.
+        :param n_burn: Number of MCMC burn in samples. Optional, default is :py:attr:`500`.
         :param random_state: A :py:attr:`RandomState` object to be used to ensure reproducibility. Optional,
             default is :py:attr:`None`.
         :param progress: Show tqdm progress for sampling. Optional, default is :py:attr:`True`.
@@ -220,8 +222,6 @@ class Bootstrap:
         self._covariance_matrix = self.populate_covariance_matrix(self._v, self._n_i)[max_ngp:, max_ngp:]
         self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix)
 
-        mv = multivariate_normal(self._n[max_ngp:], self._covariance_matrix, allow_singular=True, seed=random_state)
-
         def log_likelihood(theta: np.ndarray) -> float:
             """
             Get the log likelihood for multivariate normal distribution.
@@ -230,9 +230,13 @@ class Bootstrap:
 
             :return: Log-likelihood value.
             """
+            covariance_matrix = self._covariance_matrix + theta[-1] * self._covariance_matrix
+            covariance_matrix = find_nearest_positive_definite(covariance_matrix)
+            mv = multivariate_normal(self._n[max_ngp:], covariance_matrix, allow_singular=True, seed=random_state)
+
             if theta[0] < 0:
                 return -np.inf
-            model = _straight_line(self._dt[max_ngp:], *theta)
+            model = _straight_line(self._dt[max_ngp:], *theta[:-1])
             logl = mv.logpdf(model)
             return logl
 
@@ -251,21 +255,24 @@ class Bootstrap:
             return -log_likelihood(*args)
 
         if fit_intercept:
-            max_likelihood = minimize(nll, np.array([slope, intercept])).x
+            max_likelihood = minimize(nll, np.array([slope, intercept, 0])).x
         else:
-            max_likelihood = minimize(nll, np.array([slope])).x
+            max_likelihood = minimize(nll, np.array([slope, 0])).x
+        if max_likelihood[-1] == 0:
+            max_likelihood[-1] = 0.1
         pos = max_likelihood + max_likelihood * 1e-3 * np.random.randn(n_walkers, max_likelihood.size)
         sampler = EnsembleSampler(*pos.shape, log_likelihood)
         # Waiting on https://github.com/dfm/emcee/pull/376
         # if random_state is not None:
         #     pos = max_likelihood + max_likelihood * 1e-3 * random_state.randn(n_walkers, max_likelihood.size)
         #     sampler._random = random_state
-        sampler.run_mcmc(pos, n_samples + 500, progress=progress, progress_kwargs={'desc': "Likelihood Sampling"})
-        flatchain = sampler.get_chain(flat=True, discard=500)
-        self.gradient = Distribution(flatchain[:, 0])
+        sampler.run_mcmc(pos, n_samples + n_burn, progress=progress, progress_kwargs={'desc': "Likelihood Sampling"})
+        self.flatchain = sampler.get_chain(flat=True, discard=n_burn)
+        self.gradient = Distribution(self.flatchain[:, 0])
         self._intercept = None
         if fit_intercept:
-            self._intercept = Distribution(flatchain[:, 1])
+            self._intercept = Distribution(self.flatchain[:, 1])
+        
 
     @staticmethod
     def populate_covariance_matrix(variances: np.ndarray, n_samples: np.ndarray) -> np.ndarray:
