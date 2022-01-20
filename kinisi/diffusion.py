@@ -230,7 +230,7 @@ class Bootstrap:
 
             :return: Log-likelihood value.
             """
-            covariance_matrix = self._covariance_matrix + theta[-1] * self._covariance_matrix
+            covariance_matrix = self._covariance_matrix + theta[-1] * self._dt[max_ngp:] ** 4
             covariance_matrix = find_nearest_positive_definite(covariance_matrix)
             mv = multivariate_normal(self._n[max_ngp:], covariance_matrix, allow_singular=True, seed=random_state)
 
