@@ -10,7 +10,7 @@ diffusion coefficient from a material.
 import warnings
 from typing import List, Tuple, Union
 import numpy as np
-from scipy.stats import linregress, multivariate_normal, normaltest
+from scipy.stats import linregress, multivariate_normal, normaltest, norm
 from scipy.optimize import minimize
 import scipy.constants as const
 import tqdm
@@ -221,57 +221,65 @@ class Bootstrap:
             max_ngp = np.argmax(self._ngp)
         self._covariance_matrix = self.populate_covariance_matrix(self._v, self._n_i)[max_ngp:, max_ngp:]
         self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix)
-
-        def log_likelihood(theta: np.ndarray) -> float:
-            """
-            Get the log likelihood for multivariate normal distribution.
-
-            :param theta: Value of the gradient and intercept of the straight line.
-
-            :return: Log-likelihood value.
-            """
-            covariance_matrix = self.populate_covariance_matrix(self._v + theta[-1] * self._dt[max_ngp:] ** 4, self._n_i)[max_ngp:, max_ngp:]
-            covariance_matrix = find_nearest_positive_definite(self._covariance_matrix)
-            mv = multivariate_normal(self._n[max_ngp:], covariance_matrix, allow_singular=True, seed=random_state)
-
-            if theta[0] < 0:
-                return -np.inf
-            model = _straight_line(self._dt[max_ngp:], *theta[:-1])
-            logl = mv.logpdf(model)
-            return logl
-
-        ols = linregress(self._dt[max_ngp:], self._n[max_ngp:])
-        slope = ols.slope
-        intercept = 1e-20
-        if slope < 0:
-            slope = 1e-20
-
-        def nll(*args) -> float:
-            """
-            General purpose negative log-likelihood.
-
-            :return: Negative log-likelihood
-            """
-            return -log_likelihood(*args)
-
+        mv = multivariate_normal(self._n[max_ngp:], self._covariance_matrix , allow_singular=True, seed=random_state)
+        X = np.array([self._dt[max_ngp:]]).T
         if fit_intercept:
-            max_likelihood = minimize(nll, np.array([slope, intercept, 0])).x
-        else:
-            max_likelihood = minimize(nll, np.array([slope, 0])).x
-        if max_likelihood[-1] == 0:
-            max_likelihood[-1] = 0.1
-        pos = max_likelihood + max_likelihood * 1e-3 * np.random.randn(n_walkers, max_likelihood.size)
-        sampler = EnsembleSampler(*pos.shape, log_likelihood)
-        # Waiting on https://github.com/dfm/emcee/pull/376
-        # if random_state is not None:
-        #     pos = max_likelihood + max_likelihood * 1e-3 * random_state.randn(n_walkers, max_likelihood.size)
-        #     sampler._random = random_state
-        sampler.run_mcmc(pos, n_samples + n_burn, progress=progress, progress_kwargs={'desc': "Likelihood Sampling"})
-        self.flatchain = sampler.get_chain(flat=True, discard=n_burn)
-        self.gradient = Distribution(self.flatchain[:, 0])
+            X = np.array([np.ones(self._covariance_matrix.shape[0]), self._dt[max_ngp:]]).T
+        Y = mv.rvs(size=10000).T
+        omega = self._covariance_matrix
+        self.flatchain = np.matmul(np.matmul(np.linalg.inv(np.matmul(X.T, np.matmul(omega, X))), X.T), np.matmul(omega, Y))
+
+        # def log_likelihood(theta: np.ndarray) -> float:
+        #     """
+        #     Get the log likelihood for multivariate normal distribution.
+
+        #     :param theta: Value of the gradient and intercept of the straight line.
+
+        #     :return: Log-likelihood value.
+        #     """
+        #     covariance_matrix = self._covariance_matrix + norm.rvs(loc=0, scale=np.exp(theta[-1]), size=self._covariance_matrix.shape)
+        #     covariance_matrix = find_nearest_positive_definite(covariance_matrix)
+        #     mv = multivariate_normal(self._n[max_ngp:], covariance_matrix, allow_singular=True, seed=random_state)
+
+        #     if theta[0] < 0:
+        #         return -np.inf
+        #     model = _straight_line(self._dt[max_ngp:], *theta[:-1])
+        #     logl = mv.logpdf(model)
+        #     return logl
+
+        # ols = linregress(self._dt[max_ngp:], self._n[max_ngp:])
+        # slope = ols.slope
+        # intercept = 1e-20
+        # if slope < 0:
+        #     slope = 1e-20
+
+        # def nll(*args) -> float:
+        #     """
+        #     General purpose negative log-likelihood.
+
+        #     :return: Negative log-likelihood
+        #     """
+        #     return -log_likelihood(*args)
+
+        # if fit_intercept:
+        #     max_likelihood = minimize(nll, np.array([slope, intercept, 0])).x
+        # else:
+        #     max_likelihood = minimize(nll, np.array([slope, 0])).x
+        # if max_likelihood[-1] == 0:
+        #     max_likelihood[-1] = 0.1
+        # pos = max_likelihood + max_likelihood * 1e-3 * np.random.randn(n_walkers, max_likelihood.size)
+        # sampler = EnsembleSampler(*pos.shape, log_likelihood)
+        # # Waiting on https://github.com/dfm/emcee/pull/376
+        # # if random_state is not None:
+        # #     pos = max_likelihood + max_likelihood * 1e-3 * random_state.randn(n_walkers, max_likelihood.size)
+        # #     sampler._random = random_state
+        # sampler.run_mcmc(pos, n_samples + n_burn, progress=progress, progress_kwargs={'desc': "Likelihood Sampling"})
+        # self.flatchain = sampler.get_chain(flat=True, discard=n_burn)
+        self.gradient = Distribution(self.flatchain[0])
         self._intercept = None
         if fit_intercept:
-            self._intercept = Distribution(self.flatchain[:, 1])
+            self.gradient = Distribution(self.flatchain[1]) 
+            self._intercept = Distribution(self.flatchain[0])
         
 
     @staticmethod
