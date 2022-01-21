@@ -223,9 +223,9 @@ class Bootstrap:
         if fit_intercept:
             X = np.array([np.ones(self._covariance_matrix.shape[0]), self._dt[max_ngp:]]).T
         Y = mv.rvs(size=n_samples).T
-        # self.flatchain = np.matmul(np.matmul(np.linalg.inv(np.matmul(X.T, np.matmul(self._covariance_matrix, X))), X.T),
-        #                            np.matmul(self._covariance_matrix, Y))
-        self.flatchain = np.matmul(np.matmul(np.linalg.inv(np.matmul(X.T, X)), X.T), Y)
+        self.flatchain = np.matmul(np.matmul(np.linalg.inv(np.matmul(X.T, np.matmul(self._covariance_matrix, X))), X.T),
+                                   np.matmul(self._covariance_matrix, Y))
+        # self.flatchain = np.matmul(np.matmul(np.linalg.inv(np.matmul(X.T, X)), X.T), Y)
 
         self.gradient = Distribution(self.flatchain[0])
         self._intercept = None
