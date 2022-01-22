@@ -17,7 +17,7 @@ import tqdm
 from uravu.distribution import Distribution
 from sklearn.utils import resample
 from emcee import EnsembleSampler
-from kinisi.matrix import find_nearest_positive_definite
+from kinisi.matrix import find_nearest_positive_definite, nearcorr
 
 
 class Bootstrap:
@@ -218,7 +218,7 @@ class Bootstrap:
         if use_ngp:
             max_ngp = np.argmax(self._ngp)
         self._covariance_matrix = self.populate_covariance_matrix(self._v, self._n_i)[max_ngp:, max_ngp:]
-        self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix)
+        self._covariance_matrix = nearcorr(self._covariance_matrix)
 
         popt, pcov = self.max_likelihood(self._dt[max_ngp:], self._n[max_ngp:], self._covariance_matrix, fit_intercept)
 
@@ -291,7 +291,7 @@ class Bootstrap:
         if max_l[:, 0] < 0:
             max_l[:, 0] = 1e-20
         pcov = np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X)))
-        pcov = find_nearest_positive_definite(pcov)
+        pcov = nearcorr(pcov)
         return max_l, pcov
 
     @staticmethod
