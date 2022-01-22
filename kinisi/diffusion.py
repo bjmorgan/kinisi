@@ -193,7 +193,9 @@ class Bootstrap:
                       use_ngp: bool = False,
                       dt_skip: float = 0,
                       fit_intercept: bool = True,
-                      n_samples: int = 32000,
+                      n_walkers: int = 32,
+                      n_samples: int = 1000,
+                      n_burn: int = 500,
                       random_state: np.random.mtrand.RandomState = None,
                       progress: bool = True):
         """
@@ -219,24 +221,60 @@ class Bootstrap:
         self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix)
 
         mv = multivariate_normal(self._n[max_ngp:], self._covariance_matrix, allow_singular=True, seed=random_state)
-        X = np.array([self._dt[max_ngp:]]).T
+
+        def log_likelihood(theta: np.ndarray) -> float:
+            """
+            Get the log likelihood for multivariate normal distribution.
+            :param theta: Value of the gradient and intercept of the straight line.
+            :return: Log-likelihood value.
+            """
+            if theta[0] < 0:
+                return -np.inf
+            model = _straight_line(self._dt[max_ngp:], *theta)
+            logl = mv.logpdf(model)
+            return logl
+
+        ols = linregress(self._dt[max_ngp:], self._n[max_ngp:])
+        slope = ols.slope
+        intercept = 1e-20
+        if slope < 0:
+            slope = 1e-20
+
+        def nll(*args) -> float:
+            """
+            General purpose negative log-likelihood.
+            :return: Negative log-likelihood
+            """
+            return -log_likelihood(*args)
+
         if fit_intercept:
-            X = np.array([np.ones(self._covariance_matrix.shape[0]), self._dt[max_ngp:]]).T
-        Y = mv.rvs(size=n_samples).T
+            max_likelihood = minimize(nll, np.array([slope, intercept])).x
+        else:
+            max_likelihood = minimize(nll, np.array([slope])).x
+        pos = max_likelihood + max_likelihood * 1e-3 * np.random.randn(n_walkers, max_likelihood.size)
+        sampler = EnsembleSampler(*pos.shape, log_likelihood)
+        # Waiting on https://github.com/dfm/emcee/pull/376
+        # if random_state is not None:
+        #     pos = max_likelihood + max_likelihood * 1e-3 * random_state.randn(n_walkers, max_likelihood.size)
+        #     sampler._random = random_state
+        sampler.run_mcmc(pos, n_samples + n_burn, progress=progress, progress_kwargs={'desc': "Likelihood Sampling"})
+        flatchain = sampler.get_chain(flat=True, discard=n_burn)
+
         inv_cov = np.linalg.pinv(self._covariance_matrix)
-        fchain = np.matmul(np.matmul(np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X))), X.T), np.matmul(inv_cov, Y))
-        self.covariance_result = np.linalg.inv(np.matmul(X.T, np.matmul(inv_cov, X)))
+        X = np.array([self._dt[max_ngp:], np.ones_like(self._dt[max_ngp:])]).T
+        self.covariance_result = np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X)))
         self.covariance_result = find_nearest_positive_definite(self.covariance_result)
-        chain = np.zeros((n_samples, 1000, 2))
-        for i in tqdm.tqdm(range(n_samples)):
-            chain[i] = multivariate_normal(fchain[:, i], self.covariance_result, allow_singular=True, seed=random_state).rvs(1000)
-        self.flatchain = chain.reshape(n_samples * 1000, 2)
-        choice = np.random.randint(0, self.flatchain.shape[0], size=n_samples)
+
+        chain = np.zeros((n_samples * n_walkers, 1000, 2))
+        for i in tqdm.tqdm(range(n_samples * n_walkers), desc='Estimating Posterior'):
+            chain[i] = multivariate_normal(flatchain[i], self.covariance_result, allow_singular=True, seed=random_state).rvs(1000) 
+
+        self.flatchain = chain.reshape(n_samples * n_walkers * 1000, 2)
+        choice = np.random.randint(0, self.flatchain.shape[0], size=n_samples * n_walkers)
         self.gradient = Distribution(self.flatchain[choice, 0])
         self._intercept = None
         if fit_intercept:
-            self.gradient = Distribution(self.flatchain[choice, 1])
-            self._intercept = Distribution(self.flatchain[choice, 0])
+            self._intercept = Distribution(self.flatchain[choice, 1])
 
     @staticmethod
     def populate_covariance_matrix(variances: np.ndarray, n_samples: np.ndarray) -> np.ndarray:
