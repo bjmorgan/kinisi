@@ -220,6 +220,8 @@ class Bootstrap:
         self._covariance_matrix = self.populate_covariance_matrix(self._v, self._n_i)[max_ngp:, max_ngp:]
         self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix)
 
+        popt, pcov = self.max_likelihood(self._dt[max_ngp:], self._n[max_ngp:], self._covariance_matrix, fit_intercept)
+
         mv = multivariate_normal(self._n[max_ngp:], self._covariance_matrix, allow_singular=True, seed=random_state)
 
         def log_likelihood(theta: np.ndarray) -> float:
@@ -234,37 +236,63 @@ class Bootstrap:
             logl = mv.logpdf(model)
             return logl
 
-        if fit_intercept:
-            X = np.array([self._dt[max_ngp:], np.ones_like(self._dt[max_ngp:])]).T
-        else:
-            X = np.array([self._dt[max_ngp:]]).T
-        Y = np.array([self._n[max_ngp:]]).T 
-        inv_cov = np.linalg.pinv(self._covariance_matrix)
-        max_likelihood = np.matmul(np.matmul(np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X))), X.T), np.matmul(inv_cov, Y)).T
-        if max_likelihood[:, 0] < 0:
-            max_likelihood[:, 0] = 1e-20
-        self.covariance_result = np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X)))
-        self.covariance_result = find_nearest_positive_definite(self.covariance_result)
-
-        pos = max_likelihood + max_likelihood * 1e-3 * np.random.randn(n_walkers, max_likelihood.size)
+        pos = popt + popt * 1e-3 * np.random.randn(n_walkers, popt.size)
         sampler = EnsembleSampler(*pos.shape, log_likelihood)
         # Waiting on https://github.com/dfm/emcee/pull/376
         # if random_state is not None:
-        #     pos = max_likelihood + max_likelihood * 1e-3 * random_state.randn(n_walkers, max_likelihood.size)
+        #     pos = popt + popt * 1e-3 * random_state.randn(n_walkers, popt.size)
         #     sampler._random = random_state
         sampler.run_mcmc(pos, n_samples + n_burn, progress=progress, progress_kwargs={'desc': "Likelihood Sampling"})
-        flatchain = sampler.get_chain(flat=True, discard=n_burn)
 
-        chain = np.zeros((n_samples * n_walkers, 1000, 2))
-        for i in tqdm.tqdm(range(n_samples * n_walkers), desc='Constructing Posterior'):
-            chain[i] = multivariate_normal(flatchain[i], self.covariance_result, allow_singular=True, seed=random_state).rvs(1000) 
-
-        self.flatchain = chain.reshape(n_samples * n_walkers * 1000, 2)
+        self.flatchain = self.sample_flatchain(sampler.get_chain(flat=True, discard=n_burn), pcov, random_state)
+        
         choice = np.random.randint(0, self.flatchain.shape[0], size=n_samples * n_walkers)
         self.gradient = Distribution(self.flatchain[choice, 0])
         self._intercept = None
         if fit_intercept:
             self._intercept = Distribution(self.flatchain[choice, 1])
+
+    @staticmethod
+    def sample_flatchain(flatchain: np.ndarray, pcov: np.ndarray, random_state: np.random.mtrand.RandomState = None) -> np.ndarray:
+        """
+        Sample the current flatchain to obtain the true distributions.
+        
+        :param flatchain: The current samples for the dataset
+        :param pcov: Parameter covariance matrix
+        :param random_state: A :py:attr:`RandomState` object to be used to ensure reproducibility. Optional,
+            default is :py:attr:`None`
+        
+        :return: The flattened sampled chain.
+        """
+        chain = np.zeros((flatchain.shape[0], 1000, 2))
+        for i in tqdm.tqdm(range(flatchain.shape[0]), desc='Constructing Posterior'):
+            chain[i] = multivariate_normal(flatchain[i], pcov, allow_singular=True, seed=random_state).rvs(1000) 
+
+        return chain.reshape(flatchain.shape[0] * 1000, 2)
+
+    @staticmethod
+    def max_likelihood(dt: np.ndarray, msd: np.ndarray, pcov: np.ndarray, fit_intercept: bool) -> Tuple[np.ndarray]:
+        """
+        Determine the max likelihood for a GLS model and the covariance matrix for the parameters
+        
+        :param dt: Timestep values
+        :param msd: MSD values
+        :param cov: Covariance matrix
+        
+        :return: The max likelihood values and the parameter covariance matrix.
+        """
+        if fit_intercept:
+            X = np.array([dt, np.ones_like(dt)]).T
+        else:
+            X = np.array([dt]).T
+        Y = np.array([msd]).T 
+        inv_cov = np.linalg.pinv(pcov)
+        max_l = np.matmul(np.matmul(np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X))), X.T), np.matmul(inv_cov, Y)).T
+        if max_l[:, 0] < 0:
+            max_l[:, 0] = 1e-20
+        pcov = np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X)))
+        pcov = find_nearest_positive_definite(pcov)
+        return max_l, pcov
 
     @staticmethod
     def populate_covariance_matrix(variances: np.ndarray, n_samples: np.ndarray) -> np.ndarray:
@@ -279,10 +307,10 @@ class Bootstrap:
         covariance_matrix = np.zeros((variances.size, variances.size))
         for i in range(0, variances.size):
             for j in range(i, variances.size):
-                ratio = n_samples[i] / n_samples[j]
-                covariance_matrix[i, j] = variances[i] * ratio
+                value = n_samples[i] / n_samples[j] * variances[i]
+                covariance_matrix[i, j] = value + norm.rvs(0, 0.01) * value
                 covariance_matrix[j, i] = np.copy(covariance_matrix[i, j])
-        return covariance_matrix + norm.rvs(0, 0.01, size=covariance_matrix.shape) * covariance_matrix
+        return covariance_matrix
 
 
 class MSDBootstrap(Bootstrap):
