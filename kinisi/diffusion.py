@@ -308,7 +308,7 @@ class Bootstrap:
         for i in range(0, variances.size):
             for j in range(i, variances.size):
                 value = n_samples[i] / n_samples[j] * variances[i]
-                covariance_matrix[i, j] = value + norm.rvs(0, 0.1) * value
+                covariance_matrix[i, j] = value
                 covariance_matrix[j, i] = np.copy(covariance_matrix[i, j])
         return covariance_matrix
 
