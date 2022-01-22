@@ -224,17 +224,19 @@ class Bootstrap:
             X = np.array([np.ones(self._covariance_matrix.shape[0]), self._dt[max_ngp:]]).T
         Y = mv.rvs(size=n_samples).T
         inv_cov = np.linalg.pinv(self._covariance_matrix)
-        fchain = np.matmul(np.matmul(np.linalg.inv(np.matmul(X.T, np.matmul(inv_cov, X))), X.T), np.matmul(inv_cov, Y))
+        fchain = np.matmul(np.matmul(np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X))), X.T), np.matmul(inv_cov, Y))
         self.covariance_result = np.linalg.inv(np.matmul(X.T, np.matmul(inv_cov, X)))
         self.covariance_result = find_nearest_positive_definite(self.covariance_result)
-        self.flatchain = np.zeros((n_samples, 2))
+        chain = np.zeros((n_samples, 1000, 2))
         for i in tqdm.tqdm(range(n_samples)):
-            self.flatchain[i] = multivariate_normal(fchain[:, i], self.covariance_result, allow_singular=True, seed=random_state).rvs(1)
-        self.gradient = Distribution(self.flatchain[:, 0])
+            chain[i] = multivariate_normal(fchain[:, i], self.covariance_result, allow_singular=True, seed=random_state).rvs(1000)
+        self.flatchain = chain.reshape(n_samples * 1000, 2)
+        choice = np.random.randint(0, self.flatchain.shape[0], size=n_samples)
+        self.gradient = Distribution(self.flatchain[choice, 0])
         self._intercept = None
         if fit_intercept:
-            self.gradient = Distribution(self.flatchain[:, 1])
-            self._intercept = Distribution(self.flatchain[:, 0])
+            self.gradient = Distribution(self.flatchain[choice, 1])
+            self._intercept = Distribution(self.flatchain[choice, 0])
 
     @staticmethod
     def populate_covariance_matrix(variances: np.ndarray, n_samples: np.ndarray) -> np.ndarray:
