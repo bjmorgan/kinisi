@@ -218,23 +218,22 @@ class Bootstrap:
         self._covariance_matrix = self.populate_covariance_matrix(self._v, self._n_i)[max_ngp:, max_ngp:]
         self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix)
 
+        mv = multivariate_normal(self._n[max_ngp:], self._covariance_matrix, allow_singular=True, seed=random_state)
         X = np.array([self._dt[max_ngp:]]).T
-        Y = np.array([self._n[max_ngp:]]).T
-        inv_cov = np.linalg.pinv(self._covariance_matrix)
         if fit_intercept:
             X = np.array([np.ones(self._covariance_matrix.shape[0]), self._dt[max_ngp:]]).T
-            c, m = np.matmul(np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X))), np.matmul(X.T, np.matmul(inv_cov, Y)))
-        else:
-            c, m = np.matmul(np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X))), np.matmul(X.T, np.matmul(inv_cov, Y)))
-        mv = multivariate_normal(m * self._dt[max_ngp:] + c, self._covariance_matrix, allow_singular=True, seed=random_state)
         Y = mv.rvs(size=n_samples).T
-        self.flatchain = np.matmul(np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X))), np.matmul(X.T, np.matmul(inv_cov, Y)))
-
-        self.gradient = Distribution(self.flatchain[0])
+        inv_cov = np.linalg.pinv(self._covariance_matrix)
+        fchain = np.matmul(np.matmul(np.linalg.inv(np.matmul(X.T, np.matmul(inv_cov, X))), X.T), np.matmul(inv_cov, Y))
+        self.covariance_result = np.linalg.inv(np.matmul(X.T, np.matmul(inv_cov, X)))
+        self.flatchain = np.zeros((n_samples, 2))
+        for i in tqdm.tqdm(range(n_samples)):
+            self.flatchain[i] = multivariate_normal(fchain[:, i], self.covariance_result, allow_singular=True, seed=random_state).rvs(1)
+        self.gradient = Distribution(self.flatchain[:, 0])
         self._intercept = None
         if fit_intercept:
-            self.gradient = Distribution(self.flatchain[1])
-            self._intercept = Distribution(self.flatchain[0])
+            self.gradient = Distribution(self.flatchain[:, 1])
+            self._intercept = Distribution(self.flatchain[:, 0])
 
     @staticmethod
     def populate_covariance_matrix(variances: np.ndarray, n_samples: np.ndarray) -> np.ndarray:
