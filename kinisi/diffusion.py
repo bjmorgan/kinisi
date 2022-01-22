@@ -224,8 +224,7 @@ class Bootstrap:
             X = np.array([np.ones(self._covariance_matrix.shape[0]), self._dt[max_ngp:]]).T
         Y = mv.rvs(size=n_samples).T
         inv_cov = np.linalg.pinv(self._covariance_matrix)
-        self.flatchain = np.matmul(np.matmul(np.linalg.inv(np.matmul(X.T, np.matmul(inv_cov, X))), X.T),
-                                   np.matmul(inv_cov, Y))
+        self.flatchain = np.matmul(np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X))), np.matmul(X.T, np.matmul(inv_cov, Y)))
 
         self.gradient = Distribution(self.flatchain[0])
         self._intercept = None
