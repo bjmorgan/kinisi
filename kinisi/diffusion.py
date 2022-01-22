@@ -218,12 +218,16 @@ class Bootstrap:
         self._covariance_matrix = self.populate_covariance_matrix(self._v, self._n_i)[max_ngp:, max_ngp:]
         self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix)
 
-        mv = multivariate_normal(self._n[max_ngp:], self._covariance_matrix, allow_singular=True, seed=random_state)
         X = np.array([self._dt[max_ngp:]]).T
+        Y = np.array([self._n[max_ngp:]]).T
+        inv_cov = np.linalg.pinv(self._covariance_matrix)
         if fit_intercept:
             X = np.array([np.ones(self._covariance_matrix.shape[0]), self._dt[max_ngp:]]).T
+            c, m = np.matmul(np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X))), np.matmul(X.T, np.matmul(inv_cov, Y)))
+        else:
+            c, m = np.matmul(np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X))), np.matmul(X.T, np.matmul(inv_cov, Y)))
+        mv = multivariate_normal(m * self._dt[max_ngp:] + c, self._covariance_matrix, allow_singular=True, seed=random_state)
         Y = mv.rvs(size=n_samples).T
-        inv_cov = np.linalg.pinv(self._covariance_matrix)
         self.flatchain = np.matmul(np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X))), np.matmul(X.T, np.matmul(inv_cov, Y)))
 
         self.gradient = Distribution(self.flatchain[0])
