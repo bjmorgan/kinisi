@@ -226,6 +226,7 @@ class Bootstrap:
         inv_cov = np.linalg.pinv(self._covariance_matrix)
         fchain = np.matmul(np.matmul(np.linalg.inv(np.matmul(X.T, np.matmul(inv_cov, X))), X.T), np.matmul(inv_cov, Y))
         self.covariance_result = np.linalg.inv(np.matmul(X.T, np.matmul(inv_cov, X)))
+        self.covariance_result = find_nearest_positive_definite(self.covariance_result)
         self.flatchain = np.zeros((n_samples, 2))
         for i in tqdm.tqdm(range(n_samples)):
             self.flatchain[i] = multivariate_normal(fchain[:, i], self.covariance_result, allow_singular=True, seed=random_state).rvs(1)
