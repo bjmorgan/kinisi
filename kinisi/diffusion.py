@@ -234,23 +234,18 @@ class Bootstrap:
             logl = mv.logpdf(model)
             return logl
 
-        ols = linregress(self._dt[max_ngp:], self._n[max_ngp:])
-        slope = ols.slope
-        intercept = 1e-20
-        if slope < 0:
-            slope = 1e-20
-
-        def nll(*args) -> float:
-            """
-            General purpose negative log-likelihood.
-            :return: Negative log-likelihood
-            """
-            return -log_likelihood(*args)
-
         if fit_intercept:
-            max_likelihood = minimize(nll, np.array([slope, intercept])).x
+            X = np.array([self._dt[max_ngp:], np.ones_like(self._dt[max_ngp:])]).T
         else:
-            max_likelihood = minimize(nll, np.array([slope])).x
+            X = np.array([self._dt[max_ngp:]]).T
+        Y = np.array([self._n[max_ngp:]]).T 
+        inv_cov = np.linalg.pinv(self._covariance_matrix)
+        max_likelihood = np.matmul(np.matmul(np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X))), X.T), np.matmul(inv_cov, Y)).T
+        if max_likelihood[:, 0] < 0:
+            max_likelihood[:, 0] = 1e-20
+        self.covariance_result = np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X)))
+        self.covariance_result = find_nearest_positive_definite(self.covariance_result)
+
         pos = max_likelihood + max_likelihood * 1e-3 * np.random.randn(n_walkers, max_likelihood.size)
         sampler = EnsembleSampler(*pos.shape, log_likelihood)
         # Waiting on https://github.com/dfm/emcee/pull/376
@@ -260,13 +255,8 @@ class Bootstrap:
         sampler.run_mcmc(pos, n_samples + n_burn, progress=progress, progress_kwargs={'desc': "Likelihood Sampling"})
         flatchain = sampler.get_chain(flat=True, discard=n_burn)
 
-        inv_cov = np.linalg.pinv(self._covariance_matrix)
-        X = np.array([self._dt[max_ngp:], np.ones_like(self._dt[max_ngp:])]).T
-        self.covariance_result = np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X)))
-        self.covariance_result = find_nearest_positive_definite(self.covariance_result)
-
         chain = np.zeros((n_samples * n_walkers, 1000, 2))
-        for i in tqdm.tqdm(range(n_samples * n_walkers), desc='Estimating Posterior'):
+        for i in tqdm.tqdm(range(n_samples * n_walkers), desc='Constructing Posterior'):
             chain[i] = multivariate_normal(flatchain[i], self.covariance_result, allow_singular=True, seed=random_state).rvs(1000) 
 
         self.flatchain = chain.reshape(n_samples * n_walkers * 1000, 2)
