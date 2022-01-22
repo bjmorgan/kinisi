@@ -282,7 +282,7 @@ class Bootstrap:
                 ratio = n_samples[i] / n_samples[j]
                 covariance_matrix[i, j] = variances[i] * ratio
                 covariance_matrix[j, i] = np.copy(covariance_matrix[i, j])
-        return covariance_matrix
+        return covariance_matrix + norm.rvs(0, 0.01, size=covariance_matrix.shape) * covariance_matrix
 
 
 class MSDBootstrap(Bootstrap):
