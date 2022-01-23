@@ -12,6 +12,7 @@ from typing import List, Tuple, Union
 import numpy as np
 from scipy.stats import linregress, multivariate_normal, normaltest, norm
 from scipy.optimize import minimize
+from scipy.ndimage import gaussian_filter
 import scipy.constants as const
 import tqdm
 from uravu.distribution import Distribution
@@ -218,48 +219,41 @@ class Bootstrap:
         if use_ngp:
             max_ngp = np.argmax(self._ngp)
 
-        grad = np.array([0])
-        k = 0
-        wls_rad = self.max_likelihood(self._dt[max_ngp:], self._n[max_ngp:], np.diag(self._v), fit_intercept)[0][0][0]
-        while np.abs(grad.mean() - wls_rad) / wls_rad > 0.1:
-            print(k)
+        self._covariance_matrix = gaussian_filter(self.populate_covariance_matrix(self._v, self._n_i), sigma=1)
+        self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix)[max_ngp:, max_ngp:]
 
-            self._covariance_matrix = self.populate_covariance_matrix(self._v + norm.rvs(0, k, size=self._v.size) * self._v, self._n_i)
-            self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix)[max_ngp:, max_ngp:]
-            k += 0.01
+        popt, pcov = self.max_likelihood(self._dt[max_ngp:], self._n[max_ngp:], self._covariance_matrix, fit_intercept)
 
-            popt, pcov = self.max_likelihood(self._dt[max_ngp:], self._n[max_ngp:], self._covariance_matrix, fit_intercept)
+        mv = multivariate_normal(self._n[max_ngp:], self._covariance_matrix, allow_singular=True, seed=random_state)
 
-            mv = multivariate_normal(self._n[max_ngp:], self._covariance_matrix, allow_singular=True, seed=random_state)
+        def log_likelihood(theta: np.ndarray) -> float:
+            """
+            Get the log likelihood for multivariate normal distribution.
+            :param theta: Value of the gradient and intercept of the straight line.
 
-            def log_likelihood(theta: np.ndarray) -> float:
-                """
-                Get the log likelihood for multivariate normal distribution.
-                :param theta: Value of the gradient and intercept of the straight line.
-                :return: Log-likelihood value.
-                """
-                if theta[0] < 0:
-                    return -np.inf
-                model = _straight_line(self._dt[max_ngp:], *theta)
-                logl = mv.logpdf(model)
-                return logl
+            :return: Log-likelihood value.
+            """
+            if theta[0] < 0:
+                return -np.inf
+            model = _straight_line(self._dt[max_ngp:], *theta)
+            logl = mv.logpdf(model)
+            return logl
 
-            pos = popt + popt * 1e-3 * np.random.randn(n_walkers, popt.size)
-            sampler = EnsembleSampler(*pos.shape, log_likelihood)
-            # Waiting on https://github.com/dfm/emcee/pull/376
-            # if random_state is not None:
-            #     pos = popt + popt * 1e-3 * random_state.randn(n_walkers, popt.size)
-            #     sampler._random = random_state
-            sampler.run_mcmc(pos, n_samples + n_burn, progress=progress, progress_kwargs={'desc': "Likelihood Sampling"})
+        pos = popt + popt * 1e-3 * np.random.randn(n_walkers, popt.size)
+        sampler = EnsembleSampler(*pos.shape, log_likelihood)
+        # Waiting on https://github.com/dfm/emcee/pull/376
+        # if random_state is not None:
+        #     pos = popt + popt * 1e-3 * random_state.randn(n_walkers, popt.size)
+        #     sampler._random = random_state
+        sampler.run_mcmc(pos, n_samples + n_burn, progress=progress, progress_kwargs={'desc': "Likelihood Sampling"})
 
-            self.flatchain = self.sample_flatchain(sampler.get_chain(flat=True, discard=n_burn), pcov, random_state)
-            
-            choice = np.random.randint(0, self.flatchain.shape[0], size=n_samples * n_walkers)
-            self.gradient = Distribution(self.flatchain[choice, 0])
-            self._intercept = None
-            if fit_intercept:
-                self._intercept = Distribution(self.flatchain[choice, 1])
-            grad = self.gradient.samples
+        self.flatchain = self.sample_flatchain(sampler.get_chain(flat=True, discard=n_burn), pcov, random_state)
+        
+        choice = np.random.randint(0, self.flatchain.shape[0], size=n_samples * n_walkers)
+        self.gradient = Distribution(self.flatchain[choice, 0])
+        self._intercept = None
+        if fit_intercept:
+            self._intercept = Distribution(self.flatchain[choice, 1])
 
         
              
