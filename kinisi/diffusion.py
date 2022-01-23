@@ -12,7 +12,6 @@ from typing import List, Tuple, Union
 import numpy as np
 from scipy.stats import linregress, multivariate_normal, normaltest, norm
 from scipy.optimize import minimize
-from scipy.ndimage import gaussian_filter
 import scipy.constants as const
 import tqdm
 from uravu.distribution import Distribution
@@ -218,9 +217,8 @@ class Bootstrap:
         max_ngp = np.argwhere(self._dt > dt_skip)[0][0]
         if use_ngp:
             max_ngp = np.argmax(self._ngp)
-
-        self._covariance_matrix = gaussian_filter(self.populate_covariance_matrix(self._v, self._n_i), sigma=1)
-        self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix)[max_ngp:, max_ngp:]
+        self._covariance_matrix = self.populate_covariance_matrix(self._v, self._n_i)[max_ngp:, max_ngp:]
+        self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix)
 
         popt, pcov = self.max_likelihood(self._dt[max_ngp:], self._n[max_ngp:], self._covariance_matrix, fit_intercept)
 
@@ -230,7 +228,6 @@ class Bootstrap:
             """
             Get the log likelihood for multivariate normal distribution.
             :param theta: Value of the gradient and intercept of the straight line.
-
             :return: Log-likelihood value.
             """
             if theta[0] < 0:
@@ -254,9 +251,6 @@ class Bootstrap:
         self._intercept = None
         if fit_intercept:
             self._intercept = Distribution(self.flatchain[choice, 1])
-
-        
-             
 
     @staticmethod
     def sample_flatchain(flatchain: np.ndarray, pcov: np.ndarray, random_state: np.random.mtrand.RandomState = None) -> np.ndarray:

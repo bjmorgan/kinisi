@@ -25,7 +25,7 @@ def find_nearest_positive_definite(matrix: np.ndarray) -> np.ndarray:
                   "definite matrix has been found and will be used.")
 
     B = (matrix + matrix.T) / 2
-    _, s, V = np.linalg.svd(B, hermitian=True)
+    _, s, V = np.linalg.svd(B)
     H = np.dot(V.T, np.dot(np.diag(s), V))
     A2 = (B + H) / 2
     A3 = (A2 + A2.T) / 2
@@ -37,9 +37,8 @@ def find_nearest_positive_definite(matrix: np.ndarray) -> np.ndarray:
     eye = np.eye(matrix.shape[0])
     k = 1
     while not check_positive_definite(A3):
-        mineig = np.min(np.real(np.linalg.eigh(A3)[0]))
-        mineig = np.max([-mineig, 0])
-        A3 -= eye * (-mineig * k**2 + spacing)
+        mineig = np.min(np.real(np.linalg.eigvals(A3)))
+        A3 += eye * (-mineig * k**2 + spacing)
         k += 1
 
     return A3
