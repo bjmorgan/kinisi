@@ -225,36 +225,48 @@ class Bootstrap:
         #     print('k', k)
         # self._covariance_matrix = self.populate_covariance_matrix(self._v + norm.rvs(0, k, size=self._v.size) * self._v, self._n_i)[max_ngp:, max_ngp:]
         self._covariance_matrix = self.populate_covariance_matrix(self._v, self._n_i)[max_ngp:, max_ngp:]
-        self._covariance_matrix = np.linalg.pinv(np.linalg.pinv(self._covariance_matrix, rcond=1e-7))
+        self._covariance_matrix = np.linalg.pinv(np.linalg.pinv(self._covariance_matrix, rcond=self._covariance_matrix.min()))
         self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix)
         # k += 0.005
 
-        popt, pcov = self.max_likelihood(self._dt[max_ngp:], self._n[max_ngp:], self._covariance_matrix, fit_intercept)
+        # popt, pcov = self.max_likelihood(self._dt[max_ngp:], self._n[max_ngp:], self._covariance_matrix, fit_intercept)
 
         mv = multivariate_normal(self._n[max_ngp:], self._covariance_matrix, allow_singular=True, seed=random_state)
 
-        def log_likelihood(theta: np.ndarray) -> float:
-            """
-            Get the log likelihood for multivariate normal distribution.
-            :param theta: Value of the gradient and intercept of the straight line.
+        # def log_likelihood(theta: np.ndarray) -> float:
+        #     """
+        #     Get the log likelihood for multivariate normal distribution.
+        #     :param theta: Value of the gradient and intercept of the straight line.
             
-            :return: Log-likelihood value.
-            """
-            if theta[0] < 0:
-                return -np.inf
-            model = _straight_line(self._dt[max_ngp:], *theta)
-            logl = mv.logpdf(model)
-            return logl
+        #     :return: Log-likelihood value.
+        #     """
+        #     if theta[0] < 0:
+        #         return -np.inf
+        #     model = _straight_line(self._dt[max_ngp:], *theta)
+        #     logl = mv.logpdf(model)
+        #     return logl
 
-        pos = popt + popt * 1e-3 * np.random.randn(n_walkers, popt.size)
-        sampler = EnsembleSampler(*pos.shape, log_likelihood)
-        # Waiting on https://github.com/dfm/emcee/pull/376
-        # if random_state is not None:
-        #     pos = popt + popt * 1e-3 * random_state.randn(n_walkers, popt.size)
-        #     sampler._random = random_state
-        sampler.run_mcmc(pos, n_samples + n_burn, progress=progress, progress_kwargs={'desc': "Likelihood Sampling"})
+        # pos = popt + popt * 1e-3 * np.random.randn(n_walkers, popt.size)
+        # sampler = EnsembleSampler(*pos.shape, log_likelihood)
+        # # Waiting on https://github.com/dfm/emcee/pull/376
+        # # if random_state is not None:
+        # #     pos = popt + popt * 1e-3 * random_state.randn(n_walkers, popt.size)
+        # #     sampler._random = random_state
+        # sampler.run_mcmc(pos, n_samples + n_burn, progress=progress, progress_kwargs={'desc': "Likelihood Sampling"})
 
-        self.flatchain = self.sample_flatchain(sampler.get_chain(flat=True, discard=n_burn), pcov, random_state)
+        # self.flatchain = self.sample_flatchain(sampler.get_chain(flat=True, discard=n_burn), pcov, random_state)
+
+        if fit_intercept:
+            X = np.array([self._dt[max_ngp:], np.ones_like(self._dt[max_ngp:])]).T
+        else:
+            X = np.array([self._dt[max_ngp:]]).T
+        Y = mv.rvs(n_samples * n_walkers).T 
+        inv_cov = np.linalg.pinv(self._covariance_matrix)
+        chain = np.matmul(np.matmul(np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X))), X.T), np.matmul(inv_cov, Y)).T
+        pcov = np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X)))
+        pcov = find_nearest_positive_definite(pcov)
+
+        self.flatchain = self.sample_flatchain(chain, pcov, random_state)
         
         choice = np.random.randint(0, self.flatchain.shape[0], size=n_samples * n_walkers)
         self.gradient = Distribution(self.flatchain[choice, 0])
