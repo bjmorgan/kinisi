@@ -367,7 +367,7 @@ class MSDBootstrap(Bootstrap):
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
             distro = self.sample_until_normal(d_squared, self._n_i[i], n_resamples, max_resamples, alpha, random_state)
             self._distributions.append(distro)
-            self._n = np.append(self._n, distro.n)
+            self._n = np.append(self._n, np.mean(d_squared.flatten()))
             self._s = np.append(self._s, np.std(distro.samples, ddof=1))
             self._v = np.append(self._v, np.var(distro.samples, ddof=1))
             self._ngp = np.append(self._ngp, self.ngp_calculation(d_squared))
