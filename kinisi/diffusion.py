@@ -365,11 +365,12 @@ class MSDBootstrap(Bootstrap):
                 continue
             self._n_i = np.append(self._n_i, n_samples_current)
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
-            distro = self.sample_until_normal(d_squared, self._n_i[i], n_resamples, max_resamples, alpha, random_state)
+            distro = self.sample_until_normal(d_squared.flatten()[::2], self._n_i[i], n_resamples, max_resamples, alpha, random_state)
+            distro2 = self.sample_until_normal(d_squared.flatten()[1::2], self._n_i[i], n_resamples, max_resamples, alpha, random_state)
             self._distributions.append(distro)
-            self._n = np.append(self._n, np.mean(d_squared.flatten()))
-            self._s = np.append(self._s, np.std(distro.samples, ddof=1))
-            self._v = np.append(self._v, np.var(distro.samples, ddof=1))
+            self._n = np.append(self._n, distro.n)
+            self._s = np.append(self._s, np.std(distro2.samples, ddof=1))
+            self._v = np.append(self._v, np.var(distro2.samples, ddof=1))
             self._ngp = np.append(self._ngp, self.ngp_calculation(d_squared))
             self._dt = np.append(self._dt, self._delta_t[i])
 
