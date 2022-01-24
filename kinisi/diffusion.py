@@ -223,9 +223,8 @@ class Bootstrap:
         # wls_rad = self.max_likelihood(self._dt[max_ngp:], self._n[max_ngp:], np.diag(self._v[max_ngp:]), fit_intercept)[0][0][0]
         # while np.abs(grad.mean() - wls_rad) / wls_rad > 0.05:
         #     print('k', k)
-        from scipy.signal import savgol_filter
         # self._covariance_matrix = self.populate_covariance_matrix(self._v + norm.rvs(0, k, size=self._v.size) * self._v, self._n_i)[max_ngp:, max_ngp:]
-        self._covariance_matrix = self.populate_covariance_matrix(savgol_filter(self._v, 51, 3), self._n_i)[max_ngp:, max_ngp:]
+        self._covariance_matrix = self.populate_covariance_matrix(self._v, self._n_i)[max_ngp:, max_ngp:]
         self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix)
         # k += 0.005
 
