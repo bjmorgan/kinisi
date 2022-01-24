@@ -225,7 +225,7 @@ class Bootstrap:
         #     print('k', k)
         # self._covariance_matrix = self.populate_covariance_matrix(self._v + norm.rvs(0, k, size=self._v.size) * self._v, self._n_i)[max_ngp:, max_ngp:]
         self._covariance_matrix = self.populate_covariance_matrix(self._v, self._n_i)[max_ngp:, max_ngp:]
-        self._covariance_matrix = np.linalg.pinv(np.linalg.pinv(self._covariance_matrix, rcond=self._covariance_matrix.min() * 0.1))
+        self._covariance_matrix = np.linalg.pinv(np.linalg.pinv(self._covariance_matrix, rcond=self._covariance_matrix.min()))
         self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix)
         # k += 0.005
 
