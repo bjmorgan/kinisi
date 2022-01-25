@@ -12,6 +12,7 @@ from typing import List, Tuple, Union
 import numpy as np
 from scipy.stats import linregress, multivariate_normal, normaltest, norm
 from scipy.optimize import minimize
+from scipy.linalg import pinvh
 import scipy.constants as const
 import tqdm
 from uravu.distribution import Distribution
@@ -193,9 +194,8 @@ class Bootstrap:
                       use_ngp: bool = False,
                       dt_skip: float = 0,
                       fit_intercept: bool = True,
-                      n_walkers: int = 32,
-                      n_samples: int = 1000,
-                      n_burn: int = 500,
+                      n_samples: int = 32000,
+                      rtol: float = 3e-7,
                       random_state: np.random.mtrand.RandomState = None,
                       progress: bool = True):
         """
@@ -218,68 +218,29 @@ class Bootstrap:
         if use_ngp:
             max_ngp = np.argmax(self._ngp)
 
-        # grad = np.array([0])
-        k = 0
-        # wls_rad = self.max_likelihood(self._dt[max_ngp:], self._n[max_ngp:], np.diag(self._v[max_ngp:]), fit_intercept)[0][0][0]
-        # while np.abs(grad.mean() - wls_rad) / wls_rad > 0.05:
-        #     print('k', k)
-        # self._covariance_matrix = self.populate_covariance_matrix(self._v + norm.rvs(0, k, size=self._v.size) * self._v, self._n_i)[max_ngp:, max_ngp:]
-        from scipy.linalg import pinvh
         self._covariance_matrix = self.populate_covariance_matrix(self._v, self._n_i)[max_ngp:, max_ngp:]
-        self._covariance_matrix = pinvh(pinvh(self._covariance_matrix, rtol=3e-7))
+        self._covariance_matrix = pinvh(pinvh(self._covariance_matrix, rtol=rtol))
         self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix)
-        # k += 0.005
-
-        # popt, pcov = self.max_likelihood(self._dt[max_ngp:], self._n[max_ngp:], self._covariance_matrix, fit_intercept)
 
         mv = multivariate_normal(self._n[max_ngp:], self._covariance_matrix, allow_singular=True, seed=random_state)
-
-        # def log_likelihood(theta: np.ndarray) -> float:
-        #     """
-        #     Get the log likelihood for multivariate normal distribution.
-        #     :param theta: Value of the gradient and intercept of the straight line.
-            
-        #     :return: Log-likelihood value.
-        #     """
-        #     if theta[0] < 0:
-        #         return -np.inf
-        #     model = _straight_line(self._dt[max_ngp:], *theta)
-        #     logl = mv.logpdf(model)
-        #     return logl
-
-        # pos = popt + popt * 1e-3 * np.random.randn(n_walkers, popt.size)
-        # sampler = EnsembleSampler(*pos.shape, log_likelihood)
-        # # Waiting on https://github.com/dfm/emcee/pull/376
-        # # if random_state is not None:
-        # #     pos = popt + popt * 1e-3 * random_state.randn(n_walkers, popt.size)
-        # #     sampler._random = random_state
-        # sampler.run_mcmc(pos, n_samples + n_burn, progress=progress, progress_kwargs={'desc': "Likelihood Sampling"})
-
-        # self.flatchain = self.sample_flatchain(sampler.get_chain(flat=True, discard=n_burn), pcov, random_state)
 
         if fit_intercept:
             X = np.array([self._dt[max_ngp:], np.ones_like(self._dt[max_ngp:])]).T
         else:
             X = np.array([self._dt[max_ngp:]]).T
-        Y = mv.rvs(n_samples * n_walkers).T 
+        Y = mv.rvs(n_samples).T 
         inv_cov = pinvh(self._covariance_matrix)
-        chain = np.matmul(np.matmul(np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X))), X.T), np.matmul(inv_cov, Y)).T
-        pcov = np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X)))
-        pcov = find_nearest_positive_definite(pcov)
+        self.flatchain = np.matmul(np.matmul(np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X))), X.T), np.matmul(inv_cov, Y)).T
+        # pcov = np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X)))
+        # pcov = find_nearest_positive_definite(pcov)
 
-        self.flatchain = self.sample_flatchain(chain, pcov, random_state)
+        # self.flatchain = self.sample_flatchain(chain, pcov, random_state)
         
-        choice = np.random.randint(0, self.flatchain.shape[0], size=n_samples * n_walkers)
-        self.gradient = Distribution(self.flatchain[choice, 0])
+        # choice = np.random.randint(0, self.flatchain.shape[0], size=n_samples)
+        self.gradient = Distribution(self.flatchain[:, 0])
         self._intercept = None
         if fit_intercept:
-            self._intercept = Distribution(self.flatchain[choice, 1])
-        # grad = self.gradient.samples
-        # if k > 0.02:
-        #     break
-
-        
-             
+            self._intercept = Distribution(self.flatchain[:, 1])
 
     @staticmethod
     def sample_flatchain(flatchain: np.ndarray, pcov: np.ndarray, random_state: np.random.mtrand.RandomState = None) -> np.ndarray:
@@ -294,34 +255,10 @@ class Bootstrap:
         :return: The flattened sampled chain.
         """
         chain = np.zeros((flatchain.shape[0], 1000, 2))
-        for i in tqdm.tqdm(range(flatchain.shape[0]), desc='Constructing Posterior'):
+        for i in tqdm.tqdm(range(flatchain.shape[0]), desc='Sampling Gaussian Process'):
             chain[i] = multivariate_normal(flatchain[i], pcov, allow_singular=True, seed=random_state).rvs(1000) 
 
         return chain.reshape(flatchain.shape[0] * 1000, 2)
-
-    @staticmethod
-    def max_likelihood(dt: np.ndarray, msd: np.ndarray, pcov: np.ndarray, fit_intercept: bool) -> Tuple[np.ndarray]:
-        """
-        Determine the max likelihood for a GLS model and the covariance matrix for the parameters
-        
-        :param dt: Timestep values
-        :param msd: MSD values
-        :param cov: Covariance matrix
-        
-        :return: The max likelihood values and the parameter covariance matrix.
-        """
-        if fit_intercept:
-            X = np.array([dt, np.ones_like(dt)]).T
-        else:
-            X = np.array([dt]).T
-        Y = np.array([msd]).T 
-        inv_cov = np.linalg.pinv(pcov)
-        max_l = np.matmul(np.matmul(np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X))), X.T), np.matmul(inv_cov, Y)).T
-        if max_l[:, 0] < 0:
-            max_l[:, 0] = 1e-20
-        pcov = np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X)))
-        pcov = find_nearest_positive_definite(pcov)
-        return max_l, pcov
 
     @staticmethod
     def populate_covariance_matrix(variances: np.ndarray, n_samples: np.ndarray) -> np.ndarray:
