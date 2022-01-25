@@ -224,8 +224,9 @@ class Bootstrap:
         # while np.abs(grad.mean() - wls_rad) / wls_rad > 0.05:
         #     print('k', k)
         # self._covariance_matrix = self.populate_covariance_matrix(self._v + norm.rvs(0, k, size=self._v.size) * self._v, self._n_i)[max_ngp:, max_ngp:]
+        from scipy.linalg import pinvh
         self._covariance_matrix = self.populate_covariance_matrix(self._v, self._n_i)[max_ngp:, max_ngp:]
-        self._covariance_matrix = np.linalg.pinv(np.linalg.pinv(self._covariance_matrix), rcond=1e-13, hermitian=True)
+        self._covariance_matrix = pinvh(pinvh(self._covariance_matrix, rtol=3e-7))
         self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix)
         # k += 0.005
 
@@ -261,7 +262,7 @@ class Bootstrap:
         else:
             X = np.array([self._dt[max_ngp:]]).T
         Y = mv.rvs(n_samples * n_walkers).T 
-        inv_cov = np.linalg.pinv(self._covariance_matrix)
+        inv_cov = pinvh(self._covariance_matrix)
         chain = np.matmul(np.matmul(np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X))), X.T), np.matmul(inv_cov, Y)).T
         pcov = np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X)))
         pcov = find_nearest_positive_definite(pcov)
