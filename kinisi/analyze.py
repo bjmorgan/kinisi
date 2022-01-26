@@ -142,7 +142,11 @@ class Analyzer:
             raise ValueError('The dtype specified was not recognised, please consult the kinisi documentation.')
 
     @classmethod
-    def _from_universe(cls, trajectory: 'MDAnalysis.core.universe.Universe', parser_params: dict, dtype: str = None, **kwargs):
+    def _from_universe(cls,
+                       trajectory: 'MDAnalysis.core.universe.Universe',
+                       parser_params: dict,
+                       dtype: str = None,
+                       **kwargs):
         """
         Create an :py:class:`Analyzer` object from an :py:class:`MDAnalysis.core.universe.Universe` object.
 
@@ -335,7 +339,7 @@ class DiffusionAnalyzer(Analyzer):
     @classmethod
     def from_universe(cls,
                       trajectory: 'MDAnalysis.core.universe.Universe',
-                      parser_params: dict, 
+                      parser_params: dict,
                       dtype: str = None,
                       bootstrap_params: dict = None):
         """
@@ -397,7 +401,6 @@ class DiffusionAnalyzer(Analyzer):
         :return: sampling flatchain
         """
         return np.array([self.D.samples, self.intercept.samples]).T
-
 
 
 class JumpDiffusionAnalyzer(Analyzer):
@@ -562,7 +565,7 @@ class JumpDiffusionAnalyzer(Analyzer):
         :return: Jump diffusion coefficient
         """
         return self._diff.D_J
-    
+
     @property
     def flatchain(self) -> np.ndarray:
         """
@@ -765,7 +768,7 @@ class ConductivityAnalyzer(Analyzer):
         :returns: Conductivity, in mS^{1}cm^{-1}.
         """
         return self._diff.sigma
-    
+
     @property
     def flatchain(self) -> np.ndarray:
         """

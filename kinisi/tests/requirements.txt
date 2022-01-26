@@ -5,7 +5,6 @@ tqdm
 uravu>=1.2.5
 pymatgen
 MDAnalysis
-emcee>=3.1.1
 coverage
 codeclimate-test-reporter
 ipykernel

@@ -10,13 +10,12 @@ diffusion coefficient from a material.
 import warnings
 from typing import List, Tuple, Union
 import numpy as np
-from scipy.stats import linregress, multivariate_normal, normaltest
-from scipy.optimize import minimize
+from scipy.stats import multivariate_normal, normaltest
+from scipy.linalg import pinvh
 import scipy.constants as const
 import tqdm
 from uravu.distribution import Distribution
 from sklearn.utils import resample
-from emcee import EnsembleSampler
 from kinisi.matrix import find_nearest_positive_definite
 
 
@@ -193,10 +192,9 @@ class Bootstrap:
                       use_ngp: bool = False,
                       dt_skip: float = 0,
                       fit_intercept: bool = True,
-                      n_walkers: int = 32,
-                      n_samples: int = 1000,
-                      random_state: np.random.mtrand.RandomState = None,
-                      progress: bool = True):
+                      n_samples: int = 32000,
+                      rtol: float = None,
+                      random_state: np.random.mtrand.RandomState = None):
         """
         Use the covariance matrix estimated from the resampled values to estimate the gradient and intercept
         using a generalised least squares approach.
@@ -208,64 +206,37 @@ class Bootstrap:
             to :py:attr:`0`.
         :param fit_intercept: Should the intercept of the diffusion relationship be fit. Optional, default
             is :py:attr:`True`.
-        :param n_walkers: Number of MCMC walkers to use. Optional, default is :py:attr:`32`.
-        :param n_samples: Number of MCMC samples to perform. Optional, default is :py:attr:`1000`.
+        :param n_samples: Number of samples of the Gaussian process to perform. Optional, default is :py:attr:`1000`.
+        :param rtol: The relative threshold term for the covariance matrix inversion. If you obtain a very unusual
+            value for the diffusion coefficient, it is recommended to increase this value (ideally iteratively). 
+            Option, default is :code:`N * eps`, where :code:`eps` is the machine precision value of the covariance 
+            matrix content.
         :param random_state: A :py:attr:`RandomState` object to be used to ensure reproducibility. Optional,
             default is :py:attr:`None`.
-        :param progress: Show tqdm progress for sampling. Optional, default is :py:attr:`True`.
         """
         max_ngp = np.argwhere(self._dt > dt_skip)[0][0]
         if use_ngp:
             max_ngp = np.argmax(self._ngp)
+
         self._covariance_matrix = self.populate_covariance_matrix(self._v, self._n_i)[max_ngp:, max_ngp:]
+        self._covariance_matrix = pinvh(pinvh(self._covariance_matrix, rtol=rtol))
         self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix)
 
         mv = multivariate_normal(self._n[max_ngp:], self._covariance_matrix, allow_singular=True, seed=random_state)
 
-        def log_likelihood(theta: np.ndarray) -> float:
-            """
-            Get the log likelihood for multivariate normal distribution.
-
-            :param theta: Value of the gradient and intercept of the straight line.
-
-            :return: Log-likelihood value.
-            """
-            if theta[0] < 0:
-                return -np.inf
-            model = _straight_line(self._dt[max_ngp:], *theta)
-            logl = mv.logpdf(model)
-            return logl
-
-        ols = linregress(self._dt[max_ngp:], self._n[max_ngp:])
-        slope = ols.slope
-        intercept = 1e-20
-        if slope < 0:
-            slope = 1e-20
-
-        def nll(*args) -> float:
-            """
-            General purpose negative log-likelihood.
-
-            :return: Negative log-likelihood
-            """
-            return -log_likelihood(*args)
-
         if fit_intercept:
-            max_likelihood = minimize(nll, np.array([slope, intercept])).x
+            X = np.array([self._dt[max_ngp:], np.ones_like(self._dt[max_ngp:])]).T
         else:
-            max_likelihood = minimize(nll, np.array([slope])).x
-        pos = max_likelihood + max_likelihood * 1e-3 * np.random.randn(n_walkers, max_likelihood.size)
-        sampler = EnsembleSampler(*pos.shape, log_likelihood)
-        # Waiting on https://github.com/dfm/emcee/pull/376
-        # if random_state is not None:
-        #     pos = max_likelihood + max_likelihood * 1e-3 * random_state.randn(n_walkers, max_likelihood.size)
-        #     sampler._random = random_state
-        sampler.run_mcmc(pos, n_samples + 500, progress=progress, progress_kwargs={'desc': "Likelihood Sampling"})
-        flatchain = sampler.get_chain(flat=True, discard=500)
-        self.gradient = Distribution(flatchain[:, 0])
+            X = np.array([self._dt[max_ngp:]]).T
+        Y = mv.rvs(n_samples).T
+        inv_cov = pinvh(self._covariance_matrix)
+        self.flatchain = np.matmul(np.matmul(np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X))), X.T),
+                                   np.matmul(inv_cov, Y)).T
+
+        self.gradient = Distribution(self.flatchain[:, 0])
         self._intercept = None
         if fit_intercept:
-            self._intercept = Distribution(flatchain[:, 1])
+            self._intercept = Distribution(self.flatchain[:, 1])
 
     @staticmethod
     def populate_covariance_matrix(variances: np.ndarray, n_samples: np.ndarray) -> np.ndarray:
@@ -280,8 +251,8 @@ class Bootstrap:
         covariance_matrix = np.zeros((variances.size, variances.size))
         for i in range(0, variances.size):
             for j in range(i, variances.size):
-                ratio = n_samples[i] / n_samples[j]
-                covariance_matrix[i, j] = variances[i] * ratio
+                value = n_samples[i] / n_samples[j] * variances[i]
+                covariance_matrix[i, j] = value
                 covariance_matrix[j, i] = np.copy(covariance_matrix[i, j])
         return covariance_matrix
 
