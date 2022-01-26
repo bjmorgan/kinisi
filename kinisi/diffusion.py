@@ -10,14 +10,12 @@ diffusion coefficient from a material.
 import warnings
 from typing import List, Tuple, Union
 import numpy as np
-from scipy.stats import linregress, multivariate_normal, normaltest, norm
-from scipy.optimize import minimize
+from scipy.stats import multivariate_normal, normaltest
 from scipy.linalg import pinvh
 import scipy.constants as const
 import tqdm
 from uravu.distribution import Distribution
 from sklearn.utils import resample
-from emcee import EnsembleSampler
 from kinisi.matrix import find_nearest_positive_definite
 
 
@@ -195,9 +193,8 @@ class Bootstrap:
                       dt_skip: float = 0,
                       fit_intercept: bool = True,
                       n_samples: int = 32000,
-                      rtol: float = 3e-7,
-                      random_state: np.random.mtrand.RandomState = None,
-                      progress: bool = True):
+                      rtol: float = None,
+                      random_state: np.random.mtrand.RandomState = None):
         """
         Use the covariance matrix estimated from the resampled values to estimate the gradient and intercept
         using a generalised least squares approach.
@@ -210,9 +207,12 @@ class Bootstrap:
         :param fit_intercept: Should the intercept of the diffusion relationship be fit. Optional, default
             is :py:attr:`True`.
         :param n_samples: Number of samples of the Gaussian process to perform. Optional, default is :py:attr:`1000`.
+        :param rtol: The relative threshold term for the covariance matrix inversion. If you obtain a very unusual
+            value for the diffusion coefficient, it is recommended to increase this value (ideally iteratively). 
+            Option, default is :code:`N * eps`, where :code:`eps` is the machine precision value of the covariance 
+            matrix content.
         :param random_state: A :py:attr:`RandomState` object to be used to ensure reproducibility. Optional,
             default is :py:attr:`None`.
-        :param progress: Show tqdm progress for sampling. Optional, default is :py:attr:`True`.
         """
         max_ngp = np.argwhere(self._dt > dt_skip)[0][0]
         if use_ngp:
@@ -231,34 +231,11 @@ class Bootstrap:
         Y = mv.rvs(n_samples).T 
         inv_cov = pinvh(self._covariance_matrix)
         self.flatchain = np.matmul(np.matmul(np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X))), X.T), np.matmul(inv_cov, Y)).T
-        # pcov = np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X)))
-        # pcov = find_nearest_positive_definite(pcov)
 
-        # self.flatchain = self.sample_flatchain(chain, pcov, random_state)
-        
-        # choice = np.random.randint(0, self.flatchain.shape[0], size=n_samples)
         self.gradient = Distribution(self.flatchain[:, 0])
         self._intercept = None
         if fit_intercept:
             self._intercept = Distribution(self.flatchain[:, 1])
-
-    @staticmethod
-    def sample_flatchain(flatchain: np.ndarray, pcov: np.ndarray, random_state: np.random.mtrand.RandomState = None) -> np.ndarray:
-        """
-        Sample the current flatchain to obtain the true distributions.
-        
-        :param flatchain: The current samples for the dataset
-        :param pcov: Parameter covariance matrix
-        :param random_state: A :py:attr:`RandomState` object to be used to ensure reproducibility. Optional,
-            default is :py:attr:`None`
-        
-        :return: The flattened sampled chain.
-        """
-        chain = np.zeros((flatchain.shape[0], 1000, 2))
-        for i in tqdm.tqdm(range(flatchain.shape[0]), desc='Sampling Gaussian Process'):
-            chain[i] = multivariate_normal(flatchain[i], pcov, allow_singular=True, seed=random_state).rvs(1000) 
-
-        return chain.reshape(flatchain.shape[0] * 1000, 2)
 
     @staticmethod
     def populate_covariance_matrix(variances: np.ndarray, n_samples: np.ndarray) -> np.ndarray:

@@ -261,23 +261,11 @@ class TestMSDBootstrap(unittest.TestCase):
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
             dt = np.linspace(100, 1000, 10)
             bs = MSDBootstrap(dt, disp_3d, random_state=RNG)
-            bs.diffusion(n_walkers=5, n_samples=100, fit_intercept=False)
+            bs.diffusion(n_samples=500, fit_intercept=False)
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs._diffusion_coefficient, Distribution)
             assert bs._diffusion_coefficient.size == 500
             assert bs.intercept == None
-
-    def test_bootstrap_n_walkers(self):
-        with warnings.catch_warnings(record=True) as w:
-            disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
-            dt = np.linspace(100, 1000, 10)
-            bs = MSDBootstrap(dt, disp_3d, random_state=RNG)
-            bs.diffusion(n_walkers=5)
-            assert bs.covariance_matrix.shape == (10, 10)
-            assert isinstance(bs._diffusion_coefficient, Distribution)
-            assert isinstance(bs.intercept, Distribution)
-            assert bs._diffusion_coefficient.size == 5000
-            assert bs.intercept.size == 5000
 
     def test_bootstrap_n_samples(self):
         with warnings.catch_warnings(record=True) as w:
@@ -288,8 +276,8 @@ class TestMSDBootstrap(unittest.TestCase):
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs._diffusion_coefficient, Distribution)
             assert isinstance(bs.intercept, Distribution)
-            assert bs._diffusion_coefficient.size == 3200
-            assert bs.intercept.size == 3200
+            assert bs._diffusion_coefficient.size == 100
+            assert bs.intercept.size == 100
 
     def test_bootstrap_D(self):
         with warnings.catch_warnings(record=True) as w:
@@ -300,8 +288,8 @@ class TestMSDBootstrap(unittest.TestCase):
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs._diffusion_coefficient, Distribution)
             assert isinstance(bs.intercept, Distribution)
-            assert bs.D.size == 3200
-            assert bs.intercept.size == 3200
+            assert bs.D.size == 100
+            assert bs.intercept.size == 100
 
     # Waiting on https://github.com/dfm/emcee/pull/376
     # def test_initialisation_random_state(self):
@@ -459,23 +447,11 @@ class TestTMSDBootstrap(unittest.TestCase):
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
             dt = np.linspace(100, 1000, 10)
             bs = TMSDBootstrap(dt, disp_3d, random_state=RNG)
-            bs.jump_diffusion(n_walkers=5, n_samples=100, fit_intercept=False)
+            bs.jump_diffusion(n_samples=500, fit_intercept=False)
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs._jump_diffusion_coefficient, Distribution)
             assert bs._jump_diffusion_coefficient.size == 500
             assert bs.intercept == None
-
-    def test_bootstrap_n_walkers(self):
-        with warnings.catch_warnings(record=True) as w:
-            disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
-            dt = np.linspace(100, 1000, 10)
-            bs = TMSDBootstrap(dt, disp_3d, random_state=RNG)
-            bs.jump_diffusion(n_walkers=5)
-            assert bs.covariance_matrix.shape == (10, 10)
-            assert isinstance(bs._jump_diffusion_coefficient, Distribution)
-            assert isinstance(bs.intercept, Distribution)
-            assert bs.D_J.size == 5000
-            assert bs.intercept.size == 5000
 
     def test_bootstrap_n_samples(self):
         with warnings.catch_warnings(record=True) as w:
@@ -486,8 +462,8 @@ class TestTMSDBootstrap(unittest.TestCase):
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs._jump_diffusion_coefficient, Distribution)
             assert isinstance(bs.intercept, Distribution)
-            assert bs._jump_diffusion_coefficient.size == 3200
-            assert bs.intercept.size == 3200
+            assert bs._jump_diffusion_coefficient.size == 100
+            assert bs.intercept.size == 100
 
     def test_bootstrap_D(self):
         with warnings.catch_warnings(record=True) as w:
@@ -498,8 +474,8 @@ class TestTMSDBootstrap(unittest.TestCase):
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs._jump_diffusion_coefficient, Distribution)
             assert isinstance(bs.intercept, Distribution)
-            assert bs._jump_diffusion_coefficient.size == 3200
-            assert bs.intercept.size == 3200
+            assert bs._jump_diffusion_coefficient.size == 100
+            assert bs.intercept.size == 100
 
     # Waiting on https://github.com/dfm/emcee/pull/376
     # def test_initialisation_random_state(self):
@@ -659,23 +635,11 @@ class TestMSCDBootstrap(unittest.TestCase):
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
             dt = np.linspace(100, 1000, 10)
             bs = MSCDBootstrap(dt, disp_3d, 1, random_state=RNG)
-            bs.conductivity(1, 10, n_walkers=5, n_samples=100, fit_intercept=False)
+            bs.conductivity(1, 10, n_samples=500, fit_intercept=False)
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs.sigma, Distribution)
             assert bs.sigma.size == 500
             assert bs.intercept == None
-
-    def test_bootstrap_n_walkers(self):
-        with warnings.catch_warnings(record=True) as w:
-            disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
-            dt = np.linspace(100, 1000, 10)
-            bs = MSCDBootstrap(dt, disp_3d, 1, random_state=RNG)
-            bs.conductivity(1, 10, n_walkers=5)
-            assert bs.covariance_matrix.shape == (10, 10)
-            assert isinstance(bs.sigma, Distribution)
-            assert isinstance(bs.intercept, Distribution)
-            assert bs.sigma.size == 5000
-            assert bs.intercept.size == 5000
 
     def test_bootstrap_n_samples(self):
         with warnings.catch_warnings(record=True) as w:
@@ -686,8 +650,8 @@ class TestMSCDBootstrap(unittest.TestCase):
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs.sigma, Distribution)
             assert isinstance(bs.intercept, Distribution)
-            assert bs.sigma.size == 3200
-            assert bs.intercept.size == 3200
+            assert bs.sigma.size == 100
+            assert bs.intercept.size == 100
 
     def test_bootstrap_D(self):
         with warnings.catch_warnings(record=True) as w:
@@ -698,20 +662,20 @@ class TestMSCDBootstrap(unittest.TestCase):
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs.sigma, Distribution)
             assert isinstance(bs.intercept, Distribution)
-            assert bs.sigma.size == 3200
-            assert bs.intercept.size == 3200
+            assert bs.sigma.size == 100
+            assert bs.intercept.size == 100
 
     # Waiting on https://github.com/dfm/emcee/pull/376
     # def test_initialisation_random_state(self):
     #     disp_3d = [RNG.randn(100, i, 3) + 1000 for i in range(20, 10, -1)]
     #     dt = np.linspace(100, 1000, 10)
-    #     bs1 = DiffBootstrap(dt, disp_3d, n_walkers=5, n_samples=100, random_state=np.random.RandomState(0))
+    #     bs1 = DiffBootstrap(dt, disp_3d, n_samples=100, random_state=np.random.RandomState(0))
     #     assert bs1.covariance_matrix.shape == (10, 10)
     #     assert isinstance(bs1.diffusion_coefficient, Distribution)
     #     assert isinstance(bs1.intercept, Distribution)
     #     assert bs1.diffusion_coefficient.size == 500
     #     assert bs1.intercept.size == 500
-    #     bs2 = DiffBootstrap(dt, disp_3d, n_walkers=5, n_samples=100, random_state=np.random.RandomState(0))
+    #     bs2 = DiffBootstrap(dt, disp_3d, n_samples=100, random_state=np.random.RandomState(0))
     #     assert_almost_equal(bs1.v, bs2.v)
     #     assert_almost_equal(bs1.covariance_matrix, bs2.covariance_matrix)
     #     assert_almost_equal(bs1.diffusion_coefficient.samples, bs2.diffusion_coefficient.samples)
