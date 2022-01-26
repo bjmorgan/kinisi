@@ -9,6 +9,7 @@ A small module to find the nearest positive definite matrix.
 import warnings
 import numpy as np
 
+
 def find_nearest_positive_definite(matrix: np.ndarray) -> np.ndarray:
     """
     Find the nearest positive-definite matrix to that given, using the method from N.J. Higham, "Computing a nearest
