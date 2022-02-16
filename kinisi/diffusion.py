@@ -10,12 +10,14 @@ diffusion coefficient from a material.
 import warnings
 from typing import List, Tuple, Union
 import numpy as np
-from scipy.stats import multivariate_normal, normaltest
+from scipy.stats import multivariate_normal, normaltest, linregress
 from scipy.linalg import pinvh
+from scipy.optimize import minimize
 import scipy.constants as const
 import tqdm
 from uravu.distribution import Distribution
 from sklearn.utils import resample
+from emcee import EnsembleSampler 
 from kinisi.matrix import find_nearest_positive_definite
 
 
@@ -192,7 +194,10 @@ class Bootstrap:
                       use_ngp: bool = False,
                       dt_skip: float = 0,
                       fit_intercept: bool = True,
-                      n_samples: int = 32000,
+                      n_samples: int = 1000,
+                      n_walkers: int = 32, 
+                      n_burn: int = 500,
+                      progress: bool = True,
                       rtol: float = None,
                       random_state: np.random.mtrand.RandomState = None):
         """
@@ -207,6 +212,10 @@ class Bootstrap:
         :param fit_intercept: Should the intercept of the diffusion relationship be fit. Optional, default
             is :py:attr:`True`.
         :param n_samples: Number of samples of the Gaussian process to perform. Optional, default is :py:attr:`1000`.
+        :param n_walkers: Number of MCMC walkers to use. Optional, default is :py:attr:`32`.
+        :param n_burn: Number of burn in samples (these allow the sampling to settle). Optional, default
+            is :py:attr:`500`.
+        :param progress: Show tqdm progress for sampling. Optional, default is :py:attr:`True`.
         :param rtol: The relative threshold term for the covariance matrix inversion. If you obtain a very unusual
             value for the diffusion coefficient, it is recommended to increase this value (ideally iteratively). 
             Option, default is :code:`N * eps`, where :code:`eps` is the machine precision value of the covariance 
@@ -223,21 +232,6 @@ class Bootstrap:
         self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix)
 
         mv = multivariate_normal(self._n[max_ngp:], self._covariance_matrix, allow_singular=True, seed=random_state)
-
-        # if fit_intercept:
-        #     X = np.array([self._dt[max_ngp:], np.ones_like(self._dt[max_ngp:])]).T
-        # else:
-        #     X = np.array([self._dt[max_ngp:]]).T
-        # Y = mv.rvs(n_samples).T
-        # inv_cov = pinvh(self._covariance_matrix)
-        # self.flatchain = np.matmul(np.matmul(np.linalg.pinv(np.matmul(X.T, np.matmul(inv_cov, X))), X.T),
-        #                            np.matmul(inv_cov, Y)).T
-
-        n_walkers = 32
-        from scipy.stats import linregress
-        from scipy.optimize import minimize
-        from emcee import EnsembleSampler 
-        progress = True
 
         def log_likelihood(theta: np.ndarray) -> float:
             """
@@ -274,8 +268,8 @@ class Bootstrap:
         # if random_state is not None:
         #     pos = max_likelihood + max_likelihood * 1e-3 * random_state.randn(n_walkers, max_likelihood.size)
         #     sampler._random = random_state
-        sampler.run_mcmc(pos, n_samples + 500, progress=progress, progress_kwargs={'desc': "Likelihood Sampling"})
-        self.flatchain = sampler.get_chain(flat=True, discard=500)
+        sampler.run_mcmc(pos, n_samples + n_burn, progress=progress, progress_kwargs={'desc': "Likelihood Sampling"})
+        self.flatchain = sampler.get_chain(flat=True, discard=n_burn)
 
         self.gradient = Distribution(self.flatchain[:, 0])
         self._intercept = None
