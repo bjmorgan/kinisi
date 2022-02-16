@@ -264,7 +264,7 @@ class TestMSDBootstrap(unittest.TestCase):
             bs.diffusion(n_samples=500, fit_intercept=False)
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs._diffusion_coefficient, Distribution)
-            assert bs._diffusion_coefficient.size == 500
+            assert bs._diffusion_coefficient.size == 16000
             assert bs.intercept == None
 
     def test_bootstrap_n_samples(self):
@@ -276,8 +276,8 @@ class TestMSDBootstrap(unittest.TestCase):
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs._diffusion_coefficient, Distribution)
             assert isinstance(bs.intercept, Distribution)
-            assert bs._diffusion_coefficient.size == 100
-            assert bs.intercept.size == 100
+            assert bs._diffusion_coefficient.size == 3200
+            assert bs.intercept.size == 3200
 
     def test_bootstrap_D(self):
         with warnings.catch_warnings(record=True) as w:
@@ -288,8 +288,8 @@ class TestMSDBootstrap(unittest.TestCase):
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs._diffusion_coefficient, Distribution)
             assert isinstance(bs.intercept, Distribution)
-            assert bs.D.size == 100
-            assert bs.intercept.size == 100
+            assert bs.D.size == 3200
+            assert bs.intercept.size == 3200
 
     # Waiting on https://github.com/dfm/emcee/pull/376
     # def test_initialisation_random_state(self):
@@ -450,7 +450,7 @@ class TestTMSDBootstrap(unittest.TestCase):
             bs.jump_diffusion(n_samples=500, fit_intercept=False)
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs._jump_diffusion_coefficient, Distribution)
-            assert bs._jump_diffusion_coefficient.size == 500
+            assert bs._jump_diffusion_coefficient.size == 16000
             assert bs.intercept == None
 
     def test_bootstrap_n_samples(self):
@@ -462,8 +462,8 @@ class TestTMSDBootstrap(unittest.TestCase):
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs._jump_diffusion_coefficient, Distribution)
             assert isinstance(bs.intercept, Distribution)
-            assert bs._jump_diffusion_coefficient.size == 100
-            assert bs.intercept.size == 100
+            assert bs._jump_diffusion_coefficient.size == 3200
+            assert bs.intercept.size == 3200
 
     def test_bootstrap_D(self):
         with warnings.catch_warnings(record=True) as w:
@@ -474,8 +474,8 @@ class TestTMSDBootstrap(unittest.TestCase):
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs._jump_diffusion_coefficient, Distribution)
             assert isinstance(bs.intercept, Distribution)
-            assert bs._jump_diffusion_coefficient.size == 100
-            assert bs.intercept.size == 100
+            assert bs._jump_diffusion_coefficient.size == 3200
+            assert bs.intercept.size == 3200
 
     # Waiting on https://github.com/dfm/emcee/pull/376
     # def test_initialisation_random_state(self):
@@ -638,7 +638,7 @@ class TestMSCDBootstrap(unittest.TestCase):
             bs.conductivity(1, 10, n_samples=500, fit_intercept=False)
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs.sigma, Distribution)
-            assert bs.sigma.size == 500
+            assert bs.sigma.size == 16000
             assert bs.intercept == None
 
     def test_bootstrap_n_samples(self):
@@ -650,8 +650,8 @@ class TestMSCDBootstrap(unittest.TestCase):
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs.sigma, Distribution)
             assert isinstance(bs.intercept, Distribution)
-            assert bs.sigma.size == 100
-            assert bs.intercept.size == 100
+            assert bs.sigma.size == 3200
+            assert bs.intercept.size == 3200
 
     def test_bootstrap_D(self):
         with warnings.catch_warnings(record=True) as w:
@@ -662,8 +662,8 @@ class TestMSCDBootstrap(unittest.TestCase):
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs.sigma, Distribution)
             assert isinstance(bs.intercept, Distribution)
-            assert bs.sigma.size == 100
-            assert bs.intercept.size == 100
+            assert bs.sigma.size == 3200
+            assert bs.intercept.size == 3200
 
     # Waiting on https://github.com/dfm/emcee/pull/376
     # def test_initialisation_random_state(self):
