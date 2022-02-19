@@ -198,7 +198,6 @@ class Bootstrap:
                       n_walkers: int = 32, 
                       n_burn: int = 500,
                       progress: bool = True,
-                      rtol: float = None,
                       random_state: np.random.mtrand.RandomState = None):
         """
         Use the covariance matrix estimated from the resampled values to estimate the gradient and intercept
@@ -216,10 +215,6 @@ class Bootstrap:
         :param n_burn: Number of burn in samples (these allow the sampling to settle). Optional, default
             is :py:attr:`500`.
         :param progress: Show tqdm progress for sampling. Optional, default is :py:attr:`True`.
-        :param rtol: The relative threshold term for the covariance matrix inversion. If you obtain a very unusual
-            value for the diffusion coefficient, it is recommended to increase this value (ideally iteratively). 
-            Option, default is :code:`N * eps`, where :code:`eps` is the machine precision value of the covariance 
-            matrix content.
         :param random_state: A :py:attr:`RandomState` object to be used to ensure reproducibility. Optional,
             default is :py:attr:`None`.
         """
