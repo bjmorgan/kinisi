@@ -302,7 +302,7 @@ class MSDBootstrap(Bootstrap):
 
     :param delta_t: An array of the timestep values, units of ps
     :param disp_3d: A list of arrays, where each array has the axes
-        :py:code:`[atom, displacement observation, dimension]`. There is one array in the list for each
+        :code:`[atom, displacement observation, dimension]`. There is one array in the list for each
         delta_t value. Note: it is necessary to use a list of arrays as the number of observations is
         not necessary the same at each data point.
     :param sub_sample_dt: The frequency in observations to be sampled. Default is :py:attr:`1` (every observation)
@@ -365,7 +365,7 @@ class TMSDBootstrap(Bootstrap):
 
     :param delta_t: An array of the timestep values.
     :param disp_3d: A list of arrays, where each array has the axes
-        :py:code:`[atom, displacement observation, dimension]`. There is one array in the list for each
+        :code:`[atom, displacement observation, dimension]`. There is one array in the list for each
         delta_t value. Note: it is necessary to use a list of arrays as the number of observations is
         not necessary the same at each data point.
     :param sub_sample_dt: The frequency in observations to be sampled. Optional, default
@@ -434,7 +434,7 @@ class MSCDBootstrap(Bootstrap):
 
     :param delta_t: An array of the timestep values.
     :param disp_3d: A list of arrays, where each array has the axes
-        :py:code:`[atom, displacement observation, dimension]`. There is one array in the list for each
+        :code:`[atom, displacement observation, dimension]`. There is one array in the list for each
         delta_t value. Note: it is necessary to use a list of arrays as the number of observations is
         not necessary the same at each data point.
     :param ionic_charge: The charge on the mobile ions, either an array with a value for each ion or a scalar
