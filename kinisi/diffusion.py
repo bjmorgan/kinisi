@@ -11,7 +11,7 @@ import warnings
 from typing import List, Tuple, Union
 import numpy as np
 from scipy.stats import multivariate_normal, normaltest, linregress
-from scipy.linalg import pinvh, inv
+from scipy.linalg import pinvh
 from scipy.optimize import minimize
 import scipy.constants as const
 import tqdm
@@ -223,10 +223,11 @@ class Bootstrap:
             max_ngp = np.argmax(self._ngp)
 
         self._covariance_matrix = self.populate_covariance_matrix(self._v, self._n_i)[max_ngp:, max_ngp:]
-        self._covariance_matrix = pinvh(pinvh(self._covariance_matrix, atol=self._covariance_matrix.min() * 0.1))
         self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix)
 
-        mv = multivariate_normal(self._n[max_ngp:], self._covariance_matrix, allow_singular=True, seed=random_state)
+        L = np.linalg.cholesky(self._covariance_matrix * 2 * np.pi)
+        logdet = 2 * np.log(np.diag(L)).sum()
+        inv = pinvh(self._covariance_matrix)
 
         def log_likelihood(theta: np.ndarray) -> float:
             """
@@ -237,7 +238,8 @@ class Bootstrap:
             if theta[0] < 0:
                 return -np.inf
             model = _straight_line(self._dt[max_ngp:], *theta)
-            logl = mv.logpdf(model)
+            diff = (model - self._n[max_ngp:])
+            logl = -0.5 * (logdet + np.matmul(diff.T, np.matmul(inv, diff)) + self._n[max_ngp:].size)
             return logl
 
         ols = linregress(self._dt[max_ngp:], self._n[max_ngp:])
