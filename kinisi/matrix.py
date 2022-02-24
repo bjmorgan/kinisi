@@ -26,8 +26,8 @@ def find_nearest_positive_definite(matrix: np.ndarray) -> np.ndarray:
     warnings.warn("The estimated covariance matrix was not positive definite, the nearest positive "
                   "definite matrix has been found and will be used.")
 
-    A3 = correlation_tools.cov_nearest(matrix, method='clipped')
-
+    A3 = correlation_tools.cov_nearest(matrix, method='nearest')
+    return A3
     if check_positive_definite(A3):
         return A3
 
