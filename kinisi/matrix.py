@@ -38,7 +38,6 @@ def find_nearest_positive_definite(matrix: np.ndarray) -> np.ndarray:
         mineig = np.min(np.real(np.linalg.eigvals(A3)))
         A3 += eye * (-mineig * k**2 + spacing)
         k += 1
-        print('m', k, spacing)
 
     return A3
 
