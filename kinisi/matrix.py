@@ -8,7 +8,6 @@ A small module to find the nearest positive definite matrix.
 
 import warnings
 import numpy as np
-from statsmodels.stats import correlation_tools
 
 
 def find_nearest_positive_definite(matrix: np.ndarray) -> np.ndarray:
@@ -26,8 +25,12 @@ def find_nearest_positive_definite(matrix: np.ndarray) -> np.ndarray:
     warnings.warn("The estimated covariance matrix was not positive definite, the nearest positive "
                   "definite matrix has been found and will be used.")
 
-    A3 = correlation_tools.cov_nearest(matrix, method='nearest')
-    return A3
+    B = (matrix + matrix.T) / 2
+    _, s, V = np.linalg.svd(B)
+    H = np.dot(V.T, np.dot(np.diag(s), V))
+    A2 = (B + H) / 2
+    A3 = (A2 + A2.T) / 2
+
     if check_positive_definite(A3):
         return A3
 

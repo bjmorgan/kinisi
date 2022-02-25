@@ -3,4 +3,3 @@ scikit-learn
 scipy>=1.7.0
 tqdm
 uravu>=1.2.5
-statsmodels
