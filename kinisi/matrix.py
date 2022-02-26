@@ -32,13 +32,13 @@ def find_nearest_positive_definite(matrix: np.ndarray) -> np.ndarray:
     A3 = (A2 + A2.T) / 2
     inv_eps = 0.01 / (np.finfo(A3.dtype).eps)
 
-    if (check_positive_definite(A3) and np.linalg.cond(A3) < inv_eps):
+    if (check_positive_definite(A3)):
         return A3
 
     spacing = np.spacing(np.linalg.norm(matrix))
     eye = np.eye(matrix.shape[0])
     k = 1
-    while not check_positive_definite(A3) or np.linalg.cond(A3) > inv_eps:
+    while not check_positive_definite(A3):
         mineig = np.min(np.real(np.linalg.eigvals(A3)))
         A3 += eye * (-mineig * k**2 + spacing)
         k += 1
