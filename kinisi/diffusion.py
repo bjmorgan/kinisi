@@ -197,6 +197,7 @@ class Bootstrap:
                       n_samples: int = 1000,
                       n_walkers: int = 32, 
                       n_burn: int = 500,
+                      rtol: float = None,
                       progress: bool = True,
                       random_state: np.random.mtrand.RandomState = None):
         """
@@ -214,6 +215,10 @@ class Bootstrap:
         :param n_walkers: Number of MCMC walkers to use. Optional, default is :py:attr:`32`.
         :param n_burn: Number of burn in samples (these allow the sampling to settle). Optional, default
             is :py:attr:`500`.
+        :param rtol: The relative threshold term for the covariance matrix inversion. If you obtain a very unusual
+            value for the diffusion coefficient, it is recommended to increase this value (ideally iteratively). 
+            Option, default is :code:`N * eps`, where :code:`eps` is the machine precision value of the covariance 
+            matrix content.
         :param progress: Show tqdm progress for sampling. Optional, default is :py:attr:`True`.
         :param random_state: A :py:attr:`RandomState` object to be used to ensure reproducibility. Optional,
             default is :py:attr:`None`.
@@ -223,10 +228,10 @@ class Bootstrap:
             max_ngp = np.argmax(self._ngp)
 
         self._covariance_matrix = self.populate_covariance_matrix(self._v, self._n_i)[max_ngp:, max_ngp:]
-        self._covariance_matrix = pinvh(pinvh(self._covariance_matrix, atol=self._covariance_matrix.min() * 0.1))
-        self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix)
+        self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix) 
 
-        mv = multivariate_normal(self._n[max_ngp:], self._covariance_matrix, allow_singular=True, seed=random_state)
+        _, logdet = np.linalg.slogdet(self._covariance_matrix * (2 * np.pi) ** self._n[max_ngp:].size)
+        inv = pinvh(self._covariance_matrix, rtol=rtol)
 
         def log_likelihood(theta: np.ndarray) -> float:
             """
@@ -237,7 +242,8 @@ class Bootstrap:
             if theta[0] < 0:
                 return -np.inf
             model = _straight_line(self._dt[max_ngp:], *theta)
-            logl = mv.logpdf(model)
+            diff = (model - self._n[max_ngp:])
+            logl = -0.5 * (logdet + np.matmul(diff.T, np.matmul(inv, diff)))
             return logl
 
         ols = linregress(self._dt[max_ngp:], self._n[max_ngp:])
