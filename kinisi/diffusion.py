@@ -217,7 +217,7 @@ class Bootstrap:
             is :py:attr:`500`.
         :param rtol: The relative threshold term for the covariance matrix inversion. If you obtain a very unusual
             value for the diffusion coefficient, it is recommended to increase this value (ideally iteratively). 
-            Option, default is :code:`N * eps`, where :code:`eps` is the machine precision value of the covariance 
+            Optional, default is :code:`N * eps`, where :code:`eps` is the machine precision value of the covariance 
             matrix content.
         :param progress: Show tqdm progress for sampling. Optional, default is :py:attr:`True`.
         :param random_state: A :py:attr:`RandomState` object to be used to ensure reproducibility. Optional,
