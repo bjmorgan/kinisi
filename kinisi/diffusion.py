@@ -228,10 +228,10 @@ class Bootstrap:
             max_ngp = np.argmax(self._ngp)
 
         self._covariance_matrix = self.populate_covariance_matrix(self._v, self._n_i)[max_ngp:, max_ngp:]
-        self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix) 
+        self._covariance_matrix = pinvh(pinvh(self._covariance_matrix, rtol=rtol), rtol=rtol)
+        self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix)
 
-        _, logdet = np.linalg.slogdet(self._covariance_matrix * (2 * np.pi) ** self._n[max_ngp:].size)
-        inv = pinvh(self._covariance_matrix, rtol=rtol)
+        mv = multivariate_normal(self._n[max_ngp:], self._covariance_matrix, allow_singular=True)
 
         def log_likelihood(theta: np.ndarray) -> float:
             """
@@ -242,9 +242,7 @@ class Bootstrap:
             if theta[0] < 0:
                 return -np.inf
             model = _straight_line(self._dt[max_ngp:], *theta)
-            diff = (model - self._n[max_ngp:])
-            logl = -0.5 * (logdet + np.matmul(diff.T, np.matmul(inv, diff)))
-            return logl
+            return mv.logpdf(model)
 
         ols = linregress(self._dt[max_ngp:], self._n[max_ngp:])
         slope = ols.slope
