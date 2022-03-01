@@ -134,19 +134,16 @@ class TestDiffusionAnalyzer(unittest.TestCase):
     Tests for the DiffusionAnalyzer base class.
     """
     def test_properties(self):
-        with warnings.catch_warnings(record=True) as w:
-            a = DiffusionAnalyzer.from_pymatgen(xd.structures,
-                                                parser_params=da_params,
-                                                bootstrap_params={'random_state': np.random.RandomState(0)})
-            assert_almost_equal(a.dt, a._diff.dt)
-            assert_almost_equal(a.msd, a._diff.n)
-            assert_almost_equal(a.msd_std, a._diff.s)
-            for i in range(len(a.dr)):
-                assert_almost_equal(a.dr[i].samples, a._diff.euclidian_displacements[i].samples)
-            assert a.ngp_max == a._diff.dt[a._diff.ngp.argmax()]
-            assert a.D == None
-            assert issubclass(w[0].category, UserWarning)
-            assert "maximum" in str(w[0].message)
+        a = DiffusionAnalyzer.from_pymatgen(xd.structures,
+                                            parser_params=da_params,
+                                            bootstrap_params={'random_state': np.random.RandomState(0)})
+        assert_almost_equal(a.dt, a._diff.dt)
+        assert_almost_equal(a.msd, a._diff.n)
+        assert_almost_equal(a.msd_std, a._diff.s)
+        for i in range(len(a.dr)):
+            assert_almost_equal(a.dr[i].samples, a._diff.euclidian_displacements[i].samples)
+        assert a.ngp_max == a._diff.dt[a._diff.ngp.argmax()]
+        assert a.D == None
 
     def test_diffusion(self):
         with warnings.catch_warnings(record=True) as w:
@@ -163,7 +160,6 @@ class TestDiffusionAnalyzer(unittest.TestCase):
             assert isinstance(a.D, Distribution)
             assert a.flatchain.shape == (32000, 2)
             assert issubclass(w[0].category, UserWarning)
-            assert "maximum" in str(w[0].message)
 
 
 class TestJumpDiffusionAnalyzer(unittest.TestCase):

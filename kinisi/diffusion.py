@@ -155,8 +155,9 @@ class Bootstrap:
         """
         values = _bootstrap(array.flatten(), n_samples, n_resamples, random_state)
         p_value = normaltest(values)[1]
-        while (p_value < alpha and len(values) < max_resamples):
+        while p_value < alpha and len(values) < max_resamples:
             values += _bootstrap(array.flatten(), n_samples, 100, random_state)
+            p_value = normaltest(values)[1]
         if len(values) >= max_resamples:
             warnings.warn("The maximum number of resamples has been reached, and the distribution is not yet normal.")
         return Distribution(values)
