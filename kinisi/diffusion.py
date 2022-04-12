@@ -198,7 +198,6 @@ class Bootstrap:
                       n_samples: int = 1000,
                       n_walkers: int = 32, 
                       n_burn: int = 500,
-                      noise: float = 0,
                       progress: bool = True,
                       random_state: np.random.mtrand.RandomState = None):
         """
