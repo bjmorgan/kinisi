@@ -18,7 +18,7 @@ import tqdm
 from uravu.distribution import Distribution
 from sklearn.utils import resample
 from emcee import EnsembleSampler 
-from kinisi.matrix import find_nearest_positive_definite
+from kinisi.matrix import check_positive_definite, find_nearest_positive_definite
 
 
 class Bootstrap:
@@ -198,7 +198,7 @@ class Bootstrap:
                       n_samples: int = 1000,
                       n_walkers: int = 32, 
                       n_burn: int = 500,
-                      rtol: float = None,
+                      noise: float = 0,
                       progress: bool = True,
                       random_state: np.random.mtrand.RandomState = None):
         """
@@ -229,9 +229,8 @@ class Bootstrap:
             max_ngp = np.argmax(self._ngp)
 
         self._covariance_matrix = self.populate_covariance_matrix(self._v, self._n_i)[max_ngp:, max_ngp:]
-        self._covariance_matrix = pinvh(pinvh(self._covariance_matrix, rtol=rtol), rtol=rtol)
         self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix)
-
+        
         mv = multivariate_normal(self._n[max_ngp:], self._covariance_matrix, allow_singular=True)
 
         def log_likelihood(theta: np.ndarray) -> float:

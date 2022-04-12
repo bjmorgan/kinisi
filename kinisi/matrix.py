@@ -53,6 +53,7 @@ def check_positive_definite(matrix: np.ndarray) -> bool:
     :param matrix: Matrix to check.
     :return: True for a positive-definite matrix.
     """
+    # return np.linalg.eigvals(matrix).real.min() > 1e-7
     try:
         _ = np.linalg.cholesky(matrix)
         return True
