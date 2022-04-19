@@ -1,0 +1,12 @@
+Citations
+=========
+
+Here we will try and list publications that have used :py:mod:`kinisi` (if you would like your work included please open a PR on the documentation_):
+
+1. Morgan, B. J., *Chem. Mater.*, **33**, 2004-2018, 2021. doi: `10.1021/acs.chemmater.0c03738`_
+2. Krenzer, G., Kim, C.-E., Tolberg, K., Morgan, B. J., Walsh, A., *J. Mater. Chem. A*, **10**, 2295-2304, 2022. doi: `10.1039/D1TA07631K`_
+
+
+.. _documentation: http://mccluskey.scot
+.. _10.1021/acs.chemmater.0c03738: https://doi.org/10.1021/acs.chemmater.0c03738
+.. _10.1039/D1TA07631K: https://doi.org/10.1039/D1TA07631K

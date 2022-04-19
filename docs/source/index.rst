@@ -47,6 +47,7 @@ Contributors
    tutorials
    faq
    modules
+   papers
 
 Searching
 =========
