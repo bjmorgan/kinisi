@@ -7,6 +7,6 @@ Here we will try and list publications that have used :py:mod:`kinisi` (if you w
 2. Krenzer, G., Kim, C.-E., Tolberg, K., Morgan, B. J., Walsh, A., *J. Mater. Chem. A*, **10**, 2295-2304, 2022. doi: `10.1039/D1TA07631K`_
 
 
-.. _documentation: http://mccluskey.scot
+.. _documentation: https://github.com/bjmorgan/kinisi/blob/master/docs/source/papers.rst
 .. _10.1021/acs.chemmater.0c03738: https://doi.org/10.1021/acs.chemmater.0c03738
 .. _10.1039/D1TA07631K: https://doi.org/10.1039/D1TA07631K
