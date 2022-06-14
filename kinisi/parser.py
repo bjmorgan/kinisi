@@ -196,7 +196,7 @@ class PymatgenParser(Parser):
                          indices[0],
                          indices[1],
                          time_step,
-                         step_skip,
+                         step_skip * sub_sample_traj,
                          min_obs=min_obs,
                          min_dt=min_dt,
                          ndelta_t=ndelta_t,
