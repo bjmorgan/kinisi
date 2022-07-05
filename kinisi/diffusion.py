@@ -12,7 +12,7 @@ from typing import List, Tuple, Union
 import numpy as np
 from scipy.stats import multivariate_normal, normaltest, linregress
 from scipy.linalg import pinvh, inv
-from scipy.optimize import minimize
+from scipy.optimize import minimize, curve_fit
 import scipy.constants as const
 import tqdm
 from uravu.distribution import Distribution
@@ -39,7 +39,7 @@ class Bootstrap:
         self._max_obs = self._displacements[0].shape[1]
         self._distributions = []
         self._dt = np.array([])
-        self._iterator = self.iterator(progress, range(len(self._displacements)))
+        self._iterator = self.iterator(progress, range(len(self._displacements))[1:])
         self._n = np.array([])
         self._s = np.array([])
         self._v = np.array([])
@@ -227,7 +227,21 @@ class Bootstrap:
         if use_ngp:
             max_ngp = np.argmax(self._ngp)
 
-        self._covariance_matrix = self.populate_covariance_matrix(self._v, self._n_i)[max_ngp:, max_ngp:]
+        def model_variance(dt: np.ndarray, a: float) -> np.ndarray:
+            """
+            Determine the model variance, based on a quadratic relationship with the number of
+            independent samples as a divisor.
+
+            :param dt: Timestep value
+            :param a: Quadratic coefficient
+            :return: Model variances
+            """
+            return a / self._n_i[max_ngp:] * dt ** 2
+
+        popt, _ = curve_fit(model_variance, self.dt[max_ngp:], self._v[max_ngp:])
+        model_v = model_variance(self.dt[max_ngp:], *popt)
+
+        self._covariance_matrix = self.populate_covariance_matrix(model_v, self._n_i)
         self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix)
         
         mv = multivariate_normal(self._n[max_ngp:], self._covariance_matrix, allow_singular=True)
@@ -287,7 +301,8 @@ class Bootstrap:
         covariance_matrix = np.zeros((variances.size, variances.size))
         for i in range(0, variances.size):
             for j in range(i, variances.size):
-                value = n_samples[i] / n_samples[j] * variances[i]
+                ratio = n_samples[i] / n_samples[j]
+                value = ratio * variances[i]
                 covariance_matrix[i, j] = value
                 covariance_matrix[j, i] = np.copy(covariance_matrix[i, j])
         return covariance_matrix
@@ -330,7 +345,7 @@ class MSDBootstrap(Bootstrap):
                 continue
             self._n_i = np.append(self._n_i, n_samples_current)
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
-            distro = self.sample_until_normal(d_squared, self._n_i[i], n_resamples, max_resamples, alpha, random_state)
+            distro = self.sample_until_normal(d_squared, n_samples_current, n_resamples, max_resamples, alpha, random_state)
             self._distributions.append(distro)
             self._n = np.append(self._n, d_squared.mean())
             self._s = np.append(self._s, np.std(distro.samples, ddof=1))
@@ -397,7 +412,7 @@ class TMSDBootstrap(Bootstrap):
                 continue
             self._n_i = np.append(self._n_i, n_samples_current)
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
-            distro = self.sample_until_normal(coll_motion, self._n_i[i], n_resamples, max_resamples, alpha,
+            distro = self.sample_until_normal(coll_motion, n_samples_current, n_resamples, max_resamples, alpha,
                                               random_state)
             self._distributions.append(distro)
             self._n = np.append(self._n, distro.n)
@@ -472,7 +487,7 @@ class MSCDBootstrap(Bootstrap):
                 continue
             self._n_i = np.append(self._n_i, n_samples_current)
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
-            distro = self.sample_until_normal(sq_chg_motion, self._n_i[i], n_resamples, max_resamples, alpha,
+            distro = self.sample_until_normal(sq_chg_motion, n_samples_current, n_resamples, max_resamples, alpha,
                                               random_state)
             self._distributions.append(distro)
             self._n = np.append(self._n, distro.n)

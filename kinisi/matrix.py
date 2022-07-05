@@ -30,7 +30,6 @@ def find_nearest_positive_definite(matrix: np.ndarray) -> np.ndarray:
     H = np.dot(V.T, np.dot(np.diag(s), V))
     A2 = (B + H) / 2
     A3 = (A2 + A2.T) / 2
-    inv_eps = 0.01 / (np.finfo(A3.dtype).eps)
 
     if (check_positive_definite(A3)):
         return A3
