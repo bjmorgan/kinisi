@@ -163,8 +163,8 @@ class Parser:
         if disp_mem > self.memory_limit:
             raise MemoryError(f"The memory limit of this job is {self.memory_limit:.1e} GB but the "
                               f"displacement values will use {disp_mem:.1e} GB. Please either increase "
-                              "the memory_limit paror descrease the sampling rate (see "
-                              "https://kinisi.readthedocs.io/en/latest/faq.html).")
+                              "the memory_limit parameter or descrease the sampling rate (see "
+                              "https://kinisi.readthedocs.io/en/latest/memory_limit.html).")
         for timestep in iterator:
             disp = np.subtract(drift_corrected[self.indices, timestep:, :],
                                drift_corrected[self.indices, :-timestep, :])
