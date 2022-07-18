@@ -2,7 +2,7 @@
 Parser functions, including implementation for :py:mod:`pymatgen` compatible VASP files and :py:mod:`MDAnalysis`
 compatible trajectories.
 
-This parser borrows heavily from the :py:class`pymatgen.analysis.diffusion_analyzer.DiffusionAnalyzer` class, 
+This parser borrows heavily from the :py:class`pymatgen.analysis.diffusion_analyzer.DiffusionAnalyzer` class,
 originally authored by Will Richards (wrichard@mit.edu) and Shyue Ping Ong.
 We include this statement to note that we make no claim to authorship of that code and make no attack on the
 original authors.
@@ -37,8 +37,11 @@ class Parser:
     :param min_dt: Minimum timestep to be evaluated, in the simulation units. Optional, defaults to :py:attr:`100`.
     :param ndelta_t: The number of :py:attr:`delta_t` values to calculate the MSD over. Optional,
         defaults to :py:attr:`75`.
+    :param memory_limit: Upper limit in the amount of computer memory that the displacements can occupy in
+        gigabytes (GB). Optional, defaults to :py:attr:`8.`.
     :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
     """
+
     def __init__(self,
                  disp: np.ndarray,
                  indices: np.ndarray,
@@ -48,12 +51,14 @@ class Parser:
                  min_obs: int = 30,
                  min_dt: int = 1,
                  ndelta_t: int = 75,
+                 memory_limit: float = 8.,
                  progress: bool = True):
         self.time_step = time_step
         self.step_skip = step_skip
         self.indices = indices
         self.min_dt = min_dt
         self.ndelta_t = ndelta_t
+        self.memory_limit = memory_limit
         self._volume = None
 
         drift_corrected = self.correct_drift(framework_indices, disp)
@@ -151,6 +156,15 @@ class Parser:
             iterator = tqdm(timesteps, desc='Getting Displacements')
         else:
             iterator = timesteps
+        disp_mem = 0
+        for timestep in iterator:
+            disp_mem += np.product(drift_corrected[self.indices, timestep:].shape) * 8
+        disp_mem *= 1e-9
+        if disp_mem > self.memory_limit:
+            raise MemoryError(f"The memory limit of this job is {self.memory_limit:.1e} GB but the "
+                              f"displacement values will use {disp_mem:.1e} GB. Please either increase "
+                              "the memory_limit parameter or descrease the sampling rate (see "
+                              "https://kinisi.readthedocs.io/en/latest/memory_limit.html).")
         for timestep in iterator:
             disp = np.subtract(drift_corrected[self.indices, timestep:, :],
                                drift_corrected[self.indices, :-timestep, :])
@@ -176,8 +190,11 @@ class PymatgenParser(Parser):
     :param min_dt: Minimum timestep to be evaluated, in the simulation units. Optional, defaults to :py:attr:`100`.
     :param ndelta_t: The number of :py:attr:`delta_t` values to calculate the MSD over. Optional,
         defaults to :py:attr:`75`.
+    :param memory_limit: Upper limit in the amount of computer memory that the displacements can occupy in
+        gigabytes (GB). Optional, defaults to :py:attr:`8.`.
     :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
     """
+
     def __init__(self,
                  structures: List["pymatgen.core.structure.Structure"],
                  specie: Union["pymatgen.core.periodic_table.Element", "pymatgen.core.periodic_table.Specie"],
@@ -187,6 +204,7 @@ class PymatgenParser(Parser):
                  sub_sample_traj: int = 1,
                  min_dt: float = 100,
                  ndelta_t: int = 75,
+                 memory_limit: float = 8.,
                  progress: bool = True):
         structure, coords, latt = self.get_structure_coords_latt(structures, sub_sample_traj, progress)
 
@@ -200,6 +218,7 @@ class PymatgenParser(Parser):
                          min_obs=min_obs,
                          min_dt=min_dt,
                          ndelta_t=ndelta_t,
+                         memory_limit=memory_limit,
                          progress=progress)
         self._volume = structure.volume
         self.delta_t *= 1e-3
@@ -274,7 +293,7 @@ class MDAnalysisParser(Parser):
         E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated
         up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated
         times. Optional, defaults to :py:attr:`30`.
-    :param sub_sample_atoms: The sampling rate to sample the atoms in the system. Optional, defaults 
+    :param sub_sample_atoms: The sampling rate to sample the atoms in the system. Optional, defaults
         to :py:attr:`1` where all atoms are used.
     :param sub_sample_traj: Multiple of the :py:attr:`time_step` to sub sample at. Optional,
         defaults to :py:attr:`1` where all timesteps are used.
@@ -282,8 +301,11 @@ class MDAnalysisParser(Parser):
         defaults to :py:attr:`100`.
     :param ndelta_t: The number of :py:attr:`delta_t` values to calculate the MSD over. Optional,
         defaults to :py:attr:`75`.
+    :param memory_limit: Upper limit in the amount of computer memory that the displacements can occupy in
+        gigabytes (GB). Optional, defaults to :py:attr:`8.`.
     :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
     """
+
     def __init__(self,
                  universe: "MDAnalysis.core.universe.Universe",
                  specie: str,
@@ -294,6 +316,7 @@ class MDAnalysisParser(Parser):
                  sub_sample_traj: int = 1,
                  min_dt: float = 100,
                  ndelta_t: int = 75,
+                 memory_limit: float = 8.,
                  progress: bool = True):
         structure, coords, latt, volume = self.get_structure_coords_latt(universe, sub_sample_atoms, sub_sample_traj,
                                                                          progress)
@@ -301,7 +324,7 @@ class MDAnalysisParser(Parser):
         indices = self.get_indices(structure, specie)
 
         super().__init__(self.get_disp(coords, latt), indices[0], indices[1], time_step, step_skip * sub_sample_traj,
-                         min_obs, min_dt, ndelta_t, progress)
+                         min_obs, min_dt, ndelta_t, memory_limit, progress)
         self._volume = volume
 
     @staticmethod
