@@ -11,14 +11,23 @@ import warnings
 from typing import List, Tuple, Union
 import numpy as np
 from scipy.stats import multivariate_normal, normaltest, linregress
-from scipy.linalg import pinvh, inv
 from scipy.optimize import minimize, curve_fit
 import scipy.constants as const
 import tqdm
 from uravu.distribution import Distribution
 from sklearn.utils import resample
-from emcee import EnsembleSampler 
-from kinisi.matrix import check_positive_definite, find_nearest_positive_definite
+from emcee import EnsembleSampler
+from kinisi.matrix import find_nearest_positive_definite
+
+DIMENSIONALITY = {
+    'x': (np.s_[0], 1),
+    'y': (np.s_[1], 1),
+    'z': (np.s_[2], 1),
+    'xy': (np.s_[:2], 2),
+    'xz': (np.s_[::2], 2),
+    'yz': (np.s_[1:], 2),
+    'xyz': (np.s_[:], 3)
+}
 
 
 class Bootstrap:
@@ -33,6 +42,7 @@ class Bootstrap:
         observation).
     :param progress: Show tqdm progress for sampling. Optional, default is :py:attr:`True`.
     """
+
     def __init__(self, delta_t: np.ndarray, disp_3d: List[np.ndarray], sub_sample_dt: int = 1, progress: bool = True):
         self._displacements = disp_3d[::sub_sample_dt]
         self._delta_t = np.array(delta_t[::sub_sample_dt])
@@ -196,7 +206,7 @@ class Bootstrap:
                       dt_skip: float = 0,
                       fit_intercept: bool = True,
                       n_samples: int = 1000,
-                      n_walkers: int = 32, 
+                      n_walkers: int = 32,
                       n_burn: int = 500,
                       progress: bool = True,
                       random_state: np.random.mtrand.RandomState = None):
@@ -216,8 +226,8 @@ class Bootstrap:
         :param n_burn: Number of burn in samples (these allow the sampling to settle). Optional, default
             is :py:attr:`500`.
         :param rtol: The relative threshold term for the covariance matrix inversion. If you obtain a very unusual
-            value for the diffusion coefficient, it is recommended to increase this value (ideally iteratively). 
-            Optional, default is :code:`N * eps`, where :code:`eps` is the machine precision value of the covariance 
+            value for the diffusion coefficient, it is recommended to increase this value (ideally iteratively).
+            Optional, default is :code:`N * eps`, where :code:`eps` is the machine precision value of the covariance
             matrix content.
         :param progress: Show tqdm progress for sampling. Optional, default is :py:attr:`True`.
         :param random_state: A :py:attr:`RandomState` object to be used to ensure reproducibility. Optional,
@@ -236,14 +246,14 @@ class Bootstrap:
             :param a: Quadratic coefficient
             :return: Model variances
             """
-            return a / self._n_i[max_ngp:] * dt ** 2
+            return a / self._n_i[max_ngp:] * dt**2
 
         popt, _ = curve_fit(model_variance, self.dt[max_ngp:], self._v[max_ngp:])
         model_v = model_variance(self.dt[max_ngp:], *popt)
 
         self._covariance_matrix = self.populate_covariance_matrix(model_v, self._n_i)
         self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix)
-        
+
         mv = multivariate_normal(self._n[max_ngp:], self._covariance_matrix, allow_singular=True)
 
         def log_likelihood(theta: np.ndarray) -> float:
@@ -323,29 +333,37 @@ class MSDBootstrap(Bootstrap):
     :param max_resamples: The max number of resamples to be performed by the distribution is assumed to be normal.
         This is present to allow user control over the time taken for the resampling to occur. Default
         is :py:attr:`100000`
+    :param dimension: Dimension/s to find the displacement along, this should be some subset of `'xyz'` indicating
+        the axes of interest. Optional, defaults to `'xyz'`.
     :param alpha: Value that p-value for the normal test must be greater than to accept. Default is :py:attr:`1e-3`
     :param random_state : A :py:attr:`RandomState` object to be used to ensure reproducibility. Default
         is :py:attr:`None`
     :param progress: Show tqdm progress for sampling. Default is :py:attr:`True`
     """
+
     def __init__(self,
                  delta_t: np.ndarray,
                  disp_3d: List[np.ndarray],
                  sub_sample_dt: int = 1,
                  n_resamples: int = 1000,
                  max_resamples: int = 10000,
+                 dimension: str = 'xyz',
                  alpha: float = 1e-3,
                  random_state: np.random.mtrand.RandomState = None,
                  progress: bool = True):
         super().__init__(delta_t, disp_3d, sub_sample_dt, progress)
+        slice, dim = DIMENSIONALITY[dimension.lower()]
         for i in self._iterator:
-            d_squared = np.sum(self._displacements[i]**2, axis=2)
+            disp_slice = self._displacements[i][:, :, slice].reshape(self._displacements[i].shape[0],
+                                                                     self._displacements[i].shape[1], dim)
+            d_squared = np.sum(disp_slice**2, axis=2)
             n_samples_current = self.n_samples(self._displacements[i].shape, self._max_obs)
             if n_samples_current <= 1:
                 continue
             self._n_i = np.append(self._n_i, n_samples_current)
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
-            distro = self.sample_until_normal(d_squared, n_samples_current, n_resamples, max_resamples, alpha, random_state)
+            distro = self.sample_until_normal(d_squared, n_samples_current, n_resamples, max_resamples, alpha,
+                                              random_state)
             self._distributions.append(distro)
             self._n = np.append(self._n, d_squared.mean())
             self._s = np.append(self._s, np.std(distro.samples, ddof=1))
@@ -388,25 +406,32 @@ class TMSDBootstrap(Bootstrap):
     :param max_resamples: The max number of resamples to be performed by the distribution is assumed to be
         normal. This is present to allow user control over the time taken for the resampling to occur.
         Optional, default is :py:attr:`100000`
+    :param dimension: Dimension/s to find the displacement along, this should be some subset of `'xyz'` indicating
+        the axes of interest. Optional, defaults to `'xyz'`.
     :param alpha: Value that p-value for the normal test must be greater than to accept. Optional, default
         is :py:attr:`1e-3`
     :param random_state : A :py:attr:`RandomState` object to be used to ensure reproducibility. Optional,
         default is :py:attr:`None`
     :param progress: Show tqdm progress for sampling. Optional, default is :py:attr:`True`
     """
+
     def __init__(self,
                  delta_t: np.ndarray,
                  disp_3d: List[np.ndarray],
                  sub_sample_dt: int = 1,
                  n_resamples: int = 1000,
                  max_resamples: int = 10000,
+                 dimension: str = 'xyz',
                  alpha: float = 1e-3,
                  random_state: np.random.mtrand.RandomState = None,
                  progress: bool = True):
         super().__init__(delta_t, disp_3d, sub_sample_dt, progress)
+        slice, dim = DIMENSIONALITY[dimension.lower()]
         for i in self._iterator:
-            d_squared = np.sum(self._displacements[i]**2, axis=2)
-            coll_motion = np.sum(np.sum(self._displacements[i], axis=0)**2, axis=-1)
+            disp_slice = self._displacements[i][:, :, slice].reshape(self._displacements[i].shape[0],
+                                                                     self._displacements[i].shape[1], dim)
+            d_squared = np.sum(disp_slice**2, axis=2)
+            coll_motion = np.sum(np.sum(disp_slice, axis=0)**2, axis=-1)
             n_samples_current = self.n_samples((1, self._displacements[i].shape[1]), self._max_obs)
             if n_samples_current <= 1:
                 continue
@@ -458,12 +483,15 @@ class MSCDBootstrap(Bootstrap):
     :param max_resamples: The max number of resamples to be performed by the distribution is assumed to be normal.
         This is present to allow user control over the time taken for the resampling to occur. Optional, default
         is :py:attr:`100000`.
+    :param dimension: Dimension/s to find the displacement along, this should be some subset of `'xyz'` indicating
+        the axes of interest. Optional, defaults to `'xyz'`.
     :param alpha: Value that p-value for the normal test must be greater than to accept. Optional, default
         is :py:attr:`1e-3`.
     :param random_state: A :py:attr:`RandomState` object to be used to ensure reproducibility. Optional,
         default is :py:attr:`None`.
     :param progress: Show tqdm progress for sampling. Optional, default is :py:attr:`True`.
     """
+
     def __init__(self,
                  delta_t: np.ndarray,
                  disp_3d: List[np.ndarray],
@@ -471,6 +499,7 @@ class MSCDBootstrap(Bootstrap):
                  sub_sample_dt: int = 1,
                  n_resamples: int = 1000,
                  max_resamples: int = 10000,
+                 dimension: str = 'xyz',
                  alpha: float = 1e-3,
                  random_state: np.random.mtrand.RandomState = None,
                  progress: bool = True):
@@ -479,8 +508,11 @@ class MSCDBootstrap(Bootstrap):
             _ = len(ionic_charge)
         except TypeError:
             ionic_charge = np.ones(self._displacements[0].shape[0]) * ionic_charge
+        slice, dim = DIMENSIONALITY[dimension.lower()]
         for i in self._iterator:
-            d_squared = np.sum(self._displacements[i]**2, axis=2)
+            disp_slice = self._displacements[i][:, :, slice].reshape(self._displacements[i].shape[0],
+                                                                     self._displacements[i].shape[1], dim)
+            d_squared = np.sum(disp_slice**2, axis=2)
             sq_chg_motion = np.sum(np.sum((ionic_charge * self._displacements[i].T).T, axis=0)**2, axis=-1)
             n_samples_current = self.n_samples((1, self._displacements[i].shape[1]), self._max_obs)
             if n_samples_current <= 1:
