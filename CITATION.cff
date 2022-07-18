@@ -9,9 +9,9 @@ authors:
     given-names: "Benjamin J."
     orcid: "https://orcid.org/0000-0002-3056-8233"
 cff-version: "1.1.0"
-date-released: 2022-06-29
+date-released: 2022-07-18
 license: MIT
 message: "If you use this software, please cite it using these metadata."
 repository-code: "https://github.com/bjmorgan/kinisi"
 title: kinisi
-version: "0.3.8"
+version: "0.3.9"
