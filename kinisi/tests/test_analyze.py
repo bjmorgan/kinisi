@@ -17,7 +17,8 @@ from pymatgen.io.vasp import Xdatcar
 import MDAnalysis as mda
 from uravu.distribution import Distribution
 import kinisi
-from kinisi.analyze import Analyzer, DiffusionAnalyzer, JumpDiffusionAnalyzer, ConductivityAnalyzer, _flatten_list
+from kinisi.analyze import DiffusionAnalyzer, JumpDiffusionAnalyzer, ConductivityAnalyzer
+from kinisi.analyzer import Analyzer, _flatten_list
 
 file_path = os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_XDATCAR.gz')
 xd = Xdatcar(file_path)
