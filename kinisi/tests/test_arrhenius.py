@@ -28,6 +28,7 @@ class TestArrhenius(unittest.TestCase):
     """
     Unit tests for arrhenius module
     """
+
     def test_standard_arrhenius_init(self):
         """
         Test the initialisation of standard arrhenius

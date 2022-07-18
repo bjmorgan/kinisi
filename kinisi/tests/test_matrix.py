@@ -18,6 +18,7 @@ class TestFunctions(unittest.TestCase):
     """
     Tests for the matrix functions.
     """
+
     def test_find_psd_matrix(self):
         start_matrix = np.eye(20)
         assert_equal(start_matrix, find_nearest_positive_definite(start_matrix))

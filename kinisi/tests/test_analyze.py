@@ -32,6 +32,7 @@ class TestAnalyzer(unittest.TestCase):
     """
     Tests for the Analyzer base class.
     """
+
     def test_structure_pmg(self):
         a = Analyzer._from_pymatgen(xd.structures, parser_params=da_params)
         assert a._delta_t.size == 139
@@ -122,17 +123,18 @@ class TestAnalyzer(unittest.TestCase):
 
     def test_list_bad_input(self):
         with self.assertRaises(ValueError):
-            a = Analyzer._from_file([file_path, file_path], parser_params=da_params, dtype='consecutie')
+            _ = Analyzer._from_file([file_path, file_path], parser_params=da_params, dtype='consecutie')
 
     def test_list_bad_mda(self):
         with self.assertRaises(ValueError):
-            a = Analyzer._from_universe(file_path, parser_params=db_params, dtype='consecutie')
+            _ = Analyzer._from_universe(file_path, parser_params=db_params, dtype='consecutie')
 
 
 class TestDiffusionAnalyzer(unittest.TestCase):
     """
     Tests for the DiffusionAnalyzer base class.
     """
+
     def test_properties(self):
         a = DiffusionAnalyzer.from_pymatgen(xd.structures,
                                             parser_params=da_params,
@@ -143,7 +145,7 @@ class TestDiffusionAnalyzer(unittest.TestCase):
         for i in range(len(a.dr)):
             assert_almost_equal(a.dr[i].samples, a._diff.euclidian_displacements[i].samples)
         assert a.ngp_max == a._diff.dt[a._diff.ngp.argmax()]
-        assert a.D == None
+        assert a.D is None
 
     def test_diffusion(self):
         with warnings.catch_warnings(record=True) as w:
@@ -166,6 +168,7 @@ class TestJumpDiffusionAnalyzer(unittest.TestCase):
     """
     Tests for the JumpDiffusionAnalyzer base class.
     """
+
     def test_properties(self):
         with warnings.catch_warnings(record=True) as w:
             a = JumpDiffusionAnalyzer.from_pymatgen(xd.structures,
@@ -202,6 +205,7 @@ class TestConductivityAnalyzer(unittest.TestCase):
     """
     Tests for the ConductivityAnalyzer base class.
     """
+
     def test_properties(self):
         with warnings.catch_warnings(record=True) as w:
             a = ConductivityAnalyzer.from_pymatgen(xd.structures,
@@ -240,6 +244,7 @@ class TestFunctions(unittest.TestCase):
     """
     Tests for other functions
     """
+
     def test__flatten_list(self):
         a_list = [[1, 2, 3], [4, 5]]
         result = _flatten_list(a_list)

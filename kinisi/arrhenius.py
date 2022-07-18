@@ -30,12 +30,14 @@ class StandardArrhenius(Relationship):
     Args:
         temperature (:py:attr:`array_like`): Temperature data in kelvin.
         diffusion (:py:attr:`array_like`): Diffusion coefficient data in cm^2s^{-1}.
-        bounds (:py:attr:`tuple`): The minimum and maximum values for each parameters. Defaults to :py:attr:`((0, 1), (0, 1e20))`.
+        bounds (:py:attr:`tuple`): The minimum and maximum values for each parameters.
+            Defaults to :py:attr:`((0, 1), (0, 1e20))`.
         diffusion_error (:py:attr:`array_like`): Uncertainty in the diffusion coefficient data. Not necessary
             if :py:attr:`diffusion` is :py:attr:`list` of :py:class:`uravu.distribution.Distribution` objects.
         ci_points (:py:attr:`array_like`, optional): The two percentiles at which confidence intervals should be
             found for the variables. Default is :py:attr:`[2.5, 97.5]` (a 95 % confidence interval).
     """
+
     def __init__(self,
                  temperature: np.ndarray,
                  diffusion: Union[List['uravu.distribution.Distribution'], np.ndarray],
@@ -82,13 +84,14 @@ class SuperArrhenius(Relationship):
     Args:
         temperature (:py:attr:`array_like`): Temperature data in kelvin.
         diffusion (:py:attr:`array_like`): Diffusion coefficient data in cm^2s^{-1}.
-        bounds (:py:attr:`tuple`): The minimum and maximum values for each parameters. Defaults to 
+        bounds (:py:attr:`tuple`): The minimum and maximum values for each parameters. Defaults to
             :py:attr:`[(0, 1), (0, 1e20), (0, temperature[0])]`.
         diffusion_error (:py:attr:`array_like`): Uncertainty in the diffusion coefficient data. Not necessary
             if :py:attr:`diffusion` is :py:attr:`list` of :py:class:`uravu.distribution.Distribution` objects.
         ci_points (:py:attr:`array_like`, optional): The two percentiles at which confidence intervals should be
             found for the variables. Default is :py:attr:`[2.5, 97.5]` (a 95 % confidence interval).
     """
+
     def __init__(self,
                  temperature: np.ndarray,
                  diffusion: Union[List['uravu.distribution.Distribution'], np.ndarray],

@@ -23,9 +23,9 @@ from kinisi.parser import MDAnalysisParser, PymatgenParser
 
 class Analyzer:
     """
-    This class is the superclass for the :py:class:`kinisi.analyze.DiffusionAnalyzer`, 
-    :py:class:`kinisi.analyze.JumpDiffusionAnalyzer` and :py:class:`kinisi.analyze.ConductivityAnalyzer` classes. 
-    Therefore all of the properties here are available to these other classes. 
+    This class is the superclass for the :py:class:`kinisi.analyze.DiffusionAnalyzer`,
+    :py:class:`kinisi.analyze.JumpDiffusionAnalyzer` and :py:class:`kinisi.analyze.ConductivityAnalyzer` classes.
+    Therefore all of the properties here are available to these other classes.
 
     :param delta_t: An array of the timestep values.
     :param disp_3d: A list of arrays, where each array has the axes :code:`[atom, displacement observation,
@@ -33,6 +33,7 @@ class Analyzer:
         list of arrays as the number of observations is not necessary the same at each data point.
     :param volume: The volume of the simulation cell.
     """
+
     def __init__(self, delta_t: np.ndarray, disp_3d: List[np.ndarray], volume: float):
         self._delta_t = delta_t
         self._disp_3d = disp_3d
@@ -249,6 +250,7 @@ class DiffusionAnalyzer(Analyzer):
     :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.DiffBootstrap` object. See
         the appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
     """
+
     def __init__(self,
                  delta_t: np.ndarray,
                  disp_3d: List[np.ndarray],
@@ -421,6 +423,7 @@ class JumpDiffusionAnalyzer(Analyzer):
     :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.DiffBootstrap` object. See
         the appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
     """
+
     def __init__(self,
                  delta_t: np.ndarray,
                  disp_3d: List[np.ndarray],
@@ -594,6 +597,7 @@ class ConductivityAnalyzer(Analyzer):
     :param ionic_charge: The charge on the mobile ions, either an array with a value for each ion or a scalar
         if all values are the same. Optional, default is :py:attr:`1`.
     """
+
     def __init__(self,
                  delta_t: np.ndarray,
                  disp_3d: List[np.ndarray],

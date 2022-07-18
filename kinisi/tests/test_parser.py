@@ -26,6 +26,7 @@ class TestParser(unittest.TestCase):
     """
     Unit tests for parser module
     """
+
     def test_parser_init_timestep(self):
         p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=20)
         assert_equal(p.time_step, time_step)
