@@ -1,6 +1,6 @@
 """
-This module contains the API classes the :py:class:`kinisi.analyze.DiffusionAnalyzer` class for MSD
-and diffusion analysis.
+The :py:class:`kinisi.analyze.DiffusionAnalyzer` class enables the analysis of mean-squared displacement and
+the self-diffusion coefficient.
 """
 
 # Copyright (c) Andrew R. McCluskey and Benjamin J. Morgan

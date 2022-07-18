@@ -1,6 +1,6 @@
 """
-This module contains the API classes for the :py:class:`kinisi.analyze.ConductivityAnalyzer` class for MSCD
-and conductivity analysis.
+The :py:class:`kinisi.analyze.ConductivityAnalyzer` class will allow the conductivity of a material in a
+simulation to be found, without assuming a Haven ration of 1. 
 """
 
 # Copyright (c) Andrew R. McCluskey and Benjamin J. Morgan

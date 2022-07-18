@@ -1,6 +1,6 @@
 """
-This module contains the API classes for the :py:class:`kinisi.analyze.JumpDiffusionAnalyzer` class for TMSD
-and collective diffusion analysis.
+The :py:class:`kinisi.analyze.JumpDiffusionAnalyzer` class allows the study of jump diffusion
+and the collective motion of particles.
 """
 
 # Copyright (c) Andrew R. McCluskey and Benjamin J. Morgan
