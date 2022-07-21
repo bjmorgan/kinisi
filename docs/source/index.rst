@@ -20,8 +20,8 @@ Examples of some of these analyses are shown in the `tutorials`_, also given the
   :align: center
   :alt: An example of the kinisi analysis for the diffusion of lithium in a superionic material. 
 
-  An example of the output from a :py:mod:`kinisi` analysis; showing the determined mean-squared displacements (blue points with error bars), 
-  the estimated Einstein diffusion relationship (black line representing a probability distribution), 
+  An example of the output from a :py:mod:`kinisi` analysis; showing the determined mean-squared displacements (solid black line), 
+  the estimated Einstein diffusion relationship (blue regions representing descreasing credible intervals), 
   and the estimate of the start of the diffusive regime using the maximum of the non-Gaussian parameter (green vertical line).
 
 Contributors
