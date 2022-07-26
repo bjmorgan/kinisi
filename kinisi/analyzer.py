@@ -6,7 +6,6 @@ This module contains the base class for the different :py:class:`Analyzer` objec
 # Distributed under the terms of the MIT License
 # author: Andrew R. McCluskey (arm61)
 
-
 from typing import Union, List
 import numpy as np
 from kinisi.parser import MDAnalysisParser, PymatgenParser
@@ -48,7 +47,7 @@ class Analyzer:
             raise ValueError(f"The file {filename} already exists, please delete it or change the input filename.")
         with h5py.File(filename, 'w') as h5file:
             _dict_to_group(h5file, '/', my_dict)
-            
+
     @classmethod
     def load(cls, filename: str) -> 'Analyzer':
         """
@@ -336,7 +335,7 @@ def _group_to_dict(h5file: 'h5py._hl.files.File', path: str) -> dict:
             else:
                 my_dict[key] = value[()]
         elif isinstance(value, h5py._hl.group.Group):
-            key_list = list(h5file[path + key + '/'].keys()) 
+            key_list = list(h5file[path + key + '/'].keys())
             if key_list[0][:4] == 'list':
                 my_dict[key] = []
                 for i in sorted([int(i[4:]) for i in key_list]):
@@ -349,7 +348,7 @@ def _group_to_dict(h5file: 'h5py._hl.files.File', path: str) -> dict:
                                 my_dict[key].append(value[()])
                         else:
                             my_dict[key].append(value[()])
-                    elif isinstance(h5file[path + key + f'/list{i}'], h5py._hl.group.Group): 
+                    elif isinstance(h5file[path + key + f'/list{i}'], h5py._hl.group.Group):
                         my_dict[key].append(_group_to_dict(h5file, path + key + f'/list{i}'))
             else:
                 my_dict[key] = _group_to_dict(h5file, path + key + '/')

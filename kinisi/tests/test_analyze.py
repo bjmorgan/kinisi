@@ -33,9 +33,10 @@ class TestAnalyzer(unittest.TestCase):
     """
     Tests for the Analyzer base class.
     """
+
     def test_dict_roundtrip(self):
         a = Analyzer._from_pymatgen(xd.structures, parser_params=da_params)
-        b = Analyzer.from_dict(a.to_dict()) 
+        b = Analyzer.from_dict(a.to_dict())
         assert_equal(a._delta_t, b._delta_t)
         for i, d in enumerate(a._disp_3d):
             assert_equal(d, b._disp_3d[i])
@@ -195,7 +196,6 @@ class TestDiffusionAnalyzer(unittest.TestCase):
             assert a.ngp_max == b.ngp_max
             assert_equal(a.D.samples, b.D.samples)
             assert_equal(a.flatchain, b.flatchain)
-
 
 
 class TestJumpDiffusionAnalyzer(unittest.TestCase):

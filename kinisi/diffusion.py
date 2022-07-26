@@ -66,11 +66,22 @@ class Bootstrap:
         """
         :return: Dictionary description of the :py:class:`Bootstrap`.
         """
-        my_dict = {'displacements': self._displacements, 'delta_t': self._delta_t, 'max_obs': self._max_obs,
-                   'dt': self._dt, 'n': self._n, 's': self._s, 'v': self._v, 
-                   'n_i': self._n_i, 'ngp': self._ngp,
-                   'covariance_matrix': self._covariance_matrix, 'diffusion_coefficient': None, 
-                   'jump_diffusion_coefficient': None, 'sigma': None, 'intercept': None}
+        my_dict = {
+            'displacements': self._displacements,
+            'delta_t': self._delta_t,
+            'max_obs': self._max_obs,
+            'dt': self._dt,
+            'n': self._n,
+            's': self._s,
+            'v': self._v,
+            'n_i': self._n_i,
+            'ngp': self._ngp,
+            'covariance_matrix': self._covariance_matrix,
+            'diffusion_coefficient': None,
+            'jump_diffusion_coefficient': None,
+            'sigma': None,
+            'intercept': None
+        }
         my_dict['distributions'] = [d.to_dict() for d in self._distributions]
         my_dict['euclidian_displacements'] = [d.to_dict() for d in self._euclidian_displacements]
         if self._diffusion_coefficient is not None:
@@ -82,7 +93,7 @@ class Bootstrap:
         if self._intercept is not None:
             my_dict['intercept'] = self._intercept.to_dict()
         return my_dict
-    
+
     @classmethod
     def from_dict(cls, my_dict: dict) -> 'Bootstrap':
         """
@@ -385,7 +396,6 @@ class Bootstrap:
         """
         return self._diffusion_coefficient
 
-    
     def jump_diffusion(self, **kwargs):
         """
         Use the bootstrap-GLS method to determine the jump diffusivity for the system. Keyword arguments

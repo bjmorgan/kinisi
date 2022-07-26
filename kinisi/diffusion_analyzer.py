@@ -31,10 +31,7 @@ class DiffusionAnalyzer(Analyzer):
         the appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
     """
 
-    def __init__(self,
-                 delta_t: np.ndarray,
-                 disp_3d: List[np.ndarray],
-                 volume: float):
+    def __init__(self, delta_t: np.ndarray, disp_3d: List[np.ndarray], volume: float):
         super().__init__(delta_t, disp_3d, volume)
         self._diff = None
 
@@ -45,7 +42,7 @@ class DiffusionAnalyzer(Analyzer):
         my_dict = super().to_dict()
         my_dict['diff'] = self._diff.to_dict()
         return my_dict
-    
+
     @classmethod
     def from_dict(cls, my_dict: dict) -> 'DiffusionAnalyzer':
         """
