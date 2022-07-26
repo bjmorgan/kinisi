@@ -34,12 +34,30 @@ class DiffusionAnalyzer(Analyzer):
     def __init__(self,
                  delta_t: np.ndarray,
                  disp_3d: List[np.ndarray],
-                 volume: float,
-                 bootstrap_params: Union[dict, None] = None):
-        if bootstrap_params is None:
-            bootstrap_params = {}
+                 volume: float):
         super().__init__(delta_t, disp_3d, volume)
-        self._diff = diffusion.MSDBootstrap(self._delta_t, self._disp_3d, **bootstrap_params)
+        self._diff = None
+
+    def to_dict(self) -> dict:
+        """
+        :return: Dictionary description of :py:class:`DiffusionAnalyzer`.
+        """
+        my_dict = super().to_dict()
+        my_dict['diff'] = self._diff.to_dict()
+        return my_dict
+    
+    @classmethod
+    def from_dict(cls, my_dict: dict) -> 'DiffusionAnalyzer':
+        """
+        Generate a :py:class:`DiffusionAnalyzer` object from a dictionary.
+        
+        :param my_dict: The input dictionary. 
+        
+        :return: New :py:class:`DiffusionAnalyzer` object. 
+        """
+        diff_anal = cls(my_dict['delta_t'], my_dict['disp_3d'], my_dict['volume'])
+        diff_anal._diff = diffusion.Bootstrap.from_dict(my_dict['diff'])
+        return diff_anal
 
     @classmethod
     def from_pymatgen(cls,
@@ -66,8 +84,11 @@ class DiffusionAnalyzer(Analyzer):
 
         :return: Relevant :py:class:`DiffusionAnalyzer` object.
         """
-        # This exists to offer better documentation, in particular for the boostrap_params kwarg.
-        return super()._from_pymatgen(trajectory, parser_params, dtype=dtype, bootstrap_params=bootstrap_params)
+        if bootstrap_params is None:
+            bootstrap_params = {}
+        diff = super()._from_pymatgen(trajectory, parser_params, dtype=dtype)
+        diff._diff = diffusion.MSDBootstrap(diff._delta_t, diff._disp_3d, **bootstrap_params)
+        return diff
 
     @classmethod
     def from_Xdatcar(cls,
@@ -92,8 +113,11 @@ class DiffusionAnalyzer(Analyzer):
 
         :return: Relevant :py:class:`DiffusionAnalyzer` object.
         """
-        # This exists to offer better documentation, in particular for the boostrap_params kwarg.
-        return super()._from_Xdatcar(trajectory, parser_params, dtype=dtype, bootstrap_params=bootstrap_params)
+        if bootstrap_params is None:
+            bootstrap_params = {}
+        diff = super()._from_Xdatcar(trajectory, parser_params, dtype=dtype)
+        diff._diff = diffusion.MSDBootstrap(diff._delta_t, diff._disp_3d, **bootstrap_params)
+        return diff
 
     @classmethod
     def from_file(cls,
@@ -116,8 +140,11 @@ class DiffusionAnalyzer(Analyzer):
 
         :return: Relevant :py:class:`DiffusionAnalyzer` object.
         """
-        # This exists to offer better documentation, in particular for the boostrap_params kwarg.
-        return super()._from_file(trajectory, parser_params, dtype=dtype, bootstrap_params=bootstrap_params)
+        if bootstrap_params is None:
+            bootstrap_params = {}
+        diff = super()._from_file(trajectory, parser_params, dtype=dtype)
+        diff._diff = diffusion.MSDBootstrap(diff._delta_t, diff._disp_3d, **bootstrap_params)
+        return diff
 
     @classmethod
     def from_universe(cls,
@@ -141,8 +168,11 @@ class DiffusionAnalyzer(Analyzer):
 
         :return: Relevant :py:class:`DiffusionAnalyzer` object.
         """
-        # This exists to offer better documentation, in particular for the boostrap_params kwarg.
-        return super()._from_universe(trajectory, parser_params, dtype=dtype, bootstrap_params=bootstrap_params)
+        if bootstrap_params is None:
+            bootstrap_params = {}
+        diff = super()._from_universe(trajectory, parser_params, dtype=dtype)
+        diff._diff = diffusion.MSDBootstrap(diff._delta_t, diff._disp_3d, **bootstrap_params)
+        return diff
 
     def diffusion(self, diffusion_params: Union[dict, None] = None):
         """

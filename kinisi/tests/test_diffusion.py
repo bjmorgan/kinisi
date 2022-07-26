@@ -10,6 +10,7 @@ Distributed under the terms of the MIT License
 
 # pylint: disable=R0201
 
+import enum
 import unittest
 import warnings
 import numpy as np
@@ -25,6 +26,21 @@ class TestBootstrap(unittest.TestCase):
     """
     Tests for the diffusion.Bootstrap class.
     """
+
+    def test_dictionary_roundtrip(self):
+        disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+        dt = np.linspace(100, 1000, 10)
+        a = Bootstrap(dt, disp_3d)
+        b = Bootstrap.from_dict(a.to_dict())
+        for i, d in enumerate(disp_3d):
+            assert_almost_equal(a._displacements[i], b._displacements[i])
+        assert_almost_equal(a._delta_t, b._delta_t)
+        assert a._max_obs == b._max_obs
+        assert a._distributions == b._distributions
+        assert a.dt.size == b.dt.size
+        assert isinstance(b.dt, np.ndarray)
+        assert b._diffusion_coefficient is None
+        assert b.intercept is None
 
     def test_initialisation(self):
         disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
@@ -118,6 +134,30 @@ class TestMSDBootstrap(unittest.TestCase):
     """
     Tests for the diffusion.MSDBootstrap class.
     """
+
+    def test_dictionary_roundtrip(self):
+        with warnings.catch_warnings(record=True) as _:
+            disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            dt = np.linspace(100, 1000, 10)
+            a = MSDBootstrap(dt, disp_3d, random_state=np.random.RandomState(0))
+            b = MSDBootstrap.from_dict(a.to_dict())
+            for i, d in enumerate(disp_3d):
+                assert_almost_equal(a._displacements[i], b._displacements[i])
+            assert_almost_equal(a._delta_t, b._delta_t)
+            assert a._max_obs == b._max_obs
+            assert_equal(a.n, b.n)
+            assert_equal(a.s, b.s)
+            assert_equal(a.v, b.v)
+            assert_equal(a.n_i, b.n_i)
+            assert_equal(a.ngp, b.ngp)
+            for i, d in enumerate(a._distributions):
+                assert_almost_equal(d.samples, b._distributions[i].samples)
+            for i, d in enumerate(a.euclidian_displacements):
+                assert_equal(d.samples, b.euclidian_displacements[i].samples)
+            assert a.dt.size == b.dt.size
+            assert isinstance(b.dt, np.ndarray)
+            assert b._diffusion_coefficient is None
+            assert b.intercept is None
 
     def test_initialisation(self):
         with warnings.catch_warnings(record=True) as _:
@@ -226,6 +266,31 @@ class TestMSDBootstrap(unittest.TestCase):
                 assert_almost_equal(i.ci_points, [2.5, 97.5])
             assert isinstance(bs._iterator, range)
 
+    def test_bootstrap_dictionary_roundtrip(self):
+        with warnings.catch_warnings(record=True) as _:
+            disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            dt = np.linspace(100, 1000, 10)
+            a = MSDBootstrap(dt, disp_3d, random_state=np.random.RandomState(0))
+            a.diffusion()
+            b = MSDBootstrap.from_dict(a.to_dict())
+            for i, d in enumerate(disp_3d):
+                assert_almost_equal(a._displacements[i], b._displacements[i])
+            assert_almost_equal(a._delta_t, b._delta_t)
+            assert a._max_obs == b._max_obs
+            assert_equal(a.n, b.n)
+            assert_equal(a.s, b.s)
+            assert_equal(a.v, b.v)
+            assert_equal(a.n_i, b.n_i)
+            assert_equal(a.ngp, b.ngp)
+            for i, d in enumerate(a._distributions):
+                assert_almost_equal(d.samples, b._distributions[i].samples)
+            for i, d in enumerate(a.euclidian_displacements):
+                assert_equal(d.samples, b.euclidian_displacements[i].samples)
+            assert a.dt.size == b.dt.size
+            assert isinstance(b.dt, np.ndarray)
+            assert_equal(a._diffusion_coefficient.samples, b._diffusion_coefficient.samples)
+            assert_equal(a.intercept.samples, b.intercept.samples)
+
     def test_bootstrap(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
@@ -252,7 +317,7 @@ class TestMSDBootstrap(unittest.TestCase):
 
     def test_bootstrap_use_ngp(self):
         with warnings.catch_warnings(record=True) as _:
-            disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            disp_3d = [RNG.randn(100, i, 3) for i in range(200, 190, -1)]
             dt = np.linspace(100, 1000, 10)
             bs = MSDBootstrap(dt, disp_3d, random_state=RNG)
             bs.diffusion(use_ngp=True)

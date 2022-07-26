@@ -6,6 +6,9 @@ This module contains the base class for the different :py:class:`Analyzer` objec
 # Distributed under the terms of the MIT License
 # author: Andrew R. McCluskey (arm61)
 
+from ast import Import
+from operator import itemgetter
+from tkinter import image_types
 from typing import Union, List
 import numpy as np
 from kinisi.parser import MDAnalysisParser, PymatgenParser
@@ -28,6 +31,61 @@ class Analyzer:
         self._delta_t = delta_t
         self._disp_3d = disp_3d
         self._volume = volume
+
+    def save(self, filename: str):
+        """
+        Save the Analyzer object as a HDF5 file.
+        
+        :param filename: Name for the file, no file extension is required and if one if given it is replaced with .hdf.
+        """
+        if filename[-4:] != '.hdf':
+            raise ValueError("The expected file extension is .hdf")
+        my_dict = self.to_dict()
+        try:
+            import h5py
+            from os.path import exists
+        except ModuleNotFoundError:  # pragma: no cover
+            raise ModuleNotFoundError("To save and load objects, the h5py module is required")  # pragma: no cover
+        if exists(filename):
+            raise ValueError(f"The file {filename} already exists, please delete it or change the input filename.")
+        with h5py.File(filename, 'w') as h5file:
+            _dict_to_group(h5file, '/', my_dict)
+            
+    @classmethod
+    def load(cls, filename: str) -> 'Analyzer':
+        """
+        Load the :py:class:`Analyzer` object from an HDF5 file.
+        
+        :param filename: Name for the file, any file extension will be replaced with .hdf.
+        
+        :return: An :py:class:`Analyzer` object from the file.
+        """
+        if filename[-4:] != '.hdf':
+            raise ValueError("The expected file extension is .hdf")
+        try:
+            import h5py
+        except ModuleNotFoundError:  # pragma: no cover
+            raise ModuleNotFoundError("To save and load objects, the h5py module is required")  # pragma: no cover
+        with h5py.File(filename, 'r') as h5file:
+            my_dict = _group_to_dict(h5file, '/')
+        return cls.from_dict(my_dict)
+
+    def to_dict(self) -> dict:
+        """
+        :return: Dictionary description of Analyzer.
+        """
+        return {'delta_t': self._delta_t, 'disp_3d': self._disp_3d, 'volume': self._volume}
+
+    @classmethod
+    def from_dict(cls, my_dict: dict) -> 'Analyzer':
+        """
+        Generate an :py:class:`Analyzer` object from a dictionary.
+        
+        :param my_dict: The input dictionary.
+        
+        :return: New :py:class:`Analyzer` object.
+        """
+        return cls(**my_dict)
 
     @classmethod
     def _from_pymatgen(cls,
@@ -232,3 +290,71 @@ def _flatten_list(this_list: list) -> list:
     :return: Flattened list
     """
     return [item for sublist in this_list for item in sublist]
+
+
+def _dict_to_group(h5file: 'h5py._hl.files.File', path: str, my_dict: dict):
+    """
+    A recursive function to help with saving to hdf5 file formats.
+    
+    :param h5file: Open hdf5 file.
+    :param path: Path in the hdf5 file.
+    :param my_dict: Dict to make datasets from.
+    """
+    for key, value in my_dict.items():
+        if isinstance(value, (np.ndarray, int, float, str, bytes)):
+            h5file[path + key] = value
+        elif isinstance(value, list):
+            for i, d in enumerate(value):
+                if isinstance(d, (np.ndarray, int, float, str, bytes)):
+                    h5file[path + key + f'/list{i}'] = d
+                elif isinstance(d, dict):
+                    _dict_to_group(h5file, path + key + f'/list{i}' + '/', d)
+        elif isinstance(value, dict):
+            _dict_to_group(h5file, path + key + '/', value)
+        elif value is None:
+            h5file[path + key] = 'NULL'
+        else:
+            raise ValueError(f'Cannot save {type(value)} type')
+
+
+def _group_to_dict(h5file: 'h5py._hl.files.File', path: str) -> dict:
+    """
+    A recursive function to load data from hdf5 files. 
+    
+    :param h5file: Open hdf5 file.
+    :param path: Path in the hdf5 file.
+
+    :return: A dictionary of the hdf5 groups and datasets.
+    """
+    import h5py
+    my_dict = {}
+    for key, value in h5file[path].items():
+        if isinstance(value, h5py._hl.dataset.Dataset):
+            if isinstance(value[()], (str, bytes)):
+                if value[()] == b'NULL':
+                    my_dict[key] = None
+                else:
+                    my_dict[key] = value[()]
+            else:
+                my_dict[key] = value[()]
+        elif isinstance(value, h5py._hl.group.Group):
+            key_list = list(h5file[path + key + '/'].keys()) 
+            if key_list[0][:4] == 'list':
+                my_dict[key] = []
+                for i in sorted([int(i[4:]) for i in key_list]):
+                    value = h5file[path + key + f'/list{i}']
+                    if isinstance(value, h5py._hl.dataset.Dataset):
+                        if isinstance(value[()], (str, bytes)):
+                            if value[()] == b'NULL':
+                                my_dict[key].append(None)
+                            else:
+                                my_dict[key].append(value[()])
+                        else:
+                            my_dict[key].append(value[()])
+                    elif isinstance(h5file[path + key + f'/list{i}'], h5py._hl.group.Group): 
+                        my_dict[key].append(_group_to_dict(h5file, path + key + f'/list{i}'))
+            else:
+                my_dict[key] = _group_to_dict(h5file, path + key + '/')
+        else:
+            raise ValueError(f'Cannot save {type(value)} type')
+    return my_dict

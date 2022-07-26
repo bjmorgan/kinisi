@@ -36,13 +36,30 @@ class ConductivityAnalyzer(Analyzer):
     def __init__(self,
                  delta_t: np.ndarray,
                  disp_3d: List[np.ndarray],
-                 volume: float,
-                 bootstrap_params: Union[dict, None] = None,
-                 ionic_charge: Union[np.ndarray, int] = 1):
-        if bootstrap_params is None:
-            bootstrap_params = {}
+                 volume: float):
         super().__init__(delta_t, disp_3d, volume)
-        self._diff = diffusion.MSCDBootstrap(self._delta_t, self._disp_3d, ionic_charge, **bootstrap_params)
+        self._diff = None
+
+    def to_dict(self) -> dict:
+        """
+        :return: Dictionary description of :py:class:`ConductivityAnalyzer`.
+        """
+        my_dict = super().to_dict()
+        my_dict['diff'] = self._diff.to_dict()
+        return my_dict
+
+    @classmethod
+    def from_dict(cls, my_dict: dict) -> 'ConductivityAnalyzer':
+        """
+        Generate a :py:class:`ConductivityAnalyzer` object from a dictionary.
+        
+        :param my_dict: The input dictionary.
+        
+        :return: New :py:class`ConductivityAnalyzer` object.
+        """
+        cond_anal = cls(my_dict['delta_t'], my_dict['disp_3d'], my_dict['volume'])
+        cond_anal._diff = diffusion.Bootstrap.from_dict(my_dict['diff'])
+        return cond_anal
 
     @classmethod
     def from_pymatgen(cls,
@@ -71,12 +88,11 @@ class ConductivityAnalyzer(Analyzer):
 
         :return: Relevant :py:class:`ConductivityAnalyzer` object.
         """
-        # This exists to offer better documentation, in particular for the boostrap_params kwarg.
-        return super()._from_pymatgen(trajectory,
-                                      parser_params,
-                                      dtype=dtype,
-                                      bootstrap_params=bootstrap_params,
-                                      ionic_charge=ionic_charge)
+        if bootstrap_params is None:
+            bootstrap_params = {}
+        cond_anal =  super()._from_pymatgen(trajectory, parser_params, dtype=dtype)
+        cond_anal._diff = diffusion.MSCDBootstrap(cond_anal._delta_t, cond_anal._disp_3d, ionic_charge, **bootstrap_params)
+        return cond_anal
 
     @classmethod
     def from_Xdatcar(cls,
@@ -104,12 +120,11 @@ class ConductivityAnalyzer(Analyzer):
 
         :return: Relevant :py:class:`ConductivityAnalyzer` object.
         """
-        # This exists to offer better documentation, in particular for the boostrap_params kwarg.
-        return super()._from_Xdatcar(trajectory,
-                                     parser_params,
-                                     dtype=dtype,
-                                     bootstrap_params=bootstrap_params,
-                                     ionic_charge=ionic_charge)
+        if bootstrap_params is None:
+            bootstrap_params = {}
+        cond_anal = super()._from_Xdatcar(trajectory, parser_params, dtype=dtype)
+        cond_anal._diff = diffusion.MSCDBootstrap(cond_anal._delta_t, cond_anal._disp_3d, ionic_charge, **bootstrap_params)
+        return cond_anal
 
     @classmethod
     def from_file(cls,
@@ -135,12 +150,11 @@ class ConductivityAnalyzer(Analyzer):
 
         :return: Relevant :py:class:`ConductivityAnalyzer` object.
         """
-        # This exists to offer better documentation, in particular for the boostrap_params and ionic_charge kwarg.
-        return super()._from_file(trajectory,
-                                  parser_params,
-                                  dtype=dtype,
-                                  bootstrap_params=bootstrap_params,
-                                  ionic_charge=ionic_charge)
+        if bootstrap_params is None:
+            bootstrap_params = {}
+        cond_anal = super()._from_file(trajectory, parser_params, dtype=dtype)
+        cond_anal._diff = diffusion.MSCDBootstrap(cond_anal._delta_t, cond_anal._disp_3d, ionic_charge, **bootstrap_params)
+        return cond_anal
 
     @classmethod
     def from_universe(cls,
@@ -167,12 +181,11 @@ class ConductivityAnalyzer(Analyzer):
 
         :return: Relevant :py:class:`ConductivityAnalyzer` object.
         """
-        # This exists to offer better documentation, in particular for the boostrap_params kwarg.
-        return super()._from_universe(trajectory,
-                                      parser_params,
-                                      dtype=dtype,
-                                      bootstrap_params=bootstrap_params,
-                                      ionic_charge=ionic_charge)
+        if bootstrap_params is None:
+            bootstrap_params = {}
+        cond_anal = super()._from_universe(trajectory, parser_params, dtype=dtype)
+        cond_anal._diff = diffusion.MSCDBootstrap(cond_anal._delta_t, cond_anal._disp_3d, ionic_charge, **bootstrap_params)
+        return cond_anal
 
     def conductivity(self, temperature: float, conductivity_params: Union[dict, None] = None):
         """

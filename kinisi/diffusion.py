@@ -57,10 +57,61 @@ class Bootstrap:
         self._ngp = np.array([])
         self._euclidian_displacements = []
         self._diffusion_coefficient = None
-        self._jump_diffusion_coeffiecient = None
+        self._jump_diffusion_coefficient = None
         self._sigma = None
         self._intercept = None
         self._covariance_matrix = None
+
+    def to_dict(self) -> dict:
+        """
+        :return: Dictionary description of the :py:class:`Bootstrap`.
+        """
+        my_dict = {'displacements': self._displacements, 'delta_t': self._delta_t, 'max_obs': self._max_obs,
+                   'dt': self._dt, 'n': self._n, 's': self._s, 'v': self._v, 
+                   'n_i': self._n_i, 'ngp': self._ngp,
+                   'covariance_matrix': self._covariance_matrix, 'diffusion_coefficient': None, 
+                   'jump_diffusion_coefficient': None, 'sigma': None, 'intercept': None}
+        my_dict['distributions'] = [d.to_dict() for d in self._distributions]
+        my_dict['euclidian_displacements'] = [d.to_dict() for d in self._euclidian_displacements]
+        if self._diffusion_coefficient is not None:
+            my_dict['diffusion_coefficient'] = self._diffusion_coefficient.to_dict()
+        if self._jump_diffusion_coefficient is not None:
+            my_dict['jump_diffusion_coefficient'] = self._jump_diffusion_coefficient.to_dict()
+        if self._sigma is not None:
+            my_dict['sigma'] = self._sigma.to_dict()
+        if self._intercept is not None:
+            my_dict['intercept'] = self._intercept.to_dict()
+        return my_dict
+    
+    @classmethod
+    def from_dict(cls, my_dict: dict) -> 'Bootstrap':
+        """
+        Generate a :py:class:`Bootstrap` object from a dictionary.
+        
+        :param my_dict: The input dictionary.
+        
+        :return: New :py:class`Bootstrap` object. 
+        """
+        boot = cls(my_dict['delta_t'], my_dict['displacements'], sub_sample_dt=1, progress=False)
+        boot._max_obs = my_dict['max_obs']
+        boot._distributions = [Distribution.from_dict(d) for d in my_dict['distributions']]
+        boot._euclidian_displacements = [Distribution.from_dict(d) for d in my_dict['euclidian_displacements']]
+        boot._dt = my_dict['dt']
+        boot._n = my_dict['n']
+        boot._s = my_dict['s']
+        boot._v = my_dict['v']
+        boot._n_i = my_dict['n_i']
+        boot._ngp = my_dict['ngp']
+        if my_dict['diffusion_coefficient'] is not None:
+            boot._diffusion_coefficient = Distribution.from_dict(my_dict['diffusion_coefficient'])
+        if my_dict['jump_diffusion_coefficient'] is not None:
+            boot._jump_diffusion_coefficient = Distribution.from_dict(my_dict['jump_diffusion_coefficient'])
+        if my_dict['sigma'] is not None:
+            boot._sigma = Distribution.from_dict(my_dict['sigma'])
+        if my_dict['intercept'] is not None:
+            boot._intercept = Distribution.from_dict(my_dict['intercept'])
+        boot._covariance_matrix = my_dict['covariance_matrix']
+        return boot
 
     @property
     def dt(self) -> np.ndarray:
@@ -317,6 +368,64 @@ class Bootstrap:
                 covariance_matrix[j, i] = np.copy(covariance_matrix[i, j])
         return covariance_matrix
 
+    def diffusion(self, **kwargs):
+        """
+        Use the bootstrap-GLS method to determine the diffusivity for the system. Keyword arguments will be
+        passed of the :py:func:`bootstrap_GLS` method.
+        """
+        self.bootstrap_GLS(**kwargs)
+        self._diffusion_coefficient = Distribution(self.gradient.samples / (2e4 * self._displacements[0].shape[-1]))
+
+    @property
+    def D(self) -> Union[Distribution, None]:
+        """
+        An alias for the diffusion coefficient Distribution.
+
+        :return: Diffusion coefficient, with units of cm:sup:`2`s:sup:`-1`.
+        """
+        return self._diffusion_coefficient
+
+    
+    def jump_diffusion(self, **kwargs):
+        """
+        Use the bootstrap-GLS method to determine the jump diffusivity for the system. Keyword arguments
+        will be passed of the :py:func:`bootstrap_GLS` method.
+        """
+        self.bootstrap_GLS(**kwargs)
+        self._jump_diffusion_coefficient = Distribution(
+            self.gradient.samples / (2e4 * self._displacements[0].shape[-1] * self._displacements[0].shape[0]))
+
+    @property
+    def D_J(self) -> Union[Distribution, None]:
+        """
+        Alias for the jump diffusion coefficient Distribution.
+
+        :return: Jump diffusion coefficient, with units of cm:sup:`2`s:sup:`-1`.
+        """
+        return self._jump_diffusion_coefficient
+
+    def conductivity(self, temperature: float, volume: float, **kwargs):
+        """
+        Use the bootstrap-GLS method to determine the ionic conductivity for the system, in units of mScm:sup:`-1`.
+        Keyword arguments will be passed of the :py:func:`bootstrap_GLS` method.
+
+        :param temperature: System temperature, in Kelvin.
+        :param volume: System volume, in Å^{3}.
+        """
+        self.bootstrap_GLS(**kwargs)
+        volume = volume * 1e-24  # cm^3
+        D = self.gradient.samples / (2e4 * self._displacements[0].shape[-1])  # cm^2s^-1
+        conversion = 1000 / (volume * const.N_A) * (const.N_A * const.e)**2 / (const.R * temperature)
+        self._sigma = Distribution(D * conversion)
+
+    @property
+    def sigma(self) -> Union[Distribution, None]:
+        """
+        :return: The estimated conductivity, based on the generalised least squares approach, with
+            units mScm:sup:`-1`.
+        """
+        return self._sigma
+
 
 class MSDBootstrap(Bootstrap):
     """
@@ -370,23 +479,6 @@ class MSDBootstrap(Bootstrap):
             self._v = np.append(self._v, np.var(distro.samples, ddof=1))
             self._ngp = np.append(self._ngp, self.ngp_calculation(d_squared))
             self._dt = np.append(self._dt, self._delta_t[i])
-
-    def diffusion(self, **kwargs):
-        """
-        Use the bootstrap-GLS method to determine the diffusivity for the system. Keyword arguments will be
-        passed of the :py:func:`bootstrap_GLS` method.
-        """
-        self.bootstrap_GLS(**kwargs)
-        self._diffusion_coefficient = Distribution(self.gradient.samples / (2e4 * self._displacements[0].shape[-1]))
-
-    @property
-    def D(self) -> Union[Distribution, None]:
-        """
-        An alias for the diffusion coefficient Distribution.
-
-        :return: Diffusion coefficient, with units of cm:sup:`2`s:sup:`-1`.
-        """
-        return self._diffusion_coefficient
 
 
 class TMSDBootstrap(Bootstrap):
@@ -445,24 +537,6 @@ class TMSDBootstrap(Bootstrap):
             self._v = np.append(self._v, np.var(distro.samples, ddof=1))
             self._ngp = np.append(self._ngp, self.ngp_calculation(d_squared.flatten()))
             self._dt = np.append(self._dt, self._delta_t[i])
-
-    def jump_diffusion(self, **kwargs):
-        """
-        Use the bootstrap-GLS method to determine the jump diffusivity for the system. Keyword arguments
-        will be passed of the :py:func:`bootstrap_GLS` method.
-        """
-        self.bootstrap_GLS(**kwargs)
-        self._jump_diffusion_coefficient = Distribution(
-            self.gradient.samples / (2e4 * self._displacements[0].shape[-1] * self._displacements[0].shape[0]))
-
-    @property
-    def D_J(self) -> Union[Distribution, None]:
-        """
-        Alias for the jump diffusion coefficient Distribution.
-
-        :return: Jump diffusion coefficient, with units of cm:sup:`2`s:sup:`-1`.
-        """
-        return self._jump_diffusion_coefficient
 
 
 class MSCDBootstrap(Bootstrap):
@@ -527,28 +601,6 @@ class MSCDBootstrap(Bootstrap):
             self._v = np.append(self._v, np.var(distro.samples, ddof=1))
             self._ngp = np.append(self._ngp, self.ngp_calculation(d_squared.flatten()))
             self._dt = np.append(self._dt, self._delta_t[i])
-
-    def conductivity(self, temperature: float, volume: float, **kwargs):
-        """
-        Use the bootstrap-GLS method to determine the ionic conductivity for the system, in units of mScm:sup:`-1`.
-        Keyword arguments will be passed of the :py:func:`bootstrap_GLS` method.
-
-        :param temperature: System temperature, in Kelvin.
-        :param volume: System volume, in Å^{3}.
-        """
-        self.bootstrap_GLS(**kwargs)
-        volume = volume * 1e-24  # cm^3
-        D = self.gradient.samples / (2e4 * self._displacements[0].shape[-1])  # cm^2s^-1
-        conversion = 1000 / (volume * const.N_A) * (const.N_A * const.e)**2 / (const.R * temperature)
-        self._sigma = Distribution(D * conversion)
-
-    @property
-    def sigma(self) -> Union[Distribution, None]:
-        """
-        :return: The estimated conductivity, based on the generalised least squares approach, with
-            units mScm:sup:`-1`.
-        """
-        return self._sigma
 
 
 def _bootstrap(array: np.ndarray, n_samples: int, n_resamples: int, random_state: np.random.mtrand.RandomState = None):
