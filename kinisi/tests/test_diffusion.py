@@ -10,7 +10,6 @@ Distributed under the terms of the MIT License
 
 # pylint: disable=R0201
 
-import enum
 import unittest
 import warnings
 import numpy as np

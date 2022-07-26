@@ -6,9 +6,7 @@ This module contains the base class for the different :py:class:`Analyzer` objec
 # Distributed under the terms of the MIT License
 # author: Andrew R. McCluskey (arm61)
 
-from ast import Import
-from operator import itemgetter
-from tkinter import image_types
+
 from typing import Union, List
 import numpy as np
 from kinisi.parser import MDAnalysisParser, PymatgenParser
