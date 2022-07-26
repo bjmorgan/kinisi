@@ -1,6 +1,6 @@
 """
 The :py:class:`kinisi.analyze.ConductivityAnalyzer` class will allow the conductivity of a material in a
-simulation to be found, without assuming a Haven ration of 1. 
+simulation to be found, without assuming a Haven ration of 1.
 """
 
 # Copyright (c) Andrew R. McCluskey and Benjamin J. Morgan
@@ -49,9 +49,9 @@ class ConductivityAnalyzer(Analyzer):
     def from_dict(cls, my_dict: dict) -> 'ConductivityAnalyzer':
         """
         Generate a :py:class:`ConductivityAnalyzer` object from a dictionary.
-        
+
         :param my_dict: The input dictionary.
-        
+
         :return: New :py:class`ConductivityAnalyzer` object.
         """
         cond_anal = cls(my_dict['delta_t'], my_dict['disp_3d'], my_dict['volume'])

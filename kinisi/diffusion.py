@@ -98,10 +98,10 @@ class Bootstrap:
     def from_dict(cls, my_dict: dict) -> 'Bootstrap':
         """
         Generate a :py:class:`Bootstrap` object from a dictionary.
-        
+
         :param my_dict: The input dictionary.
-        
-        :return: New :py:class`Bootstrap` object. 
+
+        :return: New :py:class`Bootstrap` object.
         """
         boot = cls(my_dict['delta_t'], my_dict['displacements'], sub_sample_dt=1, progress=False)
         boot._max_obs = my_dict['max_obs']

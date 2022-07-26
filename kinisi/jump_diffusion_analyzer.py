@@ -47,10 +47,10 @@ class JumpDiffusionAnalyzer(Analyzer):
     def from_dict(cls, my_dict) -> 'JumpDiffusionAnalyzer':
         """
         Generate a :py:class:`DiffusionAnalyzer` object from a dictionary.
-        
-        :param my_dict: The input dictionary. 
-        
-        :return: New :py:class:`DiffusionAnalyzer` object. 
+
+        :param my_dict: The input dictionary.
+
+        :return: New :py:class:`DiffusionAnalyzer` object.
         """
         jdiff_anal = cls(my_dict['delta_t'], my_dict['disp_3d'], my_dict['volume'])
         jdiff_anal._diff = diffusion.Bootstrap.from_dict(my_dict['diff'])

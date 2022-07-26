@@ -32,7 +32,7 @@ class Analyzer:
     def save(self, filename: str):
         """
         Save the Analyzer object as a HDF5 file.
-        
+
         :param filename: Name for the file, no file extension is required and if one if given it is replaced with .hdf.
         """
         if filename[-4:] != '.hdf':
@@ -52,9 +52,9 @@ class Analyzer:
     def load(cls, filename: str) -> 'Analyzer':
         """
         Load the :py:class:`Analyzer` object from an HDF5 file.
-        
+
         :param filename: Name for the file, any file extension will be replaced with .hdf.
-        
+
         :return: An :py:class:`Analyzer` object from the file.
         """
         if filename[-4:] != '.hdf':
@@ -77,9 +77,9 @@ class Analyzer:
     def from_dict(cls, my_dict: dict) -> 'Analyzer':
         """
         Generate an :py:class:`Analyzer` object from a dictionary.
-        
+
         :param my_dict: The input dictionary.
-        
+
         :return: New :py:class:`Analyzer` object.
         """
         return cls(**my_dict)
@@ -292,7 +292,7 @@ def _flatten_list(this_list: list) -> list:
 def _dict_to_group(h5file: 'h5py._hl.files.File', path: str, my_dict: dict):
     """
     A recursive function to help with saving to hdf5 file formats.
-    
+
     :param h5file: Open hdf5 file.
     :param path: Path in the hdf5 file.
     :param my_dict: Dict to make datasets from.
@@ -316,8 +316,8 @@ def _dict_to_group(h5file: 'h5py._hl.files.File', path: str, my_dict: dict):
 
 def _group_to_dict(h5file: 'h5py._hl.files.File', path: str) -> dict:
     """
-    A recursive function to load data from hdf5 files. 
-    
+    A recursive function to load data from hdf5 files.
+
     :param h5file: Open hdf5 file.
     :param path: Path in the hdf5 file.
 
