@@ -10,3 +10,4 @@ htmlcov
 **/.ipynb_checkpoints
 **/Untitled.ipynb
 abstracts
+docs/source/example.hdf
