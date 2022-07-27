@@ -12,7 +12,7 @@ import os
 import warnings
 import unittest
 import numpy as np
-from numpy.testing import assert_almost_equal
+from numpy.testing import assert_almost_equal, assert_equal
 from pymatgen.io.vasp import Xdatcar
 import MDAnalysis as mda
 from uravu.distribution import Distribution
@@ -33,6 +33,14 @@ class TestAnalyzer(unittest.TestCase):
     """
     Tests for the Analyzer base class.
     """
+
+    def test_dict_roundtrip(self):
+        a = Analyzer._from_pymatgen(xd.structures, parser_params=da_params)
+        b = Analyzer.from_dict(a.to_dict())
+        assert_equal(a._delta_t, b._delta_t)
+        for i, d in enumerate(a._disp_3d):
+            assert_equal(d, b._disp_3d[i])
+        assert a._volume == b._volume
 
     def test_structure_pmg(self):
         a = Analyzer._from_pymatgen(xd.structures, parser_params=da_params)
@@ -164,6 +172,31 @@ class TestDiffusionAnalyzer(unittest.TestCase):
             assert a.flatchain.shape == (32000, 2)
             assert issubclass(w[0].category, UserWarning)
 
+    def test_dictionary_roundtrip(self):
+        with warnings.catch_warnings(record=True) as w:
+            a = DiffusionAnalyzer.from_pymatgen(xd.structures,
+                                                parser_params=da_params,
+                                                bootstrap_params={'random_state': np.random.RandomState(0)})
+            assert_almost_equal(a.dt, a._diff.dt)
+            assert_almost_equal(a.msd, a._diff.n)
+            assert_almost_equal(a.msd_std, a._diff.s)
+            for i in range(len(a.dr)):
+                assert_almost_equal(a.dr[i].samples, a._diff.euclidian_displacements[i].samples)
+            a.diffusion()
+            assert a.ngp_max == a._diff.dt[a._diff.ngp.argmax()]
+            assert isinstance(a.D, Distribution)
+            assert a.flatchain.shape == (32000, 2)
+            assert issubclass(w[0].category, UserWarning)
+            b = DiffusionAnalyzer.from_dict(a.to_dict())
+            assert_equal(a.dt, b.dt)
+            assert_equal(a.msd, b.msd)
+            assert_equal(a.msd_std, b.msd_std)
+            for i in range(len(a.dr)):
+                assert_almost_equal(a.dr[i].samples, b.dr[i].samples)
+            assert a.ngp_max == b.ngp_max
+            assert_equal(a.D.samples, b.D.samples)
+            assert_equal(a.flatchain, b.flatchain)
+
 
 class TestJumpDiffusionAnalyzer(unittest.TestCase):
     """
@@ -200,6 +233,31 @@ class TestJumpDiffusionAnalyzer(unittest.TestCase):
             assert a.flatchain.shape == (32000, 2)
             assert issubclass(w[0].category, UserWarning)
             assert "maximum" in str(w[0].message)
+        
+    def test_dictionary_roundtrip(self):
+        with warnings.catch_warnings(record=True) as w:
+            a = JumpDiffusionAnalyzer.from_pymatgen(xd.structures,
+                                                parser_params=da_params,
+                                                bootstrap_params={'random_state': np.random.RandomState(0)})
+            assert_almost_equal(a.dt, a._diff.dt)
+            assert_almost_equal(a.tmsd, a._diff.n)
+            assert_almost_equal(a.tmsd_std, a._diff.s)
+            for i in range(len(a.dr)):
+                assert_almost_equal(a.dr[i].samples, a._diff.euclidian_displacements[i].samples)
+            a.jump_diffusion()
+            assert a.ngp_max == a._diff.dt[a._diff.ngp.argmax()]
+            assert isinstance(a.D_J, Distribution)
+            assert a.flatchain.shape == (32000, 2)
+            assert issubclass(w[0].category, UserWarning)
+            b = JumpDiffusionAnalyzer.from_dict(a.to_dict())
+            assert_equal(a.dt, b.dt)
+            assert_equal(a.tmsd, b.tmsd)
+            assert_equal(a.tmsd_std, b.tmsd_std)
+            for i in range(len(a.dr)):
+                assert_almost_equal(a.dr[i].samples, b.dr[i].samples)
+            assert a.ngp_max == b.ngp_max
+            assert_equal(a.D_J.samples, b.D_J.samples)
+            assert_equal(a.flatchain, b.flatchain)
 
 
 class TestConductivityAnalyzer(unittest.TestCase):
@@ -239,6 +297,31 @@ class TestConductivityAnalyzer(unittest.TestCase):
             assert a.flatchain.shape == (32000, 2)
             assert issubclass(w[0].category, UserWarning)
             assert "maximum" in str(w[0].message)
+
+    def test_dictionary_roundtrip(self):
+        with warnings.catch_warnings(record=True) as w:
+            a = ConductivityAnalyzer.from_pymatgen(xd.structures,
+                                                parser_params=da_params,
+                                                bootstrap_params={'random_state': np.random.RandomState(0)})
+            assert_almost_equal(a.dt, a._diff.dt)
+            assert_almost_equal(a.mscd, a._diff.n)
+            assert_almost_equal(a.mscd_std, a._diff.s)
+            for i in range(len(a.dr)):
+                assert_almost_equal(a.dr[i].samples, a._diff.euclidian_displacements[i].samples)
+            a.conductivity(100)
+            assert a.ngp_max == a._diff.dt[a._diff.ngp.argmax()]
+            assert isinstance(a.sigma, Distribution)
+            assert a.flatchain.shape == (32000, 2)
+            assert issubclass(w[0].category, UserWarning)
+            b = ConductivityAnalyzer.from_dict(a.to_dict())
+            assert_equal(a.dt, b.dt)
+            assert_equal(a.mscd, b.mscd)
+            assert_equal(a.mscd_std, b.mscd_std)
+            for i in range(len(a.dr)):
+                assert_almost_equal(a.dr[i].samples, b.dr[i].samples)
+            assert a.ngp_max == b.ngp_max
+            assert_equal(a.sigma.samples, b.sigma.samples)
+            assert_equal(a.flatchain, b.flatchain)    
 
 
 class TestFunctions(unittest.TestCase):

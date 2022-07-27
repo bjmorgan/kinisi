@@ -2,7 +2,7 @@ numpy
 scikit-learn
 scipy>=1.7.0
 tqdm
-uravu>=1.2.5
+uravu>=1.2.7
 pymatgen
 MDAnalysis
 coverage
@@ -12,3 +12,4 @@ nbsphinx
 corner
 sphinx_book_theme
 sphinx_autodoc_typehints
+h5py
