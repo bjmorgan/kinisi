@@ -82,7 +82,8 @@ class Bootstrap:
             'diffusion_coefficient': None,
             'jump_diffusion_coefficient': None,
             'sigma': None,
-            'intercept': None
+            'intercept': None,
+            'gradient': None
         }
         my_dict['distributions'] = [d.to_dict() for d in self._distributions]
         my_dict['euclidian_displacements'] = [d.to_dict() for d in self._euclidian_displacements]
