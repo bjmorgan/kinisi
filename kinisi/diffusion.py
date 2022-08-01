@@ -60,6 +60,8 @@ class Bootstrap:
         self._jump_diffusion_coefficient = None
         self._sigma = None
         self._intercept = None
+        self.gradient = None
+        self.flatchain = None
         self._covariance_matrix = None
 
     def to_dict(self) -> dict:
@@ -92,6 +94,9 @@ class Bootstrap:
             my_dict['sigma'] = self._sigma.to_dict()
         if self._intercept is not None:
             my_dict['intercept'] = self._intercept.to_dict()
+        if self.gradient is not None:
+            my_dict['gradient'] = self.gradient.to_dict()
+        my_dict['flatchain'] = self.flatchain
         return my_dict
 
     @classmethod
@@ -121,6 +126,9 @@ class Bootstrap:
             boot._sigma = Distribution.from_dict(my_dict['sigma'])
         if my_dict['intercept'] is not None:
             boot._intercept = Distribution.from_dict(my_dict['intercept'])
+        if my_dict['gradient'] is not None:
+            boot.gradient = Distribution.from_dict(my_dict['gradient'])
+        boot.flatchain = my_dict['flatchain']
         boot._covariance_matrix = my_dict['covariance_matrix']
         return boot
 
