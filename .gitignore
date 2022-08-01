@@ -11,3 +11,4 @@ htmlcov
 **/Untitled.ipynb
 abstracts
 docs/source/example.hdf
+docs/source/_static/.*.lock
