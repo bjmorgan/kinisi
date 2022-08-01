@@ -30,7 +30,7 @@ Contributors
 `Andrew R. McCluskey`_ | `Benjamin J. Morgan`_
 
 .. _Andrew R. McCluskey: https://www.mccluskey.scot
-.. _Benjamin J. Morgan: http://analysisandsynthesis.com
+.. _Benjamin J. Morgan: https://morgan-group-bath.github.io
 .. _VASP: https://www.vasp.at/wiki/index.php/XDATCAR
 .. _MDAnalysis: https://userguide.mdanalysis.org/stable/reading_and_writing.html
 .. _tutorials: ./tutorials.html
