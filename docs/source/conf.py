@@ -48,15 +48,11 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
     'sphinx.ext.intersphinx',
-    'sphinx.ext.imgmath',
+    # 'sphinx.ext.imgmath',
     'sphinx.ext.mathjax',
     'sphinx_autodoc_typehints',
     'nbsphinx'
 ]
-
-mathjax3_config = {
-    'tex': {'tags': 'ams', 'useLabelIds': True},
-}
 
 nbsphinx_timeout = 900
 
