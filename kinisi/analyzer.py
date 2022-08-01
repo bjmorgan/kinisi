@@ -240,6 +240,14 @@ class Analyzer:
                 disp[u[0].disp_3d[i].shape[0] * j:u[0].disp_3d[i].shape[0] * (j + 1)] = u[j].disp_3d[i]
             joint_disp_3d.append(disp)
         return joint_disp_3d
+    
+    @property
+    def distribution(self) -> np.ndarray:
+        """
+        :return: A distribution of samples for the linear relationship that can be used for easy
+        plotting of credible intervals.
+        """
+        return self._diff.gradient.samples * self.dt[:, np.newaxis] + self._diff.intercept.samples
 
     @property
     def dt(self) -> np.ndarray:
