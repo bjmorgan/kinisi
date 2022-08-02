@@ -20,13 +20,13 @@ from emcee import EnsembleSampler
 from kinisi.matrix import find_nearest_positive_definite
 
 DIMENSIONALITY = {
-    'x': (np.s_[0], 1),
-    'y': (np.s_[1], 1),
-    'z': (np.s_[2], 1),
-    'xy': (np.s_[:2], 2),
-    'xz': (np.s_[::2], 2),
-    'yz': (np.s_[1:], 2),
-    'xyz': (np.s_[:], 3)
+    'x': np.s_[0],
+    'y': np.s_[1],
+    'z': np.s_[2],
+    'xy': np.s_[:2],
+    'xz': np.s_[::2],
+    'yz': np.s_[1:],
+    'xyz': np.s_[:]
 }
 
 
@@ -63,6 +63,7 @@ class Bootstrap:
         self.gradient = None
         self.flatchain = None
         self._covariance_matrix = None
+        self.dims = 3
 
     def to_dict(self) -> dict:
         """
@@ -394,7 +395,7 @@ class Bootstrap:
         passed of the :py:func:`bootstrap_GLS` method.
         """
         self.bootstrap_GLS(**kwargs)
-        self._diffusion_coefficient = Distribution(self.gradient.samples / (2e4 * self._displacements[0].shape[-1]))
+        self._diffusion_coefficient = Distribution(self.gradient.samples / (2e4 * self.dims))
 
     @property
     def D(self) -> Union[Distribution, None]:
@@ -412,7 +413,7 @@ class Bootstrap:
         """
         self.bootstrap_GLS(**kwargs)
         self._jump_diffusion_coefficient = Distribution(
-            self.gradient.samples / (2e4 * self._displacements[0].shape[-1] * self._displacements[0].shape[0]))
+            self.gradient.samples / (2e4 * self.dims * self._displacements[0].shape[0]))
 
     @property
     def D_J(self) -> Union[Distribution, None]:
@@ -433,7 +434,7 @@ class Bootstrap:
         """
         self.bootstrap_GLS(**kwargs)
         volume = volume * 1e-24  # cm^3
-        D = self.gradient.samples / (2e4 * self._displacements[0].shape[-1])  # cm^2s^-1
+        D = self.gradient.samples / (2e4 * self.dims)  # cm^2s^-1
         conversion = 1000 / (volume * const.N_A) * (const.N_A * const.e)**2 / (const.R * temperature)
         self._sigma = Distribution(D * conversion)
 
@@ -480,10 +481,11 @@ class MSDBootstrap(Bootstrap):
                  random_state: np.random.mtrand.RandomState = None,
                  progress: bool = True):
         super().__init__(delta_t, disp_3d, sub_sample_dt, progress)
-        slice, dim = DIMENSIONALITY[dimension.lower()]
+        slice = DIMENSIONALITY[dimension.lower()]
+        self.dims = len(dimension.lower())
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, slice].reshape(self._displacements[i].shape[0],
-                                                                     self._displacements[i].shape[1], dim)
+                                                                     self._displacements[i].shape[1], self.dims)
             d_squared = np.sum(disp_slice**2, axis=2)
             n_samples_current = self.n_samples(self._displacements[i].shape, self._max_obs)
             if n_samples_current <= 1:
@@ -537,10 +539,11 @@ class TMSDBootstrap(Bootstrap):
                  random_state: np.random.mtrand.RandomState = None,
                  progress: bool = True):
         super().__init__(delta_t, disp_3d, sub_sample_dt, progress)
-        slice, dim = DIMENSIONALITY[dimension.lower()]
+        slice = DIMENSIONALITY[dimension.lower()]
+        self.dims = len(dimension.lower())
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, slice].reshape(self._displacements[i].shape[0],
-                                                                     self._displacements[i].shape[1], dim)
+                                                                     self._displacements[i].shape[1], self.dims)
             d_squared = np.sum(disp_slice**2, axis=2)
             coll_motion = np.sum(np.sum(disp_slice, axis=0)**2, axis=-1)
             n_samples_current = self.n_samples((1, self._displacements[i].shape[1]), self._max_obs)
@@ -601,10 +604,11 @@ class MSCDBootstrap(Bootstrap):
             _ = len(ionic_charge)
         except TypeError:
             ionic_charge = np.ones(self._displacements[0].shape[0]) * ionic_charge
-        slice, dim = DIMENSIONALITY[dimension.lower()]
+        slice = DIMENSIONALITY[dimension.lower()]
+        self.dims = len(dimension.lower())
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, slice].reshape(self._displacements[i].shape[0],
-                                                                     self._displacements[i].shape[1], dim)
+                                                                     self._displacements[i].shape[1], self.dims)
             d_squared = np.sum(disp_slice**2, axis=2)
             sq_chg_motion = np.sum(np.sum((ionic_charge * self._displacements[i].T).T, axis=0)**2, axis=-1)
             n_samples_current = self.n_samples((1, self._displacements[i].shape[1]), self._max_obs)
