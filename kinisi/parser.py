@@ -38,7 +38,7 @@ class Parser:
     :param ndelta_t: The number of :py:attr:`delta_t` values to calculate the MSD over. Optional,
         defaults to :py:attr:`75`.
     :param memory_limit: Upper limit in the amount of computer memory that the displacements can occupy in
-        gigabytes (GB). Optional, defaults to :py:attr:`8.`.
+        gigabytes (GB). Optional, defaults to :py:attr:`8.0`.
     :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
     """
 
