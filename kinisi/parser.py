@@ -259,7 +259,8 @@ class PymatgenParser(Parser):
     @staticmethod
     def get_indices(
         structure: "pymatgen.core.structure.Structure", specie: Union["pymatgen.core.periodic_table.Element",
-                                                                      "pymatgen.core.periodic_table.Specie"]
+                                                                      "pymatgen.core.periodic_table.Specie",
+                                                                      "pymatgen.core.periodic_table.Species"]
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Determine framework and non-framework indices for a :py:mod:`pymatgen` compatible file.
