@@ -278,6 +278,8 @@ class PymatgenParser(Parser):
                 indices.append(i)
             else:
                 framework_indices.append(i)
+        if len(indices) == 0:
+            raise ValueError("There are no species selected to calculate the mean-squared displacement of.")
         return indices, framework_indices
 
 
