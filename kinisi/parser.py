@@ -273,7 +273,7 @@ class PymatgenParser(Parser):
         indices = []
         framework_indices = []
         for i, site in enumerate(structure):
-            if site.specie.symbol == specie:
+            if site.specie.__str__() == specie:
                 indices.append(i)
             else:
                 framework_indices.append(i)
