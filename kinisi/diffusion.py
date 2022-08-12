@@ -323,7 +323,7 @@ class Bootstrap:
         popt, _ = curve_fit(model_variance, self.dt[max_ngp:], self._v[max_ngp:])
         model_v = model_variance(self.dt[max_ngp:], *popt)
 
-        self._covariance_matrix = self.populate_covariance_matrix(model_v, self._n_i)
+        self._covariance_matrix = self.populate_covariance_matrix(model_v, self._n_i[max_ngp:])
         self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix)
 
         mv = multivariate_normal(self._n[max_ngp:], self._covariance_matrix, allow_singular=True)
