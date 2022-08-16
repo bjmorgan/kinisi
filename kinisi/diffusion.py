@@ -49,7 +49,7 @@ class Bootstrap:
         self._max_obs = self._displacements[0].shape[1]
         self._distributions = []
         self._dt = np.array([])
-        self._iterator = self.iterator(progress, range(len(self._displacements))[1:])
+        self._iterator = self.iterator(progress, range(len(self._displacements)))
         self._n = np.array([])
         self._s = np.array([])
         self._v = np.array([])

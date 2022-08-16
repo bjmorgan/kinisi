@@ -170,7 +170,6 @@ class TestDiffusionAnalyzer(unittest.TestCase):
             assert a.ngp_max == a._diff.dt[a._diff.ngp.argmax()]
             assert isinstance(a.D, Distribution)
             assert a.flatchain.shape == (32000, 2)
-            assert issubclass(w[0].category, UserWarning)
 
     def test_dictionary_roundtrip(self):
         with warnings.catch_warnings(record=True) as w:
@@ -186,7 +185,6 @@ class TestDiffusionAnalyzer(unittest.TestCase):
             assert a.ngp_max == a._diff.dt[a._diff.ngp.argmax()]
             assert isinstance(a.D, Distribution)
             assert a.flatchain.shape == (32000, 2)
-            assert issubclass(w[0].category, UserWarning)
             b = DiffusionAnalyzer.from_dict(a.to_dict())
             assert_equal(a.dt, b.dt)
             assert_equal(a.msd, b.msd)
