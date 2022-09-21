@@ -173,7 +173,6 @@ class TestMSDBootstrap(unittest.TestCase):
                 assert isinstance(i, Distribution)
             for i in bs._distributions:
                 assert i.samples.size >= 1000
-                assert_almost_equal(i.ci_points, [2.5, 97.5])
 
     def test_initialisation_n_resamples(self):
         with warnings.catch_warnings(record=True) as _:
@@ -190,7 +189,6 @@ class TestMSDBootstrap(unittest.TestCase):
                 assert isinstance(i, Distribution)
             for i in bs._distributions:
                 assert i.samples.size >= 10
-                assert_almost_equal(i.ci_points, [2.5, 97.5])
 
     def test_initialisation_max_resamples(self):
         with warnings.catch_warnings(record=True) as _:
@@ -207,7 +205,6 @@ class TestMSDBootstrap(unittest.TestCase):
                 assert isinstance(i, Distribution)
             for i in bs._distributions:
                 assert i.samples.size <= 110
-                assert_almost_equal(i.ci_points, [2.5, 97.5])
 
     def test_initialisation_random_state(self):
         with warnings.catch_warnings(record=True) as _:
@@ -224,7 +221,6 @@ class TestMSDBootstrap(unittest.TestCase):
                 assert isinstance(i, Distribution)
             for i in bs1._distributions:
                 assert i.samples.size >= 1000
-                assert_almost_equal(i.ci_points, [2.5, 97.5])
             bs2 = MSDBootstrap(dt, disp_3d, random_state=np.random.RandomState(0))
             assert bs1._distributions[-1].size == bs2._distributions[-1].size
             assert_almost_equal(bs1._distributions[-1].samples, bs2._distributions[-1].samples)
@@ -244,7 +240,6 @@ class TestMSDBootstrap(unittest.TestCase):
                 assert isinstance(i, Distribution)
             for i in bs._distributions:
                 assert i.samples.size >= 1000
-                assert_almost_equal(i.ci_points, [2.5, 97.5])
             assert isinstance(bs._iterator, range)
 
     def test_initialisation_skip_where_low_samples(self):
@@ -262,7 +257,6 @@ class TestMSDBootstrap(unittest.TestCase):
                 assert isinstance(i, Distribution)
             for i in bs._distributions:
                 assert i.samples.size >= 1000
-                assert_almost_equal(i.ci_points, [2.5, 97.5])
             assert isinstance(bs._iterator, range)
 
     def test_bootstrap_dictionary_roundtrip(self):
@@ -397,7 +391,6 @@ class TestTMSDBootstrap(unittest.TestCase):
                 assert isinstance(i, Distribution)
             for i in bs._distributions:
                 assert i.samples.size >= 1000
-                assert_almost_equal(i.ci_points, [2.5, 97.5])
 
     def test_initialisation_n_resamples(self):
         with warnings.catch_warnings(record=True) as _:
@@ -414,7 +407,6 @@ class TestTMSDBootstrap(unittest.TestCase):
                 assert isinstance(i, Distribution)
             for i in bs._distributions:
                 assert i.samples.size >= 10
-                assert_almost_equal(i.ci_points, [2.5, 97.5])
 
     def test_initialisation_max_resamples(self):
         with warnings.catch_warnings(record=True) as _:
@@ -431,7 +423,6 @@ class TestTMSDBootstrap(unittest.TestCase):
                 assert isinstance(i, Distribution)
             for i in bs._distributions:
                 assert i.samples.size <= 110
-                assert_almost_equal(i.ci_points, [2.5, 97.5])
 
     def test_initialisation_random_state(self):
         with warnings.catch_warnings(record=True) as _:
@@ -448,7 +439,6 @@ class TestTMSDBootstrap(unittest.TestCase):
                 assert isinstance(i, Distribution)
             for i in bs1._distributions:
                 assert i.samples.size >= 1000
-                assert_almost_equal(i.ci_points, [2.5, 97.5])
             bs2 = TMSDBootstrap(dt, disp_3d, random_state=np.random.RandomState(0))
             assert bs1._distributions[-1].size == bs2._distributions[-1].size
             assert_almost_equal(bs1._distributions[-1].samples, bs2._distributions[-1].samples)
@@ -468,7 +458,6 @@ class TestTMSDBootstrap(unittest.TestCase):
                 assert isinstance(i, Distribution)
             for i in bs._distributions:
                 assert i.samples.size >= 1000
-                assert_almost_equal(i.ci_points, [2.5, 97.5])
             assert isinstance(bs._iterator, range)
 
     def test_initialisation_skip_where_low_samples(self):
@@ -486,7 +475,6 @@ class TestTMSDBootstrap(unittest.TestCase):
                 assert isinstance(i, Distribution)
             for i in bs._distributions:
                 assert i.samples.size >= 1000
-                assert_almost_equal(i.ci_points, [2.5, 97.5])
             assert isinstance(bs._iterator, range)
 
     def test_bootstrap(self):
@@ -586,7 +574,6 @@ class TestMSCDBootstrap(unittest.TestCase):
                 assert isinstance(i, Distribution)
             for i in bs._distributions:
                 assert i.samples.size >= 1000
-                assert_almost_equal(i.ci_points, [2.5, 97.5])
 
     def test_initialisation_n_resamples(self):
         with warnings.catch_warnings(record=True) as _:
@@ -603,7 +590,6 @@ class TestMSCDBootstrap(unittest.TestCase):
                 assert isinstance(i, Distribution)
             for i in bs._distributions:
                 assert i.samples.size >= 10
-                assert_almost_equal(i.ci_points, [2.5, 97.5])
 
     def test_initialisation_max_resamples(self):
         with warnings.catch_warnings(record=True) as _:
@@ -620,7 +606,6 @@ class TestMSCDBootstrap(unittest.TestCase):
                 assert isinstance(i, Distribution)
             for i in bs._distributions:
                 assert i.samples.size <= 110
-                assert_almost_equal(i.ci_points, [2.5, 97.5])
 
     def test_initialisation_random_state(self):
         with warnings.catch_warnings(record=True) as _:
@@ -637,7 +622,6 @@ class TestMSCDBootstrap(unittest.TestCase):
                 assert isinstance(i, Distribution)
             for i in bs1._distributions:
                 assert i.samples.size >= 1000
-                assert_almost_equal(i.ci_points, [2.5, 97.5])
             bs2 = MSCDBootstrap(dt, disp_3d, 1, random_state=np.random.RandomState(0))
             assert bs1._distributions[-1].size == bs2._distributions[-1].size
             assert_almost_equal(bs1._distributions[-1].samples, bs2._distributions[-1].samples)
@@ -657,7 +641,6 @@ class TestMSCDBootstrap(unittest.TestCase):
                 assert isinstance(i, Distribution)
             for i in bs._distributions:
                 assert i.samples.size >= 1000
-                assert_almost_equal(i.ci_points, [2.5, 97.5])
             assert isinstance(bs._iterator, range)
 
     def test_initialisation_skip_where_low_samples(self):
@@ -675,7 +658,6 @@ class TestMSCDBootstrap(unittest.TestCase):
                 assert isinstance(i, Distribution)
             for i in bs._distributions:
                 assert i.samples.size >= 1000
-                assert_almost_equal(i.ci_points, [2.5, 97.5])
             assert isinstance(bs._iterator, range)
 
     def test_bootstrap(self):

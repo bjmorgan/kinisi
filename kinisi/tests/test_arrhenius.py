@@ -37,7 +37,7 @@ class TestArrhenius(unittest.TestCase):
         assert_equal(arr.function, arrhenius.arrhenius)
         assert_almost_equal(arr.abscissa, temp)
         assert_almost_equal(arr.y.n, ea, decimal=0)
-        assert_almost_equal(arr.y.s, np.array([ea * 0.196, ea * 0.196]), decimal=0)
+        assert_almost_equal(arr.y.s, ea * 0.1, decimal=0)
 
     def test_super_arrhenius_init(self):
         """
@@ -47,7 +47,7 @@ class TestArrhenius(unittest.TestCase):
         assert_equal(arr.function, arrhenius.super_arrhenius)
         assert_almost_equal(arr.abscissa, temp)
         assert_almost_equal(arr.y.n, ea, decimal=0)
-        assert_almost_equal(arr.y.s, np.array([ea * 0.196, ea * 0.196]), decimal=0)
+        assert_almost_equal(arr.y.s, ea * 0.1, decimal=0)
 
     def test_standard_arrhenius(self):
         """
