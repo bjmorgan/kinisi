@@ -7,6 +7,7 @@ diffusion coefficient from a material.
 # Distributed under the terms of the MIT License
 # author: Andrew R. McCluskey (arm61)
 
+from random import sample
 import warnings
 from typing import List, Tuple, Union
 import numpy as np
@@ -483,11 +484,15 @@ class MSDBootstrap(Bootstrap):
         super().__init__(delta_t, disp_3d, sub_sample_dt, progress)
         slice = DIMENSIONALITY[dimension.lower()]
         self.dims = len(dimension.lower())
+        # sample_multiply =  1 / self._delta_t.max() * self._delta_t + 0.5
+        # sample_multiply[np.where(sample_multiply > 1)] = 1
+        # sample_multiply = 1 / sample_multiply
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, slice].reshape(self._displacements[i].shape[0],
                                                                      self._displacements[i].shape[1], self.dims)
             d_squared = np.sum(disp_slice**2, axis=2)
             n_samples_current = self.n_samples(self._displacements[i].shape, self._max_obs)
+            # n_samples_current = int(self.n_samples(self._displacements[i].shape, self._max_obs) * sample_multiply[i])
             if n_samples_current <= 1:
                 continue
             self._n_i = np.append(self._n_i, n_samples_current)

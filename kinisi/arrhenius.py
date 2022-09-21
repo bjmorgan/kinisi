@@ -42,9 +42,8 @@ class StandardArrhenius(Relationship):
                  temperature: np.ndarray,
                  diffusion: Union[List['uravu.distribution.Distribution'], np.ndarray],
                  bounds: Tuple[Tuple[float, float], Tuple[float, float]] = ((0, 1), (0, 1e20)),
-                 diffusion_error: np.ndarray = None,
-                 ci_points: Tuple[float, float] = None):
-        super().__init__(arrhenius, temperature, diffusion, bounds, ordinate_error=diffusion_error, ci_points=None)
+                 diffusion_error: np.ndarray = None):
+        super().__init__(arrhenius, temperature, diffusion, bounds, ordinate_error=diffusion_error)
 
     @property
     def activation_energy(self) -> 'uravu.distribution.Distribution':
@@ -97,16 +96,14 @@ class SuperArrhenius(Relationship):
                  diffusion: Union[List['uravu.distribution.Distribution'], np.ndarray],
                  bounds: Tuple[Tuple[float, float], Tuple[float, float], Tuple[float, float]] = [(0, 1), (0, 1e20),
                                                                                                  (0, None)],
-                 diffusion_error: np.ndarray = None,
-                 ci_points: Tuple[float, float] = None):
+                 diffusion_error: np.ndarray = None):
         if bounds[2][1] is None:
             bounds[2] = (0, temperature[0])
         super().__init__(super_arrhenius,
                          temperature,
                          diffusion,
                          bounds,
-                         ordinate_error=diffusion_error,
-                         ci_points=None)
+                         ordinate_error=diffusion_error)
 
     @property
     def activation_energy(self) -> 'uravu.distribution.Distribution':
