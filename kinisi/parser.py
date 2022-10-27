@@ -30,15 +30,10 @@ class Parser:
     :param time_step: Time step, in picoseconds, between steps in trajectory.
     :param step_skip: Sampling freqency of the trajectory (time_step is multiplied by this number to get the real
         time between output from the simulation file).
-    :param min_obs: Minimum number of observations of an atom before including it in the MSD vs dt calculation.
-        E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up
-        to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated times.
-        Optional, defaults to :py:attr:`30`.
     :param min_dt: Minimum timestep to be evaluated, in the simulation units. Optional, defaults to :py:attr:`100`.
-    :param ndelta_t: The number of :py:attr:`delta_t` values to calculate the MSD over. Optional,
-        defaults to :py:attr:`75`.
     :param memory_limit: Upper limit in the amount of computer memory that the displacements can occupy in
         gigabytes (GB). Optional, defaults to :py:attr:`8.`.
+    :param nsteps: Number of steps to be used in the timestep function. Optional, defaults to all of them.
     :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
     """
 
@@ -48,24 +43,24 @@ class Parser:
                  framework_indices: np.ndarray,
                  time_step: float,
                  step_skip: int,
-                 min_obs: int = 30,
                  min_dt: int = 1,
-                 ndelta_t: int = 75,
                  memory_limit: float = 8.,
+                 n_steps: int = None,
                  progress: bool = True):
         self.time_step = time_step
         self.step_skip = step_skip
         self.indices = indices
         self.min_dt = min_dt
-        self.ndelta_t = ndelta_t
         self.memory_limit = memory_limit
         self._volume = None
 
         drift_corrected = self.correct_drift(framework_indices, disp)
+        self.dc = drift_corrected
 
-        nsteps = drift_corrected.shape[1]
+        if n_steps is None:
+            nsteps = drift_corrected.shape[1]
 
-        timesteps = self.smoothed_timesteps(nsteps, min_obs, indices)
+        timesteps = self.get_timesteps(nsteps)
 
         self.delta_t, self.disp_3d = self.get_disps(timesteps, drift_corrected, progress)
 
@@ -115,26 +110,21 @@ class Parser:
             drift_corrected = disp
         return drift_corrected
 
-    def smoothed_timesteps(self, nsteps: int, min_obs: int, indices: np.ndarray) -> np.ndarray:
+    def get_timesteps(self, nsteps: int) -> np.ndarray:
         """
         Calculate the smoothed timesteps to be used.
 
         :param nsteps: Number of time steps.
-        :param min_obs: Minimum number of observations to have before including in the MSD vs dt calculation.
-            E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated
-            up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3
-            uncorrelated times.
-        :param indices: Indices for the atoms in the trajectory used in the calculation of the diffusion.
+        :param func:
 
         :return: Smoothed timesteps.
         """
         min_dt = int(self.min_dt / (self.step_skip * self.time_step))
-        max_dt = min(len(indices) * nsteps // min_obs, nsteps)
         if min_dt == 0:
             min_dt = 1
-        if min_dt >= max_dt:
-            raise ValueError('Not enough data to calculate diffusivity')
-        timesteps = np.arange(min_dt, max_dt, max(int((max_dt - min_dt) / self.ndelta_t), 1))
+        if min_dt >= nsteps:
+            raise ValueError('min_dt is greater than or equal to the maximum simulation length.')
+        timesteps = np.arange(min_dt, nsteps, 1)
         return timesteps
 
     def get_disps(self,
@@ -157,17 +147,17 @@ class Parser:
         else:
             iterator = timesteps
         disp_mem = 0
-        for timestep in iterator:
-            disp_mem += np.product(drift_corrected[self.indices, timestep:].shape) * 8
+        for i, timestep in enumerate(iterator):
+            disp_mem += np.product(drift_corrected[self.indices, i + 1::i + 1].shape) * 8
         disp_mem *= 1e-9
         if disp_mem > self.memory_limit:
             raise MemoryError(f"The memory limit of this job is {self.memory_limit:.1e} GB but the "
                               f"displacement values will use {disp_mem:.1e} GB. Please either increase "
                               "the memory_limit parameter or descrease the sampling rate (see "
                               "https://kinisi.readthedocs.io/en/latest/memory_limit.html).")
-        for timestep in iterator:
-            disp = np.subtract(drift_corrected[self.indices, timestep:, :],
-                               drift_corrected[self.indices, :-timestep, :])
+        for i, timestep in enumerate(iterator):
+            disp = np.subtract(drift_corrected[self.indices, timestep::timestep],
+                               drift_corrected[self.indices, :-timestep:timestep])
             disp_3d.append(disp)
         return delta_t, disp_3d
 
@@ -181,17 +171,12 @@ class PymatgenParser(Parser):
     :param time_step: Time step, in picoseconds, between steps in trajectory.
     :param step_skip: Sampling freqency of the trajectory (time_step is multiplied by this number to get the real
         time between output from the simulation file).
-    :param min_obs: Minimum number of observations of an atom before including it in the MSD vs dt calculation.
-        E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated up
-        to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated
-        times. Optional, defaults to :py:attr:`30`.
     :param sub_sample_traj: Multiple of the :py:attr:`time_step` to sub sample at. Optional, defaults
         to :py:attr:`1` where all timesteps are used.
     :param min_dt: Minimum timestep to be evaluated, in the simulation units. Optional, defaults to :py:attr:`100`.
-    :param ndelta_t: The number of :py:attr:`delta_t` values to calculate the MSD over. Optional,
-        defaults to :py:attr:`75`.
     :param memory_limit: Upper limit in the amount of computer memory that the displacements can occupy in
         gigabytes (GB). Optional, defaults to :py:attr:`8.`.
+    :param nsteps: Number of steps to be used in the timestep function. Optional, defaults to all of them.
     :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
     """
 
@@ -200,25 +185,23 @@ class PymatgenParser(Parser):
                  specie: Union["pymatgen.core.periodic_table.Element", "pymatgen.core.periodic_table.Specie"],
                  time_step: float,
                  step_skip: int,
-                 min_obs: int = 30,
                  sub_sample_traj: int = 1,
-                 min_dt: float = 100,
-                 ndelta_t: int = 75,
+                 min_dt: float = 0,
                  memory_limit: float = 8.,
+                 n_steps: int = None,
                  progress: bool = True):
         structure, coords, latt = self.get_structure_coords_latt(structures, sub_sample_traj, progress)
 
         indices = self.get_indices(structure, specie)
 
-        super().__init__(self.get_disp(coords, latt),
-                         indices[0],
-                         indices[1],
-                         time_step,
-                         step_skip * sub_sample_traj,
-                         min_obs=min_obs,
+        super().__init__(disp=self.get_disp(coords, latt),
+                         indices=indices[0],
+                         framework_indices=indices[1],
+                         time_step=time_step,
+                         step_skip=step_skip * sub_sample_traj,
                          min_dt=min_dt,
-                         ndelta_t=ndelta_t,
                          memory_limit=memory_limit,
+                         n_steps=n_steps,
                          progress=progress)
         self._volume = structure.volume
         self.delta_t *= 1e-3
@@ -292,20 +275,15 @@ class MDAnalysisParser(Parser):
     :param time_step: Time step, in picoseconds, between steps in trajectory.
     :param step_skip: Sampling freqency of the trajectory (time_step is multiplied by this number to get the real
         time between output from the simulation file).
-    :param min_obs: Minimum number of observations of an atom before including it in the MSD vs dt calculation.
-        E.g. If a structure has 10 diffusing atoms, and :py:attr:`min_obs=30`, the MSD vs dt will be calculated
-        up to :py:attr:`dt = total_run_time / 3`, so that each diffusing atom is measured at least 3 uncorrelated
-        times. Optional, defaults to :py:attr:`30`.
     :param sub_sample_atoms: The sampling rate to sample the atoms in the system. Optional, defaults
         to :py:attr:`1` where all atoms are used.
     :param sub_sample_traj: Multiple of the :py:attr:`time_step` to sub sample at. Optional,
         defaults to :py:attr:`1` where all timesteps are used.
     :param min_dt: Minimum timestep to be evaluated, in the simulation units. Optional,
         defaults to :py:attr:`100`.
-    :param ndelta_t: The number of :py:attr:`delta_t` values to calculate the MSD over. Optional,
-        defaults to :py:attr:`75`.
     :param memory_limit: Upper limit in the amount of computer memory that the displacements can occupy in
         gigabytes (GB). Optional, defaults to :py:attr:`8.`.
+    :param nsteps: Number of steps to be used in the timestep function. Optional, defaults to all of them.
     :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
     """
 
@@ -314,20 +292,26 @@ class MDAnalysisParser(Parser):
                  specie: str,
                  time_step: float,
                  step_skip: int,
-                 min_obs: int = 30,
                  sub_sample_atoms: int = 1,
                  sub_sample_traj: int = 1,
-                 min_dt: float = 100,
-                 ndelta_t: int = 75,
+                 min_dt: float = 0,
                  memory_limit: float = 8.,
+                 n_steps: int = None,
                  progress: bool = True):
         structure, coords, latt, volume = self.get_structure_coords_latt(universe, sub_sample_atoms, sub_sample_traj,
                                                                          progress)
 
         indices = self.get_indices(structure, specie)
 
-        super().__init__(self.get_disp(coords, latt), indices[0], indices[1], time_step, step_skip * sub_sample_traj,
-                         min_obs, min_dt, ndelta_t, memory_limit, progress)
+        super().__init__(disp=self.get_disp(coords, latt),
+                         indices=indices[0],
+                         framework_indices=indices[1],
+                         time_step=time_step,
+                         step_skip=step_skip * sub_sample_traj,
+                         min_dt=min_dt,
+                         memory_limit=memory_limit,
+                         n_steps=n_steps,
+                         progress=progress)
         self._volume = volume
 
     @staticmethod

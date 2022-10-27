@@ -99,11 +99,7 @@ class SuperArrhenius(Relationship):
                  diffusion_error: np.ndarray = None):
         if bounds[2][1] is None:
             bounds[2] = (0, temperature[0])
-        super().__init__(super_arrhenius,
-                         temperature,
-                         diffusion,
-                         bounds,
-                         ordinate_error=diffusion_error)
+        super().__init__(super_arrhenius, temperature, diffusion, bounds, ordinate_error=diffusion_error)
 
     @property
     def activation_energy(self) -> 'uravu.distribution.Distribution':
