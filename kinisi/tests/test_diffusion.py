@@ -94,14 +94,6 @@ class TestBootstrap(unittest.TestCase):
         result = Bootstrap.iterator(False, range(10))
         assert isinstance(result, range)
 
-    def test_n_samples_a(self):
-        result = Bootstrap.n_samples((100, 10), 10)
-        assert result == 1000
-
-    def test_n_samples_b(self):
-        result = Bootstrap.n_samples((100, 8), 10)
-        assert result == 333
-
     def test_sample_until_normal(self):
         distro1 = Bootstrap.sample_until_normal(RNG.normal(0, 1, size=2000),
                                                 50,
@@ -166,7 +158,7 @@ class TestMSDBootstrap(unittest.TestCase):
             assert bs.n.shape == (10, )
             assert bs.s.shape == (10, )
             assert_almost_equal(bs.v, np.square(bs.s))
-            assert_equal(bs.n_i, [2000, 1000, 666, 500, 400, 333, 285, 250, 222, 200])
+            assert_equal(bs.n_i, [2000, 1900, 1800, 1700, 1600, 1500, 1400, 1300, 1200, 1100])
             assert bs.ngp.shape == (10, )
             assert len(bs.euclidian_displacements) == 10
             for i in bs.euclidian_displacements:
@@ -182,7 +174,7 @@ class TestMSDBootstrap(unittest.TestCase):
             assert bs.n.shape == (10, )
             assert bs.s.shape == (10, )
             assert_almost_equal(bs.v, np.square(bs.s))
-            assert_equal(bs.n_i, [2000, 1000, 666, 500, 400, 333, 285, 250, 222, 200])
+            assert_equal(bs.n_i, [2000, 1900, 1800, 1700, 1600, 1500, 1400, 1300, 1200, 1100])
             assert bs.ngp.shape == (10, )
             assert len(bs.euclidian_displacements) == 10
             for i in bs.euclidian_displacements:
@@ -198,7 +190,7 @@ class TestMSDBootstrap(unittest.TestCase):
             assert bs.n.shape == (10, )
             assert bs.s.shape == (10, )
             assert_almost_equal(bs.v, np.square(bs.s))
-            assert_equal(bs.n_i, [2000, 1000, 666, 500, 400, 333, 285, 250, 222, 200])
+            assert_equal(bs.n_i, [2000, 1900, 1800, 1700, 1600, 1500, 1400, 1300, 1200, 1100])
             assert bs.ngp.shape == (10, )
             assert len(bs.euclidian_displacements) == 10
             for i in bs.euclidian_displacements:
@@ -214,7 +206,7 @@ class TestMSDBootstrap(unittest.TestCase):
             assert bs1.n.shape == (10, )
             assert bs1.s.shape == (10, )
             assert_almost_equal(bs1.v, np.square(bs1.s))
-            assert_equal(bs1.n_i, [2000, 1000, 666, 500, 400, 333, 285, 250, 222, 200])
+            assert_equal(bs1.n_i, [2000, 1900, 1800, 1700, 1600, 1500, 1400, 1300, 1200, 1100])
             assert bs1.ngp.shape == (10, )
             assert len(bs1.euclidian_displacements) == 10
             for i in bs1.euclidian_displacements:
@@ -233,7 +225,7 @@ class TestMSDBootstrap(unittest.TestCase):
             assert bs.n.shape == (10, )
             assert bs.s.shape == (10, )
             assert_almost_equal(bs.v, np.square(bs.s))
-            assert_equal(bs.n_i, [2000, 1000, 666, 500, 400, 333, 285, 250, 222, 200])
+            assert_equal(bs.n_i, [2000, 1900, 1800, 1700, 1600, 1500, 1400, 1300, 1200, 1100])
             assert bs.ngp.shape == (10, )
             assert len(bs.euclidian_displacements) == 10
             for i in bs.euclidian_displacements:
@@ -247,12 +239,12 @@ class TestMSDBootstrap(unittest.TestCase):
             disp_3d = [RNG.randn(1, i, 3) for i in range(10, 1, -1)]
             dt = np.linspace(100, 1000, 10)
             bs = MSDBootstrap(dt, disp_3d, progress=False, random_state=np.random.RandomState(0))
-            assert bs.n.shape == (5, )
-            assert bs.s.shape == (5, )
+            assert bs.n.shape == (9, )
+            assert bs.s.shape == (9, )
             assert_almost_equal(bs.v, np.square(bs.s))
-            assert_equal(bs.n_i, [10, 5, 3, 2, 2])
-            assert bs.ngp.shape == (5, )
-            assert len(bs.euclidian_displacements) == 5
+            assert_equal(bs.n_i, [10, 9, 8, 7, 6, 5, 4, 3, 2])
+            assert bs.ngp.shape == (9, )
+            assert len(bs.euclidian_displacements) == 9
             for i in bs.euclidian_displacements:
                 assert isinstance(i, Distribution)
             for i in bs._distributions:
@@ -384,7 +376,7 @@ class TestTMSDBootstrap(unittest.TestCase):
             assert bs.n.shape == (10, )
             assert bs.s.shape == (10, )
             assert_almost_equal(bs.v, np.square(bs.s))
-            assert_equal(bs.n_i, [20, 10, 6, 5, 4, 3, 2, 2, 2, 2])
+            assert_equal(bs.n_i, [20, 19, 18, 17, 16, 15, 14, 13, 12, 11])
             assert bs.ngp.shape == (10, )
             assert len(bs.euclidian_displacements) == 10
             for i in bs.euclidian_displacements:
@@ -400,7 +392,7 @@ class TestTMSDBootstrap(unittest.TestCase):
             assert bs.n.shape == (10, )
             assert bs.s.shape == (10, )
             assert_almost_equal(bs.v, np.square(bs.s))
-            assert_equal(bs.n_i, [20, 10, 6, 5, 4, 3, 2, 2, 2, 2])
+            assert_equal(bs.n_i, [20, 19, 18, 17, 16, 15, 14, 13, 12, 11])
             assert bs.ngp.shape == (10, )
             assert len(bs.euclidian_displacements) == 10
             for i in bs.euclidian_displacements:
@@ -416,7 +408,7 @@ class TestTMSDBootstrap(unittest.TestCase):
             assert bs.n.shape == (10, )
             assert bs.s.shape == (10, )
             assert_almost_equal(bs.v, np.square(bs.s))
-            assert_equal(bs.n_i, [20, 10, 6, 5, 4, 3, 2, 2, 2, 2])
+            assert_equal(bs.n_i, [20, 19, 18, 17, 16, 15, 14, 13, 12, 11])
             assert bs.ngp.shape == (10, )
             assert len(bs.euclidian_displacements) == 10
             for i in bs.euclidian_displacements:
@@ -432,7 +424,7 @@ class TestTMSDBootstrap(unittest.TestCase):
             assert bs1.n.shape == (10, )
             assert bs1.s.shape == (10, )
             assert_almost_equal(bs1.v, np.square(bs1.s))
-            assert_equal(bs1.n_i, [20, 10, 6, 5, 4, 3, 2, 2, 2, 2])
+            assert_equal(bs1.n_i, [20, 19, 18, 17, 16, 15, 14, 13, 12, 11])
             assert bs1.ngp.shape == (10, )
             assert len(bs1.euclidian_displacements) == 10
             for i in bs1.euclidian_displacements:
@@ -451,7 +443,7 @@ class TestTMSDBootstrap(unittest.TestCase):
             assert bs.n.shape == (10, )
             assert bs.s.shape == (10, )
             assert_almost_equal(bs.v, np.square(bs.s))
-            assert_equal(bs.n_i, [20, 10, 6, 5, 4, 3, 2, 2, 2, 2])
+            assert_equal(bs.n_i, [20, 19, 18, 17, 16, 15, 14, 13, 12, 11])
             assert bs.ngp.shape == (10, )
             assert len(bs.euclidian_displacements) == 10
             for i in bs.euclidian_displacements:
@@ -465,12 +457,12 @@ class TestTMSDBootstrap(unittest.TestCase):
             disp_3d = [RNG.randn(1, i, 3) for i in range(10, 1, -1)]
             dt = np.linspace(100, 1000, 10)
             bs = TMSDBootstrap(dt, disp_3d, progress=False, random_state=np.random.RandomState(0))
-            assert bs.n.shape == (5, )
-            assert bs.s.shape == (5, )
+            assert bs.n.shape == (9, )
+            assert bs.s.shape == (9, )
             assert_almost_equal(bs.v, np.square(bs.s))
-            assert_equal(bs.n_i, [10, 5, 3, 2, 2])
-            assert bs.ngp.shape == (5, )
-            assert len(bs.euclidian_displacements) == 5
+            assert_equal(bs.n_i, [10, 9, 8, 7, 6, 5, 4, 3, 2])
+            assert bs.ngp.shape == (9, )
+            assert len(bs.euclidian_displacements) == 9
             for i in bs.euclidian_displacements:
                 assert isinstance(i, Distribution)
             for i in bs._distributions:
@@ -567,7 +559,7 @@ class TestMSCDBootstrap(unittest.TestCase):
             assert bs.n.shape == (10, )
             assert bs.s.shape == (10, )
             assert_almost_equal(bs.v, np.square(bs.s))
-            assert_equal(bs.n_i, [20, 10, 6, 5, 4, 3, 2, 2, 2, 2])
+            assert_equal(bs.n_i, [20, 19, 18, 17, 16, 15, 14, 13, 12, 11])
             assert bs.ngp.shape == (10, )
             assert len(bs.euclidian_displacements) == 10
             for i in bs.euclidian_displacements:
@@ -583,7 +575,7 @@ class TestMSCDBootstrap(unittest.TestCase):
             assert bs.n.shape == (10, )
             assert bs.s.shape == (10, )
             assert_almost_equal(bs.v, np.square(bs.s))
-            assert_equal(bs.n_i, [20, 10, 6, 5, 4, 3, 2, 2, 2, 2])
+            assert_equal(bs.n_i, [20, 19, 18, 17, 16, 15, 14, 13, 12, 11])
             assert bs.ngp.shape == (10, )
             assert len(bs.euclidian_displacements) == 10
             for i in bs.euclidian_displacements:
@@ -599,7 +591,7 @@ class TestMSCDBootstrap(unittest.TestCase):
             assert bs.n.shape == (10, )
             assert bs.s.shape == (10, )
             assert_almost_equal(bs.v, np.square(bs.s))
-            assert_equal(bs.n_i, [20, 10, 6, 5, 4, 3, 2, 2, 2, 2])
+            assert_equal(bs.n_i, [20, 19, 18, 17, 16, 15, 14, 13, 12, 11])
             assert bs.ngp.shape == (10, )
             assert len(bs.euclidian_displacements) == 10
             for i in bs.euclidian_displacements:
@@ -615,7 +607,7 @@ class TestMSCDBootstrap(unittest.TestCase):
             assert bs1.n.shape == (10, )
             assert bs1.s.shape == (10, )
             assert_almost_equal(bs1.v, np.square(bs1.s))
-            assert_equal(bs1.n_i, [20, 10, 6, 5, 4, 3, 2, 2, 2, 2])
+            assert_equal(bs1.n_i, [20, 19, 18, 17, 16, 15, 14, 13, 12, 11])
             assert bs1.ngp.shape == (10, )
             assert len(bs1.euclidian_displacements) == 10
             for i in bs1.euclidian_displacements:
@@ -634,7 +626,7 @@ class TestMSCDBootstrap(unittest.TestCase):
             assert bs.n.shape == (10, )
             assert bs.s.shape == (10, )
             assert_almost_equal(bs.v, np.square(bs.s))
-            assert_equal(bs.n_i, [20, 10, 6, 5, 4, 3, 2, 2, 2, 2])
+            assert_equal(bs.n_i, [20, 19, 18, 17, 16, 15, 14, 13, 12, 11])
             assert bs.ngp.shape == (10, )
             assert len(bs.euclidian_displacements) == 10
             for i in bs.euclidian_displacements:
@@ -648,12 +640,12 @@ class TestMSCDBootstrap(unittest.TestCase):
             disp_3d = [RNG.randn(1, i, 3) for i in range(10, 1, -1)]
             dt = np.linspace(100, 1000, 10)
             bs = MSCDBootstrap(dt, disp_3d, 1, progress=False, random_state=np.random.RandomState(0))
-            assert bs.n.shape == (5, )
-            assert bs.s.shape == (5, )
+            assert bs.n.shape == (9, )
+            assert bs.s.shape == (9, )
             assert_almost_equal(bs.v, np.square(bs.s))
-            assert_equal(bs.n_i, [10, 5, 3, 2, 2])
-            assert bs.ngp.shape == (5, )
-            assert len(bs.euclidian_displacements) == 5
+            assert_equal(bs.n_i, [10, 9, 8, 7, 6, 5, 4, 3, 2])
+            assert bs.ngp.shape == (9, )
+            assert len(bs.euclidian_displacements) == 9
             for i in bs.euclidian_displacements:
                 assert isinstance(i, Distribution)
             for i in bs._distributions:

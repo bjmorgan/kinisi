@@ -50,25 +50,19 @@ class TestParser(unittest.TestCase):
     def test_parser_disp_3d(self):
         p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=20)
         assert_equal(len(p.disp_3d), 80)
-        for i, d in enumerate(p.disp_3d):
-            assert_equal(d.shape[0], 100)
-            assert_equal(d.shape[1], 80 - i)
-            assert_equal(d.shape[2], 3)
+        assert_equal(p.disp_3d[0].shape[0], 100)
+        assert_equal(p.disp_3d[0].shape[1], 4)
+        assert_equal(p.disp_3d[0].shape[2], 3)
 
-    def test_smoothed_timesteps(self):
+    def test_get_timesteps(self):
         p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=20)
-        timesteps = p.smoothed_timesteps(100, 30, indices)
+        timesteps = p.get_timesteps(100)
         assert_equal(timesteps, np.arange(20, 100, 1))
 
-    def test_smoothed_timesteps_not_enough(self):
-        with self.assertRaises(ValueError):
-            p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=120)
-            p.smoothed_timesteps(100, 20, indices)
-
-    def test_smoothed_timesteps_min_dt_zero(self):
+    def test_get_timesteps_min_dt_zero(self):
         p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=0)
-        timesteps = p.smoothed_timesteps(100, 30, indices)
-        assert_equal(timesteps, np.arange(1, 100, 1))
+        timesteps = p.get_timesteps(100)
+        assert_equal(timesteps, np.arange(1, 100, 1, dtype=int))
 
     def test_correct_drift_no_framework(self):
         corrected = parser.Parser.correct_drift([], dc)
@@ -89,14 +83,13 @@ class TestParser(unittest.TestCase):
         dt, disp_3d = p.get_disps(np.arange(20, 100, 1), dc)
         assert_equal(dt, np.arange(20, 100, 1))
         assert_equal(len(disp_3d), 80)
-        for i, d in enumerate(disp_3d):
-            assert_equal(d.shape[0], 100)
-            assert_equal(d.shape[1], 80 - i)
-            assert_equal(d.shape[2], 3)
+        assert_equal(p.disp_3d[0].shape[0], 100)
+        assert_equal(p.disp_3d[0].shape[1], 4)
+        assert_equal(p.disp_3d[0].shape[2], 3)
 
     def test_pymatgen_init(self):
         xd = Xdatcar(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_XDATCAR.gz'))
-        da_params = {'specie': 'Li', 'time_step': 2.0, 'step_skip': 50, 'min_obs': 50}
+        da_params = {'specie': 'Li', 'time_step': 2.0, 'step_skip': 50}
         data = parser.PymatgenParser(xd.structures, **da_params)
         assert_almost_equal(data.time_step, 2.0)
         assert_almost_equal(data.step_skip, 50)
@@ -104,7 +97,7 @@ class TestParser(unittest.TestCase):
 
     def test_pymatgen_big_timestep(self):
         xd = Xdatcar(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_XDATCAR.gz'))
-        da_params = {'specie': 'Li', 'time_step': 20.0, 'step_skip': 100, 'min_obs': 50}
+        da_params = {'specie': 'Li', 'time_step': 20.0, 'step_skip': 100}
         data = parser.PymatgenParser(xd.structures, **da_params)
         assert_almost_equal(data.time_step, 20.0)
         assert_almost_equal(data.step_skip, 100)
@@ -114,7 +107,7 @@ class TestParser(unittest.TestCase):
         xd = mda.Universe(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS.data'),
                           os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS.dcd'),
                           format='LAMMPS')
-        da_params = {'specie': '1', 'time_step': 0.005, 'step_skip': 250, 'min_obs': 50}
+        da_params = {'specie': '1', 'time_step': 0.005, 'step_skip': 250}
         data = parser.MDAnalysisParser(xd, **da_params)
         assert_almost_equal(data.time_step, 0.005)
         assert_almost_equal(data.step_skip, 250)
