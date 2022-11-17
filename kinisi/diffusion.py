@@ -8,7 +8,7 @@ diffusion coefficient from a material.
 # author: Andrew R. McCluskey (arm61)
 
 import warnings
-from typing import List, Union
+from typing import List, Tuple, Union
 import numpy as np
 from scipy.stats import multivariate_normal, normaltest, linregress
 from scipy.optimize import minimize, curve_fit
@@ -245,6 +245,21 @@ class Bootstrap:
         return Distribution(values)
 
     @staticmethod
+    def n_samples(disp_shape: Tuple[float, float], max_obs: int) -> int:
+        """
+        Calculate the maximum number of independent observations.
+
+        :param disp_shape: The shape of the displacements array.
+        :param max_obs: The maximum number of observations for the trajectory.
+
+        :return: Maximum number of independent observations.
+        """
+        n_obs = disp_shape[1]
+        n_atoms = disp_shape[0]
+        dt_int = max_obs - n_obs + 1
+        return int(max_obs / dt_int * n_atoms)
+
+    @staticmethod
     def ngp_calculation(d_squared: np.ndarray) -> float:
         """
         Determine the non-Gaussian parameter, from S. Song et al, "Transport dynamics of complex fluids"
@@ -265,7 +280,6 @@ class Bootstrap:
                       n_samples: int = 1000,
                       n_walkers: int = 32,
                       n_burn: int = 500,
-                      thin: int = 1,
                       progress: bool = True,
                       random_state: np.random.mtrand.RandomState = None):
         """
@@ -291,9 +305,6 @@ class Bootstrap:
         :param random_state: A :py:attr:`RandomState` object to be used to ensure reproducibility. Optional,
             default is :py:attr:`None`.
         """
-        if random_state is not None:
-            np.random.seed(random_state.get_state()[1][1])
-
         max_ngp = np.argwhere(self._dt > dt_skip)[0][0]
         if use_ngp:
             max_ngp = np.argmax(self._ngp)
@@ -352,7 +363,7 @@ class Bootstrap:
         #     pos = max_likelihood + max_likelihood * 1e-3 * random_state.randn(n_walkers, max_likelihood.size)
         #     sampler._random = random_state
         sampler.run_mcmc(pos, n_samples + n_burn, progress=progress, progress_kwargs={'desc': "Likelihood Sampling"})
-        self.flatchain = sampler.get_chain(flat=True, thin=thin, discard=n_burn)
+        self.flatchain = sampler.get_chain(flat=True, discard=n_burn)
 
         self.gradient = Distribution(self.flatchain[:, 0])
         self._intercept = None
@@ -401,8 +412,8 @@ class Bootstrap:
         will be passed of the :py:func:`bootstrap_GLS` method.
         """
         self.bootstrap_GLS(**kwargs)
-        self._jump_diffusion_coefficient = Distribution(self.gradient.samples /
-                                                        (2e4 * self.dims * self._displacements[0].shape[0]))
+        self._jump_diffusion_coefficient = Distribution(
+            self.gradient.samples / (2e4 * self.dims * self._displacements[0].shape[0]))
 
     @property
     def D_J(self) -> Union[Distribution, None]:
@@ -464,7 +475,7 @@ class MSDBootstrap(Bootstrap):
                  disp_3d: List[np.ndarray],
                  sub_sample_dt: int = 1,
                  n_resamples: int = 1000,
-                 max_resamples: int = 10000,
+                 max_resamples: int = 2000,
                  dimension: str = 'xyz',
                  alpha: float = 1e-3,
                  random_state: np.random.mtrand.RandomState = None,
@@ -475,10 +486,11 @@ class MSDBootstrap(Bootstrap):
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, slice].reshape(self._displacements[i].shape[0],
                                                                      self._displacements[i].shape[1], self.dims)
-            d_squared = np.sum(disp_slice**2, axis=2)
-            if d_squared.size <= 1:
+            d_squared = np.sum(disp_slice**2, axis=2)[:, ::self._delta_t[i]]
+            n_samples_current = self.n_samples(self._displacements[i].shape, self._max_obs)
+            if n_samples_current < 1:
                 continue
-            self._n_i = np.append(self._n_i, d_squared.size)
+            self._n_i = np.append(self._n_i, n_samples_current)
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
             distro = self.sample_until_normal(d_squared, d_squared.size, n_resamples, max_resamples, alpha,
                                               random_state)
@@ -534,14 +546,15 @@ class TMSDBootstrap(Bootstrap):
                                                                      self._displacements[i].shape[1], self.dims)
             d_squared = np.sum(disp_slice**2, axis=2)
             coll_motion = np.sum(np.sum(disp_slice, axis=0)**2, axis=-1)
-            if coll_motion.size <= 1:
+            n_samples_current = self.n_samples((1, self._displacements[i].shape[1]), self._max_obs)
+            if n_samples_current <= 1:
                 continue
-            self._n_i = np.append(self._n_i, coll_motion.size)
+            self._n_i = np.append(self._n_i, n_samples_current)
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
-            distro = self.sample_until_normal(coll_motion, coll_motion.size, n_resamples, max_resamples, alpha,
+            distro = self.sample_until_normal(coll_motion, n_samples_current, n_resamples, max_resamples, alpha,
                                               random_state)
             self._distributions.append(distro)
-            self._n = np.append(self._n, coll_motion.mean())
+            self._n = np.append(self._n, distro.n)
             self._s = np.append(self._s, np.std(distro.samples, ddof=1))
             self._v = np.append(self._v, np.var(distro.samples, ddof=1))
             self._ngp = np.append(self._ngp, self.ngp_calculation(d_squared.flatten()))
@@ -598,14 +611,15 @@ class MSCDBootstrap(Bootstrap):
                                                                      self._displacements[i].shape[1], self.dims)
             d_squared = np.sum(disp_slice**2, axis=2)
             sq_chg_motion = np.sum(np.sum((ionic_charge * self._displacements[i].T).T, axis=0)**2, axis=-1)
-            if sq_chg_motion.size <= 1:
+            n_samples_current = self.n_samples((1, self._displacements[i].shape[1]), self._max_obs)
+            if n_samples_current <= 1:
                 continue
-            self._n_i = np.append(self._n_i, sq_chg_motion.size)
+            self._n_i = np.append(self._n_i, n_samples_current)
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
-            distro = self.sample_until_normal(sq_chg_motion, sq_chg_motion.size, n_resamples, max_resamples, alpha,
+            distro = self.sample_until_normal(sq_chg_motion, n_samples_current, n_resamples, max_resamples, alpha,
                                               random_state)
             self._distributions.append(distro)
-            self._n = np.append(self._n, sq_chg_motion.mean())
+            self._n = np.append(self._n, distro.n)
             self._s = np.append(self._s, np.std(distro.samples, ddof=1))
             self._v = np.append(self._v, np.var(distro.samples, ddof=1))
             self._ngp = np.append(self._ngp, self.ngp_calculation(d_squared.flatten()))
@@ -626,7 +640,7 @@ def _bootstrap(array: np.ndarray, n_samples: int, n_resamples: int, random_state
     :return: Resampled values from the array
     """
     return [
-        np.mean(resample(array.flatten(), n_samples=n_samples, random_state=random_state)) for j in range(n_resamples)
+        np.mean(resample(array.flatten(), n_samples=n_samples, random_state=random_state).flatten()) for j in range(n_resamples)
     ]
 
 

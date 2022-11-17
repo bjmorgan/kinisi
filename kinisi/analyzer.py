@@ -240,7 +240,7 @@ class Analyzer:
                 disp[u[0].disp_3d[i].shape[0] * j:u[0].disp_3d[i].shape[0] * (j + 1)] = u[j].disp_3d[i]
             joint_disp_3d.append(disp)
         return joint_disp_3d
-
+    
     @property
     def distribution(self) -> np.ndarray:
         """
