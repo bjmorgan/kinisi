@@ -45,24 +45,25 @@ class TestParser(unittest.TestCase):
 
     def test_parser_delta_t(self):
         p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=20)
-        assert_equal(p.delta_t.size, 80)
+        assert_equal(p.delta_t.size, 81)
 
     def test_parser_disp_3d(self):
         p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=20)
-        assert_equal(len(p.disp_3d), 80)
-        assert_equal(p.disp_3d[0].shape[0], 100)
-        assert_equal(p.disp_3d[0].shape[1], 4)
-        assert_equal(p.disp_3d[0].shape[2], 3)
+        assert_equal(len(p.disp_3d), 81)
+        for i, d in enumerate(p.disp_3d):
+            assert_equal(d.shape[0], 100)
+            assert_equal(d.shape[1], 81 - i)
+            assert_equal(d.shape[2], 3)
 
     def test_get_timesteps(self):
         p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=20)
         timesteps = p.get_timesteps(100)
-        assert_equal(timesteps, np.arange(20, 100, 1))
+        assert_equal(timesteps, np.arange(20, 101, 1))
 
     def test_get_timesteps_min_dt_zero(self):
         p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=0)
         timesteps = p.get_timesteps(100)
-        assert_equal(timesteps, np.arange(1, 100, 1, dtype=int))
+        assert_equal(timesteps, np.arange(1, 101, 1, dtype=int))
 
     def test_correct_drift_no_framework(self):
         corrected = parser.Parser.correct_drift([], dc)
@@ -80,12 +81,13 @@ class TestParser(unittest.TestCase):
 
     def test_get_disps(self):
         p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=20)
-        dt, disp_3d = p.get_disps(np.arange(20, 100, 1), dc)
-        assert_equal(dt, np.arange(20, 100, 1))
-        assert_equal(len(disp_3d), 80)
-        assert_equal(p.disp_3d[0].shape[0], 100)
-        assert_equal(p.disp_3d[0].shape[1], 4)
-        assert_equal(p.disp_3d[0].shape[2], 3)
+        dt, disp_3d = p.get_disps(np.arange(20, 101, 1), dc)
+        assert_equal(dt, np.arange(20, 101, 1))
+        assert_equal(len(disp_3d), 81)
+        for i, d in enumerate(disp_3d):
+            assert_equal(d.shape[0], 100)
+            assert_equal(d.shape[1], 81 - i)
+            assert_equal(d.shape[2], 3)
 
     def test_pymatgen_init(self):
         xd = Xdatcar(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_XDATCAR.gz'))

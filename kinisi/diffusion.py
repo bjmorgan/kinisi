@@ -54,6 +54,7 @@ class Bootstrap:
         self._s = np.array([])
         self._v = np.array([])
         self._n_i = np.array([], dtype=int)
+        self._n_o = np.array([], dtype=int)
         self._ngp = np.array([])
         self._euclidian_displacements = []
         self._diffusion_coefficient = None
@@ -280,6 +281,7 @@ class Bootstrap:
                       n_samples: int = 1000,
                       n_walkers: int = 32,
                       n_burn: int = 500,
+                      thin: int = 10,
                       progress: bool = True,
                       random_state: np.random.mtrand.RandomState = None):
         """
@@ -297,10 +299,7 @@ class Bootstrap:
         :param n_walkers: Number of MCMC walkers to use. Optional, default is :py:attr:`32`.
         :param n_burn: Number of burn in samples (these allow the sampling to settle). Optional, default
             is :py:attr:`500`.
-        :param rtol: The relative threshold term for the covariance matrix inversion. If you obtain a very unusual
-            value for the diffusion coefficient, it is recommended to increase this value (ideally iteratively).
-            Optional, default is :code:`N * eps`, where :code:`eps` is the machine precision value of the covariance
-            matrix content.
+        :param thin: Use only every :py:attr:`thin` samples for the MCMC sampler. Optional, default is :py:attr:`10`.
         :param progress: Show tqdm progress for sampling. Optional, default is :py:attr:`True`.
         :param random_state: A :py:attr:`RandomState` object to be used to ensure reproducibility. Optional,
             default is :py:attr:`None`.
@@ -318,12 +317,12 @@ class Bootstrap:
             :param a: Quadratic coefficient
             :return: Model variances
             """
-            return a / self._n_i[max_ngp:] * dt**2
+            return a / self._n_o[max_ngp:] * dt**2
 
         popt, _ = curve_fit(model_variance, self.dt[max_ngp:], self._v[max_ngp:])
         model_v = model_variance(self.dt[max_ngp:], *popt)
 
-        self._covariance_matrix = self.populate_covariance_matrix(model_v, self._n_i[max_ngp:])
+        self._covariance_matrix = self.populate_covariance_matrix(model_v, self._n_o[max_ngp:], self.dt[max_ngp:])
         self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix)
 
         mv = multivariate_normal(self._n[max_ngp:], self._covariance_matrix, allow_singular=True)
@@ -363,7 +362,7 @@ class Bootstrap:
         #     pos = max_likelihood + max_likelihood * 1e-3 * random_state.randn(n_walkers, max_likelihood.size)
         #     sampler._random = random_state
         sampler.run_mcmc(pos, n_samples + n_burn, progress=progress, progress_kwargs={'desc': "Likelihood Sampling"})
-        self.flatchain = sampler.get_chain(flat=True, discard=n_burn)
+        self.flatchain = sampler.get_chain(flat=True, thin=thin, discard=n_burn)
 
         self.gradient = Distribution(self.flatchain[:, 0])
         self._intercept = None
@@ -371,7 +370,7 @@ class Bootstrap:
             self._intercept = Distribution(self.flatchain[:, 1])
 
     @staticmethod
-    def populate_covariance_matrix(variances: np.ndarray, n_samples: np.ndarray) -> np.ndarray:
+    def populate_covariance_matrix(variances: np.ndarray, n_samples: np.ndarray, dt: np.ndarray) -> np.ndarray:
         """
         Populate the covariance matrix for the generalised least squares methodology.
 
@@ -475,7 +474,7 @@ class MSDBootstrap(Bootstrap):
                  disp_3d: List[np.ndarray],
                  sub_sample_dt: int = 1,
                  n_resamples: int = 1000,
-                 max_resamples: int = 2000,
+                 max_resamples: int = 10000,
                  dimension: str = 'xyz',
                  alpha: float = 1e-3,
                  random_state: np.random.mtrand.RandomState = None,
@@ -483,14 +482,16 @@ class MSDBootstrap(Bootstrap):
         super().__init__(delta_t, disp_3d, sub_sample_dt, progress)
         slice = DIMENSIONALITY[dimension.lower()]
         self.dims = len(dimension.lower())
+        timesteps = (self._delta_t / np.diff(self._delta_t)[0]).astype(int)
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, slice].reshape(self._displacements[i].shape[0],
                                                                      self._displacements[i].shape[1], self.dims)
-            d_squared = np.sum(disp_slice**2, axis=2)[:, ::self._delta_t[i]]
+            d_squared = np.sum(disp_slice**2, axis=2)[:, ::timesteps[i]]
             n_samples_current = self.n_samples(self._displacements[i].shape, self._max_obs)
-            if n_samples_current < 1:
+            if n_samples_current <= 1:
                 continue
             self._n_i = np.append(self._n_i, n_samples_current)
+            self._n_o = np.append(self._n_o, d_squared.size)
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
             distro = self.sample_until_normal(d_squared, d_squared.size, n_resamples, max_resamples, alpha,
                                               random_state)
@@ -541,15 +542,17 @@ class TMSDBootstrap(Bootstrap):
         super().__init__(delta_t, disp_3d, sub_sample_dt, progress)
         slice = DIMENSIONALITY[dimension.lower()]
         self.dims = len(dimension.lower())
+        timesteps = (self._delta_t / np.diff(self._delta_t)[0]).astype(int)
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, slice].reshape(self._displacements[i].shape[0],
                                                                      self._displacements[i].shape[1], self.dims)
-            d_squared = np.sum(disp_slice**2, axis=2)
+            d_squared = np.sum(disp_slice**2, axis=2)[:, ::timesteps[i]]
             coll_motion = np.sum(np.sum(disp_slice, axis=0)**2, axis=-1)
             n_samples_current = self.n_samples((1, self._displacements[i].shape[1]), self._max_obs)
             if n_samples_current <= 1:
                 continue
             self._n_i = np.append(self._n_i, n_samples_current)
+            self._n_o = np.append(self._n_o, coll_motion.size)
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
             distro = self.sample_until_normal(coll_motion, n_samples_current, n_resamples, max_resamples, alpha,
                                               random_state)
@@ -606,15 +609,17 @@ class MSCDBootstrap(Bootstrap):
             ionic_charge = np.ones(self._displacements[0].shape[0]) * ionic_charge
         slice = DIMENSIONALITY[dimension.lower()]
         self.dims = len(dimension.lower())
+        timesteps = (self._delta_t / np.diff(self._delta_t)[0]).astype(int)
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, slice].reshape(self._displacements[i].shape[0],
                                                                      self._displacements[i].shape[1], self.dims)
-            d_squared = np.sum(disp_slice**2, axis=2)
+            d_squared = np.sum(disp_slice**2, axis=2)[:, ::timesteps[i]]
             sq_chg_motion = np.sum(np.sum((ionic_charge * self._displacements[i].T).T, axis=0)**2, axis=-1)
             n_samples_current = self.n_samples((1, self._displacements[i].shape[1]), self._max_obs)
             if n_samples_current <= 1:
                 continue
             self._n_i = np.append(self._n_i, n_samples_current)
+            self._n_o = np.append(self._n_o, sq_chg_motion.size)
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
             distro = self.sample_until_normal(sq_chg_motion, n_samples_current, n_resamples, max_resamples, alpha,
                                               random_state)

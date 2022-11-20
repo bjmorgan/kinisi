@@ -124,7 +124,7 @@ class Parser:
             min_dt = 1
         if min_dt >= nsteps:
             raise ValueError('min_dt is greater than or equal to the maximum simulation length.')
-        timesteps = np.arange(min_dt, nsteps, 1, dtype=int)
+        timesteps = np.arange(min_dt, nsteps + 1, 1, dtype=int)
         return timesteps
 
     def get_disps(self,
@@ -156,8 +156,9 @@ class Parser:
                               "the memory_limit parameter or descrease the sampling rate (see "
                               "https://kinisi.readthedocs.io/en/latest/memory_limit.html).")
         for i, timestep in enumerate(iterator):
-            disp = np.subtract(drift_corrected[self.indices, timestep:],
-                               drift_corrected[self.indices, :-timestep])
+            disp = np.concatenate([drift_corrected[self.indices, np.newaxis, timestep - 1], 
+                                   np.subtract(drift_corrected[self.indices, timestep:], drift_corrected[self.indices, :-timestep])], 
+                                  axis=1) 
             disp_3d.append(disp)
         return delta_t, disp_3d
 

@@ -158,7 +158,7 @@ class TestMSDBootstrap(unittest.TestCase):
             assert bs.n.shape == (10, )
             assert bs.s.shape == (10, )
             assert_almost_equal(bs.v, np.square(bs.s))
-            assert_equal(bs.n_i, [2000, 1900, 1800, 1700, 1600, 1500, 1400, 1300, 1200, 1100])
+            assert_equal(bs.n_i, [2000, 1000, 666, 500, 400, 333, 285, 250, 222, 200])
             assert bs.ngp.shape == (10, )
             assert len(bs.euclidian_displacements) == 10
             for i in bs.euclidian_displacements:
@@ -174,7 +174,7 @@ class TestMSDBootstrap(unittest.TestCase):
             assert bs.n.shape == (10, )
             assert bs.s.shape == (10, )
             assert_almost_equal(bs.v, np.square(bs.s))
-            assert_equal(bs.n_i, [2000, 1900, 1800, 1700, 1600, 1500, 1400, 1300, 1200, 1100])
+            assert_equal(bs.n_i, [2000, 1000, 666, 500, 400, 333, 285, 250, 222, 200])
             assert bs.ngp.shape == (10, )
             assert len(bs.euclidian_displacements) == 10
             for i in bs.euclidian_displacements:
@@ -190,7 +190,7 @@ class TestMSDBootstrap(unittest.TestCase):
             assert bs.n.shape == (10, )
             assert bs.s.shape == (10, )
             assert_almost_equal(bs.v, np.square(bs.s))
-            assert_equal(bs.n_i, [2000, 1900, 1800, 1700, 1600, 1500, 1400, 1300, 1200, 1100])
+            assert_equal(bs.n_i, [2000, 1000, 666, 500, 400, 333, 285, 250, 222, 200])
             assert bs.ngp.shape == (10, )
             assert len(bs.euclidian_displacements) == 10
             for i in bs.euclidian_displacements:
@@ -206,7 +206,7 @@ class TestMSDBootstrap(unittest.TestCase):
             assert bs1.n.shape == (10, )
             assert bs1.s.shape == (10, )
             assert_almost_equal(bs1.v, np.square(bs1.s))
-            assert_equal(bs1.n_i, [2000, 1900, 1800, 1700, 1600, 1500, 1400, 1300, 1200, 1100])
+            assert_equal(bs1.n_i, [2000, 1000, 666, 500, 400, 333, 285, 250, 222, 200])
             assert bs1.ngp.shape == (10, )
             assert len(bs1.euclidian_displacements) == 10
             for i in bs1.euclidian_displacements:
@@ -225,7 +225,7 @@ class TestMSDBootstrap(unittest.TestCase):
             assert bs.n.shape == (10, )
             assert bs.s.shape == (10, )
             assert_almost_equal(bs.v, np.square(bs.s))
-            assert_equal(bs.n_i, [2000, 1900, 1800, 1700, 1600, 1500, 1400, 1300, 1200, 1100])
+            assert_equal(bs.n_i, [2000, 1000, 666, 500, 400, 333, 285, 250, 222, 200])
             assert bs.ngp.shape == (10, )
             assert len(bs.euclidian_displacements) == 10
             for i in bs.euclidian_displacements:
@@ -239,12 +239,12 @@ class TestMSDBootstrap(unittest.TestCase):
             disp_3d = [RNG.randn(1, i, 3) for i in range(10, 1, -1)]
             dt = np.linspace(100, 1000, 10)
             bs = MSDBootstrap(dt, disp_3d, progress=False, random_state=np.random.RandomState(0))
-            assert bs.n.shape == (9, )
-            assert bs.s.shape == (9, )
+            assert bs.n.shape == (5, )
+            assert bs.s.shape == (5, )
             assert_almost_equal(bs.v, np.square(bs.s))
-            assert_equal(bs.n_i, [10, 9, 8, 7, 6, 5, 4, 3, 2])
-            assert bs.ngp.shape == (9, )
-            assert len(bs.euclidian_displacements) == 9
+            assert_equal(bs.n_i, [10, 5, 3, 2, 2])
+            assert bs.ngp.shape == (5, )
+            assert len(bs.euclidian_displacements) == 5
             for i in bs.euclidian_displacements:
                 assert isinstance(i, Distribution)
             for i in bs._distributions:
@@ -285,8 +285,8 @@ class TestMSDBootstrap(unittest.TestCase):
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs._diffusion_coefficient, Distribution)
             assert isinstance(bs.intercept, Distribution)
-            assert bs._diffusion_coefficient.size == 32000
-            assert bs.intercept.size == 32000
+            assert bs._diffusion_coefficient.size == 3200
+            assert bs.intercept.size == 3200
 
     def test_bootstrap_dt_skip(self):
         with warnings.catch_warnings(record=True) as _:
@@ -297,8 +297,8 @@ class TestMSDBootstrap(unittest.TestCase):
             assert bs.covariance_matrix.shape == (9, 9)
             assert isinstance(bs._diffusion_coefficient, Distribution)
             assert isinstance(bs.intercept, Distribution)
-            assert bs._diffusion_coefficient.size == 32000
-            assert bs.intercept.size == 32000
+            assert bs._diffusion_coefficient.size == 3200
+            assert bs.intercept.size == 3200
 
     def test_bootstrap_use_ngp(self):
         with warnings.catch_warnings(record=True) as _:
@@ -309,8 +309,8 @@ class TestMSDBootstrap(unittest.TestCase):
             assert bs.covariance_matrix.shape == (10 - np.argmax(bs.ngp), 10 - np.argmax(bs.ngp))
             assert isinstance(bs._diffusion_coefficient, Distribution)
             assert isinstance(bs.intercept, Distribution)
-            assert bs._diffusion_coefficient.size == 32000
-            assert bs.intercept.size == 32000
+            assert bs._diffusion_coefficient.size == 3200
+            assert bs.intercept.size == 3200
 
     def test_bootstrap_fit_intercept(self):
         with warnings.catch_warnings(record=True) as _:
@@ -320,7 +320,7 @@ class TestMSDBootstrap(unittest.TestCase):
             bs.diffusion(n_samples=500, fit_intercept=False)
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs._diffusion_coefficient, Distribution)
-            assert bs._diffusion_coefficient.size == 16000
+            assert bs._diffusion_coefficient.size == 1600
             assert bs.intercept is None
 
     def test_bootstrap_n_samples(self):
@@ -332,8 +332,8 @@ class TestMSDBootstrap(unittest.TestCase):
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs._diffusion_coefficient, Distribution)
             assert isinstance(bs.intercept, Distribution)
-            assert bs._diffusion_coefficient.size == 3200
-            assert bs.intercept.size == 3200
+            assert bs._diffusion_coefficient.size == 320
+            assert bs.intercept.size == 320
 
     def test_bootstrap_D(self):
         with warnings.catch_warnings(record=True) as _:
@@ -344,8 +344,20 @@ class TestMSDBootstrap(unittest.TestCase):
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs._diffusion_coefficient, Distribution)
             assert isinstance(bs.intercept, Distribution)
-            assert bs.D.size == 3200
-            assert bs.intercept.size == 3200
+            assert bs.D.size == 320
+            assert bs.intercept.size == 320
+
+    def test_bootstrap_thin(self):
+        with warnings.catch_warnings(record=True) as _:
+            disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            dt = np.linspace(100, 1000, 10)
+            bs = MSDBootstrap(dt, disp_3d, random_state=RNG)
+            bs.diffusion(use_ngp=True, thin=1)
+            assert bs.covariance_matrix.shape == (10 - np.argmax(bs.ngp), 10 - np.argmax(bs.ngp))
+            assert isinstance(bs._diffusion_coefficient, Distribution)
+            assert isinstance(bs.intercept, Distribution)
+            assert bs._diffusion_coefficient.size == 32000
+            assert bs.intercept.size == 32000
 
     # Waiting on https://github.com/dfm/emcee/pull/376
     # def test_initialisation_random_state(self):
@@ -376,7 +388,7 @@ class TestTMSDBootstrap(unittest.TestCase):
             assert bs.n.shape == (10, )
             assert bs.s.shape == (10, )
             assert_almost_equal(bs.v, np.square(bs.s))
-            assert_equal(bs.n_i, [20, 19, 18, 17, 16, 15, 14, 13, 12, 11])
+            assert_equal(bs.n_i, [20, 10, 6, 5, 4, 3, 2, 2, 2, 2])
             assert bs.ngp.shape == (10, )
             assert len(bs.euclidian_displacements) == 10
             for i in bs.euclidian_displacements:
@@ -392,7 +404,7 @@ class TestTMSDBootstrap(unittest.TestCase):
             assert bs.n.shape == (10, )
             assert bs.s.shape == (10, )
             assert_almost_equal(bs.v, np.square(bs.s))
-            assert_equal(bs.n_i, [20, 19, 18, 17, 16, 15, 14, 13, 12, 11])
+            assert_equal(bs.n_i, [20, 10, 6, 5, 4, 3, 2, 2, 2, 2])
             assert bs.ngp.shape == (10, )
             assert len(bs.euclidian_displacements) == 10
             for i in bs.euclidian_displacements:
@@ -408,7 +420,7 @@ class TestTMSDBootstrap(unittest.TestCase):
             assert bs.n.shape == (10, )
             assert bs.s.shape == (10, )
             assert_almost_equal(bs.v, np.square(bs.s))
-            assert_equal(bs.n_i, [20, 19, 18, 17, 16, 15, 14, 13, 12, 11])
+            assert_equal(bs.n_i, [20, 10, 6, 5, 4, 3, 2, 2, 2, 2])
             assert bs.ngp.shape == (10, )
             assert len(bs.euclidian_displacements) == 10
             for i in bs.euclidian_displacements:
@@ -424,7 +436,7 @@ class TestTMSDBootstrap(unittest.TestCase):
             assert bs1.n.shape == (10, )
             assert bs1.s.shape == (10, )
             assert_almost_equal(bs1.v, np.square(bs1.s))
-            assert_equal(bs1.n_i, [20, 19, 18, 17, 16, 15, 14, 13, 12, 11])
+            assert_equal(bs1.n_i, [20, 10, 6, 5, 4, 3, 2, 2, 2, 2])
             assert bs1.ngp.shape == (10, )
             assert len(bs1.euclidian_displacements) == 10
             for i in bs1.euclidian_displacements:
@@ -443,7 +455,7 @@ class TestTMSDBootstrap(unittest.TestCase):
             assert bs.n.shape == (10, )
             assert bs.s.shape == (10, )
             assert_almost_equal(bs.v, np.square(bs.s))
-            assert_equal(bs.n_i, [20, 19, 18, 17, 16, 15, 14, 13, 12, 11])
+            assert_equal(bs.n_i, [20, 10, 6, 5, 4, 3, 2, 2, 2, 2])
             assert bs.ngp.shape == (10, )
             assert len(bs.euclidian_displacements) == 10
             for i in bs.euclidian_displacements:
@@ -457,12 +469,12 @@ class TestTMSDBootstrap(unittest.TestCase):
             disp_3d = [RNG.randn(1, i, 3) for i in range(10, 1, -1)]
             dt = np.linspace(100, 1000, 10)
             bs = TMSDBootstrap(dt, disp_3d, progress=False, random_state=np.random.RandomState(0))
-            assert bs.n.shape == (9, )
-            assert bs.s.shape == (9, )
+            assert bs.n.shape == (5, )
+            assert bs.s.shape == (5, )
             assert_almost_equal(bs.v, np.square(bs.s))
-            assert_equal(bs.n_i, [10, 9, 8, 7, 6, 5, 4, 3, 2])
-            assert bs.ngp.shape == (9, )
-            assert len(bs.euclidian_displacements) == 9
+            assert_equal(bs.n_i, [10, 5, 3, 2, 2])
+            assert bs.ngp.shape == (5, )
+            assert len(bs.euclidian_displacements) == 5
             for i in bs.euclidian_displacements:
                 assert isinstance(i, Distribution)
             for i in bs._distributions:
@@ -478,8 +490,8 @@ class TestTMSDBootstrap(unittest.TestCase):
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs._jump_diffusion_coefficient, Distribution)
             assert isinstance(bs.intercept, Distribution)
-            assert bs._jump_diffusion_coefficient.size == 32000
-            assert bs.intercept.size == 32000
+            assert bs._jump_diffusion_coefficient.size == 3200
+            assert bs.intercept.size == 3200
 
     def test_bootstrap_use_ngp(self):
         with warnings.catch_warnings(record=True) as _:
@@ -490,8 +502,8 @@ class TestTMSDBootstrap(unittest.TestCase):
             assert bs.covariance_matrix.shape == (10 - np.argmax(bs.ngp), 10 - np.argmax(bs.ngp))
             assert isinstance(bs._jump_diffusion_coefficient, Distribution)
             assert isinstance(bs.intercept, Distribution)
-            assert bs._jump_diffusion_coefficient.size == 32000
-            assert bs.intercept.size == 32000
+            assert bs._jump_diffusion_coefficient.size == 3200
+            assert bs.intercept.size == 3200
 
     def test_bootstrap_fit_intercept(self):
         with warnings.catch_warnings(record=True) as _:
@@ -501,7 +513,7 @@ class TestTMSDBootstrap(unittest.TestCase):
             bs.jump_diffusion(n_samples=500, fit_intercept=False)
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs._jump_diffusion_coefficient, Distribution)
-            assert bs._jump_diffusion_coefficient.size == 16000
+            assert bs._jump_diffusion_coefficient.size == 1600
             assert bs.intercept is None
 
     def test_bootstrap_n_samples(self):
@@ -513,8 +525,8 @@ class TestTMSDBootstrap(unittest.TestCase):
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs._jump_diffusion_coefficient, Distribution)
             assert isinstance(bs.intercept, Distribution)
-            assert bs._jump_diffusion_coefficient.size == 3200
-            assert bs.intercept.size == 3200
+            assert bs._jump_diffusion_coefficient.size == 320
+            assert bs.intercept.size == 320
 
     def test_bootstrap_D(self):
         with warnings.catch_warnings(record=True) as _:
@@ -525,8 +537,20 @@ class TestTMSDBootstrap(unittest.TestCase):
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs._jump_diffusion_coefficient, Distribution)
             assert isinstance(bs.intercept, Distribution)
-            assert bs._jump_diffusion_coefficient.size == 3200
-            assert bs.intercept.size == 3200
+            assert bs._jump_diffusion_coefficient.size == 320
+            assert bs.intercept.size == 320
+    
+    def test_bootstrap_thin(self):
+        with warnings.catch_warnings(record=True) as _:
+            disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            dt = np.linspace(100, 1000, 10)
+            bs = TMSDBootstrap(dt, disp_3d, random_state=RNG)
+            bs.jump_diffusion(use_ngp=True, thin=1)
+            assert bs.covariance_matrix.shape == (10 - np.argmax(bs.ngp), 10 - np.argmax(bs.ngp))
+            assert isinstance(bs._jump_diffusion_coefficient, Distribution)
+            assert isinstance(bs.intercept, Distribution)
+            assert bs._jump_diffusion_coefficient.size == 32000
+            assert bs.intercept.size == 32000
 
     # Waiting on https://github.com/dfm/emcee/pull/376
     # def test_initialisation_random_state(self):
@@ -559,7 +583,7 @@ class TestMSCDBootstrap(unittest.TestCase):
             assert bs.n.shape == (10, )
             assert bs.s.shape == (10, )
             assert_almost_equal(bs.v, np.square(bs.s))
-            assert_equal(bs.n_i, [20, 19, 18, 17, 16, 15, 14, 13, 12, 11])
+            assert_equal(bs.n_i, [20, 10, 6, 5, 4, 3, 2, 2, 2, 2])
             assert bs.ngp.shape == (10, )
             assert len(bs.euclidian_displacements) == 10
             for i in bs.euclidian_displacements:
@@ -575,7 +599,7 @@ class TestMSCDBootstrap(unittest.TestCase):
             assert bs.n.shape == (10, )
             assert bs.s.shape == (10, )
             assert_almost_equal(bs.v, np.square(bs.s))
-            assert_equal(bs.n_i, [20, 19, 18, 17, 16, 15, 14, 13, 12, 11])
+            assert_equal(bs.n_i, [20, 10, 6, 5, 4, 3, 2, 2, 2, 2])
             assert bs.ngp.shape == (10, )
             assert len(bs.euclidian_displacements) == 10
             for i in bs.euclidian_displacements:
@@ -591,7 +615,7 @@ class TestMSCDBootstrap(unittest.TestCase):
             assert bs.n.shape == (10, )
             assert bs.s.shape == (10, )
             assert_almost_equal(bs.v, np.square(bs.s))
-            assert_equal(bs.n_i, [20, 19, 18, 17, 16, 15, 14, 13, 12, 11])
+            assert_equal(bs.n_i, [20, 10, 6, 5, 4, 3, 2, 2, 2, 2])
             assert bs.ngp.shape == (10, )
             assert len(bs.euclidian_displacements) == 10
             for i in bs.euclidian_displacements:
@@ -607,7 +631,7 @@ class TestMSCDBootstrap(unittest.TestCase):
             assert bs1.n.shape == (10, )
             assert bs1.s.shape == (10, )
             assert_almost_equal(bs1.v, np.square(bs1.s))
-            assert_equal(bs1.n_i, [20, 19, 18, 17, 16, 15, 14, 13, 12, 11])
+            assert_equal(bs1.n_i, [20, 10, 6, 5, 4, 3, 2, 2, 2, 2])
             assert bs1.ngp.shape == (10, )
             assert len(bs1.euclidian_displacements) == 10
             for i in bs1.euclidian_displacements:
@@ -626,7 +650,7 @@ class TestMSCDBootstrap(unittest.TestCase):
             assert bs.n.shape == (10, )
             assert bs.s.shape == (10, )
             assert_almost_equal(bs.v, np.square(bs.s))
-            assert_equal(bs.n_i, [20, 19, 18, 17, 16, 15, 14, 13, 12, 11])
+            assert_equal(bs.n_i, [20, 10, 6, 5, 4, 3, 2, 2, 2, 2])
             assert bs.ngp.shape == (10, )
             assert len(bs.euclidian_displacements) == 10
             for i in bs.euclidian_displacements:
@@ -640,12 +664,12 @@ class TestMSCDBootstrap(unittest.TestCase):
             disp_3d = [RNG.randn(1, i, 3) for i in range(10, 1, -1)]
             dt = np.linspace(100, 1000, 10)
             bs = MSCDBootstrap(dt, disp_3d, 1, progress=False, random_state=np.random.RandomState(0))
-            assert bs.n.shape == (9, )
-            assert bs.s.shape == (9, )
+            assert bs.n.shape == (5, )
+            assert bs.s.shape == (5, )
             assert_almost_equal(bs.v, np.square(bs.s))
-            assert_equal(bs.n_i, [10, 9, 8, 7, 6, 5, 4, 3, 2])
-            assert bs.ngp.shape == (9, )
-            assert len(bs.euclidian_displacements) == 9
+            assert_equal(bs.n_i, [10, 5, 3, 2, 2])
+            assert bs.ngp.shape == (5, )
+            assert len(bs.euclidian_displacements) == 5
             for i in bs.euclidian_displacements:
                 assert isinstance(i, Distribution)
             for i in bs._distributions:
@@ -661,8 +685,8 @@ class TestMSCDBootstrap(unittest.TestCase):
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs.sigma, Distribution)
             assert isinstance(bs.intercept, Distribution)
-            assert bs.sigma.size == 32000
-            assert bs.intercept.size == 32000
+            assert bs.sigma.size == 3200
+            assert bs.intercept.size == 3200
 
     def test_bootstrap_use_ngp(self):
         with warnings.catch_warnings(record=True) as _:
@@ -673,8 +697,8 @@ class TestMSCDBootstrap(unittest.TestCase):
             assert bs.covariance_matrix.shape == (10 - np.argmax(bs.ngp), 10 - np.argmax(bs.ngp))
             assert isinstance(bs.sigma, Distribution)
             assert isinstance(bs.intercept, Distribution)
-            assert bs.sigma.size == 32000
-            assert bs.intercept.size == 32000
+            assert bs.sigma.size == 3200
+            assert bs.intercept.size == 3200
 
     def test_bootstrap_fit_intercept(self):
         with warnings.catch_warnings(record=True) as _:
@@ -684,7 +708,7 @@ class TestMSCDBootstrap(unittest.TestCase):
             bs.conductivity(1, 10, n_samples=500, fit_intercept=False)
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs.sigma, Distribution)
-            assert bs.sigma.size == 16000
+            assert bs.sigma.size == 1600
             assert bs.intercept is None
 
     def test_bootstrap_n_samples(self):
@@ -696,8 +720,8 @@ class TestMSCDBootstrap(unittest.TestCase):
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs.sigma, Distribution)
             assert isinstance(bs.intercept, Distribution)
-            assert bs.sigma.size == 3200
-            assert bs.intercept.size == 3200
+            assert bs.sigma.size == 320
+            assert bs.intercept.size == 320
 
     def test_bootstrap_D(self):
         with warnings.catch_warnings(record=True) as _:
@@ -708,8 +732,20 @@ class TestMSCDBootstrap(unittest.TestCase):
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs.sigma, Distribution)
             assert isinstance(bs.intercept, Distribution)
-            assert bs.sigma.size == 3200
-            assert bs.intercept.size == 3200
+            assert bs.sigma.size == 320
+            assert bs.intercept.size == 320
+
+    def test_bootstrap_thin(self):
+        with warnings.catch_warnings(record=True) as _:
+            disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            dt = np.linspace(100, 1000, 10)
+            bs = MSCDBootstrap(dt, disp_3d, 1, random_state=RNG)
+            bs.conductivity(1, 10, use_ngp=True, thin=1)
+            assert bs.covariance_matrix.shape == (10 - np.argmax(bs.ngp), 10 - np.argmax(bs.ngp))
+            assert isinstance(bs.sigma, Distribution)
+            assert isinstance(bs.intercept, Distribution)
+            assert bs.sigma.size == 32000
+            assert bs.intercept.size == 32000
 
     # Waiting on https://github.com/dfm/emcee/pull/376
     # def test_initialisation_random_state(self):
