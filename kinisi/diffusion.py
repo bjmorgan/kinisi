@@ -349,9 +349,9 @@ class Bootstrap:
     def generate_covariance_matrix(self, max_ngp: int):
         """
         Generate the covariance matrix, including the modelling and finding the closest matrix
-        that is positive definite. 
+        that is positive definite.
 
-        :param max_ngp: The index of the maximum of the non-Gaussian parameter or the point 
+        :param max_ngp: The index of the maximum of the non-Gaussian parameter or the point
             where the analysis should begin.
         :return: Modelled covariance matrix that is positive definite.
         """
@@ -366,7 +366,7 @@ class Bootstrap:
             :return: Model variances
             """
             return a / self._n_o[max_ngp:] * dt**2
-        
+
         self._popt, _ = curve_fit(_model_variance, self.dt[max_ngp:], self._v[max_ngp:])
         self._model_v = _model_variance(self.dt[max_ngp:], *self._popt)
         self._covariance_matrix = _populate_covariance_matrix(self._model_v, self._n_o[max_ngp:])
@@ -468,7 +468,7 @@ class MSDBootstrap(Bootstrap):
         self._iterator = self.iterator(progress, range(len(self._displacements)))
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, self._slice].reshape(self._displacements[i].shape[0],
-                                                                     self._displacements[i].shape[1], self.dims)
+                                                                           self._displacements[i].shape[1], self.dims)
             d_squared = np.sum(disp_slice**2, axis=2)
             if d_squared.size <= 1:
                 continue
@@ -524,7 +524,7 @@ class TMSDBootstrap(Bootstrap):
         self._iterator = self.iterator(progress, range(int(len(self._displacements) / 2)))
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, self._slice].reshape(self._displacements[i].shape[0],
-                                                                     self._displacements[i].shape[1], self.dims)
+                                                                           self._displacements[i].shape[1], self.dims)
             d_squared = np.sum(disp_slice**2, axis=2)
             coll_motion = np.sum(np.sum(disp_slice, axis=0)**2, axis=-1)
             if coll_motion.size <= 1:
@@ -587,7 +587,7 @@ class MSCDBootstrap(Bootstrap):
             ionic_charge = np.ones(self._displacements[0].shape[0]) * ionic_charge
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, self._slice].reshape(self._displacements[i].shape[0],
-                                                                     self._displacements[i].shape[1], self.dims)
+                                                                           self._displacements[i].shape[1], self.dims)
             d_squared = np.sum(disp_slice**2, axis=2)
             sq_chg_motion = np.sum(np.sum((ionic_charge * self._displacements[i].T).T, axis=0)**2, axis=-1)
             if sq_chg_motion.size <= 1:
