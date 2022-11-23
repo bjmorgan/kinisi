@@ -2,4 +2,4 @@ numpy
 scikit-learn
 scipy>=1.9.3
 tqdm
-uravu>=1.2.8
+uravu>=1.2.9

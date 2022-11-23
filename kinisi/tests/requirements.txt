@@ -2,7 +2,7 @@ numpy
 scikit-learn
 scipy>=1.9.3
 tqdm
-uravu>=1.2.7
+uravu>=1.2.9
 pymatgen
 MDAnalysis
 coverage
