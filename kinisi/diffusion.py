@@ -44,7 +44,7 @@ class Bootstrap:
     :param progress: Show tqdm progress for sampling. Optional, default is :py:attr:`True`.
     """
 
-    def __init__(self, delta_t: np.ndarray, disp_3d: List[np.ndarray], sub_sample_dt: int = 1, progress: bool = True):
+    def __init__(self, delta_t: np.ndarray, disp_3d: List[np.ndarray], sub_sample_dt: int = 1, dimension='xyz'):
         self._displacements = disp_3d[::sub_sample_dt]
         self._delta_t = np.array(delta_t[::sub_sample_dt])
         self._max_obs = self._displacements[0].shape[1]
@@ -64,7 +64,8 @@ class Bootstrap:
         self.gradient = None
         self.flatchain = None
         self._covariance_matrix = None
-        self.dims = 3
+        self._slice = DIMENSIONALITY[dimension.lower()]
+        self.dims = len(dimension.lower())
 
     def to_dict(self) -> dict:
         """
@@ -111,7 +112,7 @@ class Bootstrap:
 
         :return: New :py:class`Bootstrap` object.
         """
-        boot = cls(my_dict['delta_t'], my_dict['displacements'], sub_sample_dt=1, progress=False)
+        boot = cls(my_dict['delta_t'], my_dict['displacements'], sub_sample_dt=1, dimension='xyz')
         boot._max_obs = my_dict['max_obs']
         boot._distributions = [Distribution.from_dict(d) for d in my_dict['distributions']]
         boot._euclidian_displacements = [Distribution.from_dict(d) for d in my_dict['euclidian_displacements']]
@@ -463,12 +464,10 @@ class MSDBootstrap(Bootstrap):
                  alpha: float = 1e-3,
                  random_state: np.random.mtrand.RandomState = None,
                  progress: bool = True):
-        super().__init__(delta_t, disp_3d, sub_sample_dt, progress)
+        super().__init__(delta_t, disp_3d, sub_sample_dt, dimension)
         self._iterator = self.iterator(progress, range(len(self._displacements)))
-        slice = DIMENSIONALITY[dimension.lower()]
-        self.dims = len(dimension.lower())
         for i in self._iterator:
-            disp_slice = self._displacements[i][:, :, slice].reshape(self._displacements[i].shape[0],
+            disp_slice = self._displacements[i][:, :, self._slice].reshape(self._displacements[i].shape[0],
                                                                      self._displacements[i].shape[1], self.dims)
             d_squared = np.sum(disp_slice**2, axis=2)
             if d_squared.size <= 1:
@@ -521,12 +520,10 @@ class TMSDBootstrap(Bootstrap):
                  alpha: float = 1e-3,
                  random_state: np.random.mtrand.RandomState = None,
                  progress: bool = True):
-        super().__init__(delta_t, disp_3d, sub_sample_dt, progress)
+        super().__init__(delta_t, disp_3d, sub_sample_dt, dimension)
         self._iterator = self.iterator(progress, range(int(len(self._displacements) / 2)))
-        slice = DIMENSIONALITY[dimension.lower()]
-        self.dims = len(dimension.lower())
         for i in self._iterator:
-            disp_slice = self._displacements[i][:, :, slice].reshape(self._displacements[i].shape[0],
+            disp_slice = self._displacements[i][:, :, self._slice].reshape(self._displacements[i].shape[0],
                                                                      self._displacements[i].shape[1], self.dims)
             d_squared = np.sum(disp_slice**2, axis=2)
             coll_motion = np.sum(np.sum(disp_slice, axis=0)**2, axis=-1)
@@ -582,16 +579,14 @@ class MSCDBootstrap(Bootstrap):
                  alpha: float = 1e-3,
                  random_state: np.random.mtrand.RandomState = None,
                  progress: bool = True):
-        super().__init__(delta_t, disp_3d, sub_sample_dt, progress)
+        super().__init__(delta_t, disp_3d, sub_sample_dt, dimension)
         self._iterator = self.iterator(progress, range(int(len(self._displacements) / 2)))
         try:
             _ = len(ionic_charge)
         except TypeError:
             ionic_charge = np.ones(self._displacements[0].shape[0]) * ionic_charge
-        slice = DIMENSIONALITY[dimension.lower()]
-        self.dims = len(dimension.lower())
         for i in self._iterator:
-            disp_slice = self._displacements[i][:, :, slice].reshape(self._displacements[i].shape[0],
+            disp_slice = self._displacements[i][:, :, self._slice].reshape(self._displacements[i].shape[0],
                                                                      self._displacements[i].shape[1], self.dims)
             d_squared = np.sum(disp_slice**2, axis=2)
             sq_chg_motion = np.sum(np.sum((ionic_charge * self._displacements[i].T).T, axis=0)**2, axis=-1)

@@ -69,20 +69,6 @@ class TestBootstrap(unittest.TestCase):
         assert bs._diffusion_coefficient is None
         assert bs.intercept is None
 
-    def test_initialisation_progress(self):
-        disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
-        dt = np.linspace(100, 1000, 10)
-        bs = Bootstrap(dt, disp_3d, progress=False)
-        for i, d in enumerate(disp_3d):
-            assert_almost_equal(bs._displacements[i], d)
-        assert_almost_equal(bs._delta_t, dt)
-        assert bs._max_obs == 20
-        assert bs._distributions == []
-        assert bs.dt.size == 0
-        assert isinstance(bs.dt, np.ndarray)
-        assert bs._diffusion_coefficient is None
-        assert bs.intercept is None
-
     def test_iterator_true(self):
         result = Bootstrap.iterator(True, range(10))
         assert isinstance(result, tqdm)
@@ -525,11 +511,11 @@ class TestTMSDBootstrap(unittest.TestCase):
 
     def test_bootstrap_thin(self):
         with warnings.catch_warnings(record=True) as _:
-            disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
-            dt = np.linspace(100, 1000, 10)
+            disp_3d = [RNG.randn(100, i, 3) for i in range(200, 10, -1)]
+            dt = np.linspace(100, 1000, 190)
             bs = TMSDBootstrap(dt, disp_3d, random_state=RNG)
             bs.jump_diffusion(use_ngp=True, thin=1)
-            assert bs.covariance_matrix.shape == (5 - np.argmax(bs.ngp), 5 - np.argmax(bs.ngp))
+            assert bs.covariance_matrix.shape == (95 - np.argmax(bs.ngp), 95 - np.argmax(bs.ngp))
             assert isinstance(bs._jump_diffusion_coefficient, Distribution)
             assert isinstance(bs.intercept, Distribution)
             assert bs._jump_diffusion_coefficient.size == 32000
@@ -667,11 +653,11 @@ class TestMSCDBootstrap(unittest.TestCase):
 
     def test_bootstrap_use_ngp(self):
         with warnings.catch_warnings(record=True) as _:
-            disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
-            dt = np.linspace(100, 1000, 10)
+            disp_3d = [RNG.randn(100, i, 3) for i in range(200, 10, -1)]
+            dt = np.linspace(100, 1000, 190)
             bs = MSCDBootstrap(dt, disp_3d, 1, random_state=RNG)
             bs.conductivity(1, 10, use_ngp=True)
-            assert bs.covariance_matrix.shape == (5 - np.argmax(bs.ngp), 5 - np.argmax(bs.ngp))
+            assert bs.covariance_matrix.shape == (95 - np.argmax(bs.ngp), 95 - np.argmax(bs.ngp))
             assert isinstance(bs.sigma, Distribution)
             assert isinstance(bs.intercept, Distribution)
             assert bs.sigma.size == 3200
