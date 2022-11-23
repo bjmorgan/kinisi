@@ -289,26 +289,14 @@ class Bootstrap:
         :param random_state: A :py:attr:`RandomState` object to be used to ensure reproducibility. Optional,
             default is :py:attr:`None`.
         """
+        if random_state is not None:
+            np.random.seed(random_state.get_state()[1][1])
+
         max_ngp = np.argwhere(self._dt > dt_skip)[0][0]
         if use_ngp:
             max_ngp = np.argmax(self._ngp)
 
-        def model_variance(dt: np.ndarray, a: float) -> np.ndarray:
-            """
-            Determine the model variance, based on a quadratic relationship with the number of
-            independent samples as a divisor.
-
-            :param dt: Timestep value
-            :param a: Quadratic coefficient
-            :return: Model variances
-            """
-            return a / self._n_o[max_ngp:] * dt**2
-
-        self._popt, _ = curve_fit(model_variance, self.dt[max_ngp:], self._v[max_ngp:])
-        self._model_v = model_variance(self.dt[max_ngp:], *self._popt)
-        self._covariance_matrix = _populate_covariance_matrix(self._model_v, self._n_o[max_ngp:])
-        self._npd_covariance_matrix = self._covariance_matrix
-        self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix)
+        self._covariance_matrix = self.generate_covariance_matrix(max_ngp)
 
         _, logdet = np.linalg.slogdet(self._covariance_matrix)
         logdet += np.log(2 * np.pi) * self._n[max_ngp:].size
@@ -356,6 +344,33 @@ class Bootstrap:
         self._intercept = None
         if fit_intercept:
             self._intercept = Distribution(self.flatchain[:, 1])
+
+    def generate_covariance_matrix(self, max_ngp: int):
+        """
+        Generate the covariance matrix, including the modelling and finding the closest matrix
+        that is positive definite. 
+
+        :param max_ngp: The index of the maximum of the non-Gaussian parameter or the point 
+            where the analysis should begin.
+        :return: Modelled covariance matrix that is positive definite.
+        """
+
+        def _model_variance(dt: np.ndarray, a: float, no: np.ndarray) -> np.ndarray:
+            """
+            Determine the model variance, based on a quadratic relationship with the number of
+            independent samples as a divisor.
+
+            :param dt: Timestep value
+            :param a: Quadratic coefficient
+            :return: Model variances
+            """
+            return a / self._n_o[max_ngp:] * dt**2
+        
+        self._popt, _ = curve_fit(_model_variance, self.dt[max_ngp:], self._v[max_ngp:])
+        self._model_v = _model_variance(self.dt[max_ngp:], *self._popt)
+        self._covariance_matrix = _populate_covariance_matrix(self._model_v, self._n_o[max_ngp:])
+        self._npd_covariance_matrix = self._covariance_matrix
+        return find_nearest_positive_definite(self._covariance_matrix)
 
     def diffusion(self, **kwargs):
         """
