@@ -44,90 +44,90 @@ class TestAnalyzer(unittest.TestCase):
 
     def test_structure_pmg(self):
         a = Analyzer._from_pymatgen(xd.structures, parser_params=da_params)
-        assert a._delta_t.size == 140
+        assert a._delta_t.size == 100
         assert_almost_equal(a._delta_t.max(), 14.0)
-        assert len(a._disp_3d) == 140
+        assert len(a._disp_3d) == 100
         assert a._disp_3d[0].shape == (192, 140, 3)
         assert a._disp_3d[-1].shape == (192, 1, 3)
 
     def test_xdatcar_pmg(self):
         a = Analyzer._from_Xdatcar(xd, parser_params=da_params)
-        assert a._delta_t.size == 140
+        assert a._delta_t.size == 100
         assert_almost_equal(a._delta_t.max(), 14.0)
-        assert len(a._disp_3d) == 140
+        assert len(a._disp_3d) == 100
         assert a._disp_3d[0].shape == (192, 140, 3)
         assert a._disp_3d[1].shape == (192, 70, 3)
         assert a._disp_3d[-1].shape == (192, 1, 3)
 
     def test_file_path_pmg(self):
         a = Analyzer._from_file(file_path, parser_params=da_params)
-        assert a._delta_t.size == 140
+        assert a._delta_t.size == 100
         assert_almost_equal(a._delta_t.max(), 14.0)
-        assert len(a._disp_3d) == 140
+        assert len(a._disp_3d) == 100
         assert a._disp_3d[0].shape == (192, 140, 3)
         assert a._disp_3d[-1].shape == (192, 1, 3)
 
     def test_identical_structure_pmg(self):
         a = Analyzer._from_pymatgen([xd.structures, xd.structures], parser_params=da_params, dtype='identical')
-        assert a._delta_t.size == 140
+        assert a._delta_t.size == 100
         assert_almost_equal(a._delta_t.max(), 14.0)
-        assert len(a._disp_3d) == 140
+        assert len(a._disp_3d) == 100
         assert a._disp_3d[0].shape == (384, 140, 3)
         assert a._disp_3d[-1].shape == (384, 1, 3)
 
     def test_identical_xdatcar_pmg(self):
         a = Analyzer._from_Xdatcar([xd, xd], parser_params=da_params, dtype='identical')
-        assert a._delta_t.size == 140
+        assert a._delta_t.size == 100
         assert_almost_equal(a._delta_t.max(), 14.0)
-        assert len(a._disp_3d) == 140
+        assert len(a._disp_3d) == 100
         assert a._disp_3d[0].shape == (384, 140, 3)
         assert a._disp_3d[-1].shape == (384, 1, 3)
 
     def test_identical_file_path_pmg(self):
         a = Analyzer._from_file([file_path, file_path], parser_params=da_params, dtype='identical')
-        assert a._delta_t.size == 140
+        assert a._delta_t.size == 100
         assert_almost_equal(a._delta_t.max(), 14.0)
-        assert len(a._disp_3d) == 140
+        assert len(a._disp_3d) == 100
         assert a._disp_3d[0].shape == (384, 140, 3)
         assert a._disp_3d[-1].shape == (384, 1, 3)
 
     def test_consecutive_structure_pmg(self):
         a = Analyzer._from_pymatgen([xd.structures, xd.structures], parser_params=da_params, dtype='consecutive')
-        assert a._delta_t.size == 280
+        assert a._delta_t.size == 100
         assert_almost_equal(a._delta_t.max(), 28.0)
-        assert len(a._disp_3d) == 280
+        assert len(a._disp_3d) == 100
         assert a._disp_3d[0].shape == (192, 280, 3)
         assert a._disp_3d[-1].shape == (192, 1, 3)
 
     def test_consecutive_xdatcar_pmg(self):
         a = Analyzer._from_Xdatcar([xd, xd], parser_params=da_params, dtype='consecutive')
-        assert a._delta_t.size == 280
+        assert a._delta_t.size == 100
         assert_almost_equal(a._delta_t.max(), 28.0)
-        assert len(a._disp_3d) == 280
+        assert len(a._disp_3d) == 100
         assert a._disp_3d[0].shape == (192, 280, 3)
         assert a._disp_3d[-1].shape == (192, 1, 3)
 
     def test_consecutive_file_path_pmg(self):
         a = Analyzer._from_file([file_path, file_path], parser_params=da_params, dtype='consecutive')
-        assert a._delta_t.size == 280
+        assert a._delta_t.size == 100
         assert_almost_equal(a._delta_t.max(), 28.0)
-        assert len(a._disp_3d) == 280
+        assert len(a._disp_3d) == 100
         assert a._disp_3d[0].shape == (192, 280, 3)
         assert a._disp_3d[-1].shape == (192, 1, 3)
 
     def test_mdauniverse(self):
         a = Analyzer._from_universe(md, parser_params=db_params)
-        assert a._delta_t.size == 200
+        assert a._delta_t.size == 100
         assert_almost_equal(a._delta_t.max(), 250.)
-        assert len(a._disp_3d) == 200
+        assert len(a._disp_3d) == 100
         assert a._disp_3d[0].shape == (204, 200, 3)
         assert a._disp_3d[-1].shape == (204, 1, 3)
 
     def test_identical_mdauniverse(self):
         a = Analyzer._from_universe([md, md], parser_params=db_params, dtype='identical')
-        assert a._delta_t.size == 200
+        assert a._delta_t.size == 100
         assert_almost_equal(a._delta_t.max(), 250.)
-        assert len(a._disp_3d) == 200
+        assert len(a._disp_3d) == 100
         assert a._disp_3d[0].shape == (408, 200, 3)
         assert a._disp_3d[-1].shape == (408, 1, 3)
 
