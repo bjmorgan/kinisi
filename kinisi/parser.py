@@ -30,10 +30,17 @@ class Parser:
     :param time_step: Time step, in picoseconds, between steps in trajectory.
     :param step_skip: Sampling freqency of the trajectory (time_step is multiplied by this number to get the real
         time between output from the simulation file).
-    :param min_dt: Minimum timestep to be evaluated, in the simulation units. Optional, defaults to :py:attr:`100`.
+    :param min_dt: Minimum timestep to be evaluated, in the simulation units. Optional, defaults to the 
+        produce of :py:attr:`time_step` and :py:attr:`step_skip`.
+    :param max_dt: Maximum timestep to be evaluated, in the simulation units. Optional, defaults to the
+        length of the simulation.
+    :param n_steps: Number of steps to be used in the timestep function. Optional, defaults to :py:attr:`100`
+        unless this is fewer than the total number of steps in the trajectory when it defaults to this number.
+    :param spacing: The spacing of the steps that define the timestep, can be either :py:attr:`'linear'` or 
+        :py:attr:`'logarithmic'`. If :py:attr:`'logarithmic'` the number of steps will be less than or equal 
+        to that in the :py:attr:`n_steps` argument, such that all values are unique.
     :param memory_limit: Upper limit in the amount of computer memory that the displacements can occupy in
         gigabytes (GB). Optional, defaults to :py:attr:`8.`.
-    :param nsteps: Number of steps to be used in the timestep function. Optional, defaults to all of them.
     :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
     """
 
@@ -43,24 +50,32 @@ class Parser:
                  framework_indices: np.ndarray,
                  time_step: float,
                  step_skip: int,
-                 min_dt: int = 1,
+                 min_dt: float = None,
+                 max_dt: float = None,
+                 n_steps: int = 100,
+                 spacing: str = 'linear',
                  memory_limit: float = 8.,
-                 n_steps: int = None,
                  progress: bool = True):
         self.time_step = time_step
         self.step_skip = step_skip
         self.indices = indices
-        self.min_dt = min_dt
         self.memory_limit = memory_limit
+        self.min_dt = min_dt
+        self.max_dt = max_dt
         self._volume = None
 
         drift_corrected = self.correct_drift(framework_indices, disp)
         self.dc = drift_corrected
 
-        if n_steps is None:
-            nsteps = drift_corrected.shape[1]
+        if self.max_dt is None:
+            self.max_dt = drift_corrected.shape[1] * (self.step_skip * self.time_step)
+        if self.min_dt is None:
+            self.min_dt = self.step_skip * self.time_step
+        min_dt_int = int(self.min_dt / (self.step_skip * self.time_step))
+        if n_steps > (drift_corrected.shape[1] - min_dt_int) + 1:
+            n_steps = int(drift_corrected.shape[1] - min_dt_int) + 1
 
-        self.timesteps = self.get_timesteps(nsteps)
+        self.timesteps = self.get_timesteps(n_steps, spacing)
 
         self.delta_t, self.disp_3d = self.get_disps(self.timesteps, drift_corrected, progress)
 
@@ -110,22 +125,27 @@ class Parser:
             drift_corrected = disp
         return drift_corrected
 
-    def get_timesteps(self, nsteps: int) -> np.ndarray:
+    def get_timesteps(self, n_steps: int, spacing: str) -> np.ndarray:
         """
         Calculate the smoothed timesteps to be used.
 
-        :param nsteps: Number of time steps.
-        :param func:
+        :param n_steps: Number of time steps.
+        :param step_spacing:
 
         :return: Smoothed timesteps.
         """
         min_dt = int(self.min_dt / (self.step_skip * self.time_step))
+        max_dt = int(self.max_dt / (self.step_skip * self.time_step))
         if min_dt == 0:
             min_dt = 1
-        if min_dt >= nsteps:
+        if min_dt >= n_steps:
             raise ValueError('min_dt is greater than or equal to the maximum simulation length.')
-        timesteps = np.arange(min_dt, nsteps + 1, 1, dtype=int)
-        return timesteps
+        if spacing == 'linear':
+            return np.linspace(min_dt, max_dt, n_steps, dtype=int)
+        elif spacing == 'logarithmic':
+            return np.unique(np.geomspace(min_dt, max_dt, n_steps, dtype=int))
+        else:
+            raise ValueError("Only linear or logarithmic spacing is allowed.")
 
     def get_disps(self,
                   timesteps: np.ndarray,
@@ -152,7 +172,6 @@ class Parser:
             disp_mem += np.product(drift_corrected[self.indices, timestep::timestep].shape) * itemsize
             disp_mem += (len(self.indices) * drift_corrected.shape[-1]) * itemsize
         disp_mem *= 1e-9
-        print(disp_mem)
         if disp_mem > self.memory_limit:
             raise MemoryError(f"The memory limit of this job is {self.memory_limit:.1e} GB but the "
                               f"displacement values will use {disp_mem:.1e} GB. Please either increase "
@@ -179,10 +198,17 @@ class PymatgenParser(Parser):
         time between output from the simulation file).
     :param sub_sample_traj: Multiple of the :py:attr:`time_step` to sub sample at. Optional, defaults
         to :py:attr:`1` where all timesteps are used.
-    :param min_dt: Minimum timestep to be evaluated, in the simulation units. Optional, defaults to :py:attr:`100`.
+    :param min_dt: Minimum timestep to be evaluated, in the simulation units. Optional, defaults to the 
+        produce of :py:attr:`time_step` and :py:attr:`step_skip`.
+    :param max_dt: Maximum timestep to be evaluated, in the simulation units. Optional, defaults to the
+        length of the simulation.
+    :param n_steps: Number of steps to be used in the timestep function. Optional, defaults to :py:attr:`100`
+        unless this is fewer than the total number of steps in the trajectory when it defaults to this number.
+    :param spacing: The spacing of the steps that define the timestep, can be either :py:attr:`'linear'` or 
+        :py:attr:`'logarithmic'`. If :py:attr:`'logarithmic'` the number of steps will be less than or equal 
+        to that in the :py:attr:`n_steps` argument, such that all values are unique.
     :param memory_limit: Upper limit in the amount of computer memory that the displacements can occupy in
         gigabytes (GB). Optional, defaults to :py:attr:`8.`.
-    :param nsteps: Number of steps to be used in the timestep function. Optional, defaults to all of them.
     :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
     """
 
@@ -192,9 +218,11 @@ class PymatgenParser(Parser):
                  time_step: float,
                  step_skip: int,
                  sub_sample_traj: int = 1,
-                 min_dt: float = 0,
+                 min_dt: float = None,
+                 max_dt: float = None,
+                 n_steps: int = 100,
+                 spacing: str = 'linear',
                  memory_limit: float = 8.,
-                 n_steps: int = None,
                  progress: bool = True):
         structure, coords, latt = self.get_structure_coords_latt(structures, sub_sample_traj, progress)
 
@@ -206,8 +234,10 @@ class PymatgenParser(Parser):
                          time_step=time_step,
                          step_skip=step_skip * sub_sample_traj,
                          min_dt=min_dt,
-                         memory_limit=memory_limit,
+                         max_dt=max_dt,
                          n_steps=n_steps,
+                         spacing=spacing,
+                         memory_limit=memory_limit,
                          progress=progress)
         self._volume = structure.volume
         self.delta_t *= 1e-3
@@ -285,11 +315,18 @@ class MDAnalysisParser(Parser):
         to :py:attr:`1` where all atoms are used.
     :param sub_sample_traj: Multiple of the :py:attr:`time_step` to sub sample at. Optional,
         defaults to :py:attr:`1` where all timesteps are used.
-    :param min_dt: Minimum timestep to be evaluated, in the simulation units. Optional,
-        defaults to :py:attr:`100`.
+    :param min_dt: Minimum timestep to be evaluated, in the simulation units. Optional, defaults to the 
+        produce of :py:attr:`time_step` and :py:attr:`step_skip`.
+    :param max_dt: Maximum timestep to be evaluated, in the simulation units. Optional, defaults to the
+        length of the simulation.
+    :param n_steps: Number of steps to be used in the timestep function. Optional, defaults to :py:attr:`100`
+        unless this is fewer than the total number of steps in the trajectory when it defaults to this number.
+    :param spacing: The spacing of the steps that define the timestep, can be either :py:attr:`'linear'` or 
+        :py:attr:`'logarithmic'`. If :py:attr:`'logarithmic'` the number of steps will be less than or equal 
+        to that in the :py:attr:`n_steps` argument, such that all values are unique.
     :param memory_limit: Upper limit in the amount of computer memory that the displacements can occupy in
         gigabytes (GB). Optional, defaults to :py:attr:`8.`.
-    :param nsteps: Number of steps to be used in the timestep function. Optional, defaults to all of them.
+    :param n_steps: Number of steps to be used in the timestep function. Optional, defaults to all of them.
     :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
     """
 
@@ -300,9 +337,11 @@ class MDAnalysisParser(Parser):
                  step_skip: int,
                  sub_sample_atoms: int = 1,
                  sub_sample_traj: int = 1,
-                 min_dt: float = 0,
+                 min_dt: float = None,
+                 max_dt: float = None,
+                 n_steps: int = 100,
+                 spacing: str = 'linear',
                  memory_limit: float = 8.,
-                 n_steps: int = None,
                  progress: bool = True):
         structure, coords, latt, volume = self.get_structure_coords_latt(universe, sub_sample_atoms, sub_sample_traj,
                                                                          progress)
@@ -315,8 +354,10 @@ class MDAnalysisParser(Parser):
                          time_step=time_step,
                          step_skip=step_skip * sub_sample_traj,
                          min_dt=min_dt,
-                         memory_limit=memory_limit,
+                         max_dt=max_dt,
                          n_steps=n_steps,
+                         spacing=spacing,
+                         memory_limit=memory_limit,
                          progress=progress)
         self._volume = volume
 

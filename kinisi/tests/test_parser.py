@@ -58,13 +58,13 @@ class TestParser(unittest.TestCase):
 
     def test_get_timesteps(self):
         p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=20)
-        timesteps = p.get_timesteps(100)
-        assert_equal(timesteps, np.arange(20, 101, 1))
+        timesteps = p.get_timesteps(80, 'linear')
+        assert_equal(timesteps, np.linspace(20, 100, 80, dtype=int))
 
     def test_get_timesteps_min_dt_zero(self):
         p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=0)
-        timesteps = p.get_timesteps(100)
-        assert_equal(timesteps, np.arange(1, 101, 1, dtype=int))
+        timesteps = p.get_timesteps(100, 'logarithmic')
+        assert_equal(timesteps, np.unique(np.geomspace(1, 100, 100, dtype=int)))
 
     def test_correct_drift_no_framework(self):
         corrected = parser.Parser.correct_drift([], dc)
