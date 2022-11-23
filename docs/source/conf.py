@@ -23,8 +23,6 @@ project = 'kinisi'
 copyright = '2022, Andrew R. McCluskey and Benjamin J. Morgan'
 author = 'Andrew R. McCluskey and Benjamin J. Morgan'
 
-import sys, os
-sys.path.append(os.path.relpath('../../'))
 from kinisi import __version__
 
 # The short X.Y version
