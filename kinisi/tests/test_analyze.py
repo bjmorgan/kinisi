@@ -56,7 +56,7 @@ class TestAnalyzer(unittest.TestCase):
         assert_almost_equal(a._delta_t.max(), 14.0)
         assert len(a._disp_3d) == 140
         assert a._disp_3d[0].shape == (192, 140, 3)
-        assert a._disp_3d[1].shape == (192, 139, 3)
+        assert a._disp_3d[1].shape == (192, 70, 3)
         assert a._disp_3d[-1].shape == (192, 1, 3)
 
     def test_file_path_pmg(self):

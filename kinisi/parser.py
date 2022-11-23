@@ -148,7 +148,7 @@ class Parser:
             iterator = timesteps
         disp_mem = 0
         for i, timestep in enumerate(iterator):
-            disp_mem += np.product(drift_corrected[self.indices, i + 1::i + 1].shape) * 8
+            disp_mem += np.product(drift_corrected[self.indices, timestep::timestep].shape) * 8
         disp_mem *= 1e-9
         if disp_mem > self.memory_limit:
             raise MemoryError(f"The memory limit of this job is {self.memory_limit:.1e} GB but the "
@@ -157,9 +157,10 @@ class Parser:
                               "https://kinisi.readthedocs.io/en/latest/memory_limit.html).")
         for i, timestep in enumerate(iterator):
             disp = np.concatenate([drift_corrected[self.indices, np.newaxis, timestep - 1], 
-                                   np.subtract(drift_corrected[self.indices, timestep:], drift_corrected[self.indices, :-timestep])], 
-                                  axis=1) 
-            disp_3d.append(disp)
+                                   np.subtract(drift_corrected[self.indices, timestep:], 
+                                               drift_corrected[self.indices, :-timestep])], 
+                                  axis=1)
+            disp_3d.append(disp[:, ::timestep])
         return delta_t, disp_3d
 
 
