@@ -8,9 +8,10 @@ diffusion coefficient from a material.
 # author: Andrew R. McCluskey (arm61)
 
 import warnings
-from typing import List, Union
+from typing import List, Tuple, Union
 import numpy as np
-from scipy.stats import multivariate_normal, normaltest, linregress
+from scipy.stats import normaltest, linregress
+from scipy.linalg import pinvh
 from scipy.optimize import minimize, curve_fit
 import scipy.constants as const
 import tqdm
@@ -49,11 +50,11 @@ class Bootstrap:
         self._max_obs = self._displacements[0].shape[1]
         self._distributions = []
         self._dt = np.array([])
-        self._iterator = self.iterator(progress, range(len(self._displacements)))
         self._n = np.array([])
         self._s = np.array([])
         self._v = np.array([])
         self._n_i = np.array([], dtype=int)
+        self._n_o = np.array([], dtype=int)
         self._ngp = np.array([])
         self._euclidian_displacements = []
         self._diffusion_coefficient = None
@@ -265,7 +266,7 @@ class Bootstrap:
                       n_samples: int = 1000,
                       n_walkers: int = 32,
                       n_burn: int = 500,
-                      thin: int = 1,
+                      thin: int = 10,
                       progress: bool = True,
                       random_state: np.random.mtrand.RandomState = None):
         """
@@ -283,17 +284,11 @@ class Bootstrap:
         :param n_walkers: Number of MCMC walkers to use. Optional, default is :py:attr:`32`.
         :param n_burn: Number of burn in samples (these allow the sampling to settle). Optional, default
             is :py:attr:`500`.
-        :param rtol: The relative threshold term for the covariance matrix inversion. If you obtain a very unusual
-            value for the diffusion coefficient, it is recommended to increase this value (ideally iteratively).
-            Optional, default is :code:`N * eps`, where :code:`eps` is the machine precision value of the covariance
-            matrix content.
+        :param thin: Use only every :py:attr:`thin` samples for the MCMC sampler. Optional, default is :py:attr:`10`.
         :param progress: Show tqdm progress for sampling. Optional, default is :py:attr:`True`.
         :param random_state: A :py:attr:`RandomState` object to be used to ensure reproducibility. Optional,
             default is :py:attr:`None`.
         """
-        if random_state is not None:
-            np.random.seed(random_state.get_state()[1][1])
-
         max_ngp = np.argwhere(self._dt > dt_skip)[0][0]
         if use_ngp:
             max_ngp = np.argmax(self._ngp)
@@ -307,15 +302,17 @@ class Bootstrap:
             :param a: Quadratic coefficient
             :return: Model variances
             """
-            return a / self._n_i[max_ngp:] * dt**2
+            return a / self._n_o[max_ngp:] * dt**2
 
-        popt, _ = curve_fit(model_variance, self.dt[max_ngp:], self._v[max_ngp:])
-        model_v = model_variance(self.dt[max_ngp:], *popt)
-
-        self._covariance_matrix = self.populate_covariance_matrix(model_v, self._n_i[max_ngp:])
+        self._popt, _ = curve_fit(model_variance, self.dt[max_ngp:], self._v[max_ngp:])
+        self._model_v = model_variance(self.dt[max_ngp:], *self._popt)
+        self._covariance_matrix = _populate_covariance_matrix(self._model_v, self._n_o[max_ngp:])
+        self._npd_covariance_matrix = self._covariance_matrix
         self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix)
 
-        mv = multivariate_normal(self._n[max_ngp:], self._covariance_matrix, allow_singular=True)
+        _, logdet = np.linalg.slogdet(self._covariance_matrix) 
+        logdet += np.log(2 * np.pi) * self._n[max_ngp:].size
+        inv = pinvh(self._covariance_matrix)
 
         def log_likelihood(theta: np.ndarray) -> float:
             """
@@ -326,7 +323,9 @@ class Bootstrap:
             if theta[0] < 0:
                 return -np.inf
             model = _straight_line(self._dt[max_ngp:], *theta)
-            return mv.logpdf(model)
+            diff = (model - self._n[max_ngp:])
+            logl = -0.5 * (logdet + np.matmul(diff.T, np.matmul(inv, diff)))
+            return logl
 
         ols = linregress(self._dt[max_ngp:], self._n[max_ngp:])
         slope = ols.slope
@@ -353,30 +352,10 @@ class Bootstrap:
         #     sampler._random = random_state
         sampler.run_mcmc(pos, n_samples + n_burn, progress=progress, progress_kwargs={'desc': "Likelihood Sampling"})
         self.flatchain = sampler.get_chain(flat=True, thin=thin, discard=n_burn)
-
         self.gradient = Distribution(self.flatchain[:, 0])
         self._intercept = None
         if fit_intercept:
             self._intercept = Distribution(self.flatchain[:, 1])
-
-    @staticmethod
-    def populate_covariance_matrix(variances: np.ndarray, n_samples: np.ndarray) -> np.ndarray:
-        """
-        Populate the covariance matrix for the generalised least squares methodology.
-
-        :param variances: The variances for each timestep
-        :param n_samples: Number of independent trajectories for each timestep
-
-        :return: An estimated covariance matrix for the system
-        """
-        covariance_matrix = np.zeros((variances.size, variances.size))
-        for i in range(0, variances.size):
-            for j in range(i, variances.size):
-                ratio = n_samples[i] / n_samples[j]
-                value = ratio * variances[i]
-                covariance_matrix[i, j] = value
-                covariance_matrix[j, i] = np.copy(covariance_matrix[i, j])
-        return covariance_matrix
 
     def diffusion(self, **kwargs):
         """
@@ -401,8 +380,8 @@ class Bootstrap:
         will be passed of the :py:func:`bootstrap_GLS` method.
         """
         self.bootstrap_GLS(**kwargs)
-        self._jump_diffusion_coefficient = Distribution(self.gradient.samples /
-                                                        (2e4 * self.dims * self._displacements[0].shape[0]))
+        self._jump_diffusion_coefficient = Distribution(
+            self.gradient.samples / (2e4 * self.dims * self._displacements[0].shape[0]))
 
     @property
     def D_J(self) -> Union[Distribution, None]:
@@ -470,15 +449,17 @@ class MSDBootstrap(Bootstrap):
                  random_state: np.random.mtrand.RandomState = None,
                  progress: bool = True):
         super().__init__(delta_t, disp_3d, sub_sample_dt, progress)
+        self._iterator = self.iterator(progress, range(len(self._displacements)))
         slice = DIMENSIONALITY[dimension.lower()]
         self.dims = len(dimension.lower())
+        timesteps = (self._delta_t / np.diff(self._delta_t)[0]).astype(int)
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, slice].reshape(self._displacements[i].shape[0],
                                                                      self._displacements[i].shape[1], self.dims)
             d_squared = np.sum(disp_slice**2, axis=2)
             if d_squared.size <= 1:
                 continue
-            self._n_i = np.append(self._n_i, d_squared.size)
+            self._n_o = np.append(self._n_o, d_squared.size)
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
             distro = self.sample_until_normal(d_squared, d_squared.size, n_resamples, max_resamples, alpha,
                                               random_state)
@@ -527,8 +508,10 @@ class TMSDBootstrap(Bootstrap):
                  random_state: np.random.mtrand.RandomState = None,
                  progress: bool = True):
         super().__init__(delta_t, disp_3d, sub_sample_dt, progress)
+        self._iterator = self.iterator(progress, range(int(len(self._displacements) / 2)))
         slice = DIMENSIONALITY[dimension.lower()]
         self.dims = len(dimension.lower())
+        timesteps = (self._delta_t / np.diff(self._delta_t)[0]).astype(int)
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, slice].reshape(self._displacements[i].shape[0],
                                                                      self._displacements[i].shape[1], self.dims)
@@ -536,12 +519,12 @@ class TMSDBootstrap(Bootstrap):
             coll_motion = np.sum(np.sum(disp_slice, axis=0)**2, axis=-1)
             if coll_motion.size <= 1:
                 continue
-            self._n_i = np.append(self._n_i, coll_motion.size)
+            self._n_o = np.append(self._n_o, coll_motion.size)
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
             distro = self.sample_until_normal(coll_motion, coll_motion.size, n_resamples, max_resamples, alpha,
                                               random_state)
             self._distributions.append(distro)
-            self._n = np.append(self._n, coll_motion.mean())
+            self._n = np.append(self._n, distro.n)
             self._s = np.append(self._s, np.std(distro.samples, ddof=1))
             self._v = np.append(self._v, np.var(distro.samples, ddof=1))
             self._ngp = np.append(self._ngp, self.ngp_calculation(d_squared.flatten()))
@@ -587,12 +570,14 @@ class MSCDBootstrap(Bootstrap):
                  random_state: np.random.mtrand.RandomState = None,
                  progress: bool = True):
         super().__init__(delta_t, disp_3d, sub_sample_dt, progress)
+        self._iterator = self.iterator(progress, range(int(len(self._displacements) / 2)))
         try:
             _ = len(ionic_charge)
         except TypeError:
             ionic_charge = np.ones(self._displacements[0].shape[0]) * ionic_charge
         slice = DIMENSIONALITY[dimension.lower()]
         self.dims = len(dimension.lower())
+        timesteps = (self._delta_t / np.diff(self._delta_t)[0]).astype(int)
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, slice].reshape(self._displacements[i].shape[0],
                                                                      self._displacements[i].shape[1], self.dims)
@@ -600,12 +585,12 @@ class MSCDBootstrap(Bootstrap):
             sq_chg_motion = np.sum(np.sum((ionic_charge * self._displacements[i].T).T, axis=0)**2, axis=-1)
             if sq_chg_motion.size <= 1:
                 continue
-            self._n_i = np.append(self._n_i, sq_chg_motion.size)
+            self._n_o = np.append(self._n_o, sq_chg_motion.size)
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
             distro = self.sample_until_normal(sq_chg_motion, sq_chg_motion.size, n_resamples, max_resamples, alpha,
                                               random_state)
             self._distributions.append(distro)
-            self._n = np.append(self._n, sq_chg_motion.mean())
+            self._n = np.append(self._n, distro.n)
             self._s = np.append(self._s, np.std(distro.samples, ddof=1))
             self._v = np.append(self._v, np.var(distro.samples, ddof=1))
             self._ngp = np.append(self._ngp, self.ngp_calculation(d_squared.flatten()))
@@ -626,8 +611,27 @@ def _bootstrap(array: np.ndarray, n_samples: int, n_resamples: int, random_state
     :return: Resampled values from the array
     """
     return [
-        np.mean(resample(array.flatten(), n_samples=n_samples, random_state=random_state)) for j in range(n_resamples)
+        np.mean(resample(array.flatten(), n_samples=n_samples, random_state=random_state).flatten()) for j in range(n_resamples)
     ]
+
+
+def _populate_covariance_matrix(variances: np.ndarray, n_samples: np.ndarray) -> np.ndarray:
+    """
+    Populate the covariance matrix for the generalised least squares methodology.
+
+    :param variances: The variances for each timestep
+    :param n_samples: Number of independent trajectories for each timestep
+
+    :return: An estimated covariance matrix for the system
+    """
+    covariance_matrix = np.zeros((variances.size, variances.size))
+    for i in range(0, variances.size):
+        for j in range(i, variances.size):
+            ratio = n_samples[i] / n_samples[j]
+            value = ratio * variances[i]
+            covariance_matrix[i, j] = value
+            covariance_matrix[j, i] = np.copy(covariance_matrix[i, j])
+    return covariance_matrix
 
 
 def _straight_line(abscissa: np.ndarray, gradient: float, intercept: float = 0.0) -> np.ndarray:

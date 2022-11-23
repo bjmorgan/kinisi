@@ -44,91 +44,91 @@ class TestAnalyzer(unittest.TestCase):
 
     def test_structure_pmg(self):
         a = Analyzer._from_pymatgen(xd.structures, parser_params=da_params)
-        assert a._delta_t.size == 139
-        assert_almost_equal(a._delta_t.max(), 13.9)
-        assert len(a._disp_3d) == 139
-        assert a._disp_3d[0].shape == (192, 139, 3)
+        assert a._delta_t.size == 140
+        assert_almost_equal(a._delta_t.max(), 14.0)
+        assert len(a._disp_3d) == 140
+        assert a._disp_3d[0].shape == (192, 140, 3)
         assert a._disp_3d[-1].shape == (192, 1, 3)
 
     def test_xdatcar_pmg(self):
         a = Analyzer._from_Xdatcar(xd, parser_params=da_params)
-        assert a._delta_t.size == 139
-        assert_almost_equal(a._delta_t.max(), 13.9)
-        assert len(a._disp_3d) == 139
-        assert a._disp_3d[0].shape == (192, 139, 3)
-        assert a._disp_3d[1].shape == (192, 69, 3)
+        assert a._delta_t.size == 140
+        assert_almost_equal(a._delta_t.max(), 14.0)
+        assert len(a._disp_3d) == 140
+        assert a._disp_3d[0].shape == (192, 140, 3)
+        assert a._disp_3d[1].shape == (192, 70, 3)
         assert a._disp_3d[-1].shape == (192, 1, 3)
 
     def test_file_path_pmg(self):
         a = Analyzer._from_file(file_path, parser_params=da_params)
-        assert a._delta_t.size == 139
-        assert_almost_equal(a._delta_t.max(), 13.9)
-        assert len(a._disp_3d) == 139
-        assert a._disp_3d[0].shape == (192, 139, 3)
+        assert a._delta_t.size == 140
+        assert_almost_equal(a._delta_t.max(), 14.0)
+        assert len(a._disp_3d) == 140
+        assert a._disp_3d[0].shape == (192, 140, 3)
         assert a._disp_3d[-1].shape == (192, 1, 3)
 
     def test_identical_structure_pmg(self):
         a = Analyzer._from_pymatgen([xd.structures, xd.structures], parser_params=da_params, dtype='identical')
-        assert a._delta_t.size == 139
-        assert_almost_equal(a._delta_t.max(), 13.9)
-        assert len(a._disp_3d) == 139
-        assert a._disp_3d[0].shape == (384, 139, 3)
+        assert a._delta_t.size == 140
+        assert_almost_equal(a._delta_t.max(), 14.0)
+        assert len(a._disp_3d) == 140
+        assert a._disp_3d[0].shape == (384, 140, 3)
         assert a._disp_3d[-1].shape == (384, 1, 3)
 
     def test_identical_xdatcar_pmg(self):
         a = Analyzer._from_Xdatcar([xd, xd], parser_params=da_params, dtype='identical')
-        assert a._delta_t.size == 139
-        assert_almost_equal(a._delta_t.max(), 13.9)
-        assert len(a._disp_3d) == 139
-        assert a._disp_3d[0].shape == (384, 139, 3)
+        assert a._delta_t.size == 140
+        assert_almost_equal(a._delta_t.max(), 14.0)
+        assert len(a._disp_3d) == 140
+        assert a._disp_3d[0].shape == (384, 140, 3)
         assert a._disp_3d[-1].shape == (384, 1, 3)
 
     def test_identical_file_path_pmg(self):
         a = Analyzer._from_file([file_path, file_path], parser_params=da_params, dtype='identical')
-        assert a._delta_t.size == 139
-        assert_almost_equal(a._delta_t.max(), 13.9)
-        assert len(a._disp_3d) == 139
-        assert a._disp_3d[0].shape == (384, 139, 3)
+        assert a._delta_t.size == 140
+        assert_almost_equal(a._delta_t.max(), 14.0)
+        assert len(a._disp_3d) == 140
+        assert a._disp_3d[0].shape == (384, 140, 3)
         assert a._disp_3d[-1].shape == (384, 1, 3)
 
     def test_consecutive_structure_pmg(self):
         a = Analyzer._from_pymatgen([xd.structures, xd.structures], parser_params=da_params, dtype='consecutive')
-        assert a._delta_t.size == 279
-        assert_almost_equal(a._delta_t.max(), 27.9)
-        assert len(a._disp_3d) == 279
-        assert a._disp_3d[0].shape == (192, 279, 3)
+        assert a._delta_t.size == 280
+        assert_almost_equal(a._delta_t.max(), 28.0)
+        assert len(a._disp_3d) == 280
+        assert a._disp_3d[0].shape == (192, 280, 3)
         assert a._disp_3d[-1].shape == (192, 1, 3)
 
     def test_consecutive_xdatcar_pmg(self):
         a = Analyzer._from_Xdatcar([xd, xd], parser_params=da_params, dtype='consecutive')
-        assert a._delta_t.size == 279
-        assert_almost_equal(a._delta_t.max(), 27.9)
-        assert len(a._disp_3d) == 279
-        assert a._disp_3d[0].shape == (192, 279, 3)
+        assert a._delta_t.size == 280
+        assert_almost_equal(a._delta_t.max(), 28.0)
+        assert len(a._disp_3d) == 280
+        assert a._disp_3d[0].shape == (192, 280, 3)
         assert a._disp_3d[-1].shape == (192, 1, 3)
 
     def test_consecutive_file_path_pmg(self):
         a = Analyzer._from_file([file_path, file_path], parser_params=da_params, dtype='consecutive')
-        assert a._delta_t.size == 279
-        assert_almost_equal(a._delta_t.max(), 27.9)
-        assert len(a._disp_3d) == 279
-        assert a._disp_3d[0].shape == (192, 279, 3)
+        assert a._delta_t.size == 280
+        assert_almost_equal(a._delta_t.max(), 28.0)
+        assert len(a._disp_3d) == 280
+        assert a._disp_3d[0].shape == (192, 280, 3)
         assert a._disp_3d[-1].shape == (192, 1, 3)
 
     def test_mdauniverse(self):
         a = Analyzer._from_universe(md, parser_params=db_params)
-        assert a._delta_t.size == 199
-        assert_almost_equal(a._delta_t.max(), 248.75)
-        assert len(a._disp_3d) == 199
-        assert a._disp_3d[0].shape == (204, 199, 3)
+        assert a._delta_t.size == 200
+        assert_almost_equal(a._delta_t.max(), 250.)
+        assert len(a._disp_3d) == 200
+        assert a._disp_3d[0].shape == (204, 200, 3)
         assert a._disp_3d[-1].shape == (204, 1, 3)
 
     def test_identical_mdauniverse(self):
         a = Analyzer._from_universe([md, md], parser_params=db_params, dtype='identical')
-        assert a._delta_t.size == 199
-        assert_almost_equal(a._delta_t.max(), 248.75)
-        assert len(a._disp_3d) == 199
-        assert a._disp_3d[0].shape == (408, 199, 3)
+        assert a._delta_t.size == 200
+        assert_almost_equal(a._delta_t.max(), 250.)
+        assert len(a._disp_3d) == 200
+        assert a._disp_3d[0].shape == (408, 200, 3)
         assert a._disp_3d[-1].shape == (408, 1, 3)
 
     def test_list_bad_input(self):
@@ -170,7 +170,7 @@ class TestDiffusionAnalyzer(unittest.TestCase):
             a.diffusion()
             assert a.ngp_max == a._diff.dt[a._diff.ngp.argmax()]
             assert isinstance(a.D, Distribution)
-            assert a.flatchain.shape == (32000, 2)
+            assert a.flatchain.shape == (3200, 2)
 
     def test_dictionary_roundtrip(self):
         with warnings.catch_warnings(record=True) as _:
@@ -185,7 +185,7 @@ class TestDiffusionAnalyzer(unittest.TestCase):
             a.diffusion()
             assert a.ngp_max == a._diff.dt[a._diff.ngp.argmax()]
             assert isinstance(a.D, Distribution)
-            assert a.flatchain.shape == (32000, 2)
+            assert a.flatchain.shape == (3200, 2)
             b = DiffusionAnalyzer.from_dict(a.to_dict())
             assert_equal(a.dt, b.dt)
             assert_equal(a.msd, b.msd)
@@ -229,7 +229,7 @@ class TestJumpDiffusionAnalyzer(unittest.TestCase):
             a.jump_diffusion()
             assert a.ngp_max == a._diff.dt[a._diff.ngp.argmax()]
             assert isinstance(a.D_J, Distribution)
-            assert a.flatchain.shape == (32000, 2)
+            assert a.flatchain.shape == (3200, 2)
             assert issubclass(w[0].category, UserWarning)
             assert "maximum" in str(w[0].message)
 
@@ -246,7 +246,7 @@ class TestJumpDiffusionAnalyzer(unittest.TestCase):
             a.jump_diffusion()
             assert a.ngp_max == a._diff.dt[a._diff.ngp.argmax()]
             assert isinstance(a.D_J, Distribution)
-            assert a.flatchain.shape == (32000, 2)
+            assert a.flatchain.shape == (3200, 2)
             assert issubclass(w[0].category, UserWarning)
             b = JumpDiffusionAnalyzer.from_dict(a.to_dict())
             assert_equal(a.dt, b.dt)
@@ -293,7 +293,7 @@ class TestConductivityAnalyzer(unittest.TestCase):
             a.conductivity(100)
             assert a.ngp_max == a._diff.dt[a._diff.ngp.argmax()]
             assert isinstance(a.sigma, Distribution)
-            assert a.flatchain.shape == (32000, 2)
+            assert a.flatchain.shape == (3200, 2)
             assert issubclass(w[0].category, UserWarning)
             assert "maximum" in str(w[0].message)
 
@@ -310,7 +310,7 @@ class TestConductivityAnalyzer(unittest.TestCase):
             a.conductivity(100)
             assert a.ngp_max == a._diff.dt[a._diff.ngp.argmax()]
             assert isinstance(a.sigma, Distribution)
-            assert a.flatchain.shape == (32000, 2)
+            assert a.flatchain.shape == (3200, 2)
             assert issubclass(w[0].category, UserWarning)
             b = ConductivityAnalyzer.from_dict(a.to_dict())
             assert_equal(a.dt, b.dt)

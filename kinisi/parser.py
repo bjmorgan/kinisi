@@ -60,9 +60,9 @@ class Parser:
         if n_steps is None:
             nsteps = drift_corrected.shape[1]
 
-        timesteps = self.get_timesteps(nsteps)
+        self.timesteps = self.get_timesteps(nsteps)
 
-        self.delta_t, self.disp_3d = self.get_disps(timesteps, drift_corrected, progress)
+        self.delta_t, self.disp_3d = self.get_disps(self.timesteps, drift_corrected, progress)
 
     @property
     def volume(self) -> float:
@@ -124,7 +124,7 @@ class Parser:
             min_dt = 1
         if min_dt >= nsteps:
             raise ValueError('min_dt is greater than or equal to the maximum simulation length.')
-        timesteps = np.arange(min_dt, nsteps, 1)
+        timesteps = np.arange(min_dt, nsteps + 1, 1, dtype=int)
         return timesteps
 
     def get_disps(self,
@@ -148,7 +148,7 @@ class Parser:
             iterator = timesteps
         disp_mem = 0
         for i, timestep in enumerate(iterator):
-            disp_mem += np.product(drift_corrected[self.indices, i + 1::i + 1].shape) * 8
+            disp_mem += np.product(drift_corrected[self.indices, timestep::timestep].shape) * 8
         disp_mem *= 1e-9
         if disp_mem > self.memory_limit:
             raise MemoryError(f"The memory limit of this job is {self.memory_limit:.1e} GB but the "
@@ -156,9 +156,11 @@ class Parser:
                               "the memory_limit parameter or descrease the sampling rate (see "
                               "https://kinisi.readthedocs.io/en/latest/memory_limit.html).")
         for i, timestep in enumerate(iterator):
-            disp = np.subtract(drift_corrected[self.indices, timestep::timestep],
-                               drift_corrected[self.indices, :-timestep:timestep])
-            disp_3d.append(disp)
+            disp = np.concatenate([drift_corrected[self.indices, np.newaxis, timestep - 1], 
+                                   np.subtract(drift_corrected[self.indices, timestep:], 
+                                               drift_corrected[self.indices, :-timestep])], 
+                                  axis=1)
+            disp_3d.append(disp[:, ::timestep])
         return delta_t, disp_3d
 
 
