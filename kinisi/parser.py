@@ -147,9 +147,12 @@ class Parser:
         else:
             iterator = timesteps
         disp_mem = 0
+        itemsize = drift_corrected.itemsize
         for i, timestep in enumerate(iterator):
-            disp_mem += np.product(drift_corrected[self.indices, timestep::timestep].shape) * 8
+            disp_mem += np.product(drift_corrected[self.indices, timestep::timestep].shape) * itemsize
+            disp_mem += (len(self.indices) * drift_corrected.shape[-1]) * itemsize
         disp_mem *= 1e-9
+        print(disp_mem)
         if disp_mem > self.memory_limit:
             raise MemoryError(f"The memory limit of this job is {self.memory_limit:.1e} GB but the "
                               f"displacement values will use {disp_mem:.1e} GB. Please either increase "
