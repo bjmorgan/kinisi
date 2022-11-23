@@ -522,7 +522,7 @@ class TestTMSDBootstrap(unittest.TestCase):
             assert isinstance(bs.intercept, Distribution)
             assert bs._jump_diffusion_coefficient.size == 320
             assert bs.intercept.size == 320
-    
+
     def test_bootstrap_thin(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]

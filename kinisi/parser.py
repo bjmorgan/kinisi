@@ -156,9 +156,10 @@ class Parser:
                               "the memory_limit parameter or descrease the sampling rate (see "
                               "https://kinisi.readthedocs.io/en/latest/memory_limit.html).")
         for i, timestep in enumerate(iterator):
-            disp = np.concatenate([drift_corrected[self.indices, np.newaxis, timestep - 1], 
-                                   np.subtract(drift_corrected[self.indices, timestep:], 
-                                               drift_corrected[self.indices, :-timestep])], 
+            disp = np.concatenate([
+                drift_corrected[self.indices, np.newaxis, timestep - 1],
+                np.subtract(drift_corrected[self.indices, timestep:], drift_corrected[self.indices, :-timestep])
+            ],
                                   axis=1)
             disp_3d.append(disp[:, ::timestep])
         return delta_t, disp_3d

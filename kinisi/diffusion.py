@@ -8,7 +8,7 @@ diffusion coefficient from a material.
 # author: Andrew R. McCluskey (arm61)
 
 import warnings
-from typing import List, Tuple, Union
+from typing import List, Union
 import numpy as np
 from scipy.stats import normaltest, linregress
 from scipy.linalg import pinvh
@@ -310,7 +310,7 @@ class Bootstrap:
         self._npd_covariance_matrix = self._covariance_matrix
         self._covariance_matrix = find_nearest_positive_definite(self._covariance_matrix)
 
-        _, logdet = np.linalg.slogdet(self._covariance_matrix) 
+        _, logdet = np.linalg.slogdet(self._covariance_matrix)
         logdet += np.log(2 * np.pi) * self._n[max_ngp:].size
         inv = pinvh(self._covariance_matrix)
 
@@ -380,8 +380,8 @@ class Bootstrap:
         will be passed of the :py:func:`bootstrap_GLS` method.
         """
         self.bootstrap_GLS(**kwargs)
-        self._jump_diffusion_coefficient = Distribution(
-            self.gradient.samples / (2e4 * self.dims * self._displacements[0].shape[0]))
+        self._jump_diffusion_coefficient = Distribution(self.gradient.samples /
+                                                        (2e4 * self.dims * self._displacements[0].shape[0]))
 
     @property
     def D_J(self) -> Union[Distribution, None]:
@@ -452,7 +452,6 @@ class MSDBootstrap(Bootstrap):
         self._iterator = self.iterator(progress, range(len(self._displacements)))
         slice = DIMENSIONALITY[dimension.lower()]
         self.dims = len(dimension.lower())
-        timesteps = (self._delta_t / np.diff(self._delta_t)[0]).astype(int)
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, slice].reshape(self._displacements[i].shape[0],
                                                                      self._displacements[i].shape[1], self.dims)
@@ -511,7 +510,6 @@ class TMSDBootstrap(Bootstrap):
         self._iterator = self.iterator(progress, range(int(len(self._displacements) / 2)))
         slice = DIMENSIONALITY[dimension.lower()]
         self.dims = len(dimension.lower())
-        timesteps = (self._delta_t / np.diff(self._delta_t)[0]).astype(int)
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, slice].reshape(self._displacements[i].shape[0],
                                                                      self._displacements[i].shape[1], self.dims)
@@ -577,7 +575,6 @@ class MSCDBootstrap(Bootstrap):
             ionic_charge = np.ones(self._displacements[0].shape[0]) * ionic_charge
         slice = DIMENSIONALITY[dimension.lower()]
         self.dims = len(dimension.lower())
-        timesteps = (self._delta_t / np.diff(self._delta_t)[0]).astype(int)
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, slice].reshape(self._displacements[i].shape[0],
                                                                      self._displacements[i].shape[1], self.dims)
@@ -611,7 +608,8 @@ def _bootstrap(array: np.ndarray, n_samples: int, n_resamples: int, random_state
     :return: Resampled values from the array
     """
     return [
-        np.mean(resample(array.flatten(), n_samples=n_samples, random_state=random_state).flatten()) for j in range(n_resamples)
+        np.mean(resample(array.flatten(), n_samples=n_samples, random_state=random_state).flatten())
+        for j in range(n_resamples)
     ]
 
 
