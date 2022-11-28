@@ -469,7 +469,7 @@ class MSDBootstrap(Bootstrap):
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, self._slice].reshape(self._displacements[i].shape[0],
                                                                            self._displacements[i].shape[1], self.dims)
-            d_squared = np.sum(disp_slice**2, axis=2)
+            d_squared = np.sum(disp_slice**2, axis=-1)
             if d_squared.size <= 1:
                 continue
             self._n_o = np.append(self._n_o, d_squared.size)
@@ -525,7 +525,7 @@ class TMSDBootstrap(Bootstrap):
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, self._slice].reshape(self._displacements[i].shape[0],
                                                                            self._displacements[i].shape[1], self.dims)
-            d_squared = np.sum(disp_slice**2, axis=2)
+            d_squared = np.sum(disp_slice**2, axis=-1)
             coll_motion = np.sum(np.sum(disp_slice, axis=0)**2, axis=-1)
             if coll_motion.size <= 1:
                 continue
@@ -588,7 +588,7 @@ class MSCDBootstrap(Bootstrap):
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, self._slice].reshape(self._displacements[i].shape[0],
                                                                            self._displacements[i].shape[1], self.dims)
-            d_squared = np.sum(disp_slice**2, axis=2)
+            d_squared = np.sum(disp_slice**2, axis=-1)
             sq_chg_motion = np.sum(np.sum((ionic_charge * self._displacements[i].T).T, axis=0)**2, axis=-1)
             if sq_chg_motion.size <= 1:
                 continue
