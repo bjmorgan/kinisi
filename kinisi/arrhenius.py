@@ -59,6 +59,24 @@ class StandardArrhenius(Relationship):
         """
         return self.variables[1]
 
+    @property
+    def distribution(self) -> np.ndarray:
+        """
+        :return: A distribution of samples for the Arrhenius relationship that can be used for easy
+        plotting of credible intervals.
+        """
+        return self.function(self.x[:, np.newaxis], self.flatchain[:, 0], self.flatchain[:, 1])
+
+    def extrapolate(self, extrapolated_temperature: float) -> 'uravu.distribution.Distribution':
+        """
+        Extrapolate the diffusion coefficient to some un-investigated value. This can also be
+        used for interpolation.
+
+        :param: Temperature to return diffusion coefficient at.
+        :return: Diffusion coefficient at extrapolated temperature.
+        """
+        return self.function(extrapolated_temperature, self.flatchain[:, 0], self.flatchain[:, 1])
+
 
 def arrhenius(abscissa: np.ndarray, activation_energy: float, prefactor: float) -> np.ndarray:
     """
@@ -121,6 +139,24 @@ class SuperArrhenius(Relationship):
         :return: Temperature factor for the VTF equation in kelvin.
         """
         return self.variables[2]
+
+    @property
+    def distribution(self) -> np.ndarray:
+        """
+        :return: A distribution of samples for the super Arrhenius relationship that can be used
+        for easy plotting of credible intervals.
+        """
+        return self.function(self.x[:, np.newaxis], self.flatchain[:, 0], self.flatchain[:, 1], self.flatchain[:, 2])
+
+    def extrapolate(self, extrapolated_temperature: float) -> 'uravu.distribution.Distribution':
+        """
+        Extrapolate the diffusion coefficient to some un-investigated value. This can also be
+        used for interpolation.
+
+        :param: Temperature to return diffusion coefficient at.
+        :return: Diffusion coefficient at extrapolated temperature.
+        """
+        return self.function(extrapolated_temperature, self.flatchain[:, 0], self.flatchain[:, 1], self.flatchain[:, 2])
 
 
 def super_arrhenius(abscissa: np.ndarray, activation_energy: float, prefactor: float, t_zero: float) -> np.ndarray:

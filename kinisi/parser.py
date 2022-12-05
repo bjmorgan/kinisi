@@ -30,15 +30,20 @@ class Parser:
     :param time_step: Time step, in picoseconds, between steps in trajectory.
     :param step_skip: Sampling freqency of the trajectory (time_step is multiplied by this number to get the real
         time between output from the simulation file).
-    :param min_dt: Minimum timestep to be evaluated, in the simulation units. Optional, defaults to the 
+    :param min_dt: Minimum timestep to be evaluated, in the simulation units. Optional, defaults to the
         produce of :py:attr:`time_step` and :py:attr:`step_skip`.
     :param max_dt: Maximum timestep to be evaluated, in the simulation units. Optional, defaults to the
         length of the simulation.
     :param n_steps: Number of steps to be used in the timestep function. Optional, defaults to :py:attr:`100`
         unless this is fewer than the total number of steps in the trajectory when it defaults to this number.
-    :param spacing: The spacing of the steps that define the timestep, can be either :py:attr:`'linear'` or 
-        :py:attr:`'logarithmic'`. If :py:attr:`'logarithmic'` the number of steps will be less than or equal 
-        to that in the :py:attr:`n_steps` argument, such that all values are unique.
+    :param spacing: The spacing of the steps that define the timestep, can be either :py:attr:`'linear'` or
+        :py:attr:`'logarithmic'`. If :py:attr:`'logarithmic'` the number of steps will be less than or equal
+        to that in the :py:attr:`n_steps` argument, such that all values are unique. Optional, defaults to
+        :py:attr:`linear`.
+    :param sampling: The ways that the time-windows are sampled. The options are :py:attr:`'single-origin'`
+        or :py:attr:`'non-overlapping'` with the former resulting in only one observation per atom per
+        time-window and the latter giving the maximum number of origins without sampling overlapping
+        trajectories. Optional, defaults to :py:attr:`'non-overlapping'`.
     :param memory_limit: Upper limit in the amount of computer memory that the displacements can occupy in
         gigabytes (GB). Optional, defaults to :py:attr:`8.`.
     :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
@@ -54,6 +59,7 @@ class Parser:
                  max_dt: float = None,
                  n_steps: int = 100,
                  spacing: str = 'linear',
+                 sampling: str = 'non-overlapping',
                  memory_limit: float = 8.,
                  progress: bool = True):
         self.time_step = time_step
@@ -62,6 +68,7 @@ class Parser:
         self.memory_limit = memory_limit
         self.min_dt = min_dt
         self.max_dt = max_dt
+        self.sampling = sampling
         self._volume = None
 
         drift_corrected = self.correct_drift(framework_indices, disp)
@@ -72,6 +79,8 @@ class Parser:
         if self.min_dt is None:
             self.min_dt = self.step_skip * self.time_step
         min_dt_int = int(self.min_dt / (self.step_skip * self.time_step))
+        if min_dt_int >= drift_corrected.shape[1]:
+            raise ValueError('min_dt is greater than or equal to the maximum simulation length.')
         if n_steps > (drift_corrected.shape[1] - min_dt_int) + 1:
             n_steps = int(drift_corrected.shape[1] - min_dt_int) + 1
 
@@ -138,8 +147,6 @@ class Parser:
         max_dt = int(self.max_dt / (self.step_skip * self.time_step))
         if min_dt == 0:
             min_dt = 1
-        if min_dt >= n_steps:
-            raise ValueError('min_dt is greater than or equal to the maximum simulation length.')
         if spacing == 'linear':
             return np.linspace(min_dt, max_dt, n_steps, dtype=int)
         elif spacing == 'logarithmic':
@@ -178,12 +185,21 @@ class Parser:
                               "the memory_limit parameter or descrease the sampling rate (see "
                               "https://kinisi.readthedocs.io/en/latest/memory_limit.html).")
         for i, timestep in enumerate(iterator):
-            disp = np.concatenate([
-                drift_corrected[self.indices, np.newaxis, timestep - 1],
-                np.subtract(drift_corrected[self.indices, timestep:], drift_corrected[self.indices, :-timestep])
-            ],
-                                  axis=1)
-            disp_3d.append(disp[:, ::timestep])
+            if self.sampling == 'single-origin':
+                disp = drift_corrected[self.indices, i:i + 1]
+                disp_3d.append(disp)
+            elif self.sampling == 'non-overlapping':
+                disp = np.concatenate([
+                    drift_corrected[self.indices, np.newaxis, timestep - 1],
+                    np.subtract(drift_corrected[self.indices, timestep:], drift_corrected[self.indices, :-timestep])
+                ],
+                                      axis=1)
+                disp_3d.append(disp[:, ::timestep])
+            else:
+                raise ValueError(
+                    f"The sampling option of {self.sampling} is unrecognized, "
+                    "please use 'non-overlapping' or 'single-origin'."
+                )
         return delta_t, disp_3d
 
 
@@ -198,15 +214,20 @@ class PymatgenParser(Parser):
         time between output from the simulation file).
     :param sub_sample_traj: Multiple of the :py:attr:`time_step` to sub sample at. Optional, defaults
         to :py:attr:`1` where all timesteps are used.
-    :param min_dt: Minimum timestep to be evaluated, in the simulation units. Optional, defaults to the 
+    :param min_dt: Minimum timestep to be evaluated, in the simulation units. Optional, defaults to the
         produce of :py:attr:`time_step` and :py:attr:`step_skip`.
     :param max_dt: Maximum timestep to be evaluated, in the simulation units. Optional, defaults to the
         length of the simulation.
     :param n_steps: Number of steps to be used in the timestep function. Optional, defaults to :py:attr:`100`
         unless this is fewer than the total number of steps in the trajectory when it defaults to this number.
-    :param spacing: The spacing of the steps that define the timestep, can be either :py:attr:`'linear'` or 
-        :py:attr:`'logarithmic'`. If :py:attr:`'logarithmic'` the number of steps will be less than or equal 
-        to that in the :py:attr:`n_steps` argument, such that all values are unique.
+    :param spacing: The spacing of the steps that define the timestep, can be either :py:attr:`'linear'` or
+        :py:attr:`'logarithmic'`. If :py:attr:`'logarithmic'` the number of steps will be less than or equal
+        to that in the :py:attr:`n_steps` argument, such that all values are unique. Optional, defaults to
+        :py:attr:`linear`.
+    :param sampling: The ways that the time-windows are sampled. The options are :py:attr:`'single-origin'`
+        or :py:attr:`'non-overlapping'` with the former resulting in only one observation per atom per
+        time-window and the latter giving the maximum number of origins without sampling overlapping
+        trajectories. Optional, defaults to :py:attr:`'non-overlapping'`.
     :param memory_limit: Upper limit in the amount of computer memory that the displacements can occupy in
         gigabytes (GB). Optional, defaults to :py:attr:`8.`.
     :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
@@ -222,6 +243,7 @@ class PymatgenParser(Parser):
                  max_dt: float = None,
                  n_steps: int = 100,
                  spacing: str = 'linear',
+                 sampling: str = 'non-overlapping',
                  memory_limit: float = 8.,
                  progress: bool = True):
         structure, coords, latt = self.get_structure_coords_latt(structures, sub_sample_traj, progress)
@@ -237,6 +259,7 @@ class PymatgenParser(Parser):
                          max_dt=max_dt,
                          n_steps=n_steps,
                          spacing=spacing,
+                         sampling=sampling,
                          memory_limit=memory_limit,
                          progress=progress)
         self._volume = structure.volume
@@ -315,15 +338,20 @@ class MDAnalysisParser(Parser):
         to :py:attr:`1` where all atoms are used.
     :param sub_sample_traj: Multiple of the :py:attr:`time_step` to sub sample at. Optional,
         defaults to :py:attr:`1` where all timesteps are used.
-    :param min_dt: Minimum timestep to be evaluated, in the simulation units. Optional, defaults to the 
+    :param min_dt: Minimum timestep to be evaluated, in the simulation units. Optional, defaults to the
         produce of :py:attr:`time_step` and :py:attr:`step_skip`.
     :param max_dt: Maximum timestep to be evaluated, in the simulation units. Optional, defaults to the
         length of the simulation.
     :param n_steps: Number of steps to be used in the timestep function. Optional, defaults to :py:attr:`100`
         unless this is fewer than the total number of steps in the trajectory when it defaults to this number.
-    :param spacing: The spacing of the steps that define the timestep, can be either :py:attr:`'linear'` or 
-        :py:attr:`'logarithmic'`. If :py:attr:`'logarithmic'` the number of steps will be less than or equal 
-        to that in the :py:attr:`n_steps` argument, such that all values are unique.
+    :param spacing: The spacing of the steps that define the timestep, can be either :py:attr:`'linear'` or
+        :py:attr:`'logarithmic'`. If :py:attr:`'logarithmic'` the number of steps will be less than or equal
+        to that in the :py:attr:`n_steps` argument, such that all values are unique. Optional, defaults to
+        :py:attr:`linear`.
+    :param sampling: The ways that the time-windows are sampled. The options are :py:attr:`'single-origin'`
+        or :py:attr:`'non-overlapping'` with the former resulting in only one observation per atom per
+        time-window and the latter giving the maximum number of origins without sampling overlapping
+        trajectories. Optional, defaults to :py:attr:`'non-overlapping'`.
     :param memory_limit: Upper limit in the amount of computer memory that the displacements can occupy in
         gigabytes (GB). Optional, defaults to :py:attr:`8.`.
     :param n_steps: Number of steps to be used in the timestep function. Optional, defaults to all of them.
@@ -341,6 +369,7 @@ class MDAnalysisParser(Parser):
                  max_dt: float = None,
                  n_steps: int = 100,
                  spacing: str = 'linear',
+                 sampling: str = 'non-overlapping',
                  memory_limit: float = 8.,
                  progress: bool = True):
         structure, coords, latt, volume = self.get_structure_coords_latt(universe, sub_sample_atoms, sub_sample_traj,
@@ -357,6 +386,7 @@ class MDAnalysisParser(Parser):
                          max_dt=max_dt,
                          n_steps=n_steps,
                          spacing=spacing,
+                         sampling=sampling,
                          memory_limit=memory_limit,
                          progress=progress)
         self._volume = volume
