@@ -302,7 +302,10 @@ class PymatgenParser(Parser):
     def get_indices(
         structure: "pymatgen.core.structure.Structure", specie: Union["pymatgen.core.periodic_table.Element",
                                                                       "pymatgen.core.periodic_table.Specie",
-                                                                      "pymatgen.core.periodic_table.Species"]
+                                                                      "pymatgen.core.periodic_table.Species",
+                                                                      List["pymatgen.core.periodic_table.Element"],
+                                                                      List["pymatgen.core.periodic_table.Specie"],
+                                                                      List["pymatgen.core.periodic_table.Species"]]
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Determine framework and non-framework indices for a :py:mod:`pymatgen` compatible file.
@@ -315,8 +318,10 @@ class PymatgenParser(Parser):
         """
         indices = []
         framework_indices = []
+        if not isinstance(specie, List):
+            specie = [specie]
         for i, site in enumerate(structure):
-            if site.specie.__str__() == specie:
+            if site.specie.__str__() in specie:
                 indices.append(i)
             else:
                 framework_indices.append(i)
