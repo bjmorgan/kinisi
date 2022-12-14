@@ -80,7 +80,7 @@ class Parser:
             self.min_dt = self.step_skip * self.time_step
         min_dt_int = int(self.min_dt / (self.step_skip * self.time_step))
         if min_dt_int >= drift_corrected.shape[1]:
-            raise ValueError('min_dt is greater than or equal to the maximum simulation length.')
+            raise ValueError('The passed min_dt is greater than or equal to the maximum simulation length.')
         if n_steps > (drift_corrected.shape[1] - min_dt_int) + 1:
             n_steps = int(drift_corrected.shape[1] - min_dt_int) + 1
 
