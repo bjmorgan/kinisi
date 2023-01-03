@@ -422,6 +422,19 @@ class Bootstrap:
         conversion = 1000 / (volume * const.N_A) * (const.N_A * const.e)**2 / (const.R * temperature)
         self._sigma = Distribution(D * conversion)
 
+    @staticmethod
+    def n_samples(disp_shape, max_obs: int) -> int:
+        """
+        Calculate the maximum number of independent observations.
+        :param disp_shape:: The shape of the displacements array.
+        :param max_obs: The maximum number of observations for the trajectory.
+        :return: Maximum number of independent observations.
+        """
+        n_obs = disp_shape[1]
+        n_atoms = disp_shape[0]
+        dt_int = max_obs - n_obs + 1
+        return int(max_obs / dt_int * n_atoms)
+
     @property
     def sigma(self) -> Union[Distribution, None]:
         """
@@ -458,24 +471,28 @@ class MSDBootstrap(Bootstrap):
                  delta_t: np.ndarray,
                  disp_3d: List[np.ndarray],
                  sub_sample_dt: int = 1,
-                 n_resamples: int = 1000,
-                 max_resamples: int = 10000,
+                 n_resamples: int = 500,
+                 max_resamples: int = 5000,
                  dimension: str = 'xyz',
                  alpha: float = 1e-3,
+                 time_step: float = 1.0,
+                 step_skip: int = 1,
                  random_state: np.random.mtrand.RandomState = None,
                  progress: bool = True):
         super().__init__(delta_t, disp_3d, sub_sample_dt, dimension)
         self._iterator = self.iterator(progress, range(len(self._displacements)))
+        timesteps = (delta_t / (np.diff(delta_t)[0])).astype(int)
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, self._slice].reshape(self._displacements[i].shape[0],
                                                                            self._displacements[i].shape[1], self.dims)
             d_squared = np.sum(disp_slice**2, axis=-1)
             if d_squared.size <= 1:
                 continue
-            self._n_o = np.append(self._n_o, d_squared.size)
+            # n_i = self.n_samples(d_squared.shape, self._max_obs)
+            self._n_o = np.append(self._n_o, d_squared[:, ::timesteps[i]].size)
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
-            distro = self.sample_until_normal(d_squared, d_squared.size, n_resamples, max_resamples, alpha,
-                                              random_state)
+            distro = self.sample_until_normal(d_squared, d_squared[:, ::timesteps[i]].size, n_resamples, max_resamples, alpha,
+                                              random_state)                           
             self._distributions.append(distro)
             self._n = np.append(self._n, d_squared.mean())
             self._s = np.append(self._s, np.std(distro.samples, ddof=1))

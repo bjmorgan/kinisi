@@ -176,7 +176,8 @@ class Parser:
         disp_mem = 0
         itemsize = drift_corrected.itemsize
         for i, timestep in enumerate(iterator):
-            disp_mem += np.product(drift_corrected[self.indices, timestep::timestep].shape) * itemsize
+            # disp_mem += np.product(drift_corrected[self.indices, timestep::timestep].shape) * itemsize
+            disp_mem += np.product(drift_corrected[self.indices, timestep::].shape) * itemsize
             disp_mem += (len(self.indices) * drift_corrected.shape[-1]) * itemsize
         disp_mem *= 1e-9
         if disp_mem > self.memory_limit:
@@ -194,7 +195,8 @@ class Parser:
                     np.subtract(drift_corrected[self.indices, timestep:], drift_corrected[self.indices, :-timestep])
                 ],
                                       axis=1)
-                disp_3d.append(disp[:, ::timestep])
+                # disp_3d.append(disp[:, ::timestep])
+                disp_3d.append(disp)
             else:
                 raise ValueError(
                     f"The sampling option of {self.sampling} is unrecognized, "
