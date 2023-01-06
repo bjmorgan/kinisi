@@ -28,8 +28,9 @@ class TestBootstrap(unittest.TestCase):
 
     def test_dictionary_roundtrip(self):
         disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+        n_o = np.ones(len(disp_3d)) * 100
         dt = np.linspace(100, 1000, 10)
-        a = Bootstrap(dt, disp_3d)
+        a = Bootstrap(dt, disp_3d, n_o)
         b = Bootstrap.from_dict(a.to_dict())
         for i, d in enumerate(disp_3d):
             assert_almost_equal(a._displacements[i], b._displacements[i])
@@ -43,8 +44,9 @@ class TestBootstrap(unittest.TestCase):
 
     def test_initialisation(self):
         disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+        n_o = np.ones(len(disp_3d)) * 100
         dt = np.linspace(100, 1000, 10)
-        bs = Bootstrap(dt, disp_3d)
+        bs = Bootstrap(dt, disp_3d, n_o)
         for i, d in enumerate(disp_3d):
             assert_almost_equal(bs._displacements[i], d)
         assert_almost_equal(bs._delta_t, dt)
@@ -57,8 +59,9 @@ class TestBootstrap(unittest.TestCase):
 
     def test_initialisation_sub_sample_dt(self):
         disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+        n_o = np.ones(len(disp_3d)) * 100
         dt = np.linspace(100, 1000, 10)
-        bs = Bootstrap(dt, disp_3d, sub_sample_dt=2)
+        bs = Bootstrap(dt, disp_3d, n_o, sub_sample_dt=2)
         for i, d in enumerate(disp_3d[::2]):
             assert_almost_equal(bs._displacements[i], d)
         assert_almost_equal(bs._delta_t, dt[::2])
@@ -112,8 +115,9 @@ class TestMSDBootstrap(unittest.TestCase):
     def test_dictionary_roundtrip(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            a = MSDBootstrap(dt, disp_3d, random_state=np.random.RandomState(0))
+            a = MSDBootstrap(dt, disp_3d, n_o, random_state=np.random.RandomState(0))
             b = MSDBootstrap.from_dict(a.to_dict())
             for i, d in enumerate(disp_3d):
                 assert_almost_equal(a._displacements[i], b._displacements[i])
@@ -135,8 +139,9 @@ class TestMSDBootstrap(unittest.TestCase):
     def test_initialisation(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs = MSDBootstrap(dt, disp_3d, random_state=np.random.RandomState(0))
+            bs = MSDBootstrap(dt, disp_3d, n_o, random_state=np.random.RandomState(0))
             assert bs.n.shape == (10, )
             assert bs.s.shape == (10, )
             assert_almost_equal(bs.v, np.square(bs.s))
@@ -150,8 +155,9 @@ class TestMSDBootstrap(unittest.TestCase):
     def test_initialisation_n_resamples(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs = MSDBootstrap(dt, disp_3d, n_resamples=10, random_state=np.random.RandomState(0))
+            bs = MSDBootstrap(dt, disp_3d, n_o, n_resamples=10, random_state=np.random.RandomState(0))
             assert bs.n.shape == (10, )
             assert bs.s.shape == (10, )
             assert_almost_equal(bs.v, np.square(bs.s))
@@ -165,8 +171,9 @@ class TestMSDBootstrap(unittest.TestCase):
     def test_initialisation_max_resamples(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs = MSDBootstrap(dt, disp_3d, n_resamples=10, max_resamples=100, random_state=np.random.RandomState(0))
+            bs = MSDBootstrap(dt, disp_3d, n_o, n_resamples=10, max_resamples=100, random_state=np.random.RandomState(0))
             assert bs.n.shape == (10, )
             assert bs.s.shape == (10, )
             assert_almost_equal(bs.v, np.square(bs.s))
@@ -180,8 +187,9 @@ class TestMSDBootstrap(unittest.TestCase):
     def test_initialisation_random_state(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs1 = MSDBootstrap(dt, disp_3d, random_state=np.random.RandomState(0))
+            bs1 = MSDBootstrap(dt, disp_3d, n_o, random_state=np.random.RandomState(0))
             assert bs1.n.shape == (10, )
             assert bs1.s.shape == (10, )
             assert_almost_equal(bs1.v, np.square(bs1.s))
@@ -191,15 +199,16 @@ class TestMSDBootstrap(unittest.TestCase):
                 assert isinstance(i, Distribution)
             for i in bs1._distributions:
                 assert i.samples.size >= 1000
-            bs2 = MSDBootstrap(dt, disp_3d, random_state=np.random.RandomState(0))
+            bs2 = MSDBootstrap(dt, disp_3d, n_o, random_state=np.random.RandomState(0))
             assert bs1._distributions[-1].size == bs2._distributions[-1].size
             assert_almost_equal(bs1._distributions[-1].samples, bs2._distributions[-1].samples)
 
     def test_initialisation_progress(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs = MSDBootstrap(dt, disp_3d, progress=False, random_state=np.random.RandomState(0))
+            bs = MSDBootstrap(dt, disp_3d, n_o, progress=False, random_state=np.random.RandomState(0))
             assert bs.n.shape == (10, )
             assert bs.s.shape == (10, )
             assert_almost_equal(bs.v, np.square(bs.s))
@@ -214,8 +223,9 @@ class TestMSDBootstrap(unittest.TestCase):
     def test_initialisation_skip_where_low_samples(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(1, i, 3) for i in range(10, 1, -1)]
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs = MSDBootstrap(dt, disp_3d, progress=False, random_state=np.random.RandomState(0))
+            bs = MSDBootstrap(dt, disp_3d, n_o, progress=False, random_state=np.random.RandomState(0))
             assert bs.n.shape == (9, )
             assert bs.s.shape == (9, )
             assert_almost_equal(bs.v, np.square(bs.s))
@@ -230,8 +240,9 @@ class TestMSDBootstrap(unittest.TestCase):
     def test_bootstrap_dictionary_roundtrip(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            a = MSDBootstrap(dt, disp_3d, random_state=np.random.RandomState(0))
+            a = MSDBootstrap(dt, disp_3d, n_o, random_state=np.random.RandomState(0))
             a.diffusion()
             b = MSDBootstrap.from_dict(a.to_dict())
             for i, d in enumerate(disp_3d):
@@ -254,8 +265,9 @@ class TestMSDBootstrap(unittest.TestCase):
     def test_bootstrap(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs = MSDBootstrap(dt, disp_3d, random_state=RNG)
+            bs = MSDBootstrap(dt, disp_3d, n_o, random_state=RNG)
             bs.diffusion()
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs._diffusion_coefficient, Distribution)
@@ -266,8 +278,9 @@ class TestMSDBootstrap(unittest.TestCase):
     def test_bootstrap_dt_skip(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs = MSDBootstrap(dt, disp_3d)
+            bs = MSDBootstrap(dt, disp_3d, n_o)
             bs.diffusion(dt_skip=150)
             assert bs.covariance_matrix.shape == (9, 9)
             assert isinstance(bs._diffusion_coefficient, Distribution)
@@ -278,8 +291,9 @@ class TestMSDBootstrap(unittest.TestCase):
     def test_bootstrap_use_ngp(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(200, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 190)
-            bs = MSDBootstrap(dt, disp_3d, random_state=RNG)
+            bs = MSDBootstrap(dt, disp_3d, n_o, random_state=RNG)
             bs.diffusion(use_ngp=True)
             assert bs.covariance_matrix.shape == (190 - np.argmax(bs.ngp), 190 - np.argmax(bs.ngp))
             assert isinstance(bs._diffusion_coefficient, Distribution)
@@ -290,8 +304,9 @@ class TestMSDBootstrap(unittest.TestCase):
     def test_bootstrap_fit_intercept(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs = MSDBootstrap(dt, disp_3d, random_state=RNG)
+            bs = MSDBootstrap(dt, disp_3d, n_o, random_state=RNG)
             bs.diffusion(n_samples=500, fit_intercept=False)
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs._diffusion_coefficient, Distribution)
@@ -301,8 +316,9 @@ class TestMSDBootstrap(unittest.TestCase):
     def test_bootstrap_n_samples(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs = MSDBootstrap(dt, disp_3d, random_state=RNG)
+            bs = MSDBootstrap(dt, disp_3d, n_o, random_state=RNG)
             bs.diffusion(n_samples=100)
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs._diffusion_coefficient, Distribution)
@@ -313,8 +329,9 @@ class TestMSDBootstrap(unittest.TestCase):
     def test_bootstrap_D(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs = MSDBootstrap(dt, disp_3d, random_state=RNG)
+            bs = MSDBootstrap(dt, disp_3d, n_o, random_state=RNG)
             bs.diffusion(n_samples=100)
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs._diffusion_coefficient, Distribution)
@@ -325,8 +342,9 @@ class TestMSDBootstrap(unittest.TestCase):
     def test_bootstrap_thin(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs = MSDBootstrap(dt, disp_3d, random_state=RNG)
+            bs = MSDBootstrap(dt, disp_3d, n_o, random_state=RNG)
             bs.diffusion(use_ngp=True, thin=1)
             assert bs.covariance_matrix.shape == (10 - np.argmax(bs.ngp), 10 - np.argmax(bs.ngp))
             assert isinstance(bs._diffusion_coefficient, Distribution)
@@ -358,8 +376,9 @@ class TestTMSDBootstrap(unittest.TestCase):
     def test_initialisation(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100 
             dt = np.linspace(100, 1000, 10)
-            bs = TMSDBootstrap(dt, disp_3d, random_state=np.random.RandomState(0))
+            bs = TMSDBootstrap(dt, disp_3d, n_o, random_state=np.random.RandomState(0))
             assert bs.n.shape == (5, )
             assert bs.s.shape == (5, )
             assert_almost_equal(bs.v, np.square(bs.s))
@@ -373,8 +392,9 @@ class TestTMSDBootstrap(unittest.TestCase):
     def test_initialisation_n_resamples(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100  
             dt = np.linspace(100, 1000, 10)
-            bs = TMSDBootstrap(dt, disp_3d, n_resamples=10, random_state=np.random.RandomState(0))
+            bs = TMSDBootstrap(dt, disp_3d, n_o, n_resamples=10, random_state=np.random.RandomState(0))
             assert bs.n.shape == (5, )
             assert bs.s.shape == (5, )
             assert_almost_equal(bs.v, np.square(bs.s))
@@ -388,8 +408,9 @@ class TestTMSDBootstrap(unittest.TestCase):
     def test_initialisation_max_resamples(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100  
             dt = np.linspace(100, 1000, 10)
-            bs = TMSDBootstrap(dt, disp_3d, n_resamples=10, max_resamples=100, random_state=np.random.RandomState(0))
+            bs = TMSDBootstrap(dt, disp_3d, n_o, n_resamples=10, max_resamples=100, random_state=np.random.RandomState(0))
             assert bs.n.shape == (5, )
             assert bs.s.shape == (5, )
             assert_almost_equal(bs.v, np.square(bs.s))
@@ -403,8 +424,9 @@ class TestTMSDBootstrap(unittest.TestCase):
     def test_initialisation_random_state(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100  
             dt = np.linspace(100, 1000, 10)
-            bs1 = TMSDBootstrap(dt, disp_3d, random_state=np.random.RandomState(0))
+            bs1 = TMSDBootstrap(dt, disp_3d, n_o, random_state=np.random.RandomState(0))
             assert bs1.n.shape == (5, )
             assert bs1.s.shape == (5, )
             assert_almost_equal(bs1.v, np.square(bs1.s))
@@ -414,15 +436,16 @@ class TestTMSDBootstrap(unittest.TestCase):
                 assert isinstance(i, Distribution)
             for i in bs1._distributions:
                 assert i.samples.size >= 1000
-            bs2 = TMSDBootstrap(dt, disp_3d, random_state=np.random.RandomState(0))
+            bs2 = TMSDBootstrap(dt, disp_3d, n_o, random_state=np.random.RandomState(0))
             assert bs1._distributions[-1].size == bs2._distributions[-1].size
             assert_almost_equal(bs1._distributions[-1].samples, bs2._distributions[-1].samples)
 
     def test_initialisation_progress(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100  
             dt = np.linspace(100, 1000, 10)
-            bs = TMSDBootstrap(dt, disp_3d, progress=False, random_state=np.random.RandomState(0))
+            bs = TMSDBootstrap(dt, disp_3d, n_o, progress=False, random_state=np.random.RandomState(0))
             assert bs.n.shape == (5, )
             assert bs.s.shape == (5, )
             assert_almost_equal(bs.v, np.square(bs.s))
@@ -437,8 +460,9 @@ class TestTMSDBootstrap(unittest.TestCase):
     def test_initialisation_skip_where_low_samples(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(1, i, 3) for i in range(10, 1, -1)]
+            n_o = np.ones(len(disp_3d)) * 100  
             dt = np.linspace(100, 1000, 10)
-            bs = TMSDBootstrap(dt, disp_3d, progress=False, random_state=np.random.RandomState(0))
+            bs = TMSDBootstrap(dt, disp_3d, n_o, progress=False, random_state=np.random.RandomState(0))
             assert bs.n.shape == (4, )
             assert bs.s.shape == (4, )
             assert_almost_equal(bs.v, np.square(bs.s))
@@ -453,8 +477,9 @@ class TestTMSDBootstrap(unittest.TestCase):
     def test_bootstrap(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100  
             dt = np.linspace(100, 1000, 10)
-            bs = TMSDBootstrap(dt, disp_3d, random_state=RNG)
+            bs = TMSDBootstrap(dt, disp_3d, n_o, random_state=RNG)
             bs.jump_diffusion()
             assert bs.covariance_matrix.shape == (5, 5)
             assert isinstance(bs._jump_diffusion_coefficient, Distribution)
@@ -465,8 +490,9 @@ class TestTMSDBootstrap(unittest.TestCase):
     def test_bootstrap_use_ngp(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100  
             dt = np.linspace(100, 1000, 10)
-            bs = TMSDBootstrap(dt, disp_3d, random_state=RNG)
+            bs = TMSDBootstrap(dt, disp_3d, n_o, random_state=RNG)
             bs.jump_diffusion(use_ngp=True)
             assert bs.covariance_matrix.shape == (5 - np.argmax(bs.ngp), 5 - np.argmax(bs.ngp))
             assert isinstance(bs._jump_diffusion_coefficient, Distribution)
@@ -477,8 +503,9 @@ class TestTMSDBootstrap(unittest.TestCase):
     def test_bootstrap_fit_intercept(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100  
             dt = np.linspace(100, 1000, 10)
-            bs = TMSDBootstrap(dt, disp_3d, random_state=RNG)
+            bs = TMSDBootstrap(dt, disp_3d, n_o, random_state=RNG)
             bs.jump_diffusion(n_samples=500, fit_intercept=False)
             assert bs.covariance_matrix.shape == (5, 5)
             assert isinstance(bs._jump_diffusion_coefficient, Distribution)
@@ -488,8 +515,9 @@ class TestTMSDBootstrap(unittest.TestCase):
     def test_bootstrap_n_samples(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100  
             dt = np.linspace(100, 1000, 10)
-            bs = TMSDBootstrap(dt, disp_3d, random_state=RNG)
+            bs = TMSDBootstrap(dt, disp_3d, n_o, random_state=RNG)
             bs.jump_diffusion(n_samples=100)
             assert bs.covariance_matrix.shape == (5, 5)
             assert isinstance(bs._jump_diffusion_coefficient, Distribution)
@@ -500,8 +528,9 @@ class TestTMSDBootstrap(unittest.TestCase):
     def test_bootstrap_D(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100  
             dt = np.linspace(100, 1000, 10)
-            bs = TMSDBootstrap(dt, disp_3d, random_state=RNG)
+            bs = TMSDBootstrap(dt, disp_3d, n_o, random_state=RNG)
             bs.jump_diffusion(n_samples=100)
             assert bs.covariance_matrix.shape == (5, 5)
             assert isinstance(bs._jump_diffusion_coefficient, Distribution)
@@ -512,8 +541,9 @@ class TestTMSDBootstrap(unittest.TestCase):
     def test_bootstrap_thin(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(200, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100 
             dt = np.linspace(100, 1000, 190)
-            bs = TMSDBootstrap(dt, disp_3d, random_state=RNG)
+            bs = TMSDBootstrap(dt, disp_3d, n_o, random_state=RNG)
             bs.jump_diffusion(use_ngp=True, thin=1)
             assert bs.covariance_matrix.shape == (95 - np.argmax(bs.ngp), 95 - np.argmax(bs.ngp))
             assert isinstance(bs._jump_diffusion_coefficient, Distribution)
@@ -547,8 +577,9 @@ class TestMSCDBootstrap(unittest.TestCase):
     def test_initialisation(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100  
             dt = np.linspace(100, 1000, 10)
-            bs = MSCDBootstrap(dt, disp_3d, 1, random_state=np.random.RandomState(0))
+            bs = MSCDBootstrap(dt, disp_3d, 1, n_o, random_state=np.random.RandomState(0))
             assert bs.n.shape == (5, )
             assert bs.s.shape == (5, )
             assert_almost_equal(bs.v, np.square(bs.s))
@@ -562,8 +593,9 @@ class TestMSCDBootstrap(unittest.TestCase):
     def test_initialisation_n_resamples(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100  
             dt = np.linspace(100, 1000, 10)
-            bs = MSCDBootstrap(dt, disp_3d, np.ones(100), n_resamples=10, random_state=np.random.RandomState(0))
+            bs = MSCDBootstrap(dt, disp_3d, np.ones(100), n_o, n_resamples=10, random_state=np.random.RandomState(0))
             assert bs.n.shape == (5, )
             assert bs.s.shape == (5, )
             assert_almost_equal(bs.v, np.square(bs.s))
@@ -577,8 +609,9 @@ class TestMSCDBootstrap(unittest.TestCase):
     def test_initialisation_max_resamples(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100  
             dt = np.linspace(100, 1000, 10)
-            bs = MSCDBootstrap(dt, disp_3d, 1, n_resamples=10, max_resamples=100, random_state=np.random.RandomState(0))
+            bs = MSCDBootstrap(dt, disp_3d, 1, n_o, n_resamples=10, max_resamples=100, random_state=np.random.RandomState(0))
             assert bs.n.shape == (5, )
             assert bs.s.shape == (5, )
             assert_almost_equal(bs.v, np.square(bs.s))
@@ -592,8 +625,9 @@ class TestMSCDBootstrap(unittest.TestCase):
     def test_initialisation_random_state(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100  
             dt = np.linspace(100, 1000, 10)
-            bs1 = MSCDBootstrap(dt, disp_3d, 1, random_state=np.random.RandomState(0))
+            bs1 = MSCDBootstrap(dt, disp_3d, 1, n_o, random_state=np.random.RandomState(0))
             assert bs1.n.shape == (5, )
             assert bs1.s.shape == (5, )
             assert_almost_equal(bs1.v, np.square(bs1.s))
@@ -603,15 +637,16 @@ class TestMSCDBootstrap(unittest.TestCase):
                 assert isinstance(i, Distribution)
             for i in bs1._distributions:
                 assert i.samples.size >= 1000
-            bs2 = MSCDBootstrap(dt, disp_3d, 1, random_state=np.random.RandomState(0))
+            bs2 = MSCDBootstrap(dt, disp_3d, 1, n_o, random_state=np.random.RandomState(0))
             assert bs1._distributions[-1].size == bs2._distributions[-1].size
             assert_almost_equal(bs1._distributions[-1].samples, bs2._distributions[-1].samples)
 
     def test_initialisation_progress(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100  
             dt = np.linspace(100, 1000, 10)
-            bs = MSCDBootstrap(dt, disp_3d, 1, progress=False, random_state=np.random.RandomState(0))
+            bs = MSCDBootstrap(dt, disp_3d, 1, n_o, progress=False, random_state=np.random.RandomState(0))
             assert bs.n.shape == (5, )
             assert bs.s.shape == (5, )
             assert_almost_equal(bs.v, np.square(bs.s))
@@ -626,8 +661,9 @@ class TestMSCDBootstrap(unittest.TestCase):
     def test_initialisation_skip_where_low_samples(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(1, i, 3) for i in range(10, 1, -1)]
+            n_o = np.ones(len(disp_3d)) * 100 
             dt = np.linspace(100, 1000, 10)
-            bs = MSCDBootstrap(dt, disp_3d, 1, progress=False, random_state=np.random.RandomState(0))
+            bs = MSCDBootstrap(dt, disp_3d, 1, n_o, progress=False, random_state=np.random.RandomState(0))
             assert bs.n.shape == (4, )
             assert bs.s.shape == (4, )
             assert_almost_equal(bs.v, np.square(bs.s))
@@ -642,8 +678,9 @@ class TestMSCDBootstrap(unittest.TestCase):
     def test_bootstrap(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100 
             dt = np.linspace(100, 1000, 10)
-            bs = MSCDBootstrap(dt, disp_3d, 1, random_state=RNG)
+            bs = MSCDBootstrap(dt, disp_3d, 1, n_o, random_state=RNG)
             bs.conductivity(1, 10)
             assert bs.covariance_matrix.shape == (5, 5)
             assert isinstance(bs.sigma, Distribution)
@@ -654,8 +691,9 @@ class TestMSCDBootstrap(unittest.TestCase):
     def test_bootstrap_use_ngp(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(200, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100 
             dt = np.linspace(100, 1000, 190)
-            bs = MSCDBootstrap(dt, disp_3d, 1, random_state=RNG)
+            bs = MSCDBootstrap(dt, disp_3d, 1, n_o, random_state=RNG)
             bs.conductivity(1, 10, use_ngp=True)
             assert bs.covariance_matrix.shape == (95 - np.argmax(bs.ngp), 95 - np.argmax(bs.ngp))
             assert isinstance(bs.sigma, Distribution)
@@ -666,8 +704,9 @@ class TestMSCDBootstrap(unittest.TestCase):
     def test_bootstrap_fit_intercept(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100 
             dt = np.linspace(100, 1000, 10)
-            bs = MSCDBootstrap(dt, disp_3d, 1, random_state=RNG)
+            bs = MSCDBootstrap(dt, disp_3d, 1, n_o, random_state=RNG)
             bs.conductivity(1, 10, n_samples=500, fit_intercept=False)
             assert bs.covariance_matrix.shape == (5, 5)
             assert isinstance(bs.sigma, Distribution)
@@ -677,8 +716,9 @@ class TestMSCDBootstrap(unittest.TestCase):
     def test_bootstrap_n_samples(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100 
             dt = np.linspace(100, 1000, 10)
-            bs = MSCDBootstrap(dt, disp_3d, 1, random_state=RNG)
+            bs = MSCDBootstrap(dt, disp_3d, 1, n_o, random_state=RNG)
             bs.conductivity(1, 10, n_samples=100)
             assert bs.covariance_matrix.shape == (5, 5)
             assert isinstance(bs.sigma, Distribution)
@@ -689,8 +729,9 @@ class TestMSCDBootstrap(unittest.TestCase):
     def test_bootstrap_D(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100 
             dt = np.linspace(100, 1000, 10)
-            bs = MSCDBootstrap(dt, disp_3d, 1, random_state=RNG)
+            bs = MSCDBootstrap(dt, disp_3d, 1, n_o, random_state=RNG)
             bs.conductivity(1, 10, n_samples=100)
             assert bs.covariance_matrix.shape == (5, 5)
             assert isinstance(bs.sigma, Distribution)
@@ -701,8 +742,9 @@ class TestMSCDBootstrap(unittest.TestCase):
     def test_bootstrap_thin(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(200, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100 
             dt = np.linspace(100, 1000, 190)
-            bs = MSCDBootstrap(dt, disp_3d, 1, random_state=RNG)
+            bs = MSCDBootstrap(dt, disp_3d, 1, n_o, random_state=RNG)
             bs.conductivity(1, 10, use_ngp=True, thin=1)
             assert bs.covariance_matrix.shape == (95 - np.argmax(bs.ngp), 95 - np.argmax(bs.ngp))
             assert isinstance(bs.sigma, Distribution)
