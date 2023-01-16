@@ -43,7 +43,7 @@ Contributors
 
    installation
    methodology
-   tutorials
+   notebooks
    faq
    modules
    papers
