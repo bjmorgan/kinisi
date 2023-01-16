@@ -72,7 +72,6 @@ class Bootstrap:
         self.gradient = None
         self.flatchain = None
         self._covariance_matrix = None
-        print(dimension)
         self._slice = DIMENSIONALITY[dimension.lower()]
         self.dims = len(dimension.lower())
 
