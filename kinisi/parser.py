@@ -86,7 +86,7 @@ class Parser:
 
         self.timesteps = self.get_timesteps(n_steps, spacing)
 
-        self.delta_t, self.disp_3d = self.get_disps(self.timesteps, drift_corrected, progress)
+        self.delta_t, self.disp_3d, self._n_o = self.get_disps(self.timesteps, drift_corrected, progress)
 
     @property
     def volume(self) -> float:
@@ -169,6 +169,7 @@ class Parser:
         """
         delta_t = timesteps * self.time_step * self.step_skip
         disp_3d = []
+        n_samples = np.array([])
         if progress:
             iterator = tqdm(timesteps, desc='Getting Displacements')
         else:
@@ -176,7 +177,7 @@ class Parser:
         disp_mem = 0
         itemsize = drift_corrected.itemsize
         for i, timestep in enumerate(iterator):
-            disp_mem += np.product(drift_corrected[self.indices, timestep::timestep].shape) * itemsize
+            disp_mem += np.product(drift_corrected[self.indices, timestep::].shape) * itemsize
             disp_mem += (len(self.indices) * drift_corrected.shape[-1]) * itemsize
         disp_mem *= 1e-9
         if disp_mem > self.memory_limit:
@@ -187,6 +188,8 @@ class Parser:
         for i, timestep in enumerate(iterator):
             if self.sampling == 'single-origin':
                 disp = drift_corrected[self.indices, i:i + 1]
+                if np.multiply(*disp[:, ::timestep].shape[:2]) <= 1:
+                    continue 
                 disp_3d.append(disp)
             elif self.sampling == 'non-overlapping':
                 disp = np.concatenate([
@@ -194,13 +197,16 @@ class Parser:
                     np.subtract(drift_corrected[self.indices, timestep:], drift_corrected[self.indices, :-timestep])
                 ],
                                       axis=1)
-                disp_3d.append(disp[:, ::timestep])
+                if np.multiply(*disp[:, ::timestep].shape[:2]) <= 1:
+                    continue 
+                disp_3d.append(disp)
             else:
                 raise ValueError(
                     f"The sampling option of {self.sampling} is unrecognized, "
                     "please use 'non-overlapping' or 'single-origin'."
                 )
-        return delta_t, disp_3d
+            n_samples = np.append(n_samples, np.multiply(*disp[:, ::timestep].shape[:2]))
+        return delta_t, disp_3d, n_samples
 
 
 class PymatgenParser(Parser):

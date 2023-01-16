@@ -24,9 +24,10 @@ class Analyzer:
     :param volume: The volume of the simulation cell.
     """
 
-    def __init__(self, delta_t: np.ndarray, disp_3d: List[np.ndarray], volume: float):
+    def __init__(self, delta_t: np.ndarray, disp_3d: List[np.ndarray], n_o: np.ndarray, volume: float):
         self._delta_t = delta_t
         self._disp_3d = disp_3d
+        self._n_o = n_o
         self._volume = volume
 
     def save(self, filename: str):
@@ -71,7 +72,7 @@ class Analyzer:
         """
         :return: Dictionary description of Analyzer.
         """
-        return {'delta_t': self._delta_t, 'disp_3d': self._disp_3d, 'volume': self._volume}
+        return {'delta_t': self._delta_t, 'disp_3d': self._disp_3d, 'n_o': self._n_o, 'volume': self._volume}
 
     @classmethod
     def from_dict(cls, my_dict: dict) -> 'Analyzer':
@@ -108,14 +109,17 @@ class Analyzer:
         """
         if dtype is None:
             u = PymatgenParser(trajectory, **parser_params)
-            return cls(u.delta_t, u.disp_3d, u.volume, **kwargs)
+            return cls(u.delta_t, u.disp_3d, u._n_o, u.volume, **kwargs)
         elif dtype == 'identical':
             u = [PymatgenParser(f, **parser_params) for f in trajectory]
-            return cls(u[0].delta_t, cls._stack_trajectories(u), u[0].volume, **kwargs)
+            n_o = np.zeros(u[0]._n_o.size)
+            for i in u:
+                n_o += i._n_o
+            return cls(u[0].delta_t, cls._stack_trajectories(u), n_o, u[0].volume, **kwargs)
         elif dtype == 'consecutive':
             structures = _flatten_list([x for x in trajectory])
             u = PymatgenParser(structures, **parser_params)
-            return cls(u.delta_t, u.disp_3d, u.volume, **kwargs)
+            return cls(u.delta_t, u.disp_3d, u._n_o, u.volume, **kwargs)
         else:
             raise ValueError('The dtype specified was not recognised, please consult the kinisi documentation.')
 
@@ -143,14 +147,17 @@ class Analyzer:
         if dtype is None:
             structures = trajectory.structures
             u = PymatgenParser(structures, **parser_params)
-            return cls(u.delta_t, u.disp_3d, u.volume, **kwargs)
+            return cls(u.delta_t, u.disp_3d, u._n_o, u.volume, **kwargs)
         elif dtype == 'identical':
             u = [PymatgenParser(f.structures, **parser_params) for f in trajectory]
-            return cls(u[0].delta_t, cls._stack_trajectories(u), u[0].volume, **kwargs)
+            n_o = np.zeros(u[0]._n_o.size)
+            for i in u:
+                n_o += i._n_o
+            return cls(u[0].delta_t, cls._stack_trajectories(u), n_o, u[0].volume, **kwargs)
         elif dtype == 'consecutive':
             structures = _flatten_list([x.structures for x in trajectory])
             u = PymatgenParser(structures, **parser_params)
-            return cls(u.delta_t, u.disp_3d, u.volume, **kwargs)
+            return cls(u.delta_t, u.disp_3d, u._n_o, u.volume, **kwargs)
         else:
             raise ValueError('The dtype specified was not recognised, please consult the kinisi documentation.')
 
@@ -176,15 +183,18 @@ class Analyzer:
         if dtype is None:
             structures = Xdatcar(trajectory).structures
             u = PymatgenParser(structures, **parser_params)
-            return cls(u.delta_t, u.disp_3d, u.volume, **kwargs)
+            return cls(u.delta_t, u.disp_3d, u._n_o, u.volume, **kwargs)
         elif dtype == 'identical':
             u = [PymatgenParser(Xdatcar(f).structures, **parser_params) for f in trajectory]
-            return cls(u[0].delta_t, cls._stack_trajectories(u), u[0].volume, **kwargs)
+            n_o = np.zeros(u[0]._n_o.size)
+            for i in u:
+                n_o += i._n_o
+            return cls(u[0].delta_t, cls._stack_trajectories(u), n_o, u[0].volume, **kwargs)
         elif dtype == 'consecutive':
             trajectory_list = (Xdatcar(f) for f in trajectory)
             structures = _flatten_list([x.structures for x in trajectory_list])
             u = PymatgenParser(structures, **parser_params)
-            return cls(u.delta_t, u.disp_3d, u.volume, **kwargs)
+            return cls(u.delta_t, u.disp_3d, u._n_o, u.volume, **kwargs)
         else:
             raise ValueError('The dtype specified was not recognised, please consult the kinisi documentation.')
 
@@ -215,10 +225,13 @@ class Analyzer:
                 "To use the MDAnalysis from file parsing, MDAnalysis must be installed.")  # pragma: no cover
         if dtype is None:
             u = MDAnalysisParser(trajectory, **parser_params)
-            return cls(u.delta_t, u.disp_3d, u.volume, **kwargs)
+            return cls(u.delta_t, u.disp_3d, u._n_o, u.volume, **kwargs)
         elif dtype == 'identical':
             u = [MDAnalysisParser(t, **parser_params) for t in trajectory]
-            return cls(u[0].delta_t, cls._stack_trajectories(u), u[0].volume, **kwargs)
+            n_o = np.zeros(u[0]._n_o.size)
+            for i in u:
+                n_o += i._n_o
+            return cls(u[0].delta_t, cls._stack_trajectories(u), n_o, u[0].volume, **kwargs)
         else:
             raise ValueError('The dtype specified was not recognised, please consult the kinisi documentation.')
 

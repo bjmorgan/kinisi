@@ -27,7 +27,14 @@ DIMENSIONALITY = {
     'xy': np.s_[:2],
     'xz': np.s_[::2],
     'yz': np.s_[1:],
-    'xyz': np.s_[:]
+    'xyz': np.s_[:],
+    b'x': np.s_[0],
+    b'y': np.s_[1],
+    b'z': np.s_[2],
+    b'xy': np.s_[:2],
+    b'xz': np.s_[::2],
+    b'yz': np.s_[1:],
+    b'xyz': np.s_[:]
 }
 
 
@@ -44,7 +51,7 @@ class Bootstrap:
     :param progress: Show tqdm progress for sampling. Optional, default is :py:attr:`True`.
     """
 
-    def __init__(self, delta_t: np.ndarray, disp_3d: List[np.ndarray], sub_sample_dt: int = 1, dimension='xyz'):
+    def __init__(self, delta_t: np.ndarray, disp_3d: List[np.ndarray], n_o: np.ndarray, sub_sample_dt: int = 1, dimension: str='xyz'):
         self._displacements = disp_3d[::sub_sample_dt]
         self._delta_t = np.array(delta_t[::sub_sample_dt])
         self._max_obs = self._displacements[0].shape[1]
@@ -53,9 +60,10 @@ class Bootstrap:
         self._n = np.array([])
         self._s = np.array([])
         self._v = np.array([])
-        self._n_i = np.array([], dtype=int)
-        self._n_o = np.array([], dtype=int)
+        self._n_o = n_o
         self._ngp = np.array([])
+        self._sub_sample_dt = sub_sample_dt
+        self._dimension = dimension
         self._euclidian_displacements = []
         self._diffusion_coefficient = None
         self._jump_diffusion_coefficient = None
@@ -64,6 +72,7 @@ class Bootstrap:
         self.gradient = None
         self.flatchain = None
         self._covariance_matrix = None
+        print(dimension)
         self._slice = DIMENSIONALITY[dimension.lower()]
         self.dims = len(dimension.lower())
 
@@ -74,12 +83,14 @@ class Bootstrap:
         my_dict = {
             'displacements': self._displacements,
             'delta_t': self._delta_t,
+            'n_o': self._n_o,
             'max_obs': self._max_obs,
             'dt': self._dt,
             'n': self._n,
             's': self._s,
             'v': self._v,
-            'n_i': self._n_i,
+            'sub_sample_dt': self._sub_sample_dt,
+            'dimension': self._dimension,
             'ngp': self._ngp,
             'covariance_matrix': self._covariance_matrix,
             'diffusion_coefficient': None,
@@ -112,7 +123,7 @@ class Bootstrap:
 
         :return: New :py:class`Bootstrap` object.
         """
-        boot = cls(my_dict['delta_t'], my_dict['displacements'], sub_sample_dt=1, dimension='xyz')
+        boot = cls(my_dict['delta_t'], my_dict['displacements'], my_dict['n_o'], sub_sample_dt=my_dict['sub_sample_dt'], dimension=my_dict['dimension'])
         boot._max_obs = my_dict['max_obs']
         boot._distributions = [Distribution.from_dict(d) for d in my_dict['distributions']]
         boot._euclidian_displacements = [Distribution.from_dict(d) for d in my_dict['euclidian_displacements']]
@@ -120,7 +131,7 @@ class Bootstrap:
         boot._n = my_dict['n']
         boot._s = my_dict['s']
         boot._v = my_dict['v']
-        boot._n_i = my_dict['n_i']
+        boot._n_o = my_dict['n_o']
         boot._ngp = my_dict['ngp']
         if my_dict['diffusion_coefficient'] is not None:
             boot._diffusion_coefficient = Distribution.from_dict(my_dict['diffusion_coefficient'])
@@ -441,6 +452,7 @@ class MSDBootstrap(Bootstrap):
         :code:`[atom, displacement observation, dimension]`. There is one array in the list for each
         delta_t value. Note: it is necessary to use a list of arrays as the number of observations is
         not necessary the same at each data point.
+    :param n_o: Number of statistically independent observations of the MSD at each timestep.
     :param sub_sample_dt: The frequency in observations to be sampled. Default is :py:attr:`1` (every observation)
     :param n_resamples: The initial number of resamples to be performed. Default is :py:attr:`1000`
     :param max_resamples: The max number of resamples to be performed by the distribution is assumed to be normal.
@@ -457,6 +469,7 @@ class MSDBootstrap(Bootstrap):
     def __init__(self,
                  delta_t: np.ndarray,
                  disp_3d: List[np.ndarray],
+                 n_o: np.ndarray,
                  sub_sample_dt: int = 1,
                  n_resamples: int = 1000,
                  max_resamples: int = 10000,
@@ -464,7 +477,7 @@ class MSDBootstrap(Bootstrap):
                  alpha: float = 1e-3,
                  random_state: np.random.mtrand.RandomState = None,
                  progress: bool = True):
-        super().__init__(delta_t, disp_3d, sub_sample_dt, dimension)
+        super().__init__(delta_t, disp_3d, n_o, sub_sample_dt, dimension)
         self._iterator = self.iterator(progress, range(len(self._displacements)))
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, self._slice].reshape(self._displacements[i].shape[0],
@@ -472,16 +485,16 @@ class MSDBootstrap(Bootstrap):
             d_squared = np.sum(disp_slice**2, axis=-1)
             if d_squared.size <= 1:
                 continue
-            self._n_o = np.append(self._n_o, d_squared.size)
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
-            distro = self.sample_until_normal(d_squared, d_squared.size, n_resamples, max_resamples, alpha,
-                                              random_state)
+            distro = self.sample_until_normal(d_squared, int(n_o[i]), n_resamples, max_resamples, alpha,
+                                              random_state)                           
             self._distributions.append(distro)
             self._n = np.append(self._n, d_squared.mean())
             self._s = np.append(self._s, np.std(distro.samples, ddof=1))
             self._v = np.append(self._v, np.var(distro.samples, ddof=1))
             self._ngp = np.append(self._ngp, self.ngp_calculation(d_squared))
             self._dt = np.append(self._dt, self._delta_t[i])
+        self._n_o = self._n_o[:self._n.size]
 
 
 class TMSDBootstrap(Bootstrap):
@@ -494,6 +507,7 @@ class TMSDBootstrap(Bootstrap):
         :code:`[atom, displacement observation, dimension]`. There is one array in the list for each
         delta_t value. Note: it is necessary to use a list of arrays as the number of observations is
         not necessary the same at each data point.
+    :param n_o: Number of statistically independent observations of the MSD at each timestep.
     :param sub_sample_dt: The frequency in observations to be sampled. Optional, default
         is :py:attr:`1` (every observation)
     :param n_resamples: The initial number of resamples to be performed. Optional, default
@@ -513,6 +527,7 @@ class TMSDBootstrap(Bootstrap):
     def __init__(self,
                  delta_t: np.ndarray,
                  disp_3d: List[np.ndarray],
+                 n_o: np.ndarray,
                  sub_sample_dt: int = 1,
                  n_resamples: int = 1000,
                  max_resamples: int = 10000,
@@ -520,7 +535,7 @@ class TMSDBootstrap(Bootstrap):
                  alpha: float = 1e-3,
                  random_state: np.random.mtrand.RandomState = None,
                  progress: bool = True):
-        super().__init__(delta_t, disp_3d, sub_sample_dt, dimension)
+        super().__init__(delta_t, disp_3d, n_o, sub_sample_dt, dimension)
         self._iterator = self.iterator(progress, range(int(len(self._displacements) / 2)))
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, self._slice].reshape(self._displacements[i].shape[0],
@@ -529,9 +544,9 @@ class TMSDBootstrap(Bootstrap):
             coll_motion = np.sum(np.sum(disp_slice, axis=0)**2, axis=-1)
             if coll_motion.size <= 1:
                 continue
-            self._n_o = np.append(self._n_o, coll_motion.size)
+            self._n_o = np.append(self._n_o, n_o[i])
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
-            distro = self.sample_until_normal(coll_motion, coll_motion.size, n_resamples, max_resamples, alpha,
+            distro = self.sample_until_normal(coll_motion, int(n_o[i] / d_squared.shape[0]), n_resamples, max_resamples, alpha,
                                               random_state)
             self._distributions.append(distro)
             self._n = np.append(self._n, distro.n)
@@ -539,6 +554,7 @@ class TMSDBootstrap(Bootstrap):
             self._v = np.append(self._v, np.var(distro.samples, ddof=1))
             self._ngp = np.append(self._ngp, self.ngp_calculation(d_squared.flatten()))
             self._dt = np.append(self._dt, self._delta_t[i])
+        self._n_o = self._n_o[:self._n.size]
 
 
 class MSCDBootstrap(Bootstrap):
@@ -553,6 +569,7 @@ class MSCDBootstrap(Bootstrap):
         not necessary the same at each data point.
     :param ionic_charge: The charge on the mobile ions, either an array with a value for each ion or a scalar
         if all values are the same.
+    :param n_o: Number of statistically independent observations of the MSD at each timestep.
     :param sub_sample_dt: The frequency in observations to be sampled. Optional, default is :py:attr:`1`
         (every observation).
     :param n_resamples: The initial number of resamples to be performed. Optional, default is :py:attr:`1000`.
@@ -572,6 +589,7 @@ class MSCDBootstrap(Bootstrap):
                  delta_t: np.ndarray,
                  disp_3d: List[np.ndarray],
                  ionic_charge: Union[np.ndarray, int],
+                 n_o: np.ndarray,
                  sub_sample_dt: int = 1,
                  n_resamples: int = 1000,
                  max_resamples: int = 10000,
@@ -579,7 +597,7 @@ class MSCDBootstrap(Bootstrap):
                  alpha: float = 1e-3,
                  random_state: np.random.mtrand.RandomState = None,
                  progress: bool = True):
-        super().__init__(delta_t, disp_3d, sub_sample_dt, dimension)
+        super().__init__(delta_t, disp_3d, n_o, sub_sample_dt, dimension)
         self._iterator = self.iterator(progress, range(int(len(self._displacements) / 2)))
         try:
             _ = len(ionic_charge)
@@ -592,9 +610,9 @@ class MSCDBootstrap(Bootstrap):
             sq_chg_motion = np.sum(np.sum((ionic_charge * self._displacements[i].T).T, axis=0)**2, axis=-1)
             if sq_chg_motion.size <= 1:
                 continue
-            self._n_o = np.append(self._n_o, sq_chg_motion.size)
+            self._n_o = np.append(self._n_o, n_o[i])
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
-            distro = self.sample_until_normal(sq_chg_motion, sq_chg_motion.size, n_resamples, max_resamples, alpha,
+            distro = self.sample_until_normal(sq_chg_motion, int(n_o[i] / d_squared.shape[0]), n_resamples, max_resamples, alpha,
                                               random_state)
             self._distributions.append(distro)
             self._n = np.append(self._n, distro.n)
@@ -602,6 +620,7 @@ class MSCDBootstrap(Bootstrap):
             self._v = np.append(self._v, np.var(distro.samples, ddof=1))
             self._ngp = np.append(self._ngp, self.ngp_calculation(d_squared.flatten()))
             self._dt = np.append(self._dt, self._delta_t[i])
+        self._n_o = self._n_o[:self._n.size]
 
 
 def _bootstrap(array: np.ndarray, n_samples: int, n_resamples: int, random_state: np.random.mtrand.RandomState = None):

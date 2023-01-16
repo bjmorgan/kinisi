@@ -33,8 +33,8 @@ class ConductivityAnalyzer(Analyzer):
         if all values are the same. Optional, default is :py:attr:`1`.
     """
 
-    def __init__(self, delta_t: np.ndarray, disp_3d: List[np.ndarray], volume: float):
-        super().__init__(delta_t, disp_3d, volume)
+    def __init__(self, delta_t: np.ndarray, disp_3d: List[np.ndarray], n_o: np.ndarray,volume: float):
+        super().__init__(delta_t, disp_3d, n_o, volume)
         self._diff = None
 
     def to_dict(self) -> dict:
@@ -54,7 +54,7 @@ class ConductivityAnalyzer(Analyzer):
 
         :return: New :py:class`ConductivityAnalyzer` object.
         """
-        cond_anal = cls(my_dict['delta_t'], my_dict['disp_3d'], my_dict['volume'])
+        cond_anal = cls(my_dict['delta_t'], my_dict['disp_3d'], my_dict['n_o'], my_dict['volume'])
         cond_anal._diff = diffusion.Bootstrap.from_dict(my_dict['diff'])
         return cond_anal
 
@@ -88,7 +88,7 @@ class ConductivityAnalyzer(Analyzer):
         if bootstrap_params is None:
             bootstrap_params = {}
         cond_anal = super()._from_pymatgen(trajectory, parser_params, dtype=dtype)
-        cond_anal._diff = diffusion.MSCDBootstrap(cond_anal._delta_t, cond_anal._disp_3d, ionic_charge,
+        cond_anal._diff = diffusion.MSCDBootstrap(cond_anal._delta_t, cond_anal._disp_3d, ionic_charge, cond_anal._n_o,
                                                   **bootstrap_params)
         return cond_anal
 
@@ -121,7 +121,7 @@ class ConductivityAnalyzer(Analyzer):
         if bootstrap_params is None:
             bootstrap_params = {}
         cond_anal = super()._from_Xdatcar(trajectory, parser_params, dtype=dtype)
-        cond_anal._diff = diffusion.MSCDBootstrap(cond_anal._delta_t, cond_anal._disp_3d, ionic_charge,
+        cond_anal._diff = diffusion.MSCDBootstrap(cond_anal._delta_t, cond_anal._disp_3d, ionic_charge, cond_anal._n_o,
                                                   **bootstrap_params)
         return cond_anal
 
@@ -152,7 +152,7 @@ class ConductivityAnalyzer(Analyzer):
         if bootstrap_params is None:
             bootstrap_params = {}
         cond_anal = super()._from_file(trajectory, parser_params, dtype=dtype)
-        cond_anal._diff = diffusion.MSCDBootstrap(cond_anal._delta_t, cond_anal._disp_3d, ionic_charge,
+        cond_anal._diff = diffusion.MSCDBootstrap(cond_anal._delta_t, cond_anal._disp_3d, ionic_charge, cond_anal._n_o,
                                                   **bootstrap_params)
         return cond_anal
 
@@ -184,7 +184,7 @@ class ConductivityAnalyzer(Analyzer):
         if bootstrap_params is None:
             bootstrap_params = {}
         cond_anal = super()._from_universe(trajectory, parser_params, dtype=dtype)
-        cond_anal._diff = diffusion.MSCDBootstrap(cond_anal._delta_t, cond_anal._disp_3d, ionic_charge,
+        cond_anal._diff = diffusion.MSCDBootstrap(cond_anal._delta_t, cond_anal._disp_3d, ionic_charge, cond_anal._n_o,
                                                   **bootstrap_params)
         return cond_anal
 

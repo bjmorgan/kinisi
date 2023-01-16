@@ -51,10 +51,9 @@ class TestParser(unittest.TestCase):
         p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=20)
         assert_equal(len(p.disp_3d), 81)
         dt = np.arange(20, 101, 1)
-        for i, d in enumerate(p.disp_3d):
-            assert_equal(d.shape[0], 100)
-            assert_equal(d.shape[1], int(100 / dt[i]))
-            assert_equal(d.shape[2], 3)
+        assert_equal(p.disp_3d[0].shape[0], 100)
+        assert_equal(p.disp_3d[0].shape[1], 81)
+        assert_equal(p.disp_3d[0].shape[2], 3)
 
     def test_get_timesteps(self):
         p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=20)
@@ -82,13 +81,13 @@ class TestParser(unittest.TestCase):
 
     def test_get_disps(self):
         p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=20)
-        dt, disp_3d = p.get_disps(np.arange(20, 101, 1), dc)
+        dt, disp_3d, n_samples = p.get_disps(np.arange(20, 101, 1), dc)
         assert_equal(dt, np.arange(20, 101, 1))
         assert_equal(len(disp_3d), 81)
-        for i, d in enumerate(disp_3d):
-            assert_equal(d.shape[0], 100)
-            assert_equal(d.shape[1], int(100 / dt[i]))
-            assert_equal(d.shape[2], 3)
+        assert_equal(len(n_samples), 81)
+        assert_equal(disp_3d[0].shape[0], 100)
+        assert_equal(disp_3d[0].shape[1], 81)
+        assert_equal(disp_3d[0].shape[2], 3)
 
     def test_pymatgen_init(self):
         xd = Xdatcar(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_XDATCAR.gz'))

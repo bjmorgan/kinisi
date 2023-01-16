@@ -31,8 +31,8 @@ class JumpDiffusionAnalyzer(Analyzer):
         the appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
     """
 
-    def __init__(self, delta_t: np.ndarray, disp_3d: List[np.ndarray], volume: float):
-        super().__init__(delta_t, disp_3d, volume)
+    def __init__(self, delta_t: np.ndarray, disp_3d: List[np.ndarray], n_o: np.ndarray, volume: float):
+        super().__init__(delta_t, disp_3d, n_o, volume)
         self._diff = None
 
     def to_dict(self) -> dict:
@@ -52,7 +52,7 @@ class JumpDiffusionAnalyzer(Analyzer):
 
         :return: New :py:class:`DiffusionAnalyzer` object.
         """
-        jdiff_anal = cls(my_dict['delta_t'], my_dict['disp_3d'], my_dict['volume'])
+        jdiff_anal = cls(my_dict['delta_t'], my_dict['disp_3d'], my_dict['n_o'], my_dict['volume'])
         jdiff_anal._diff = diffusion.Bootstrap.from_dict(my_dict['diff'])
         return jdiff_anal
 
@@ -83,7 +83,7 @@ class JumpDiffusionAnalyzer(Analyzer):
         if bootstrap_params is None:
             bootstrap_params = {}
         jdiff_anal = super()._from_pymatgen(trajectory, parser_params, dtype=dtype)
-        jdiff_anal._diff = diffusion.TMSDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, **bootstrap_params)
+        jdiff_anal._diff = diffusion.TMSDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o, **bootstrap_params)
         return jdiff_anal
 
     @classmethod
@@ -112,7 +112,7 @@ class JumpDiffusionAnalyzer(Analyzer):
         if bootstrap_params is None:
             bootstrap_params = {}
         jdiff_anal = super()._from_Xdatcar(trajectory, parser_params, dtype=dtype)
-        jdiff_anal._diff = diffusion.TMSDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, **bootstrap_params)
+        jdiff_anal._diff = diffusion.TMSDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o, **bootstrap_params)
         return jdiff_anal
 
     @classmethod
@@ -139,7 +139,7 @@ class JumpDiffusionAnalyzer(Analyzer):
         if bootstrap_params is None:
             bootstrap_params = {}
         jdiff_anal = super()._from_file(trajectory, parser_params, dtype=dtype)
-        jdiff_anal._diff = diffusion.TMSDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, **bootstrap_params)
+        jdiff_anal._diff = diffusion.TMSDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o, **bootstrap_params)
         return jdiff_anal
 
     @classmethod
@@ -167,7 +167,7 @@ class JumpDiffusionAnalyzer(Analyzer):
         if bootstrap_params is None:
             bootstrap_params = {}
         jdiff_anal = super()._from_universe(trajectory, parser_params, dtype=dtype)
-        jdiff_anal._diff = diffusion.TMSDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, **bootstrap_params)
+        jdiff_anal._diff = diffusion.TMSDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o, **bootstrap_params)
         return jdiff_anal
 
     def jump_diffusion(self, jump_diffusion_params: Union[dict, None] = None):
