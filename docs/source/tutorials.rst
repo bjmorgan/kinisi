@@ -9,3 +9,4 @@ Here are some simple tutorials, showing how :py:mod:`kinisi` can be used to inve
    vasp_msd
    vasp_d
    arrhenius_t
+   pymatgen

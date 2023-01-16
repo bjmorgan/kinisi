@@ -19,6 +19,12 @@ FAQ
 - How does :py:mod:`kinisi` work?
 
     Please have a look at our `methodology`_ to understand how :py:mod:`kinisi` works. 
+    
+- How does :py:mod:`kinisi` compare to the similar functionality in :py:mod:`pymatgen`?
+
+    The :py:mod:`kinisi` API is based on the :py:mod:`pymatgen` equivalent. 
+    However, :py:mod:`kinisi` offers insight that is not possible with :py:mod:`pymatgen`. 
+    We investigate this in `the linked Jupyter Notebook`_. 
 
 
 .. _MDAnalysis objects: https://docs.mdanalysis.org/1.1.1/documentation_pages/units.html
@@ -26,3 +32,4 @@ FAQ
 .. _bootstrap: ./diffusion.html#kinisi.diffusion.Bootstrap.bootstrap_GLS
 .. _citation found on Github: https://github.com/bjmorgan/kinisi
 .. _methodology: ./methodology.html
+.. _the linked Jupyter Notebook: ./pymatgen.html
