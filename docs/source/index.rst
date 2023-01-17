@@ -13,7 +13,7 @@ The approach used by :py:mod:`kinisi` ensured an accurate and `statistically eff
 More information about *how* :py:mod:`kinisi` determines the diffusion coefficient can be found in the detailed `methodology`_.
 
 :py:mod:`kinisi` can handle simulation trajectories from many common molecular dynamics packages, including `VASP`_ and those that can be read by `MDAnalysis`_.
-Examples of some of these analyses are shown in the `tutorials`_, also given there is an example of using :py:mod:`kinisi` to investigate the Arrhenius relationship of diffusion as a function of temperature.
+Examples of some of these analyses are shown in the `notebooks`_, also given there is an example of using :py:mod:`kinisi` to investigate the Arrhenius relationship of diffusion as a function of temperature.
 
 .. figure:: _static/example.pdf
   :width: 450
@@ -32,7 +32,7 @@ Contributors
 .. _Benjamin J. Morgan: https://morgan-group-bath.github.io
 .. _VASP: https://www.vasp.at/wiki/index.php/XDATCAR
 .. _MDAnalysis: https://userguide.mdanalysis.org/stable/reading_and_writing.html
-.. _tutorials: ./tutorials.html
+.. _notebooks: ./notebooks.html
 .. _statistically efficient: https://en.wikipedia.org/wiki/Efficiency_(statistics)
 .. _methodology: ./methodology.html
 
