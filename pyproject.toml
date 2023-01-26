@@ -54,6 +54,8 @@ dev = [
     'pytest-cov'
 ]
 docs = [
+    'pymatgen',
+    'MDAnalysis',
     'ipykernel',
     'nbsphinx',
     'corner',
