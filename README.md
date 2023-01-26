@@ -1,4 +1,8 @@
-[![kinisi Logo](https://github.com/bjmorgan/kinisi/raw/master/docs/source/_static/kinisi_logo.png)](https://kinisi.readthedocs.io)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/bjmorgan/kinisi/blob/master/docs/source/_static/logo_dark.png?raw=true">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/bjmorgan/kinisi/blob/master/docs/source/_static/logo_light.png?raw=true">
+  <img alt="The kinisi logo" src="https://github.com/bjmorgan/kinisi/blob/master/docs/source/_static/logo_light.png?raw=true">
+</picture>
 
 Pronunciation: *kee-nee-si*
 
