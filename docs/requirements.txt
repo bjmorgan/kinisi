@@ -1,8 +1,0 @@
-ipykernel
-nbsphinx
-corner
-sphinx_autodoc_typehints
-h5py
-pymatgen-analysis-diffusion
-pydata-sphinx-theme
-myst-parser
