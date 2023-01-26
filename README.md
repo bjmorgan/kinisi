@@ -1,6 +1,6 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/bjmorgan/kinisi/blob/master/docs/source/_static/logo_dark.png?raw=true">
   <source media="(prefers-color-scheme: light)" srcset="https://github.com/bjmorgan/kinisi/blob/master/docs/source/_static/logo_light.png?raw=true">
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/bjmorgan/kinisi/blob/master/docs/source/_static/logo_dark.png?raw=true">
   <img alt="The kinisi logo" src="https://github.com/bjmorgan/kinisi/blob/master/docs/source/_static/logo_light.png?raw=true">
 </picture>
 
@@ -17,7 +17,5 @@ Pronunciation: *kee-nee-si*
 `kinisi` is available from the [PyPI](https://pypi.org/project/kinisi/) repository so can be installed using `pip` or alternatively `clone` [this repository](https://github.com/bjmorgan/kinisi) and install the latest development build with the commands below.
 
 ```
-pip install -r requirements.txt
 pip install .
-pytest
 ```
