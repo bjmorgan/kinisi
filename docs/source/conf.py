@@ -43,14 +43,12 @@ release = __version__
 extensions = [
     'sphinx.ext.autodoc',
     'myst_parser',
-    # 'sphinx.ext.doctest',
-    # 'sphinx.ext.todo',
     # 'sphinx.ext.coverage',
     # 'sphinx.ext.viewcode',
     # 'sphinx.ext.napoleon',
-    # 'sphinx.ext.intersphinx',
-    # 'sphinx.ext.mathjax',
-    # 'sphinx_autodoc_typehints',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.mathjax',
+    'sphinx_autodoc_typehints',
     'nbsphinx'
 ]
 
@@ -100,9 +98,7 @@ html_theme = 'pydata_sphinx_theme'
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-# html_title = 'kinisi'
 html_static_path = ['_static']
-# html_logo = "_static/kinisi_logo.png"
 
 html_theme_options = {
    "logo": {
@@ -119,17 +115,6 @@ html_theme_options = {
         }
    ]
 }
-
-# html_theme_options = {
-    #  "logo_only": True,
-#      "repository_url": "https://github.com/bjmorgan/kinisi",
-#      "repository_branch": "master",
-#      "path_to_docs": "docs",
-#      "use_repository_button": True,
-#      "use_issues_button": True,
-#      "use_edit_page_button": True,
-#      "show_toc_level": 2,  # Show subheadings in secondary sidebar
-#  }
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
