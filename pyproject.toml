@@ -1,14 +1,10 @@
 [build-system]
-# Use hatch to build the application. 
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-# Information about the EasyReflectometryApp project.
-# Note that while the project is called EasyReflectometryApp
-# the application itself is EasyReflectometry. 
 name = "kinisi"
-version = "0.6.1"
+dynamic = ["version"]
 description = "Efficient estimation of diffusion processes from molecular dynamics."
 authors = [
     {name = "Andrew R. McCluskey", email = "andrew.mccluskey@ess.eu"}, 
@@ -42,8 +38,6 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# These optional dependencies are for building the
-# application as a part of a Github Action.
 dev = [
     'pymatgen',
     'MDAnalysis',
@@ -72,6 +66,9 @@ documentation = 'https://kinisi.rtfd.io'
 
 [tool.hatch.build]
 include = ['kinisi']
+
+[tool.hatch.version]
+path = "kinisi/__init__.py"
 
 [tool.coverage.run]
 source = ['kinisi']
