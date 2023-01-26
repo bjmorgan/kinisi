@@ -4,4 +4,5 @@ corner
 sphinx_autodoc_typehints
 h5py
 pymatgen-analysis-diffusion
-pydata_sphinx_theme
+pydata-sphinx-theme
+myst-parser
