@@ -43,9 +43,6 @@ release = __version__
 extensions = [
     'sphinx.ext.autodoc',
     'myst_parser',
-    # 'sphinx.ext.coverage',
-    # 'sphinx.ext.viewcode',
-    # 'sphinx.ext.napoleon',
     'sphinx.ext.intersphinx',
     'sphinx.ext.mathjax',
     'sphinx_autodoc_typehints',
@@ -83,9 +80,6 @@ language = 'en'
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
 
-# The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
-
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -113,7 +107,9 @@ html_theme_options = {
             "icon": "fab fa-github-square fa-xl",
             "type": "fontawesome",
         }
-   ]
+   ],
+   "pygment_light_style": "tango",
+   "pygment_dark_style": "monokai"
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
