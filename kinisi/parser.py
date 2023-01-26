@@ -189,7 +189,7 @@ class Parser:
             if self.sampling == 'single-origin':
                 disp = drift_corrected[self.indices, i:i + 1]
                 if np.multiply(*disp[:, ::timestep].shape[:2]) <= 1:
-                    continue 
+                    continue
                 disp_3d.append(disp)
             elif self.sampling == 'non-overlapping':
                 disp = np.concatenate([
@@ -198,13 +198,11 @@ class Parser:
                 ],
                                       axis=1)
                 if np.multiply(*disp[:, ::timestep].shape[:2]) <= 1:
-                    continue 
+                    continue
                 disp_3d.append(disp)
             else:
-                raise ValueError(
-                    f"The sampling option of {self.sampling} is unrecognized, "
-                    "please use 'non-overlapping' or 'single-origin'."
-                )
+                raise ValueError(f"The sampling option of {self.sampling} is unrecognized, "
+                                 "please use 'non-overlapping' or 'single-origin'.")
             n_samples = np.append(n_samples, np.multiply(*disp[:, ::timestep].shape[:2]))
         return delta_t, disp_3d, n_samples
 
@@ -306,12 +304,10 @@ class PymatgenParser(Parser):
 
     @staticmethod
     def get_indices(
-        structure: "pymatgen.core.structure.Structure", specie: Union["pymatgen.core.periodic_table.Element",
-                                                                      "pymatgen.core.periodic_table.Specie",
-                                                                      "pymatgen.core.periodic_table.Species",
-                                                                      List["pymatgen.core.periodic_table.Element"],
-                                                                      List["pymatgen.core.periodic_table.Specie"],
-                                                                      List["pymatgen.core.periodic_table.Species"]]
+        structure: "pymatgen.core.structure.Structure",
+        specie: Union["pymatgen.core.periodic_table.Element", "pymatgen.core.periodic_table.Specie",
+                      "pymatgen.core.periodic_table.Species", List["pymatgen.core.periodic_table.Element"],
+                      List["pymatgen.core.periodic_table.Specie"], List["pymatgen.core.periodic_table.Species"]]
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Determine framework and non-framework indices for a :py:mod:`pymatgen` compatible file.

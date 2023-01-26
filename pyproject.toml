@@ -1,0 +1,78 @@
+[build-system]
+# Use hatch to build the application. 
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+# Information about the EasyReflectometryApp project.
+# Note that while the project is called EasyReflectometryApp
+# the application itself is EasyReflectometry. 
+name = "kinisi"
+version = "0.6.1"
+description = "Efficient estimation of diffusion processes from molecular dynamics."
+authors = [
+    {name = "Andrew R. McCluskey", email = "andrew.mccluskey@ess.eu"}, 
+    {name = "Benjamin J. Morgan", email="b.j.morgan@bath.ac.uk"}
+]
+maintainers = [
+    {name = "Andrew R. McCluskey", email = "andrew.mccluskey@ess.eu"}, 
+    {name = "Benjamin J. Morgan", email="b.j.morgan@bath.ac.uk"}
+]
+license = "MIT"
+classifiers = [
+    'Development Status :: 4 - Beta',
+    'Intended Audience :: Science/Research',
+    'License :: OSI Approved :: MIT License',
+    'Natural Language :: English',
+    'Operating System :: OS Independent',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Topic :: Scientific/Engineering',
+    'Topic :: Scientific/Engineering :: Chemistry',
+    'Topic :: Scientific/Engineering :: Physics'
+]
+requires-python = ">=3.8,<3.11"
+dependencies = [
+    'numpy',
+    'scikit-learn',
+    'scipy>=1.9.3',
+    'tqdm',
+    'uravu>=1.2.9'
+]
+
+[project.optional-dependencies]
+# These optional dependencies are for building the
+# application as a part of a Github Action.
+dev = [
+    'pymatgen',
+    'MDAnalysis',
+    'coverage',
+    'codeclimate-test-reporter',
+    'yapf',
+    'pytest',
+    'pytest-cov'
+]
+docs = [
+    'ipykernel',
+    'nbsphinx',
+    'corner',
+    'sphinx_autodoc_typehints',
+    'h5py',
+    'pymatgen-analysis-diffusion',
+    'pydata_sphinx_theme'
+]
+
+[project.urls]
+homepage = 'https://github.com/bjmorgan/kinisi'
+documentation = 'https://kinisi.rtfd.io'
+
+[tool.hatch.build]
+include = ['kinisi']
+
+[tool.coverage.run]
+source = ['kinisi']
+
+[tool.yapf]
+based_on_style = 'pep8'
+column_limit = 120

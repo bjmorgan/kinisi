@@ -10,7 +10,6 @@ codeclimate-test-reporter
 ipykernel
 nbsphinx
 corner
-sphinx_book_theme
 sphinx_autodoc_typehints
 h5py
 pymatgen-analysis-diffusion

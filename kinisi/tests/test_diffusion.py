@@ -173,7 +173,12 @@ class TestMSDBootstrap(unittest.TestCase):
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs = MSDBootstrap(dt, disp_3d, n_o, n_resamples=10, max_resamples=100, random_state=np.random.RandomState(0))
+            bs = MSDBootstrap(dt,
+                              disp_3d,
+                              n_o,
+                              n_resamples=10,
+                              max_resamples=100,
+                              random_state=np.random.RandomState(0))
             assert bs.n.shape == (10, )
             assert bs.s.shape == (10, )
             assert_almost_equal(bs.v, np.square(bs.s))
@@ -376,7 +381,7 @@ class TestTMSDBootstrap(unittest.TestCase):
     def test_initialisation(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
-            n_o = np.ones(len(disp_3d)) * 100 
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = TMSDBootstrap(dt, disp_3d, n_o, random_state=np.random.RandomState(0))
             assert bs.n.shape == (5, )
@@ -392,7 +397,7 @@ class TestTMSDBootstrap(unittest.TestCase):
     def test_initialisation_n_resamples(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
-            n_o = np.ones(len(disp_3d)) * 100  
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = TMSDBootstrap(dt, disp_3d, n_o, n_resamples=10, random_state=np.random.RandomState(0))
             assert bs.n.shape == (5, )
@@ -408,9 +413,14 @@ class TestTMSDBootstrap(unittest.TestCase):
     def test_initialisation_max_resamples(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
-            n_o = np.ones(len(disp_3d)) * 100  
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs = TMSDBootstrap(dt, disp_3d, n_o, n_resamples=10, max_resamples=100, random_state=np.random.RandomState(0))
+            bs = TMSDBootstrap(dt,
+                               disp_3d,
+                               n_o,
+                               n_resamples=10,
+                               max_resamples=100,
+                               random_state=np.random.RandomState(0))
             assert bs.n.shape == (5, )
             assert bs.s.shape == (5, )
             assert_almost_equal(bs.v, np.square(bs.s))
@@ -424,7 +434,7 @@ class TestTMSDBootstrap(unittest.TestCase):
     def test_initialisation_random_state(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
-            n_o = np.ones(len(disp_3d)) * 100  
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs1 = TMSDBootstrap(dt, disp_3d, n_o, random_state=np.random.RandomState(0))
             assert bs1.n.shape == (5, )
@@ -443,7 +453,7 @@ class TestTMSDBootstrap(unittest.TestCase):
     def test_initialisation_progress(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
-            n_o = np.ones(len(disp_3d)) * 100  
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = TMSDBootstrap(dt, disp_3d, n_o, progress=False, random_state=np.random.RandomState(0))
             assert bs.n.shape == (5, )
@@ -460,7 +470,7 @@ class TestTMSDBootstrap(unittest.TestCase):
     def test_initialisation_skip_where_low_samples(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(1, i, 3) for i in range(10, 1, -1)]
-            n_o = np.ones(len(disp_3d)) * 100  
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = TMSDBootstrap(dt, disp_3d, n_o, progress=False, random_state=np.random.RandomState(0))
             assert bs.n.shape == (4, )
@@ -477,7 +487,7 @@ class TestTMSDBootstrap(unittest.TestCase):
     def test_bootstrap(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
-            n_o = np.ones(len(disp_3d)) * 100  
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = TMSDBootstrap(dt, disp_3d, n_o, random_state=RNG)
             bs.jump_diffusion()
@@ -490,7 +500,7 @@ class TestTMSDBootstrap(unittest.TestCase):
     def test_bootstrap_use_ngp(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
-            n_o = np.ones(len(disp_3d)) * 100  
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = TMSDBootstrap(dt, disp_3d, n_o, random_state=RNG)
             bs.jump_diffusion(use_ngp=True)
@@ -503,7 +513,7 @@ class TestTMSDBootstrap(unittest.TestCase):
     def test_bootstrap_fit_intercept(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
-            n_o = np.ones(len(disp_3d)) * 100  
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = TMSDBootstrap(dt, disp_3d, n_o, random_state=RNG)
             bs.jump_diffusion(n_samples=500, fit_intercept=False)
@@ -515,7 +525,7 @@ class TestTMSDBootstrap(unittest.TestCase):
     def test_bootstrap_n_samples(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
-            n_o = np.ones(len(disp_3d)) * 100  
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = TMSDBootstrap(dt, disp_3d, n_o, random_state=RNG)
             bs.jump_diffusion(n_samples=100)
@@ -528,7 +538,7 @@ class TestTMSDBootstrap(unittest.TestCase):
     def test_bootstrap_D(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
-            n_o = np.ones(len(disp_3d)) * 100  
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = TMSDBootstrap(dt, disp_3d, n_o, random_state=RNG)
             bs.jump_diffusion(n_samples=100)
@@ -541,7 +551,7 @@ class TestTMSDBootstrap(unittest.TestCase):
     def test_bootstrap_thin(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(200, 10, -1)]
-            n_o = np.ones(len(disp_3d)) * 100 
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 190)
             bs = TMSDBootstrap(dt, disp_3d, n_o, random_state=RNG)
             bs.jump_diffusion(use_ngp=True, thin=1)
@@ -577,7 +587,7 @@ class TestMSCDBootstrap(unittest.TestCase):
     def test_initialisation(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
-            n_o = np.ones(len(disp_3d)) * 100  
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = MSCDBootstrap(dt, disp_3d, 1, n_o, random_state=np.random.RandomState(0))
             assert bs.n.shape == (5, )
@@ -593,7 +603,7 @@ class TestMSCDBootstrap(unittest.TestCase):
     def test_initialisation_n_resamples(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
-            n_o = np.ones(len(disp_3d)) * 100  
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = MSCDBootstrap(dt, disp_3d, np.ones(100), n_o, n_resamples=10, random_state=np.random.RandomState(0))
             assert bs.n.shape == (5, )
@@ -609,9 +619,15 @@ class TestMSCDBootstrap(unittest.TestCase):
     def test_initialisation_max_resamples(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
-            n_o = np.ones(len(disp_3d)) * 100  
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs = MSCDBootstrap(dt, disp_3d, 1, n_o, n_resamples=10, max_resamples=100, random_state=np.random.RandomState(0))
+            bs = MSCDBootstrap(dt,
+                               disp_3d,
+                               1,
+                               n_o,
+                               n_resamples=10,
+                               max_resamples=100,
+                               random_state=np.random.RandomState(0))
             assert bs.n.shape == (5, )
             assert bs.s.shape == (5, )
             assert_almost_equal(bs.v, np.square(bs.s))
@@ -625,7 +641,7 @@ class TestMSCDBootstrap(unittest.TestCase):
     def test_initialisation_random_state(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
-            n_o = np.ones(len(disp_3d)) * 100  
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs1 = MSCDBootstrap(dt, disp_3d, 1, n_o, random_state=np.random.RandomState(0))
             assert bs1.n.shape == (5, )
@@ -644,7 +660,7 @@ class TestMSCDBootstrap(unittest.TestCase):
     def test_initialisation_progress(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
-            n_o = np.ones(len(disp_3d)) * 100  
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = MSCDBootstrap(dt, disp_3d, 1, n_o, progress=False, random_state=np.random.RandomState(0))
             assert bs.n.shape == (5, )
@@ -661,7 +677,7 @@ class TestMSCDBootstrap(unittest.TestCase):
     def test_initialisation_skip_where_low_samples(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(1, i, 3) for i in range(10, 1, -1)]
-            n_o = np.ones(len(disp_3d)) * 100 
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = MSCDBootstrap(dt, disp_3d, 1, n_o, progress=False, random_state=np.random.RandomState(0))
             assert bs.n.shape == (4, )
@@ -678,7 +694,7 @@ class TestMSCDBootstrap(unittest.TestCase):
     def test_bootstrap(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
-            n_o = np.ones(len(disp_3d)) * 100 
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = MSCDBootstrap(dt, disp_3d, 1, n_o, random_state=RNG)
             bs.conductivity(1, 10)
@@ -691,7 +707,7 @@ class TestMSCDBootstrap(unittest.TestCase):
     def test_bootstrap_use_ngp(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(200, 10, -1)]
-            n_o = np.ones(len(disp_3d)) * 100 
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 190)
             bs = MSCDBootstrap(dt, disp_3d, 1, n_o, random_state=RNG)
             bs.conductivity(1, 10, use_ngp=True)
@@ -704,7 +720,7 @@ class TestMSCDBootstrap(unittest.TestCase):
     def test_bootstrap_fit_intercept(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
-            n_o = np.ones(len(disp_3d)) * 100 
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = MSCDBootstrap(dt, disp_3d, 1, n_o, random_state=RNG)
             bs.conductivity(1, 10, n_samples=500, fit_intercept=False)
@@ -716,7 +732,7 @@ class TestMSCDBootstrap(unittest.TestCase):
     def test_bootstrap_n_samples(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
-            n_o = np.ones(len(disp_3d)) * 100 
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = MSCDBootstrap(dt, disp_3d, 1, n_o, random_state=RNG)
             bs.conductivity(1, 10, n_samples=100)
@@ -729,7 +745,7 @@ class TestMSCDBootstrap(unittest.TestCase):
     def test_bootstrap_D(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
-            n_o = np.ones(len(disp_3d)) * 100 
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = MSCDBootstrap(dt, disp_3d, 1, n_o, random_state=RNG)
             bs.conductivity(1, 10, n_samples=100)
@@ -742,7 +758,7 @@ class TestMSCDBootstrap(unittest.TestCase):
     def test_bootstrap_thin(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(200, 10, -1)]
-            n_o = np.ones(len(disp_3d)) * 100 
+            n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 190)
             bs = MSCDBootstrap(dt, disp_3d, 1, n_o, random_state=RNG)
             bs.conductivity(1, 10, use_ngp=True, thin=1)
