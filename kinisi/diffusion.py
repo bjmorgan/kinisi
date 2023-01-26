@@ -51,7 +51,12 @@ class Bootstrap:
     :param progress: Show tqdm progress for sampling. Optional, default is :py:attr:`True`.
     """
 
-    def __init__(self, delta_t: np.ndarray, disp_3d: List[np.ndarray], n_o: np.ndarray, sub_sample_dt: int = 1, dimension: str='xyz'):
+    def __init__(self,
+                 delta_t: np.ndarray,
+                 disp_3d: List[np.ndarray],
+                 n_o: np.ndarray,
+                 sub_sample_dt: int = 1,
+                 dimension: str = 'xyz'):
         self._displacements = disp_3d[::sub_sample_dt]
         self._delta_t = np.array(delta_t[::sub_sample_dt])
         self._max_obs = self._displacements[0].shape[1]
@@ -122,7 +127,11 @@ class Bootstrap:
 
         :return: New :py:class`Bootstrap` object.
         """
-        boot = cls(my_dict['delta_t'], my_dict['displacements'], my_dict['n_o'], sub_sample_dt=my_dict['sub_sample_dt'], dimension=my_dict['dimension'])
+        boot = cls(my_dict['delta_t'],
+                   my_dict['displacements'],
+                   my_dict['n_o'],
+                   sub_sample_dt=my_dict['sub_sample_dt'],
+                   dimension=my_dict['dimension'])
         boot._max_obs = my_dict['max_obs']
         boot._distributions = [Distribution.from_dict(d) for d in my_dict['distributions']]
         boot._euclidian_displacements = [Distribution.from_dict(d) for d in my_dict['euclidian_displacements']]
@@ -485,8 +494,7 @@ class MSDBootstrap(Bootstrap):
             if d_squared.size <= 1:
                 continue
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
-            distro = self.sample_until_normal(d_squared, int(n_o[i]), n_resamples, max_resamples, alpha,
-                                              random_state)                           
+            distro = self.sample_until_normal(d_squared, int(n_o[i]), n_resamples, max_resamples, alpha, random_state)
             self._distributions.append(distro)
             self._n = np.append(self._n, d_squared.mean())
             self._s = np.append(self._s, np.std(distro.samples, ddof=1))
@@ -545,8 +553,8 @@ class TMSDBootstrap(Bootstrap):
                 continue
             self._n_o = np.append(self._n_o, n_o[i])
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
-            distro = self.sample_until_normal(coll_motion, int(n_o[i] / d_squared.shape[0]), n_resamples, max_resamples, alpha,
-                                              random_state)
+            distro = self.sample_until_normal(coll_motion, int(n_o[i] / d_squared.shape[0]), n_resamples, max_resamples,
+                                              alpha, random_state)
             self._distributions.append(distro)
             self._n = np.append(self._n, distro.n)
             self._s = np.append(self._s, np.std(distro.samples, ddof=1))
@@ -611,8 +619,8 @@ class MSCDBootstrap(Bootstrap):
                 continue
             self._n_o = np.append(self._n_o, n_o[i])
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
-            distro = self.sample_until_normal(sq_chg_motion, int(n_o[i] / d_squared.shape[0]), n_resamples, max_resamples, alpha,
-                                              random_state)
+            distro = self.sample_until_normal(sq_chg_motion, int(n_o[i] / d_squared.shape[0]), n_resamples,
+                                              max_resamples, alpha, random_state)
             self._distributions.append(distro)
             self._n = np.append(self._n, distro.n)
             self._s = np.append(self._s, np.std(distro.samples, ddof=1))

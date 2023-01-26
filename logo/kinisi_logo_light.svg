@@ -7,8 +7,8 @@
    viewBox="0 0 210 297"
    version="1.1"
    id="svg69309"
-   inkscape:version="1.1.1 (c3084ef, 2021-09-22)"
-   sodipodi:docname="kinisi_logo.svg"
+   inkscape:version="1.2.1 (9c6d41e4, 2022-07-14)"
+   sodipodi:docname="kinisi_logo_light.svg"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
@@ -24,14 +24,16 @@
      inkscape:document-units="mm"
      showgrid="false"
      inkscape:zoom="0.80087682"
-     inkscape:cx="-95.520307"
-     inkscape:cy="591.227"
-     inkscape:window-width="1312"
-     inkscape:window-height="1081"
+     inkscape:cx="160.44914"
+     inkscape:cy="614.951"
+     inkscape:window-width="2048"
+     inkscape:window-height="1227"
      inkscape:window-x="0"
-     inkscape:window-y="478"
+     inkscape:window-y="25"
      inkscape:window-maximized="0"
-     inkscape:current-layer="layer1" />
+     inkscape:current-layer="layer1"
+     inkscape:showpageshadow="2"
+     inkscape:deskcolor="#d1d1d1" />
   <defs
      id="defs69306" />
   <g
@@ -41,7 +43,10 @@
     <path
        d="m 23.55313,107.11168 h 0.073 c 0.43912,-0.62215 1.06098,-1.39038 1.57313,-2.01196 l 5.19432,-6.1092 h 3.87783 l -6.84049,7.2796 7.79147,10.42557 h -3.91421 l -6.10892,-8.48666 -1.64617,1.82893 v 6.65773 H 20.37045 V 90.72327 h 3.18264 z"
        style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.818;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:100;stroke-dasharray:none;stroke-opacity:1"
-       id="path67392" />
+       id="path67392"
+       inkscape:export-filename="../docs/source/_static/logo_light.png"
+       inkscape:export-xdpi="600"
+       inkscape:export-ydpi="600" />
     <g
        id="g67394"
        transform="matrix(0.28870117,0,0,-0.28870117,41.73369,94.01539)"

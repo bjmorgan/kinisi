@@ -33,7 +33,7 @@ class ConductivityAnalyzer(Analyzer):
         if all values are the same. Optional, default is :py:attr:`1`.
     """
 
-    def __init__(self, delta_t: np.ndarray, disp_3d: List[np.ndarray], n_o: np.ndarray,volume: float):
+    def __init__(self, delta_t: np.ndarray, disp_3d: List[np.ndarray], n_o: np.ndarray, volume: float):
         super().__init__(delta_t, disp_3d, n_o, volume)
         self._diff = None
 

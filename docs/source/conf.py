@@ -42,11 +42,10 @@ release = __version__
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.doctest',
-    'sphinx.ext.todo',
-    'sphinx.ext.coverage',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.napoleon',
+    'myst_parser',
+    # 'sphinx.ext.coverage',
+    # 'sphinx.ext.viewcode',
+    # 'sphinx.ext.napoleon',
     'sphinx.ext.intersphinx',
     'sphinx.ext.mathjax',
     'sphinx_autodoc_typehints',
@@ -66,8 +65,8 @@ autodoc_member_order = 'bysource'
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
-# source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+source_suffix = ['.rst', '.md']
+# source_suffix = '.md' 
 
 # The master toctree document.
 master_doc = 'index'
@@ -77,7 +76,7 @@ master_doc = 'index'
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -85,7 +84,7 @@ language = None
 exclude_patterns = []
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = None
+pygments_style = 'sphinx'
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -93,27 +92,34 @@ pygments_style = None
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_book_theme'
+html_theme = 'pydata_sphinx_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
+html_static_path = ['_static']
+
 html_theme_options = {
-     "logo_only": True,
-     "repository_url": "https://github.com/bjmorgan/kinisi",
-     "repository_branch": "master",
-     "path_to_docs": "docs",
-     "use_repository_button": True,
-     "use_issues_button": True,
-     "use_edit_page_button": True,
-     "show_toc_level": 2,  # Show subheadings in secondary sidebar
- }
+   "logo": {
+      "image_light": "logo_light.png",
+      "image_dark": "logo_dark.png",
+   },
+  "header_links_before_dropdown": 6,
+  "icon_links": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/bjmorgan/kinisi",
+            "icon": "fab fa-github-square fa-xl",
+            "type": "fontawesome",
+        }
+   ]
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+# html_static_path = ['_static']
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -123,7 +129,7 @@ html_static_path = ['_static']
 # default: ``['localtoc.html', 'relations.html', 'sourcelink.html',
 # 'searchbox.html']``.
 #
-# html_sidebars = {}
+html_sidebars = {}
 
 
 # -- Options for HTMLHelp output ---------------------------------------------
@@ -186,7 +192,7 @@ texinfo_documents = [
 # -- Options for Epub output -------------------------------------------------
 
 # Bibliographic Dublin Core info.
-epub_title = project
+# epub_title = project
 
 # The unique identifier of the text. This can be a ISBN number
 # or the project homepage.
@@ -206,14 +212,14 @@ epub_exclude_files = ['search.html']
 # -- Options for todo extension ----------------------------------------------
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
-todo_include_todos = True
+# todo_include_todos = True
 
 # Some logo things
-html_logo = "_static/kinisi_logo.png"
-html_theme_options = {"logo_only": True}
+# html_logo = "_static/kinisi_logo.png"
+# html_theme_options = {"logo_only": True}
 
-def setup(app):
-    app.add_css_file('custom.css')
+# def setup(app):
+#     app.add_css_file('custom.css')
 
 intersphinx_mapping = {
     'uravu': ('https://uravu.readthedocs.io/en/latest/', None),
