@@ -9,14 +9,24 @@ More information about the approach `kinisi` uses can be found in the detailed [
 `kinisi` can handle simulation trajectories from many common molecular dynamics packages, including [VASP](https://www.vasp.at/wiki/index.php/XDATCAR) and those that can be read by [MDAnalysis](https://userguide.mdanalysis.org/stable/reading_and_writing.html).
 Examples of some of these analyses are shown in the [notebooks](./notebooks), also given there is an example of using `kinisi` to investigate the Arrhenius relationship of diffusion as a function of temperature.
 
-```{figure} ./_static/example.pdf
+```{image} ./_static/example_light.png
   :width: 450
   :align: center
+  :class: only-light
   :alt: An example of the kinisi analysis for the diffusion of lithium in a superionic material. 
-
-  An example of the output from a `kinisi` analysis; showing the determined mean-squared displacements (solid black line), 
-  the estimated Einstein diffusion relationship (blue regions representing descreasing credible intervals).
 ```
+```{image} ./_static/example_dark.png
+  :width: 450
+  :align: center
+  :class: only-dark
+  :alt: An example of the kinisi analysis for the diffusion of lithium in a superionic material. 
+```
+<center>
+<small>
+An example of the output from <code>kinisi</code>; showing the determined mean-squared displacements (solid line),<br>
+the estimated Einstein diffusion relationship (blue regions representing descreasing credible intervals).
+</small>
+</center>
 
 ## Contributors
 
