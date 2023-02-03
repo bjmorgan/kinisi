@@ -375,7 +375,7 @@ class Bootstrap:
         :return: Modelled covariance matrix that is positive definite.
         """
 
-        def _model_variance(dt: np.ndarray, a: float, no: np.ndarray) -> np.ndarray:
+        def _model_variance(dt: np.ndarray, a: float) -> np.ndarray:
             """
             Determine the model variance, based on a quadratic relationship with the number of
             independent samples as a divisor.
