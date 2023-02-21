@@ -41,9 +41,9 @@ class Parser:
         to that in the :py:attr:`n_steps` argument, such that all values are unique. Optional, defaults to
         :py:attr:`linear`.
     :param sampling: The ways that the time-windows are sampled. The options are :py:attr:`'single-origin'`
-        or :py:attr:`'non-overlapping'` with the former resulting in only one observation per atom per
-        time-window and the latter giving the maximum number of origins without sampling overlapping
-        trajectories. Optional, defaults to :py:attr:`'non-overlapping'`.
+        or :py:attr:`'multi-origin'` with the former resulting in only one observation per atom per
+        time-window and the latter giving the maximum number of trajectories. Optional, defaults
+        to :py:attr:`'multi-origin'`.
     :param memory_limit: Upper limit in the amount of computer memory that the displacements can occupy in
         gigabytes (GB). Optional, defaults to :py:attr:`8.`.
     :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
@@ -59,7 +59,7 @@ class Parser:
                  max_dt: float = None,
                  n_steps: int = 100,
                  spacing: str = 'linear',
-                 sampling: str = 'non-overlapping',
+                 sampling: str = 'multi-origin',
                  memory_limit: float = 8.,
                  progress: bool = True):
         self.time_step = time_step
@@ -191,7 +191,7 @@ class Parser:
                 if np.multiply(*disp[:, ::timestep].shape[:2]) <= 1:
                     continue
                 disp_3d.append(disp)
-            elif self.sampling == 'non-overlapping':
+            elif self.sampling == 'multi-origin':
                 disp = np.concatenate([
                     drift_corrected[self.indices, np.newaxis, timestep - 1],
                     np.subtract(drift_corrected[self.indices, timestep:], drift_corrected[self.indices, :-timestep])
@@ -202,7 +202,7 @@ class Parser:
                 disp_3d.append(disp)
             else:
                 raise ValueError(f"The sampling option of {self.sampling} is unrecognized, "
-                                 "please use 'non-overlapping' or 'single-origin'.")
+                                 "please use 'multi-origin' or 'single-origin'.")
             n_samples = np.append(n_samples, np.multiply(*disp[:, ::timestep].shape[:2]))
         return delta_t, disp_3d, n_samples
 
@@ -229,9 +229,9 @@ class PymatgenParser(Parser):
         to that in the :py:attr:`n_steps` argument, such that all values are unique. Optional, defaults to
         :py:attr:`linear`.
     :param sampling: The ways that the time-windows are sampled. The options are :py:attr:`'single-origin'`
-        or :py:attr:`'non-overlapping'` with the former resulting in only one observation per atom per
+        or :py:attr:`'multi-origin'` with the former resulting in only one observation per atom per
         time-window and the latter giving the maximum number of origins without sampling overlapping
-        trajectories. Optional, defaults to :py:attr:`'non-overlapping'`.
+        trajectories. Optional, defaults to :py:attr:`'multi-origin'`.
     :param memory_limit: Upper limit in the amount of computer memory that the displacements can occupy in
         gigabytes (GB). Optional, defaults to :py:attr:`8.`.
     :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
@@ -247,7 +247,7 @@ class PymatgenParser(Parser):
                  max_dt: float = None,
                  n_steps: int = 100,
                  spacing: str = 'linear',
-                 sampling: str = 'non-overlapping',
+                 sampling: str = 'multi-origin',
                  memory_limit: float = 8.,
                  progress: bool = True):
         structure, coords, latt = self.get_structure_coords_latt(structures, sub_sample_traj, progress)
@@ -356,9 +356,9 @@ class MDAnalysisParser(Parser):
         to that in the :py:attr:`n_steps` argument, such that all values are unique. Optional, defaults to
         :py:attr:`linear`.
     :param sampling: The ways that the time-windows are sampled. The options are :py:attr:`'single-origin'`
-        or :py:attr:`'non-overlapping'` with the former resulting in only one observation per atom per
+        or :py:attr:`'multi-origin'` with the former resulting in only one observation per atom per
         time-window and the latter giving the maximum number of origins without sampling overlapping
-        trajectories. Optional, defaults to :py:attr:`'non-overlapping'`.
+        trajectories. Optional, defaults to :py:attr:`'multi-origin'`.
     :param memory_limit: Upper limit in the amount of computer memory that the displacements can occupy in
         gigabytes (GB). Optional, defaults to :py:attr:`8.`.
     :param n_steps: Number of steps to be used in the timestep function. Optional, defaults to all of them.
@@ -376,7 +376,7 @@ class MDAnalysisParser(Parser):
                  max_dt: float = None,
                  n_steps: int = 100,
                  spacing: str = 'linear',
-                 sampling: str = 'non-overlapping',
+                 sampling: str = 'multi-origin',
                  memory_limit: float = 8.,
                  progress: bool = True):
         structure, coords, latt, volume = self.get_structure_coords_latt(universe, sub_sample_atoms, sub_sample_traj,

@@ -30,10 +30,3 @@
 
     > Check out the [specific page](./memory_limit) that we have related to this error. 
 
-```{toctree}
----
-:hidden: true
----
-
-memory_limit
-```
