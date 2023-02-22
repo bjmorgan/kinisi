@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "kinisi"
 dynamic = ["version"]
-description = "Efficient estimation of diffusion processes from molecular dynamics."\
+description = "Efficient estimation of diffusion processes from molecular dynamics."
 readme = "README.md"
 authors = [
     {name = "Andrew R. McCluskey", email = "andrew.mccluskey@ess.eu"}, 
