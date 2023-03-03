@@ -212,7 +212,7 @@ class ConductivityAnalyzer(Analyzer):
     @property
     def mscd_std(self) -> np.ndarray:
         """
-        :return: MSCD standard deviations values for the input trajectories.
+        :return: MSCD standard deviation values for the input trajectories (a single standard deviation).
         """
         return self._diff.s
 

@@ -197,7 +197,7 @@ class JumpDiffusionAnalyzer(Analyzer):
     @property
     def tmsd_std(self) -> np.ndarray:
         """
-        :return: MSD standard deviations values for the input trajectories.
+        :return: MSD standard deviation values for the input trajectories (a single standard deviation).
         """
         return self._diff.s
 
