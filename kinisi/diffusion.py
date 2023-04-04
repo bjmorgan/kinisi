@@ -637,7 +637,6 @@ def _bootstrap(array: np.ndarray, n_samples: int, n_resamples: int, random_state
     :param array: The array to sample from.
     :param n_samples: Number of samples.
     :param n_resamples: Number of resamples to perform initially.
-    :param dt: current timestep.
     :param random_state: A :py:attr:`RandomState` object to be used to ensure reproducibility. Optional,
         default is :py:attr:`None`
 
