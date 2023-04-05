@@ -672,7 +672,6 @@ def _bayesian_bootstrap(array: np.ndarray,
     
     :return: Samples from the simulated posterior distribution of the mean of the array.
     """
-    # n_samples = int(n_samples)
     if random_state == None:
         random_state = np.random.mtrand.RandomState()
     values = array.flatten()
