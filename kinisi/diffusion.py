@@ -630,7 +630,7 @@ class MSCDBootstrap(Bootstrap):
         self._n_o = self._n_o[:self._n.size]
 
 
-def _bootstrap(array: np.ndarray, n_samples: int, n_resamples: int, random_state: np.random.mtrand.RandomState = None) -> np.ndarray:
+def _bootstrap(array: np.ndarray, n_samples: int, n_resamples: int, random_state: np.random.mtrand.RandomState = None) -> list[float]:
     """
     Perform a set of resamples.
 
@@ -651,7 +651,7 @@ def _bootstrap(array: np.ndarray, n_samples: int, n_resamples: int, random_state
 def _bayesian_bootstrap(array: np.ndarray,
                         n_samples: float,
                         n_resamples: int,
-                        random_state: np.random.mtrand.RandomState = None) -> np.ndarray:
+                        random_state: np.random.mtrand.RandomState = None) -> list[float]:
     """
     Performs a Bayesian bootstrap simulation of the posterior distribution of the mean of observed values,
     using a sparse Dirichlet prior for sample weights.
@@ -671,10 +671,11 @@ def _bayesian_bootstrap(array: np.ndarray,
     """
     if random_state == None:
         random_state = np.random.mtrand.RandomState()
-    k = len(array)
+    values = array.flatten()
+    k = len(values)
     alphak = (n_samples - 1)/(k - 1)
     weights = random_state.dirichlet(alpha=np.ones(k)*alphak, size=n_resamples)
-    return np.sum(weights * array, axis=1)
+    return list(np.sum(weights * values, axis=1))
 
 
 def _populate_covariance_matrix(variances: np.ndarray, n_samples: np.ndarray) -> np.ndarray:
