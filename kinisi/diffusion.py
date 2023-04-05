@@ -256,10 +256,10 @@ class Bootstrap:
 
         :return: The resampled distribution.
         """
-        values = _bootstrap(array, n_samples, n_resamples, random_state)
+        values = _bayesian_bootstrap(array, n_samples, n_resamples, random_state)
         p_value = normaltest(values)[1]
         while p_value < alpha and len(values) < max_resamples:
-            values += _bootstrap(array, n_samples, 100, random_state)
+            values += _bayesian_bootstrap(array, n_samples, 100, random_state)
             p_value = normaltest(values)[1]
         if len(values) >= max_resamples:
             warnings.warn("The maximum number of resamples has been reached, and the distribution is not yet normal.")
@@ -630,22 +630,51 @@ class MSCDBootstrap(Bootstrap):
         self._n_o = self._n_o[:self._n.size]
 
 
-def _bootstrap(array: np.ndarray, n_samples: int, n_resamples: int, random_state: np.random.mtrand.RandomState = None):
+def _bootstrap(array: np.ndarray, n_samples: int, n_resamples: int, random_state: np.random.mtrand.RandomState = None) -> np.ndarray:
     """
     Perform a set of resamples.
 
     :param array: The array to sample from.
     :param n_samples: Number of samples.
-    :param n_resamples: Number of resamples to perform initially.
+    :param n_resamples: Number of resamples to perform.
     :param random_state: A :py:attr:`RandomState` object to be used to ensure reproducibility. Optional,
         default is :py:attr:`None`
 
-    :return: Resampled values from the array
+    :return: Simulated means from resampling the array.
     """
     return [
         np.mean(resample(array.flatten(), n_samples=n_samples, random_state=random_state).flatten())
         for j in range(n_resamples)
     ]
+    
+    
+def _bayesian_bootstrap(array: np.ndarray,
+                        n_samples: float,
+                        n_resamples: int,
+                        random_state: np.random.mtrand.RandomState = None) -> np.ndarray:
+    """
+    Performs a Bayesian bootstrap simulation of the posterior distribution of the mean of observed values,
+    using a sparse Dirichlet prior for sample weights.
+    
+    The sparsity of the Dirichlet prior for the sample weights is controlled by a concentration parameter
+    alpha, where alpha = k(N-1)/(k-1). k is the dimensionality of the array of observed values, and 
+    N can be considered an effective number of samples for each set of sample weights.
+    alpha has been chosen to vary linearly with N, and gives a flat Dirichlet prior when N=k,
+    and a uniform categorical prior when N=1.
+    
+    :param array: The array to sample from.
+    :param n_samples: The effective number of samples for each set of simulated weights.
+    :param n_resamples: Number of resamples to perform.
+    :param random_state: A :py:attr:`RandomState` object. Optional, default is :py:attr:`None`
+    
+    :return: Samples from the simulated posterior distribution of the mean of the array.
+    """
+    if random_state == None:
+        random_state = np.random.mtrand.RandomState()
+    k = len(array)
+    alphak = (n_samples - 1)/(k - 1)
+    weights = random_state.dirichlet(alpha=np.ones(k)*alphak, size=n_resamples)
+    return np.sum(weights * array, axis=1)
 
 
 def _populate_covariance_matrix(variances: np.ndarray, n_samples: np.ndarray) -> np.ndarray:
