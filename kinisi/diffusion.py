@@ -633,7 +633,7 @@ class MSCDBootstrap(Bootstrap):
 def _bootstrap(array: np.ndarray,
                n_samples: int,
                n_resamples: float,
-               random_state: np.random.mtrand.RandomState = None) -> list[float]:
+               random_state: np.random.mtrand.RandomState = None) -> List[float]:
     """
     Perform a set of resamples.
 
@@ -654,7 +654,7 @@ def _bootstrap(array: np.ndarray,
 def _bayesian_bootstrap(array: np.ndarray,
                         n_samples: float,
                         n_resamples: int,
-                        random_state: np.random.mtrand.RandomState = None) -> list[float]:
+                        random_state: np.random.mtrand.RandomState = None) -> List[float]:
     """
     Performs a Bayesian bootstrap simulation of the posterior distribution of the mean of observed values,
     using a sparse Dirichlet prior for sample weights.
