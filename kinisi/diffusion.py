@@ -8,7 +8,7 @@ diffusion coefficient from a material.
 # author: Andrew R. McCluskey (arm61)
 
 import warnings
-from typing import List, Union
+from typing import List, Union, Any
 import numpy as np
 from scipy.stats import normaltest, linregress
 from scipy.linalg import pinvh
@@ -236,7 +236,7 @@ class Bootstrap:
 
     @staticmethod
     def sample_until_normal(array: np.ndarray,
-                            n_samples: int,
+                            n_samples: float,
                             n_resamples: int,
                             max_resamples: int,
                             alpha: float = 1e-3,
@@ -494,7 +494,7 @@ class MSDBootstrap(Bootstrap):
             if d_squared.size <= 1:
                 continue
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
-            distro = self.sample_until_normal(d_squared, int(n_o[i]), n_resamples, max_resamples, alpha, random_state)
+            distro = self.sample_until_normal(d_squared, n_o[i], n_resamples, max_resamples, alpha, random_state)
             self._distributions.append(distro)
             self._n = np.append(self._n, d_squared.mean())
             self._s = np.append(self._s, np.std(distro.samples, ddof=1))
@@ -553,7 +553,7 @@ class TMSDBootstrap(Bootstrap):
                 continue
             self._n_o = np.append(self._n_o, n_o[i])
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
-            distro = self.sample_until_normal(coll_motion, int(n_o[i] / d_squared.shape[0]), n_resamples, max_resamples,
+            distro = self.sample_until_normal(coll_motion, n_o[i] / d_squared.shape[0], n_resamples, max_resamples,
                                               alpha, random_state)
             self._distributions.append(distro)
             self._n = np.append(self._n, distro.n)
@@ -619,7 +619,7 @@ class MSCDBootstrap(Bootstrap):
                 continue
             self._n_o = np.append(self._n_o, n_o[i])
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
-            distro = self.sample_until_normal(sq_chg_motion, int(n_o[i] / d_squared.shape[0]), n_resamples,
+            distro = self.sample_until_normal(sq_chg_motion, n_o[i] / d_squared.shape[0], n_resamples,
                                               max_resamples, alpha, random_state)
             self._distributions.append(distro)
             self._n = np.append(self._n, distro.n)
@@ -630,7 +630,10 @@ class MSCDBootstrap(Bootstrap):
         self._n_o = self._n_o[:self._n.size]
 
 
-def _bootstrap(array: np.ndarray, n_samples: int, n_resamples: int, random_state: np.random.mtrand.RandomState = None) -> list[float]:
+def _bootstrap(array: np.ndarray,
+               n_samples: int,
+               n_resamples: float,
+               random_state: np.random.mtrand.RandomState = None) -> list[float]:
     """
     Perform a set of resamples.
 
@@ -643,7 +646,7 @@ def _bootstrap(array: np.ndarray, n_samples: int, n_resamples: int, random_state
     :return: Simulated means from resampling the array.
     """
     return [
-        np.mean(resample(array.flatten(), n_samples=n_samples, random_state=random_state).flatten())
+        np.mean(resample(array.flatten(), n_samples=int(n_samples), random_state=random_state).flatten())
         for j in range(n_resamples)
     ]
     
@@ -669,6 +672,7 @@ def _bayesian_bootstrap(array: np.ndarray,
     
     :return: Samples from the simulated posterior distribution of the mean of the array.
     """
+    # n_samples = int(n_samples)
     if random_state == None:
         random_state = np.random.mtrand.RandomState()
     values = array.flatten()
