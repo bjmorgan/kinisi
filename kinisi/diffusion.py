@@ -677,7 +677,11 @@ def _bayesian_bootstrap(array: np.ndarray,
     values = array.flatten()
     k = len(values)
     alphak = (n_samples - 1)/(k - 1)
-    weights = random_state.dirichlet(alpha=np.ones(k)*alphak, size=n_resamples)
+    if alphak > 0:
+        weights = random_state.dirichlet(alpha=np.ones(k)*alphak, size=n_resamples)
+    else:
+        # Sample from a uniform categorical distribution, equivalent to Dirichlet([0,0,0,…])
+        weights = random_state.multinomial(n=1, pvals=np.ones(k)/k, size=n_resamples)
     return list(np.sum(weights * values, axis=1))
 
 
