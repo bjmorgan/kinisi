@@ -387,6 +387,7 @@ class Bootstrap:
         sampler.run_mcmc(pos, n_samples + n_burn, progress=progress, progress_kwargs={'desc': "Likelihood Sampling"})
         self.flatchain = sampler.get_chain(flat=True, thin=thin, discard=n_burn)
         self.gradient = Distribution(self.flatchain[:, 0])
+        self._npd_covariance_matrix = _populate_covariance_matrix(_model_variance(self.dt, self.flatchain[:, 0].mean()), self._n_o)
         self._covariance_matrix = find_nearest_positive_definite(_populate_covariance_matrix(_model_variance(self.dt, self.flatchain[:, 0].mean()), self._n_o))
         self._v = self._covariance_matrix.diagonal()
         self._s = np.sqrt(self._v)
