@@ -256,10 +256,12 @@ class Bootstrap:
 
         :return: The resampled distribution.
         """
-        values = _bayesian_bootstrap(array, n_samples, n_resamples, random_state)
+        # values = _bayesian_bootstrap(array, n_samples, n_resamples, random_state)
+        values = _bootstrap(array, n_samples, n_resamples, random_state)
         p_value = normaltest(values)[1]
         while p_value < alpha and len(values) < max_resamples:
-            values += _bayesian_bootstrap(array, n_samples, 100, random_state)
+            # values += _bayesian_bootstrap(array, n_samples, 100, random_state)
+            values += _bootstrap(array, n_samples, 100, random_state)
             p_value = normaltest(values)[1]
         if len(values) >= max_resamples:
             warnings.warn("The maximum number of resamples has been reached, and the distribution is not yet normal.")
@@ -494,11 +496,13 @@ class MSDBootstrap(Bootstrap):
             if d_squared.size <= 1:
                 continue
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
-            distro = self.sample_until_normal(d_squared, n_o[i], n_resamples, max_resamples, alpha, random_state)
-            self._distributions.append(distro)
+            # distro = self.sample_until_normal(d_squared, n_o[i], n_resamples, max_resamples, alpha, random_state)
+            # self._distributions.append(distro)
             self._n = np.append(self._n, d_squared.mean())
-            self._s = np.append(self._s, np.std(distro.samples, ddof=1))
-            self._v = np.append(self._v, np.var(distro.samples, ddof=1))
+            self._v = np.append(self._v, 2 * self._n[i] ** 2 / n_o[i])
+            self._s = np.append(self._s, np.sqrt(self._v[i]))
+            # self._s = np.append(self._s, np.std(distro.samples, ddof=1))
+            # self._v = np.append(self._v, np.var(distro.samples, ddof=1))
             self._ngp = np.append(self._ngp, self.ngp_calculation(d_squared))
             self._dt = np.append(self._dt, self._delta_t[i])
         self._n_o = self._n_o[:self._n.size]
