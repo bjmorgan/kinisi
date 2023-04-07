@@ -318,29 +318,12 @@ class Bootstrap:
         if use_ngp:
             max_ngp = np.argmax(self._ngp)
 
-        # self._covariance_matrix = self.generate_covariance_matrix(max_ngp)
+        self._covariance_matrix = self.generate_covariance_matrix(max_ngp)
 
-        # _, logdet = np.linalg.slogdet(self._covariance_matrix)
-        # logdet += np.log(2 * np.pi) * self._n[max_ngp:].size
-        # inv = pinvh(self._covariance_matrix)
+        _, logdet = np.linalg.slogdet(self._covariance_matrix)
+        logdet += np.log(2 * np.pi) * self._n[max_ngp:].size
+        inv = pinvh(self._covariance_matrix)
 
-        precompute = 8 * 3 / self._n_o * self.dt**2 
-        precompute2 = np.log(2 * np.pi) * self._n[max_ngp:].size
-
-        def _model_variance(dt: np.ndarray, a: float) -> np.ndarray:
-            """
-            Determine the model variance, based on a quadratic relationship with the number of
-            independent samples as a divisor.
-
-            :param dt: Timestep value
-            :param a: Quadratic coefficient
-            :return: Model variances
-            """
-            return dt * (a / 6) ** 2
-        
-        self._model_v = _model_variance(precompute[max_ngp:], 6)
-        one_cov = _populate_covariance_matrix(self._model_v, self._n_o[max_ngp:])
-        
         def log_likelihood(theta: np.ndarray) -> float:
             """
             Get the log likelihood for multivariate normal distribution.
@@ -349,13 +332,6 @@ class Bootstrap:
             """
             if theta[0] < 0:
                 return -np.inf
-
-            covariance_matrix = one_cov * (theta[0] / 6) ** 2
-            covariance_matrix = find_nearest_positive_definite(covariance_matrix)
-
-            _, logdet = np.linalg.slogdet(covariance_matrix)
-            logdet += precompute2
-            inv = pinvh(covariance_matrix)
             model = _straight_line(self._dt[max_ngp:], *theta)
             diff = (model - self._n[max_ngp:])
             logl = -0.5 * (logdet + np.matmul(diff.T, np.matmul(inv, diff)))
@@ -387,11 +363,6 @@ class Bootstrap:
         sampler.run_mcmc(pos, n_samples + n_burn, progress=progress, progress_kwargs={'desc': "Likelihood Sampling"})
         self.flatchain = sampler.get_chain(flat=True, thin=thin, discard=n_burn)
         self.gradient = Distribution(self.flatchain[:, 0])
-        self._npd_covariance_matrix = _populate_covariance_matrix(_model_variance(self.dt[max_ngp:], self.flatchain[:, 0].mean()), self._n_o[max_ngp:])
-        self._covariance_matrix = find_nearest_positive_definite(self._npd_covariance_matrix)
-        covariance_matrix = find_nearest_positive_definite(_populate_covariance_matrix(_model_variance(self.dt, self.flatchain[:, 0].mean()), self._n_o))
-        self._v = covariance_matrix.diagonal()
-        self._s = np.sqrt(self._v)
         self._intercept = None
         if fit_intercept:
             self._intercept = Distribution(self.flatchain[:, 1])
@@ -525,13 +496,15 @@ class MSDBootstrap(Bootstrap):
             if d_squared.size <= 1:
                 continue
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
-            distro = self.sample_until_normal(d_squared, n_o[i], n_resamples, max_resamples, alpha, random_state)
-            self._distributions.append(distro)
+            # distro = self.sample_until_normal(d_squared, n_o[i], n_resamples, max_resamples, alpha, random_state)
+            # self._distributions.append(distro)
             self._n = np.append(self._n, d_squared.mean())
             # self._v = np.append(self._v, 2 * self._n[i] ** 2 / n_o[i])
             # self._s = np.append(self._s, np.sqrt(self._v[i]))
             # self._s = np.append(self._s, np.std(distro.samples, ddof=1))
             # self._v = np.append(self._v, np.var(distro.samples, ddof=1))
+            self._v = np.append(self._v, np.var(d_squared, ddof=1) / n_o[i])
+            self._s = np.append(self._s, np.sqrt(self._v[i]))
             self._ngp = np.append(self._ngp, self.ngp_calculation(d_squared))
             self._dt = np.append(self._dt, self._delta_t[i])
         self._n_o = self._n_o[:self._n.size]
