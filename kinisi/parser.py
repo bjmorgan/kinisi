@@ -157,7 +157,7 @@ class Parser:
     def get_disps(self,
                   timesteps: np.ndarray,
                   drift_corrected: np.ndarray,
-                  progress: bool = True) -> Tuple[np.ndarray, np.ndarray]:
+                  progress: bool = True) -> Tuple[np.ndarray, List[np.ndarray], np.ndarray]:
         """
         Calculate the displacement at each timestep.
 
@@ -203,7 +203,8 @@ class Parser:
             else:
                 raise ValueError(f"The sampling option of {self.sampling} is unrecognized, "
                                  "please use 'multi-origin' or 'single-origin'.")
-            n_samples = np.append(n_samples, np.multiply(*disp[:, ::timestep].shape[:2]))
+            # n_samples = np.append(n_samples, np.multiply(*disp[:, ::timestep].shape[:2]))
+            n_samples = np.append(n_samples, disp.shape[0] * timesteps[-1] / timestep)
         return delta_t, disp_3d, n_samples
 
 

@@ -213,8 +213,6 @@ class TestJumpDiffusionAnalyzer(unittest.TestCase):
             for i in range(len(a.dr)):
                 assert_almost_equal(a.dr[i].samples, a._diff.euclidian_displacements[i].samples)
             assert a.ngp_max == a._diff.dt[a._diff.ngp.argmax()]
-            assert issubclass(w[0].category, UserWarning)
-            assert "maximum" in str(w[0].message)
 
     def test_diffusion(self):
         with warnings.catch_warnings(record=True) as w:
@@ -230,8 +228,6 @@ class TestJumpDiffusionAnalyzer(unittest.TestCase):
             assert a.ngp_max == a._diff.dt[a._diff.ngp.argmax()]
             assert isinstance(a.D_J, Distribution)
             assert a.flatchain.shape == (3200, 2)
-            assert issubclass(w[0].category, UserWarning)
-            assert "maximum" in str(w[0].message)
 
     def test_dictionary_roundtrip(self):
         with warnings.catch_warnings(record=True) as w:
@@ -247,7 +243,6 @@ class TestJumpDiffusionAnalyzer(unittest.TestCase):
             assert a.ngp_max == a._diff.dt[a._diff.ngp.argmax()]
             assert isinstance(a.D_J, Distribution)
             assert a.flatchain.shape == (3200, 2)
-            assert issubclass(w[0].category, UserWarning)
             b = JumpDiffusionAnalyzer.from_dict(a.to_dict())
             assert_equal(a.dt, b.dt)
             assert_equal(a.tmsd, b.tmsd)
@@ -276,8 +271,6 @@ class TestConductivityAnalyzer(unittest.TestCase):
             for i in range(len(a.dr)):
                 assert_almost_equal(a.dr[i].samples, a._diff.euclidian_displacements[i].samples)
             assert a.ngp_max == a._diff.dt[a._diff.ngp.argmax()]
-            assert issubclass(w[0].category, UserWarning)
-            assert "maximum" in str(w[0].message)
 
     def test_diffusion(self):
         with warnings.catch_warnings(record=True) as w:
@@ -294,8 +287,6 @@ class TestConductivityAnalyzer(unittest.TestCase):
             assert a.ngp_max == a._diff.dt[a._diff.ngp.argmax()]
             assert isinstance(a.sigma, Distribution)
             assert a.flatchain.shape == (3200, 2)
-            assert issubclass(w[0].category, UserWarning)
-            assert "maximum" in str(w[0].message)
 
     def test_dictionary_roundtrip(self):
         with warnings.catch_warnings(record=True) as w:
@@ -311,7 +302,6 @@ class TestConductivityAnalyzer(unittest.TestCase):
             assert a.ngp_max == a._diff.dt[a._diff.ngp.argmax()]
             assert isinstance(a.sigma, Distribution)
             assert a.flatchain.shape == (3200, 2)
-            assert issubclass(w[0].category, UserWarning)
             b = ConductivityAnalyzer.from_dict(a.to_dict())
             assert_equal(a.dt, b.dt)
             assert_equal(a.mscd, b.mscd)
