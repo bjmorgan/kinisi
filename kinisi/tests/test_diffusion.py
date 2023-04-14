@@ -194,7 +194,7 @@ class TestMSDBootstrap(unittest.TestCase):
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs1 = MSDBootstrap(dt, disp_3d, n_o, random_state=np.random.RandomState(0))
+            bs1 = MSDBootstrap(dt, disp_3d, n_o, bootstrap=True, random_state=np.random.RandomState(0))
             assert bs1.n.shape == (10, )
             assert bs1.s.shape == (10, )
             assert_almost_equal(bs1.v, np.square(bs1.s))
@@ -204,7 +204,7 @@ class TestMSDBootstrap(unittest.TestCase):
                 assert isinstance(i, Distribution)
             for i in bs1._distributions:
                 assert i.samples.size >= 1000
-            bs2 = MSDBootstrap(dt, disp_3d, n_o, random_state=np.random.RandomState(0))
+            bs2 = MSDBootstrap(dt, disp_3d, n_o, bootstrap=True, random_state=np.random.RandomState(0))
             assert bs1._distributions[-1].size == bs2._distributions[-1].size
             assert_almost_equal(bs1._distributions[-1].samples, bs2._distributions[-1].samples)
 
@@ -436,7 +436,7 @@ class TestTMSDBootstrap(unittest.TestCase):
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs1 = TMSDBootstrap(dt, disp_3d, n_o, random_state=np.random.RandomState(0))
+            bs1 = TMSDBootstrap(dt, disp_3d, n_o, bootstrap=True, random_state=np.random.RandomState(0))
             assert bs1.n.shape == (5, )
             assert bs1.s.shape == (5, )
             assert_almost_equal(bs1.v, np.square(bs1.s))
@@ -446,7 +446,7 @@ class TestTMSDBootstrap(unittest.TestCase):
                 assert isinstance(i, Distribution)
             for i in bs1._distributions:
                 assert i.samples.size >= 1000
-            bs2 = TMSDBootstrap(dt, disp_3d, n_o, random_state=np.random.RandomState(0))
+            bs2 = TMSDBootstrap(dt, disp_3d, n_o, bootstrap=True, random_state=np.random.RandomState(0))
             assert bs1._distributions[-1].size == bs2._distributions[-1].size
             assert_almost_equal(bs1._distributions[-1].samples, bs2._distributions[-1].samples)
 
@@ -643,7 +643,7 @@ class TestMSCDBootstrap(unittest.TestCase):
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs1 = MSCDBootstrap(dt, disp_3d, 1, n_o, random_state=np.random.RandomState(0))
+            bs1 = MSCDBootstrap(dt, disp_3d, 1, n_o, bootstrap=True, random_state=np.random.RandomState(0))
             assert bs1.n.shape == (5, )
             assert bs1.s.shape == (5, )
             assert_almost_equal(bs1.v, np.square(bs1.s))
@@ -653,7 +653,7 @@ class TestMSCDBootstrap(unittest.TestCase):
                 assert isinstance(i, Distribution)
             for i in bs1._distributions:
                 assert i.samples.size >= 1000
-            bs2 = MSCDBootstrap(dt, disp_3d, 1, n_o, random_state=np.random.RandomState(0))
+            bs2 = MSCDBootstrap(dt, disp_3d, 1, n_o, bootstrap=True, random_state=np.random.RandomState(0))
             assert bs1._distributions[-1].size == bs2._distributions[-1].size
             assert_almost_equal(bs1._distributions[-1].samples, bs2._distributions[-1].samples)
 
