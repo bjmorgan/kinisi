@@ -577,13 +577,13 @@ class TMSDBootstrap(Bootstrap):
                 continue
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
             if bootstrap:
-                distro = self.sample_until_normal(d_squared, n_o[i], n_resamples, max_resamples, alpha, random_state)
+                distro = self.sample_until_normal(coll_motion, n_o[i] / d_squared.shape[0], n_resamples, max_resamples, alpha, random_state)
                 self._distributions.append(distro)
                 self._n_bootstrap = np.append(self._n_bootstrap, np.mean(distro.samples))
                 self._v_bootstrap = np.append(self._v_bootstrap, np.var(distro.samples, ddof=1))
                 self._s_bootstrap = np.append(self._s_bootstrap, np.std(distro.samples, ddof=1))
-            self._n = np.append(self._n, d_squared.mean())
-            self._v = np.append(self._v, np.var(d_squared, ddof=1) / n_o[i])
+            self._n = np.append(self._n, coll_motion.mean())
+            self._v = np.append(self._v, np.var(coll_motion, ddof=1) / n_o[i] / d_squared.shape[0])
             self._s = np.append(self._s, np.sqrt(self._v[i]))
             self._ngp = np.append(self._ngp, self.ngp_calculation(d_squared.flatten()))
             self._dt = np.append(self._dt, self._delta_t[i])
@@ -648,13 +648,13 @@ class MSCDBootstrap(Bootstrap):
                 continue
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
             if bootstrap:
-                distro = self.sample_until_normal(d_squared, n_o[i], n_resamples, max_resamples, alpha, random_state)
+                distro = self.sample_until_normal(sq_chg_motion, n_o[i] / d_squared.shape[0], n_resamples, max_resamples, alpha, random_state)
                 self._distributions.append(distro)
                 self._n_bootstrap = np.append(self._n_bootstrap, np.mean(distro.samples))
                 self._v_bootstrap = np.append(self._v_bootstrap, np.var(distro.samples, ddof=1))
                 self._s_bootstrap = np.append(self._s_bootstrap, np.std(distro.samples, ddof=1))
-            self._n = np.append(self._n, d_squared.mean())
-            self._v = np.append(self._v, np.var(d_squared, ddof=1) / n_o[i])
+            self._n = np.append(self._n, sq_chg_motion.mean())
+            self._v = np.append(self._v, np.var(sq_chg_motion, ddof=1) / n_o[i] / d_squared.shape[0])
             self._s = np.append(self._s, np.sqrt(self._v[i]))
             self._ngp = np.append(self._ngp, self.ngp_calculation(d_squared.flatten()))
             self._dt = np.append(self._dt, self._delta_t[i])
