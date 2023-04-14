@@ -680,8 +680,8 @@ def _bootstrap(array: np.ndarray,
         np.mean(resample(array.flatten(), n_samples=int(n_samples), random_state=random_state).flatten())
         for j in range(n_resamples)
     ]
-    
-    
+
+
 def _bayesian_bootstrap(array: np.ndarray,
                         n_samples: float,
                         n_resamples: int,
@@ -707,12 +707,12 @@ def _bayesian_bootstrap(array: np.ndarray,
         random_state = np.random.mtrand.RandomState()
     values = array.flatten()
     k = len(values)
-    alphak = (n_samples - 1)/(k - 1)
+    alphak = (n_samples - 1) / (k - 1)
     if alphak > 0:
-        weights = random_state.dirichlet(alpha=np.ones(k)*alphak, size=n_resamples)
+        weights = random_state.dirichlet(alpha=np.ones(k) * alphak, size=n_resamples)
     else:
         # Sample from a uniform categorical distribution, equivalent to Dirichlet([0,0,0,…])
-        weights = random_state.multinomial(n=1, pvals=np.ones(k)/k, size=n_resamples)
+        weights = random_state.multinomial(n=1, pvals=np.ones(k) / k, size=n_resamples)
     return list(np.sum(weights * values, axis=1))
 
 
