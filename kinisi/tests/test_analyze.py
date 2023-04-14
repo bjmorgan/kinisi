@@ -208,8 +208,8 @@ class TestJumpDiffusionAnalyzer(unittest.TestCase):
                                                     parser_params=da_params,
                                                     bootstrap_params={'random_state': np.random.RandomState(0)})
             assert_almost_equal(a.dt, a._diff.dt)
-            assert_almost_equal(a.tmsd, a._diff.n)
-            assert_almost_equal(a.tmsd_std, a._diff.s)
+            assert_almost_equal(a.mstd, a._diff.n)
+            assert_almost_equal(a.mstd_std, a._diff.s)
             for i in range(len(a.dr)):
                 assert_almost_equal(a.dr[i].samples, a._diff.euclidian_displacements[i].samples)
             assert a.ngp_max == a._diff.dt[a._diff.ngp.argmax()]
@@ -220,8 +220,8 @@ class TestJumpDiffusionAnalyzer(unittest.TestCase):
                                                     parser_params=da_params,
                                                     bootstrap_params={'random_state': np.random.RandomState(0)})
             assert_almost_equal(a.dt, a._diff.dt)
-            assert_almost_equal(a.tmsd, a._diff.n)
-            assert_almost_equal(a.tmsd_std, a._diff.s)
+            assert_almost_equal(a.mstd, a._diff.n)
+            assert_almost_equal(a.mstd_std, a._diff.s)
             for i in range(len(a.dr)):
                 assert_almost_equal(a.dr[i].samples, a._diff.euclidian_displacements[i].samples)
             a.jump_diffusion()
@@ -235,8 +235,8 @@ class TestJumpDiffusionAnalyzer(unittest.TestCase):
                                                     parser_params=da_params,
                                                     bootstrap_params={'random_state': np.random.RandomState(0)})
             assert_almost_equal(a.dt, a._diff.dt)
-            assert_almost_equal(a.tmsd, a._diff.n)
-            assert_almost_equal(a.tmsd_std, a._diff.s)
+            assert_almost_equal(a.mstd, a._diff.n)
+            assert_almost_equal(a.mstd_std, a._diff.s)
             for i in range(len(a.dr)):
                 assert_almost_equal(a.dr[i].samples, a._diff.euclidian_displacements[i].samples)
             a.jump_diffusion()
@@ -245,8 +245,8 @@ class TestJumpDiffusionAnalyzer(unittest.TestCase):
             assert a.flatchain.shape == (3200, 2)
             b = JumpDiffusionAnalyzer.from_dict(a.to_dict())
             assert_equal(a.dt, b.dt)
-            assert_equal(a.tmsd, b.tmsd)
-            assert_equal(a.tmsd_std, b.tmsd_std)
+            assert_equal(a.mstd, b.mstd)
+            assert_equal(a.mstd_std, b.mstd_std)
             for i in range(len(a.dr)):
                 assert_almost_equal(a.dr[i].samples, b.dr[i].samples)
             assert a.ngp_max == b.ngp_max

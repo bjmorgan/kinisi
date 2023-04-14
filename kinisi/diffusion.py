@@ -177,14 +177,14 @@ class Bootstrap:
     @property
     def n(self) -> np.ndarray:
         """
-        :return: The mean MSD/TMSD/MSCD, as determined from the bootstrap resampling process, in units Å:sup:`2`.
+        :return: The mean MSD/MSTD/MSCD, as determined from the bootstrap resampling process, in units Å:sup:`2`.
         """
         return self._n
 
     @property
     def s(self) -> np.ndarray:
         """
-        :return: The MSD/TMSD/MSCD standard deviation, as determined from the bootstrap resampling process, in
+        :return: The MSD/MSTD/MSCD standard deviation, as determined from the bootstrap resampling process, in
             units Å:sup:`2`.
         """
         return self._s
@@ -192,7 +192,7 @@ class Bootstrap:
     @property
     def v(self) -> np.ndarray:
         """
-        :return: The MSD/TMSD/MSCD variance as determined from the bootstrap resampling process, in units Å:sup:`4`.
+        :return: The MSD/MSTD/MSCD variance as determined from the bootstrap resampling process, in units Å:sup:`4`.
         """
         return self._v
 
@@ -525,7 +525,7 @@ class MSDBootstrap(Bootstrap):
         self._n_o = self._n_o[:self._n.size]
 
 
-class TMSDBootstrap(Bootstrap):
+class MSTDBootstrap(Bootstrap):
     """
     Perform a bootstrap resampling to obtain accurate estimates for the mean and uncertainty for the total
     mean squared displacements.

@@ -4,7 +4,7 @@ It is anticipated that this is where the majority of interaction with the packag
 This module includes:
 
 * the :py:class:`kinisi.analyze.DiffusionAnalyzer` class for MSD and diffusion analysis;
-* the :py:class:`kinisi.analyze.JumpDiffusionAnalyzer` class for TMSD and collective diffusion analysis; and
+* the :py:class:`kinisi.analyze.JumpDiffusionAnalyzer` class for MSTD and collective diffusion analysis; and
 * the :py:class:`kinisi.analyze.ConductivityAnalyzer` class for MSCD and conductivity analysis.
 
 These are all compatible with VASP Xdatcar output files, pymatgen structures and any MD trajectory that the

@@ -15,7 +15,7 @@ import warnings
 import numpy as np
 from tqdm import tqdm
 from numpy.testing import assert_almost_equal, assert_equal
-from kinisi.diffusion import Bootstrap, MSDBootstrap, TMSDBootstrap, MSCDBootstrap, _bootstrap
+from kinisi.diffusion import Bootstrap, MSDBootstrap, MSTDBootstrap, MSCDBootstrap, _bootstrap
 from uravu.distribution import Distribution
 
 RNG = np.random.RandomState(43)
@@ -107,7 +107,7 @@ class TestBootstrap(unittest.TestCase):
         assert_almost_equal(result, -0.3)
 
 
-class TestMSDBootstrap(unittest.TestCase):
+class TesMSTDBootstrap(unittest.TestCase):
     """
     Tests for the diffusion.MSDBootstrap class.
     """
@@ -373,9 +373,9 @@ class TestMSDBootstrap(unittest.TestCase):
     #     assert_almost_equal(bs1.diffusion_coefficient.samples, bs2.diffusion_coefficient.samples)
 
 
-class TestTMSDBootstrap(unittest.TestCase):
+class TestMSTDBootstrap(unittest.TestCase):
     """
-    Tests for the diffusion.TMSDBootstrap class.
+    Tests for the diffusion.MSTDBootstrap class.
     """
 
     def test_initialisation(self):
@@ -383,7 +383,7 @@ class TestTMSDBootstrap(unittest.TestCase):
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs = TMSDBootstrap(dt, disp_3d, n_o, random_state=np.random.RandomState(0))
+            bs = MSTDBootstrap(dt, disp_3d, n_o, random_state=np.random.RandomState(0))
             assert bs.n.shape == (5, )
             assert bs.s.shape == (5, )
             assert_almost_equal(bs.v, np.square(bs.s))
@@ -399,7 +399,7 @@ class TestTMSDBootstrap(unittest.TestCase):
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs = TMSDBootstrap(dt, disp_3d, n_o, n_resamples=10, random_state=np.random.RandomState(0))
+            bs = MSTDBootstrap(dt, disp_3d, n_o, n_resamples=10, random_state=np.random.RandomState(0))
             assert bs.n.shape == (5, )
             assert bs.s.shape == (5, )
             assert_almost_equal(bs.v, np.square(bs.s))
@@ -415,7 +415,7 @@ class TestTMSDBootstrap(unittest.TestCase):
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs = TMSDBootstrap(dt,
+            bs = MSTDBootstrap(dt,
                                disp_3d,
                                n_o,
                                n_resamples=10,
@@ -436,7 +436,7 @@ class TestTMSDBootstrap(unittest.TestCase):
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs1 = TMSDBootstrap(dt, disp_3d, n_o, bootstrap=True, random_state=np.random.RandomState(0))
+            bs1 = MSTDBootstrap(dt, disp_3d, n_o, bootstrap=True, random_state=np.random.RandomState(0))
             assert bs1.n.shape == (5, )
             assert bs1.s.shape == (5, )
             assert_almost_equal(bs1.v, np.square(bs1.s))
@@ -446,7 +446,7 @@ class TestTMSDBootstrap(unittest.TestCase):
                 assert isinstance(i, Distribution)
             for i in bs1._distributions:
                 assert i.samples.size >= 1000
-            bs2 = TMSDBootstrap(dt, disp_3d, n_o, bootstrap=True, random_state=np.random.RandomState(0))
+            bs2 = MSTDBootstrap(dt, disp_3d, n_o, bootstrap=True, random_state=np.random.RandomState(0))
             assert bs1._distributions[-1].size == bs2._distributions[-1].size
             assert_almost_equal(bs1._distributions[-1].samples, bs2._distributions[-1].samples)
 
@@ -455,7 +455,7 @@ class TestTMSDBootstrap(unittest.TestCase):
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs = TMSDBootstrap(dt, disp_3d, n_o, progress=False, random_state=np.random.RandomState(0))
+            bs = MSTDBootstrap(dt, disp_3d, n_o, progress=False, random_state=np.random.RandomState(0))
             assert bs.n.shape == (5, )
             assert bs.s.shape == (5, )
             assert_almost_equal(bs.v, np.square(bs.s))
@@ -472,7 +472,7 @@ class TestTMSDBootstrap(unittest.TestCase):
             disp_3d = [RNG.randn(1, i, 3) for i in range(10, 1, -1)]
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs = TMSDBootstrap(dt, disp_3d, n_o, progress=False, random_state=np.random.RandomState(0))
+            bs = MSTDBootstrap(dt, disp_3d, n_o, progress=False, random_state=np.random.RandomState(0))
             assert bs.n.shape == (4, )
             assert bs.s.shape == (4, )
             assert_almost_equal(bs.v, np.square(bs.s))
@@ -489,7 +489,7 @@ class TestTMSDBootstrap(unittest.TestCase):
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs = TMSDBootstrap(dt, disp_3d, n_o, random_state=RNG)
+            bs = MSTDBootstrap(dt, disp_3d, n_o, random_state=RNG)
             bs.jump_diffusion()
             assert bs.covariance_matrix.shape == (5, 5)
             assert isinstance(bs._jump_diffusion_coefficient, Distribution)
@@ -502,7 +502,7 @@ class TestTMSDBootstrap(unittest.TestCase):
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs = TMSDBootstrap(dt, disp_3d, n_o, random_state=RNG)
+            bs = MSTDBootstrap(dt, disp_3d, n_o, random_state=RNG)
             bs.jump_diffusion(use_ngp=True)
             assert bs.covariance_matrix.shape == (5 - np.argmax(bs.ngp), 5 - np.argmax(bs.ngp))
             assert isinstance(bs._jump_diffusion_coefficient, Distribution)
@@ -515,7 +515,7 @@ class TestTMSDBootstrap(unittest.TestCase):
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs = TMSDBootstrap(dt, disp_3d, n_o, random_state=RNG)
+            bs = MSTDBootstrap(dt, disp_3d, n_o, random_state=RNG)
             bs.jump_diffusion(n_samples=500, fit_intercept=False)
             assert bs.covariance_matrix.shape == (5, 5)
             assert isinstance(bs._jump_diffusion_coefficient, Distribution)
@@ -527,7 +527,7 @@ class TestTMSDBootstrap(unittest.TestCase):
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs = TMSDBootstrap(dt, disp_3d, n_o, random_state=RNG)
+            bs = MSTDBootstrap(dt, disp_3d, n_o, random_state=RNG)
             bs.jump_diffusion(n_samples=100)
             assert bs.covariance_matrix.shape == (5, 5)
             assert isinstance(bs._jump_diffusion_coefficient, Distribution)
@@ -540,7 +540,7 @@ class TestTMSDBootstrap(unittest.TestCase):
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs = TMSDBootstrap(dt, disp_3d, n_o, random_state=RNG)
+            bs = MSTDBootstrap(dt, disp_3d, n_o, random_state=RNG)
             bs.jump_diffusion(n_samples=100)
             assert bs.covariance_matrix.shape == (5, 5)
             assert isinstance(bs._jump_diffusion_coefficient, Distribution)
@@ -553,7 +553,7 @@ class TestTMSDBootstrap(unittest.TestCase):
             disp_3d = [RNG.randn(100, i, 3) for i in range(200, 10, -1)]
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 190)
-            bs = TMSDBootstrap(dt, disp_3d, n_o, random_state=RNG)
+            bs = MSTDBootstrap(dt, disp_3d, n_o, random_state=RNG)
             bs.jump_diffusion(use_ngp=True, thin=1)
             assert bs.covariance_matrix.shape == (95 - np.argmax(bs.ngp), 95 - np.argmax(bs.ngp))
             assert isinstance(bs._jump_diffusion_coefficient, Distribution)
@@ -565,14 +565,14 @@ class TestTMSDBootstrap(unittest.TestCase):
     # def test_initialisation_random_state(self):
     #     disp_3d = [RNG.randn(100, i, 3) + 1000 for i in range(20, 10, -1)]
     #     dt = np.linspace(100, 1000, 10)
-    #     bs1 = TMSDBootstrap(dt, disp_3d, random_state=np.random.RandomState(0))
+    #     bs1 = MSTDBootstrap(dt, disp_3d, random_state=np.random.RandomState(0))
     #     bs1.jump_diffusion( n_walkers=5, n_samples=100, random_state=np.random.RandomState(0))
     #     assert bs1.covariance_matrix.shape == (10, 10)
     #     assert isinstance(bs1.diffusion_coefficient, Distribution)
     #     assert isinstance(bs1.intercept, Distribution)
     #     assert bs1.diffusion_coefficient.size == 500
     #     assert bs1.intercept.size == 500
-    #     bs2 = TMSDBootstrap(dt, disp_3d, random_state=np.random.RandomState(0))
+    #     bs2 = MSTDBootstrap(dt, disp_3d, random_state=np.random.RandomState(0))
     #     bs2.jump_diffusion( n_walkers=5, n_samples=100, random_state=np.random.RandomState(0))
     #     assert_almost_equal(bs1.v, bs2.v)
     #     assert_almost_equal(bs1.covariance_matrix, bs2.covariance_matrix)

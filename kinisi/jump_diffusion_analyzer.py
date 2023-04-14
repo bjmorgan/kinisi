@@ -19,7 +19,7 @@ class JumpDiffusionAnalyzer(Analyzer):
     relationships in materials.
     This is achieved through the application of a bootstrapping methodology to obtain the most statistically
     accurate values for total mean squared displacement uncertainty and covariance.
-    The time-dependence of the TMSD is then modelled in a generalised least squares fashion to obtain the jump
+    The time-dependence of the MSTD is then modelled in a generalised least squares fashion to obtain the jump
     diffusion coefficient and offset using Markov chain Monte Carlo maximum likelihood sampling.
 
     :param delta_t: An array of the timestep values.
@@ -83,7 +83,7 @@ class JumpDiffusionAnalyzer(Analyzer):
         if bootstrap_params is None:
             bootstrap_params = {}
         jdiff_anal = super()._from_pymatgen(trajectory, parser_params, dtype=dtype)
-        jdiff_anal._diff = diffusion.TMSDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
+        jdiff_anal._diff = diffusion.MSTDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
                                                    **bootstrap_params)
         return jdiff_anal
 
@@ -113,7 +113,7 @@ class JumpDiffusionAnalyzer(Analyzer):
         if bootstrap_params is None:
             bootstrap_params = {}
         jdiff_anal = super()._from_Xdatcar(trajectory, parser_params, dtype=dtype)
-        jdiff_anal._diff = diffusion.TMSDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
+        jdiff_anal._diff = diffusion.MSTDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
                                                    **bootstrap_params)
         return jdiff_anal
 
@@ -141,7 +141,7 @@ class JumpDiffusionAnalyzer(Analyzer):
         if bootstrap_params is None:
             bootstrap_params = {}
         jdiff_anal = super()._from_file(trajectory, parser_params, dtype=dtype)
-        jdiff_anal._diff = diffusion.TMSDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
+        jdiff_anal._diff = diffusion.MSTDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
                                                    **bootstrap_params)
         return jdiff_anal
 
@@ -170,7 +170,7 @@ class JumpDiffusionAnalyzer(Analyzer):
         if bootstrap_params is None:
             bootstrap_params = {}
         jdiff_anal = super()._from_universe(trajectory, parser_params, dtype=dtype)
-        jdiff_anal._diff = diffusion.TMSDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
+        jdiff_anal._diff = diffusion.MSTDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
                                                    **bootstrap_params)
         return jdiff_anal
 
@@ -178,7 +178,7 @@ class JumpDiffusionAnalyzer(Analyzer):
         """
         Calculate the jump diffusion coefficicent using the bootstrap-GLS methodology.
 
-        :param ump_diffusion_params: The parameters for the :py:class:`kinisi.diffusion.TMSDBootstrap`
+        :param ump_diffusion_params: The parameters for the :py:class:`kinisi.diffusion.MSTDBootstrap`
             object. See the appropriate documentation for more guidance on this. Optional, default is the
             default bootstrap parameters.
         """
@@ -187,15 +187,15 @@ class JumpDiffusionAnalyzer(Analyzer):
         self._diff.jump_diffusion(**jump_diffusion_params)
 
     @property
-    def tmsd(self) -> np.ndarray:
+    def mstd(self) -> np.ndarray:
         """
-        :return: TMSD for the input trajectories. Note that this is the bootstrap sampled MSD, not the numerical
+        :return: MSTD for the input trajectories. Note that this is the bootstrap sampled MSD, not the numerical
             average from the data.
         """
         return self._diff.n
 
     @property
-    def tmsd_std(self) -> np.ndarray:
+    def mstd_std(self) -> np.ndarray:
         """
         :return: MSD standard deviation values for the input trajectories (a single standard deviation).
         """
