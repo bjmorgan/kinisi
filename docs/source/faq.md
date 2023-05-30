@@ -13,8 +13,8 @@
 
 - I have been using `kinisi` in my research and would like to cite the package, how should I do this?
 
-    > Thanks for using `kinisi`, we are working on a paper that you can cite in the future, but for now please use the 
-    > following [citation found on Github](https://github.com/bjmorgan/kinisi).
+    > Thanks for using `kinisi`, we recommend that you cite the [arXiv preprint](https://arxiv.org/abs/2305.18244) which 
+    > discusses the methodology along with a specific reference to the version of `kinisi` that has been used. 
     
 - How does `kinisi` work?
 

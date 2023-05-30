@@ -14,4 +14,23 @@ license: MIT
 message: "If you use this software, please cite it using these metadata."
 repository-code: "https://github.com/bjmorgan/kinisi"
 title: kinisi
-version: "0.6.2"
+version: "0.6.5"
+preferred-citation:
+  type: article
+  authors:
+    - affiliation: "European Spallation Source ERIC"
+      family-names: McCluskey
+      given-names: "Andrew R."
+      orcid: "https://orcid.org/0000-0003-3381-5911"
+    - affiliation: "Department of Chemistry, University of Bath"
+      family-names: Coles
+      given-names: "Samuel W."
+      orcid: "https://orcid.org/0000-0001-9722-5676"
+    - affiliation: "Department of Chemistry, University of Bath"
+      family-names: Morgan
+      given-names: "Benjamin J."
+      orcid: "https://orcid.org/0000-0002-3056-8233"
+  identifiers:
+    - type: other
+      value: "arXiv:/2305.18244
+  title: "Accurate Estimation of Diffusion Coefficients and their Uncertainties from Computer Simulation"
