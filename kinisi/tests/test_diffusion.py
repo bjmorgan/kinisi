@@ -248,7 +248,7 @@ class TesMSTDBootstrap(unittest.TestCase):
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             a = MSDBootstrap(dt, disp_3d, n_o, random_state=np.random.RandomState(0))
-            a.diffusion()
+            a.diffusion(0)
             b = MSDBootstrap.from_dict(a.to_dict())
             for i, d in enumerate(disp_3d):
                 assert_almost_equal(a._displacements[i], b._displacements[i])
@@ -273,7 +273,7 @@ class TesMSTDBootstrap(unittest.TestCase):
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = MSDBootstrap(dt, disp_3d, n_o, random_state=RNG)
-            bs.diffusion()
+            bs.diffusion(0)
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs._diffusion_coefficient, Distribution)
             assert isinstance(bs.intercept, Distribution)
@@ -286,7 +286,7 @@ class TesMSTDBootstrap(unittest.TestCase):
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = MSDBootstrap(dt, disp_3d, n_o)
-            bs.diffusion(dt_skip=150)
+            bs.diffusion(150)
             assert bs.covariance_matrix.shape == (9, 9)
             assert isinstance(bs._diffusion_coefficient, Distribution)
             assert isinstance(bs.intercept, Distribution)
@@ -299,7 +299,7 @@ class TesMSTDBootstrap(unittest.TestCase):
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 190)
             bs = MSDBootstrap(dt, disp_3d, n_o, random_state=RNG)
-            bs.diffusion(use_ngp=True)
+            bs.diffusion(dt[bs.ngp.argmax()])
             assert bs.covariance_matrix.shape == (190 - np.argmax(bs.ngp), 190 - np.argmax(bs.ngp))
             assert isinstance(bs._diffusion_coefficient, Distribution)
             assert isinstance(bs.intercept, Distribution)
@@ -312,7 +312,7 @@ class TesMSTDBootstrap(unittest.TestCase):
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = MSDBootstrap(dt, disp_3d, n_o, random_state=RNG)
-            bs.diffusion(n_samples=500, fit_intercept=False)
+            bs.diffusion(0, n_samples=500, fit_intercept=False)
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs._diffusion_coefficient, Distribution)
             assert bs._diffusion_coefficient.size == 1600
@@ -324,7 +324,7 @@ class TesMSTDBootstrap(unittest.TestCase):
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = MSDBootstrap(dt, disp_3d, n_o, random_state=RNG)
-            bs.diffusion(n_samples=100)
+            bs.diffusion(0, n_samples=100)
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs._diffusion_coefficient, Distribution)
             assert isinstance(bs.intercept, Distribution)
@@ -337,7 +337,7 @@ class TesMSTDBootstrap(unittest.TestCase):
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = MSDBootstrap(dt, disp_3d, n_o, random_state=RNG)
-            bs.diffusion(n_samples=100)
+            bs.diffusion(0, n_samples=100)
             assert bs.covariance_matrix.shape == (10, 10)
             assert isinstance(bs._diffusion_coefficient, Distribution)
             assert isinstance(bs.intercept, Distribution)
@@ -350,7 +350,7 @@ class TesMSTDBootstrap(unittest.TestCase):
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = MSDBootstrap(dt, disp_3d, n_o, random_state=RNG)
-            bs.diffusion(use_ngp=True, thin=1)
+            bs.diffusion(dt[bs.ngp.argmax()], thin=1)
             assert bs.covariance_matrix.shape == (10 - np.argmax(bs.ngp), 10 - np.argmax(bs.ngp))
             assert isinstance(bs._diffusion_coefficient, Distribution)
             assert isinstance(bs.intercept, Distribution)
@@ -490,7 +490,7 @@ class TestMSTDBootstrap(unittest.TestCase):
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = MSTDBootstrap(dt, disp_3d, n_o, random_state=RNG)
-            bs.jump_diffusion()
+            bs.jump_diffusion(0)
             assert bs.covariance_matrix.shape == (5, 5)
             assert isinstance(bs._jump_diffusion_coefficient, Distribution)
             assert isinstance(bs.intercept, Distribution)
@@ -503,7 +503,7 @@ class TestMSTDBootstrap(unittest.TestCase):
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = MSTDBootstrap(dt, disp_3d, n_o, random_state=RNG)
-            bs.jump_diffusion(use_ngp=True)
+            bs.jump_diffusion(dt[bs.ngp.argmax()])
             assert bs.covariance_matrix.shape == (5 - np.argmax(bs.ngp), 5 - np.argmax(bs.ngp))
             assert isinstance(bs._jump_diffusion_coefficient, Distribution)
             assert isinstance(bs.intercept, Distribution)
@@ -516,7 +516,7 @@ class TestMSTDBootstrap(unittest.TestCase):
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = MSTDBootstrap(dt, disp_3d, n_o, random_state=RNG)
-            bs.jump_diffusion(n_samples=500, fit_intercept=False)
+            bs.jump_diffusion(0, n_samples=500, fit_intercept=False)
             assert bs.covariance_matrix.shape == (5, 5)
             assert isinstance(bs._jump_diffusion_coefficient, Distribution)
             assert bs._jump_diffusion_coefficient.size == 1600
@@ -528,7 +528,7 @@ class TestMSTDBootstrap(unittest.TestCase):
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = MSTDBootstrap(dt, disp_3d, n_o, random_state=RNG)
-            bs.jump_diffusion(n_samples=100)
+            bs.jump_diffusion(0, n_samples=100)
             assert bs.covariance_matrix.shape == (5, 5)
             assert isinstance(bs._jump_diffusion_coefficient, Distribution)
             assert isinstance(bs.intercept, Distribution)
@@ -541,7 +541,7 @@ class TestMSTDBootstrap(unittest.TestCase):
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = MSTDBootstrap(dt, disp_3d, n_o, random_state=RNG)
-            bs.jump_diffusion(n_samples=100)
+            bs.jump_diffusion(0, n_samples=100)
             assert bs.covariance_matrix.shape == (5, 5)
             assert isinstance(bs._jump_diffusion_coefficient, Distribution)
             assert isinstance(bs.intercept, Distribution)
@@ -554,7 +554,7 @@ class TestMSTDBootstrap(unittest.TestCase):
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 190)
             bs = MSTDBootstrap(dt, disp_3d, n_o, random_state=RNG)
-            bs.jump_diffusion(use_ngp=True, thin=1)
+            bs.jump_diffusion(dt[bs.ngp.argmax()], thin=1)
             assert bs.covariance_matrix.shape == (95 - np.argmax(bs.ngp), 95 - np.argmax(bs.ngp))
             assert isinstance(bs._jump_diffusion_coefficient, Distribution)
             assert isinstance(bs.intercept, Distribution)
@@ -697,7 +697,7 @@ class TestMSCDBootstrap(unittest.TestCase):
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = MSCDBootstrap(dt, disp_3d, 1, n_o, random_state=RNG)
-            bs.conductivity(1, 10)
+            bs.conductivity(0, 1, 10)
             assert bs.covariance_matrix.shape == (5, 5)
             assert isinstance(bs.sigma, Distribution)
             assert isinstance(bs.intercept, Distribution)
@@ -710,7 +710,7 @@ class TestMSCDBootstrap(unittest.TestCase):
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 190)
             bs = MSCDBootstrap(dt, disp_3d, 1, n_o, random_state=RNG)
-            bs.conductivity(1, 10, use_ngp=True)
+            bs.conductivity(dt[bs.ngp.argmax()], 1, 10)
             assert bs.covariance_matrix.shape == (95 - np.argmax(bs.ngp), 95 - np.argmax(bs.ngp))
             assert isinstance(bs.sigma, Distribution)
             assert isinstance(bs.intercept, Distribution)
@@ -723,7 +723,7 @@ class TestMSCDBootstrap(unittest.TestCase):
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = MSCDBootstrap(dt, disp_3d, 1, n_o, random_state=RNG)
-            bs.conductivity(1, 10, n_samples=500, fit_intercept=False)
+            bs.conductivity(0, 1, 10, n_samples=500, fit_intercept=False)
             assert bs.covariance_matrix.shape == (5, 5)
             assert isinstance(bs.sigma, Distribution)
             assert bs.sigma.size == 1600
@@ -735,7 +735,7 @@ class TestMSCDBootstrap(unittest.TestCase):
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = MSCDBootstrap(dt, disp_3d, 1, n_o, random_state=RNG)
-            bs.conductivity(1, 10, n_samples=100)
+            bs.conductivity(0, 1, 10, n_samples=100)
             assert bs.covariance_matrix.shape == (5, 5)
             assert isinstance(bs.sigma, Distribution)
             assert isinstance(bs.intercept, Distribution)
@@ -748,7 +748,7 @@ class TestMSCDBootstrap(unittest.TestCase):
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
             bs = MSCDBootstrap(dt, disp_3d, 1, n_o, random_state=RNG)
-            bs.conductivity(1, 10, n_samples=100)
+            bs.conductivity(0, 1, 10, n_samples=100)
             assert bs.covariance_matrix.shape == (5, 5)
             assert isinstance(bs.sigma, Distribution)
             assert isinstance(bs.intercept, Distribution)
@@ -761,7 +761,7 @@ class TestMSCDBootstrap(unittest.TestCase):
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 190)
             bs = MSCDBootstrap(dt, disp_3d, 1, n_o, random_state=RNG)
-            bs.conductivity(1, 10, use_ngp=True, thin=1)
+            bs.conductivity(dt[bs.ngp.argmax()], 1, 10, thin=1)
             assert bs.covariance_matrix.shape == (95 - np.argmax(bs.ngp), 95 - np.argmax(bs.ngp))
             assert isinstance(bs.sigma, Distribution)
             assert isinstance(bs.intercept, Distribution)
