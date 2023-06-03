@@ -8,7 +8,7 @@ This module contains the base class for the different :py:class:`Analyzer` objec
 
 from typing import Union, List
 import numpy as np
-from kinisi.parser import MDAnalysisParser, PymatgenParser
+from kinisi.parser import MDAnalysisParser, PymatgenParser, ASEParser
 
 
 class Analyzer:
@@ -122,6 +122,44 @@ class Analyzer:
             return cls(u.delta_t, u.disp_3d, u._n_o, u.volume, **kwargs)
         else:
             raise ValueError('The dtype specified was not recognised, please consult the kinisi documentation.')
+        
+    @classmethod
+    def _from_ase(cls,
+                       trajectory: List[Union['ase.atoms.Atoms',
+                                              List['ase.atoms.Atoms']]],
+                       parser_params: dict,
+                       dtype: str = None,
+                       **kwargs):
+        """
+        Create a :py:class:`Analyzer` object from a list or nested list of
+        :py:class:`ase.atoms.Atoms` objects.
+
+        :param trajectory: The list or nested list of structures to be analysed.
+        :param parser_params: The parameters for the :py:class:`kinisi.parser.ASEParser` object.
+            See the appropriate documentation for more guidance on this dictionary.
+        :param dtype: If :py:attr:`trajectory` is a list of :py:class:`ase.atoms.Atoms`
+            objects, this should be :py:attr:`None`. However, if a list of lists is passed, then it is necessary
+            to identify if these constitute a series of :py:attr:`consecutive` trajectories or a series of
+            :py:attr:`identical` starting points with different random seeds, in which case the `dtype` should
+            be either :py:attr:`consecutive` or :py:attr:`identical`.
+
+        :return: Relevant :py:class:`Analyzer` object.
+        """
+        if dtype is None:
+            u = ASEParser(trajectory, **parser_params)
+            return cls(u.delta_t, u.disp_3d, u._n_o, u.volume, **kwargs)
+        elif dtype == 'identical':
+            u = [ASEParser(f, **parser_params) for f in trajectory]
+            n_o = np.zeros(u[0]._n_o.size)
+            for i in u:
+                n_o += i._n_o
+            return cls(u[0].delta_t, cls._stack_trajectories(u), n_o, u[0].volume, **kwargs)
+        elif dtype == 'consecutive':
+            structures = _flatten_list([x for x in trajectory])
+            u = ASEParser(structures, **parser_params)
+            return cls(u.delta_t, u.disp_3d, u._n_o, u.volume, **kwargs)
+        else:
+            raise ValueError('The dtype specified was not recognised, please consult the kinisi documentation.')
 
     @classmethod
     def _from_Xdatcar(cls,
@@ -209,7 +247,7 @@ class Analyzer:
 
         :param trajectory: The universe to be analysed.
         :param parser_params: The parameters for the :py:class:`kinisi.parser.MDAnalysisParser` object.
-            See the appropriate documention for more guidance on this dictionary.
+            See the appropriate documentation for more guidance on this dictionary.
         :param dtype: If :py:attr:`trajectory` is a single file, this should be :py:attr:`None`. However, if a
             list of files is passed, then it is necessary to identify that these constitute a series of
             :py:attr:`identical` starting points with different random seeds, in which case the `dtype` should
@@ -238,7 +276,7 @@ class Analyzer:
     @staticmethod
     def _stack_trajectories(u: Union[MDAnalysisParser, PymatgenParser]) -> List[np.ndarray]:
         """
-        If more than one trajectory is given, then they are stacked to give the appearence that there are
+        If more than one trajectory is given, then they are stacked to give the appearance that there are
         additional atoms in the trajectory.
 
         :param u: Results from the parsing of each trajectory.
@@ -272,7 +310,7 @@ class Analyzer:
     @property
     def dr(self) -> List['uravu.distribution.Distribution']:
         """
-        :return: A list of :py:class:`uravu.distribution.Distribution` objects that describe the euclidian
+        :return: A list of :py:class:`uravu.distribution.Distribution` objects that describe the Euclidean
             displacement at each :py:attr:`dt`.
         """
         return self._diff.euclidian_displacements
