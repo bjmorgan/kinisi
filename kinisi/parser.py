@@ -295,9 +295,10 @@ class ASEParser(Parser):
                 if first:
                     structure = struct
                     first = False
-                scaled_positions = structure.get_scaled_positions()
+                scaled_positions = struct.get_scaled_positions()
                 coords.append(np.array(scaled_positions)[:, None])
-                latt.append(struct.cell)
+                latt.append(struct.cell[:])
+            
             coords.insert(0, coords[0])
             latt.insert(0, latt[0])
             return structure, coords, latt
@@ -420,6 +421,7 @@ class PymatgenParser(Parser):
                 first = False
             coords.append(np.array(struct.frac_coords)[:, None])
             latt.append(struct.lattice.matrix)
+
         coords.insert(0, coords[0])
         latt.insert(0, latt[0])
         return structure, coords, latt
