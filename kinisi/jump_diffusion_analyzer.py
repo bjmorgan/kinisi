@@ -86,6 +86,36 @@ class JumpDiffusionAnalyzer(Analyzer):
         jdiff_anal._diff = diffusion.MSTDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
                                                    **bootstrap_params)
         return jdiff_anal
+    
+    @classmethod
+    def from_ase(cls,
+                    trajectory: List[Union['ase.atoms.Atoms', List['ase.atoms.Atoms']]],
+                    parser_params: dict,
+                    dtype: str = None,
+                    bootstrap_params: dict = None):
+        """
+        Create a :py:class:`JumpDiffusionAnalyzer` object from a list or nested list of
+        :py:class:`ase.atoms.Atoms` objects.
+
+        :param trajectory: The list or nested list of structures to be analysed.
+        :param parser_params: The parameters for the :py:class:`kinisi.parser.AseParser` object. See the
+            appropriate documentation for more guidance on this dictionary.
+        :param dtype: If :py:attr:`trajectory` is a list of :py:class:`ase.atoms.Atoms` objects,
+            this should be :py:attr:`None`. However, if a list of lists is passed, then it is necessary to identify if
+            these constitute a series of :py:attr:`consecutive` trajectories or a series of :py:attr:`identical`
+            starting points with different random seeds, in which case the `dtype` should be either
+            :py:attr:`consecutive` or :py:attr:`identical`.
+        :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
+            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+        
+        :return: Relevant :py:class:`JumpDiffusionAnalyzer` object.
+        """
+        if bootstrap_params is None:
+            bootstrap_params = {}
+        jdiff_anal = super()._from_ase(trajectory, parser_params, dtype=dtype)
+        jdiff_anal._diff = diffusion.MSTDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
+                                                    **bootstrap_params)
+        return jdiff_anal
 
     @classmethod
     def from_Xdatcar(cls,
