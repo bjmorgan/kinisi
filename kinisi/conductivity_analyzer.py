@@ -91,6 +91,41 @@ class ConductivityAnalyzer(Analyzer):
         cond_anal._diff = diffusion.MSCDBootstrap(cond_anal._delta_t, cond_anal._disp_3d, ionic_charge, cond_anal._n_o,
                                                   **bootstrap_params)
         return cond_anal
+    
+
+    @classmethod
+    def from_ase(cls,
+                      trajectory: List[Union['ase.atoms.Atoms',
+                                             List['ase.atom.Atoms']]],
+                      parser_params: dict,
+                      dtype: str = None,
+                      bootstrap_params: dict = None,
+                      ionic_charge: Union[np.ndarray, int] = 1):
+        """
+        Create a :py:class:`ConductivityAnalyzer` object from a list or nested list of
+        :py:class:`ase.Atoms` objects.
+
+        :param trajectory: The list or nested list of structures to be analysed.
+        :param parser_params: The parameters for the :py:class:`kinisi.parser.ASEParser` object. See the
+            appropriate documentation for more guidance on this dictionary.
+        :param dtype: If :py:attr:`trajectory` is a list of :py:class:`ase.Atoms` objects,
+            this should be :py:attr:`None`. However, if a list of lists is passed, then it is necessary to identify if
+            these constitute a series of :py:attr:`consecutive` trajectories or a series of :py:attr:`identical`
+            starting points with different random seeds, in which case the `dtype` should be either
+            :py:attr:`consecutive` or :py:attr:`identical`.
+        :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
+            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+        :param ionic_charge: The charge on the mobile ions, either an array with a value for each ion or a scalar
+            if all values are the same. Optional, default is :py:attr:`1`.
+
+        :return: Relevant :py:class:`ConductivityAnalyzer` object.
+        """
+        if bootstrap_params is None:
+            bootstrap_params = {}
+        cond_anal = super()._from_ase(trajectory, parser_params, dtype=dtype)
+        cond_anal._diff = diffusion.MSCDBootstrap(cond_anal._delta_t, cond_anal._disp_3d, ionic_charge, cond_anal._n_o,
+                                                  **bootstrap_params)
+        return cond_anal
 
     @classmethod
     def from_Xdatcar(cls,
