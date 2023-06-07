@@ -46,7 +46,7 @@ dev = [
     'codeclimate-test-reporter',
     'yapf',
     'pytest',
-    'pytest-cov'
+    'pytest-cov',
     'ase'
 ]
 docs = [
