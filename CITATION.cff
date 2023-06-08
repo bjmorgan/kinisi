@@ -1,17 +1,17 @@
 abstract: "Uncertainty analysis and model comparison for atomistic molecular dynamics."
 authors: 
-  - affiliation: "European Spallation Source ERIC"
-    family-names: McCluskey
-    given-names: "Andrew R."
-    orcid: "https://orcid.org/0000-0003-3381-5911"
-  - affilation: "Department of Chemistry, University College London"
-    family-names: Squires
-    given-names: "Alex G."
-    orcid: "https://orcid.org/0000-0001-6967-3690"
-  - affiliation: "Department of Chemistry, University of Bath"
-    family-names: Morgan
-    given-names: "Benjamin J."
-    orcid: "https://orcid.org/0000-0002-3056-8233"
+- affiliation: "European Spallation Source ERIC"
+  family-names: McCluskey
+  given-names: "Andrew R."
+  orcid: "https://orcid.org/0000-0003-3381-5911"
+- affilation: "Department of Chemistry, University College London"
+  family-names: Squires
+  given-names: "Alex G."
+  orcid: "https://orcid.org/0000-0001-6967-3690"
+- affiliation: "Department of Chemistry, University of Bath"
+  family-names: Morgan
+  given-names: "Benjamin J."
+  orcid: "https://orcid.org/0000-0002-3056-8233"
 cff-version: "1.1.0"
 date-released: 2022-07-18
 license: MIT
@@ -22,19 +22,19 @@ version: "0.7.0"
 preferred-citation:
   type: article
   authors:
-    - affiliation: "European Spallation Source ERIC"
-      family-names: McCluskey
-      given-names: "Andrew R."
-      orcid: "https://orcid.org/0000-0003-3381-5911"
-    - affiliation: "Department of Chemistry, University of Bath"
-      family-names: Coles
-      given-names: "Samuel W."
-      orcid: "https://orcid.org/0000-0001-9722-5676"
-    - affiliation: "Department of Chemistry, University of Bath"
-      family-names: Morgan
-      given-names: "Benjamin J."
-      orcid: "https://orcid.org/0000-0002-3056-8233"
+  - affiliation: "European Spallation Source ERIC"
+    family-names: McCluskey
+    given-names: "Andrew R."
+    orcid: "https://orcid.org/0000-0003-3381-5911"
+  - affiliation: "Department of Chemistry, University of Bath"
+    family-names: Coles
+    given-names: "Samuel W."
+    orcid: "https://orcid.org/0000-0001-9722-5676"
+  - affiliation: "Department of Chemistry, University of Bath"
+    family-names: Morgan
+    given-names: "Benjamin J."
+    orcid: "https://orcid.org/0000-0002-3056-8233"
   identifiers:
-    - type: other
-      value: "arXiv:/2305.18244
+  - type: other
+    value: "arXiv:/2305.18244
   title: "Accurate Estimation of Diffusion Coefficients and their Uncertainties from Computer Simulation"
