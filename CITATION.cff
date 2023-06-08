@@ -1,3 +1,4 @@
+cff-version: 1.2.0
 abstract: "Uncertainty analysis and model comparison for atomistic molecular dynamics."
 authors: 
 - affiliation: "European Spallation Source ERIC"
@@ -12,7 +13,6 @@ authors:
   family-names: Morgan
   given-names: "Benjamin J."
   orcid: "https://orcid.org/0000-0002-3056-8233"
-cff-version: "1.1.0"
 date-released: 2022-07-18
 license: MIT
 message: "If you use this software, please cite it using these metadata."
@@ -21,6 +21,7 @@ title: kinisi
 version: "0.7.0"
 preferred-citation:
   type: article
+  title: "Accurate Estimation of Diffusion Coefficients and their Uncertainties from Computer Simulation"
   authors:
   - affiliation: "European Spallation Source ERIC"
     family-names: McCluskey
@@ -37,4 +38,3 @@ preferred-citation:
   identifiers:
   - type: other
     value: "arXiv:/2305.18244
-  title: "Accurate Estimation of Diffusion Coefficients and their Uncertainties from Computer Simulation"
