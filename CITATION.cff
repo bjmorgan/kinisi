@@ -14,7 +14,7 @@ license: MIT
 message: "If you use this software, please cite it using these metadata."
 repository-code: "https://github.com/bjmorgan/kinisi"
 title: kinisi
-version: "0.6.5"
+version: "0.7.0"
 preferred-citation:
   type: article
   authors:

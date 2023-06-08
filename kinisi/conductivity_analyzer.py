@@ -223,10 +223,12 @@ class ConductivityAnalyzer(Analyzer):
                                                   **bootstrap_params)
         return cond_anal
 
-    def conductivity(self, temperature: float, conductivity_params: Union[dict, None] = None):
+    def conductivity(self, start_dt: float, temperature: float, conductivity_params: Union[dict, None] = None):
         """
         Calculate the jump diffusion coefficicent using the bootstrap-GLS methodology.
 
+        :param start_dt: The starting time for the analysis to find the diffusion coefficient.
+            This should be the start of the diffusive regime in the simulation.
         :param temperature: Simulation temperature in Kelvin
         :param conductivity_params: The parameters for the :py:class:`kinisi.diffusion.MSCDBootstrap` object.
             See the appropriate documentation for more guidance on this. Optional, default is the default
@@ -234,7 +236,7 @@ class ConductivityAnalyzer(Analyzer):
         """
         if conductivity_params is None:
             conductivity_params = {}
-        self._diff.conductivity(temperature, self._volume, **conductivity_params)
+        self._diff.conductivity(start_dt, temperature, self._volume, **conductivity_params)
 
     @property
     def mscd(self) -> np.ndarray:

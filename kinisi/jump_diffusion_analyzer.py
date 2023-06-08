@@ -204,17 +204,19 @@ class JumpDiffusionAnalyzer(Analyzer):
                                                    **bootstrap_params)
         return jdiff_anal
 
-    def jump_diffusion(self, jump_diffusion_params: Union[dict, None] = None):
+    def jump_diffusion(self, start_dt: float, jump_diffusion_params: Union[dict, None] = None):
         """
         Calculate the jump diffusion coefficicent using the bootstrap-GLS methodology.
 
+        :param start_dt: The starting time for the analysis to find the diffusion coefficient.
+            This should be the start of the diffusive regime in the simulation.
         :param ump_diffusion_params: The parameters for the :py:class:`kinisi.diffusion.MSTDBootstrap`
             object. See the appropriate documentation for more guidance on this. Optional, default is the
             default bootstrap parameters.
         """
         if jump_diffusion_params is None:
             jump_diffusion_params = {}
-        self._diff.jump_diffusion(**jump_diffusion_params)
+        self._diff.jump_diffusion(start_dt, **jump_diffusion_params)
 
     @property
     def mstd(self) -> np.ndarray:

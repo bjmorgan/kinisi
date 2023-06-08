@@ -188,7 +188,7 @@ class TestDiffusionAnalyzer(unittest.TestCase):
             assert_almost_equal(a.msd_std, a._diff.s)
             for i in range(len(a.dr)):
                 assert_almost_equal(a.dr[i].samples, a._diff.euclidian_displacements[i].samples)
-            a.diffusion()
+            a.diffusion(0)
             assert a.ngp_max == a._diff.dt[a._diff.ngp.argmax()]
             assert isinstance(a.D, Distribution)
             assert a.flatchain.shape == (3200, 2)
@@ -203,7 +203,7 @@ class TestDiffusionAnalyzer(unittest.TestCase):
             assert_almost_equal(a.msd_std, a._diff.s)
             for i in range(len(a.dr)):
                 assert_almost_equal(a.dr[i].samples, a._diff.euclidian_displacements[i].samples)
-            a.diffusion()
+            a.diffusion(0)
             assert a.ngp_max == a._diff.dt[a._diff.ngp.argmax()]
             assert isinstance(a.D, Distribution)
             assert a.flatchain.shape == (3200, 2)
@@ -245,7 +245,7 @@ class TestJumpDiffusionAnalyzer(unittest.TestCase):
             assert_almost_equal(a.mstd_std, a._diff.s)
             for i in range(len(a.dr)):
                 assert_almost_equal(a.dr[i].samples, a._diff.euclidian_displacements[i].samples)
-            a.jump_diffusion()
+            a.jump_diffusion(0)
             assert a.ngp_max == a._diff.dt[a._diff.ngp.argmax()]
             assert isinstance(a.D_J, Distribution)
             assert a.flatchain.shape == (3200, 2)
@@ -260,7 +260,7 @@ class TestJumpDiffusionAnalyzer(unittest.TestCase):
             assert_almost_equal(a.mstd_std, a._diff.s)
             for i in range(len(a.dr)):
                 assert_almost_equal(a.dr[i].samples, a._diff.euclidian_displacements[i].samples)
-            a.jump_diffusion()
+            a.jump_diffusion(0)
             assert a.ngp_max == a._diff.dt[a._diff.ngp.argmax()]
             assert isinstance(a.D_J, Distribution)
             assert a.flatchain.shape == (3200, 2)
@@ -304,7 +304,7 @@ class TestConductivityAnalyzer(unittest.TestCase):
             assert_almost_equal(a.mscd_std, a._diff.s)
             for i in range(len(a.dr)):
                 assert_almost_equal(a.dr[i].samples, a._diff.euclidian_displacements[i].samples)
-            a.conductivity(100)
+            a.conductivity(0, temperature=100)
             assert a.ngp_max == a._diff.dt[a._diff.ngp.argmax()]
             assert isinstance(a.sigma, Distribution)
             assert a.flatchain.shape == (3200, 2)
@@ -319,7 +319,7 @@ class TestConductivityAnalyzer(unittest.TestCase):
             assert_almost_equal(a.mscd_std, a._diff.s)
             for i in range(len(a.dr)):
                 assert_almost_equal(a.dr[i].samples, a._diff.euclidian_displacements[i].samples)
-            a.conductivity(100)
+            a.conductivity(0, temperature=100)
             assert a.ngp_max == a._diff.dt[a._diff.ngp.argmax()]
             assert isinstance(a.sigma, Distribution)
             assert a.flatchain.shape == (3200, 2)
