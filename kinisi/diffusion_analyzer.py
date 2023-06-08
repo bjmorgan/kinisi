@@ -171,17 +171,19 @@ class DiffusionAnalyzer(Analyzer):
         diff._diff = diffusion.MSDBootstrap(diff._delta_t, diff._disp_3d, diff._n_o, **bootstrap_params)
         return diff
 
-    def diffusion(self, diffusion_params: Union[dict, None] = None):
+    def diffusion(self, start_dt: float, diffusion_params: Union[dict, None] = None):
         """
         Calculate the diffusion coefficicent using the bootstrap-GLS methodology.
 
+        :param start_dt: The starting time for the analysis to find the diffusion coefficient.
+            This should be the start of the diffusive regime in the simulation.
         :param diffusion_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object.
             See the appropriate documentation for more guidance on this. Optional, default is the default bootstrap
             parameters.
         """
         if diffusion_params is None:
             diffusion_params = {}
-        self._diff.diffusion(**diffusion_params)
+        self._diff.diffusion(start_dt, **diffusion_params)
 
     @property
     def msd(self) -> np.ndarray:

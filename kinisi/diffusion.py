@@ -294,8 +294,7 @@ class Bootstrap:
         return top / bottom - 1
 
     def bootstrap_GLS(self,
-                      use_ngp: bool = False,
-                      dt_skip: float = 0,
+                      start_dt: float,
                       fit_intercept: bool = True,
                       n_samples: int = 1000,
                       n_walkers: int = 32,
@@ -307,11 +306,8 @@ class Bootstrap:
         Use the covariance matrix estimated from the resampled values to estimate the gradient and intercept
         using a generalised least squares approach.
 
-        :param use_ngp: Should the ngp max be used as the starting point for the diffusion fitting. Optional,
-            default is :py:attr:`False`.
-        :param dt_skip: Values of :py:attr:`dt` that should be skipped, i.e. where the atoms are not diffusing.
-            Note that if :py:attr:`use_ngp` is :py:attr:`True` this will be ignored. Optional, defaults
-            to :py:attr:`0`.
+        :param start_dt: The starting time for the analysis to find the diffusion coefficient.
+            This should be the start of the diffusive regime in the simulation.
         :param fit_intercept: Should the intercept of the diffusion relationship be fit. Optional, default
             is :py:attr:`True`.
         :param n_samples: Number of samples of the Gaussian process to perform. Optional, default is :py:attr:`1000`.
@@ -326,14 +322,12 @@ class Bootstrap:
         if random_state is not None:
             np.random.seed(random_state.get_state()[1][1])
 
-        max_ngp = np.argwhere(self._dt > dt_skip)[0][0]
-        if use_ngp:
-            max_ngp = np.argmax(self._ngp)
+        diff_regime = np.argwhere(self._dt >= start_dt)[0][0]
 
-        self._covariance_matrix = self.generate_covariance_matrix(max_ngp)
+        self._covariance_matrix = self.generate_covariance_matrix(diff_regime)
 
         _, logdet = np.linalg.slogdet(self._covariance_matrix)
-        logdet += np.log(2 * np.pi) * self._n[max_ngp:].size
+        logdet += np.log(2 * np.pi) * self._n[diff_regime:].size
         inv = pinvh(self._covariance_matrix)
 
         def log_likelihood(theta: np.ndarray) -> float:
@@ -344,12 +338,12 @@ class Bootstrap:
             """
             if theta[0] < 0:
                 return -np.inf
-            model = _straight_line(self._dt[max_ngp:], *theta)
-            diff = (model - self._n[max_ngp:])
+            model = _straight_line(self._dt[diff_regime:], *theta)
+            diff = (model - self._n[diff_regime:])
             logl = -0.5 * (logdet + np.matmul(diff.T, np.matmul(inv, diff)))
             return logl
 
-        ols = linregress(self._dt[max_ngp:], self._n[max_ngp:])
+        ols = linregress(self._dt[diff_regime:], self._n[diff_regime:])
         slope = ols.slope
         intercept = 1e-20
         if slope < 0:
@@ -379,13 +373,12 @@ class Bootstrap:
         if fit_intercept:
             self._intercept = Distribution(self.flatchain[:, 1])
 
-    def generate_covariance_matrix(self, max_ngp: int):
+    def generate_covariance_matrix(self, diff_regime: int):
         """
         Generate the covariance matrix, including the modelling and finding the closest matrix
         that is positive definite.
 
-        :param max_ngp: The index of the maximum of the non-Gaussian parameter or the point
-            where the analysis should begin.
+        :param diff_regime: The index of the point where the analysis should begin.
         :return: Modelled covariance matrix that is positive definite.
         """
 
@@ -398,20 +391,23 @@ class Bootstrap:
             :param a: Quadratic coefficient
             :return: Model variances
             """
-            return a / self._n_o[max_ngp:] * dt**2
+            return a / self._n_o[diff_regime:] * dt**2
 
-        self._popt, _ = curve_fit(_model_variance, self.dt[max_ngp:], self._v[max_ngp:])
-        self._model_v = _model_variance(self.dt[max_ngp:], *self._popt)
-        self._covariance_matrix = _populate_covariance_matrix(self._model_v, self._n_o[max_ngp:])
+        self._popt, _ = curve_fit(_model_variance, self.dt[diff_regime:], self._v[diff_regime:])
+        self._model_v = _model_variance(self.dt[diff_regime:], *self._popt)
+        self._covariance_matrix = _populate_covariance_matrix(self._model_v, self._n_o[diff_regime:])
         self._npd_covariance_matrix = self._covariance_matrix
         return find_nearest_positive_definite(self._covariance_matrix)
 
-    def diffusion(self, **kwargs):
+    def diffusion(self, start_dt: float, **kwargs):
         """
         Use the bootstrap-GLS method to determine the diffusivity for the system. Keyword arguments will be
         passed of the :py:func:`bootstrap_GLS` method.
+
+        :param start_dt: The starting time for the analysis to find the diffusion coefficient.
+            This should be the start of the diffusive regime in the simulation.
         """
-        self.bootstrap_GLS(**kwargs)
+        self.bootstrap_GLS(start_dt, **kwargs)
         self._diffusion_coefficient = Distribution(self.gradient.samples / (2e4 * self.dims))
 
     @property
@@ -423,12 +419,15 @@ class Bootstrap:
         """
         return self._diffusion_coefficient
 
-    def jump_diffusion(self, **kwargs):
+    def jump_diffusion(self, start_dt: float, **kwargs):
         """
         Use the bootstrap-GLS method to determine the jump diffusivity for the system. Keyword arguments
         will be passed of the :py:func:`bootstrap_GLS` method.
+
+        :param start_dt: The starting time for the analysis to find the diffusion coefficient.
+            This should be the start of the diffusive regime in the simulation.
         """
-        self.bootstrap_GLS(**kwargs)
+        self.bootstrap_GLS(start_dt, **kwargs)
         self._jump_diffusion_coefficient = Distribution(self.gradient.samples /
                                                         (2e4 * self.dims * self._displacements[0].shape[0]))
 
@@ -441,15 +440,17 @@ class Bootstrap:
         """
         return self._jump_diffusion_coefficient
 
-    def conductivity(self, temperature: float, volume: float, **kwargs):
+    def conductivity(self, start_dt: float, temperature: float, volume: float, **kwargs):
         """
         Use the bootstrap-GLS method to determine the ionic conductivity for the system, in units of mScm:sup:`-1`.
         Keyword arguments will be passed of the :py:func:`bootstrap_GLS` method.
 
+        :param start_dt: The starting time for the analysis to find the diffusion coefficient.
+            This should be the start of the diffusive regime in the simulation.
         :param temperature: System temperature, in Kelvin.
         :param volume: System volume, in Å^{3}.
         """
-        self.bootstrap_GLS(**kwargs)
+        self.bootstrap_GLS(start_dt, **kwargs)
         volume = volume * 1e-24  # cm^3
         D = self.gradient.samples / (2e4 * self.dims)  # cm^2s^-1
         conversion = 1000 / (volume * const.N_A) * (const.N_A * const.e)**2 / (const.R * temperature)
