@@ -4,6 +4,10 @@ authors:
     family-names: McCluskey
     given-names: "Andrew R."
     orcid: "https://orcid.org/0000-0003-3381-5911"
+  - affilation: "Department of Chemistry, University College London"
+    family-names: Squires
+    given-names: "Alex G."
+    orcid: "https://orcid.org/0000-0001-6967-3690"
   - affiliation: "Department of Chemistry, University of Bath"
     family-names: Morgan
     given-names: "Benjamin J."

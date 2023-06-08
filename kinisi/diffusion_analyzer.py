@@ -86,6 +86,36 @@ class DiffusionAnalyzer(Analyzer):
         diff = super()._from_pymatgen(trajectory, parser_params, dtype=dtype)
         diff._diff = diffusion.MSDBootstrap(diff._delta_t, diff._disp_3d, diff._n_o, **bootstrap_params)
         return diff
+    
+    @classmethod
+    def from_ase(cls,
+                    trajectory: List[Union['ase.atoms.Atoms', List['ase.atoms.Atoms']]],
+                    parser_params: dict,
+                    dtype: str = None,
+                    bootstrap_params: dict = None):
+        """
+        Create a :py:class:`DiffusionAnalyzer` object from a list or nested list of
+        :py:class:`ase.atoms.Atoms` objects.
+
+        :param trajectory: The list or nested list of structures to be analysed.
+        :dtype trajectory: List[Union['ase.atoms.Atoms', List['ase.atoms.Atoms']]]
+        :param parser_params: The parameters for the :py:class:`kinisi.parser.ASEParser` object. See the
+            appropriate documentation for more guidance on this dictionary.
+        :param dtype: If :py:attr:`trajectory` is a list of :py:class:`ase.atoms.Atoms` objects,
+            this should be :py:attr:`None`. However, if a list of lists is passed, then it is necessary to identify if
+            these constitute a series of :py:attr:`consecutive` trajectories or a series of :py:attr:`identical`
+            starting points with different random seeds, in which case the `dtype` should be either
+            :py:attr:`consecutive` or :py:attr:`identical`.
+        :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
+            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+
+        :return: Relevant :py:class:`DiffusionAnalyzer` object.
+        """
+        if bootstrap_params is None:
+            bootstrap_params = {}
+        diff = super()._from_ase(trajectory, parser_params, dtype=dtype)
+        diff._diff = diffusion.MSDBootstrap(diff._delta_t, diff._disp_3d, diff._n_o, **bootstrap_params)
+        return diff
 
     @classmethod
     def from_Xdatcar(cls,

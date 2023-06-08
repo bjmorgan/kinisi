@@ -207,6 +207,128 @@ class Parser:
             n_samples = np.append(n_samples, disp.shape[0] * timesteps[-1] / timestep)
         return delta_t, disp_3d, n_samples
 
+class ASEParser(Parser):
+    """
+    A parser for ASE Atoms objects
+    
+    :param atoms: Atoms ordered in sequence of run.
+    :param specie: symbol to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
+    :param time_step: Time step, in picoseconds, between steps in trajectory.
+    :param step_skip: Sampling frequency of the trajectory (time_step is multiplied by this number to get the real
+        time between output from the simulation file).
+    :param sub_sample_traj: Multiple of the :py:attr:`time_step` to sub sample at. Optional, defaults
+        to :py:attr:`1` where all timesteps are used.
+    :param min_dt: Minimum timestep to be evaluated, in the simulation units. Optional, defaults to the
+        produce of :py:attr:`time_step` and :py:attr:`step_skip`.
+    :param max_dt: Maximum timestep to be evaluated, in the simulation units. Optional, defaults to the
+        length of the simulation.
+    :param n_steps: Number of steps to be used in the timestep function. Optional, defaults to :py:attr:`100`
+        unless this is fewer than the total number of steps in the trajectory when it defaults to this number.
+    :param spacing: The spacing of the steps that define the timestep, can be either :py:attr:`'linear'` or
+        :py:attr:`'logarithmic'`. If :py:attr:`'logarithmic'` the number of steps will be less than or equal
+        to that in the :py:attr:`n_steps` argument, such that all values are unique. Optional, defaults to
+        :py:attr:`linear`.
+    :param sampling: The ways that the time-windows are sampled. The options are :py:attr:`'single-origin'`
+        or :py:attr:`'multi-origin'` with the former resulting in only one observation per atom per
+        time-window and the latter giving the maximum number of origins without sampling overlapping
+        trajectories. Optional, defaults to :py:attr:`'multi-origin'`.
+    :param memory_limit: Upper limit in the amount of computer memory that the displacements can occupy in
+        gigabytes (GB). Optional, defaults to :py:attr:`8.`.
+    :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
+    """
+    def __init__(self, 
+                 atoms: List["ase.atoms.Atoms"],
+                 specie: str,
+                 time_step: float,
+                 step_skip: int,
+                 sub_sample_traj: int = 1,
+                 min_dt: float = None,
+                 max_dt: float = None,
+                 n_steps: int = 100,
+                 spacing: str = 'linear',
+                 sampling: str = 'multi-origin',
+                 memory_limit: float = 8.,
+                 progress: bool = True):
+        
+            structure, coords, latt = self.get_structure_coords_latt(atoms, sub_sample_traj, progress)
+            indices = self.get_indices(structure, specie)
+
+            super().__init__(self.get_disp(coords, latt),
+                         indices[0], 
+                         indices[1], 
+                         time_step, 
+                         step_skip, 
+                         min_dt, 
+                         max_dt, 
+                         n_steps, 
+                         spacing, 
+                         sampling, 
+                         memory_limit, 
+                         progress)
+            self._volume = structure.get_volume()
+            
+        
+    @staticmethod
+    def get_structure_coords_latt(
+                atoms: List["ase.atoms.Atoms"],
+                sub_sample_traj: int = 1,
+                progress: bool = True) -> Tuple["ase.atoms.Atoms", List[np.ndarray], List[np.ndarray]]:
+            """
+            Obtain the initial structure and displacement from a :py:attr:`list`
+            of :py:class`pymatgen.core.structure.Structure`.
+
+            :param structures: Structures ordered in sequence of run.
+            :param sub_sample_traj: Multiple of the :py:attr:`time_step` to sub sample at.
+                Optional, default is :py:attr:`1`.
+            :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
+
+            :return: Tuple containing: initial structure, fractional coordinates for all atoms,
+                and lattice descriptions.
+            """
+            coords, latt = [], []
+            first = True
+            if progress:
+                iterator = tqdm(atoms[::sub_sample_traj], desc='Reading Trajectory')
+            else:
+                iterator = atoms[::sub_sample_traj]
+            for struct in iterator:
+                if first:
+                    structure = struct
+                    first = False
+                scaled_positions = struct.get_scaled_positions()
+                coords.append(np.array(scaled_positions)[:, None])
+                latt.append(struct.cell[:])
+            
+            coords.insert(0, coords[0])
+            latt.insert(0, latt[0])
+            return structure, coords, latt
+    
+    @staticmethod
+    def get_indices(
+        structure: "ase.atoms.Atoms",
+        specie: "str"
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Determine framework and non-framework indices for a :py:mod:`pymatgen` compatible file.
+
+        :param structure: Initial structure.
+        :param specie: Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
+
+        :returns: Tuple containing: indices for the atoms in the trajectory used in the calculation of the diffusion
+            and indices of framework atoms.
+        """
+        indices = []
+        framework_indices = []
+        if not isinstance(specie, List):
+            specie = [specie]
+        for i, site in enumerate(structure):
+            if site.symbol in specie:
+                indices.append(i)
+            else:
+                framework_indices.append(i)
+        if len(indices) == 0:
+            raise ValueError("There are no species selected to calculate the mean-squared displacement of.")
+        return indices, framework_indices
 
 class PymatgenParser(Parser):
     """
@@ -299,6 +421,7 @@ class PymatgenParser(Parser):
                 first = False
             coords.append(np.array(struct.frac_coords)[:, None])
             latt.append(struct.lattice.matrix)
+
         coords.insert(0, coords[0])
         latt.insert(0, latt[0])
         return structure, coords, latt

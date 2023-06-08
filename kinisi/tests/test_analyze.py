@@ -15,6 +15,7 @@ import numpy as np
 from numpy.testing import assert_almost_equal, assert_equal
 from pymatgen.io.vasp import Xdatcar
 import MDAnalysis as mda
+from ase.io import Trajectory
 from uravu.distribution import Distribution
 import kinisi
 from kinisi.analyze import DiffusionAnalyzer, JumpDiffusionAnalyzer, ConductivityAnalyzer
@@ -27,6 +28,10 @@ md = mda.Universe(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/e
                   os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS.dcd'),
                   format='LAMMPS')
 db_params = {'specie': '1', 'time_step': 0.005, 'step_skip': 250}
+ase_file_path = os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_ase.traj')
+traj = Trajectory(ase_file_path, 'r')
+dc_params = {'specie': 'Li', 'time_step': 1.0 * 1e-3, 'step_skip': 1}
+
 
 
 class TestAnalyzer(unittest.TestCase):
@@ -130,6 +135,22 @@ class TestAnalyzer(unittest.TestCase):
         assert len(a._disp_3d) == 100
         assert a._disp_3d[0].shape == (408, 200, 3)
         assert a._disp_3d[-1].shape == (408, 1, 3)
+
+    def test_ase(self):
+        a = Analyzer._from_ase(traj, parser_params=dc_params)
+        assert a._delta_t.size == 100
+        assert_almost_equal(a._delta_t.max(), 0.2)
+        assert len(a._disp_3d) == 100
+        assert a._disp_3d[0].shape == (180, 200, 3)
+        assert a._disp_3d[-1].shape == (180, 1, 3)
+
+    def test_identical_ase(self):
+        a = Analyzer._from_ase([traj, traj], parser_params=dc_params, dtype='identical')
+        assert a._delta_t.size == 100
+        assert_almost_equal(a._delta_t.max(), 0.2)
+        assert len(a._disp_3d) == 100
+        assert a._disp_3d[0].shape == (360, 200, 3)
+        assert a._disp_3d[-1].shape == (360, 1, 3)
 
     def test_list_bad_input(self):
         with self.assertRaises(ValueError):

@@ -12,6 +12,7 @@ import numpy as np
 import MDAnalysis as mda
 from numpy.testing import assert_almost_equal, assert_equal
 from pymatgen.io.vasp import Xdatcar
+from ase.io import Trajectory
 import os
 import kinisi
 from kinisi import parser
@@ -104,6 +105,15 @@ class TestParser(unittest.TestCase):
         assert_almost_equal(data.time_step, 20.0)
         assert_almost_equal(data.step_skip, 100)
         assert_equal(data.indices, list(range(xd.natoms[0])))
+
+    def test_ase_init(self):
+        traj = Trajectory(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_ase.traj'))
+        da_params = {'specie': 'Li', 'time_step': 1e-3, 'step_skip': 1}
+        data = parser.ASEParser(traj, **da_params)
+        assert_almost_equal(data.time_step, 1e-3)
+        assert_almost_equal(data.step_skip, 1)
+        assert_equal(data.indices, list(range(180)))
+        
 
     def test_mda_init(self):
         xd = mda.Universe(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS.data'),
