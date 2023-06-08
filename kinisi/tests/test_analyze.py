@@ -39,6 +39,49 @@ class TestAnalyzer(unittest.TestCase):
     Tests for the Analyzer base class.
     """
 
+    @classmethod
+    def tearDownClass(cls):
+        test_files = ['test_save.hdf', 'test_load.hdf']
+        for test_file in test_files:
+            if os.path.exists(test_file):
+                os.remove(test_file)
+    
+    def test_save(self):
+        a = Analyzer._from_pymatgen(xd.structures, parser_params=da_params)
+        filename = "test_save"
+        a.save(filename)
+        assert os.path.exists(filename + ".hdf")
+
+    def tearDown(self):
+        for filename in ["test_save", "test_load"]:
+            if os.path.exists(filename + ".hdf"):
+                os.remove(filename + ".hdf")
+
+    def test_to_dict(self):
+        a = Analyzer._from_pymatgen(xd.structures, parser_params=da_params)
+        dictionary = a.to_dict()
+        assert isinstance(dictionary, dict)
+        assert set(dictionary.keys()) == set(['delta_t', 'disp_3d', 'n_o', 'volume'])
+
+    def test_from_dict(self):
+        a = Analyzer._from_pymatgen(xd.structures, parser_params=da_params)
+        dictionary = a.to_dict()
+        b = Analyzer.from_dict(dictionary)
+        assert_equal(a._delta_t, b._delta_t)
+        for i, d in enumerate(a._disp_3d):
+            assert_equal(d, b._disp_3d[i])
+        assert a._volume == b._volume
+
+    def test_load(self):
+        a = Analyzer._from_pymatgen(xd.structures, parser_params=da_params)
+        filename = "test_load"
+        a.save(filename)
+        loaded = Analyzer.load(filename)
+        assert_equal(a._delta_t, loaded._delta_t)
+        for i, d in enumerate(a._disp_3d):
+            assert_equal(d, loaded._disp_3d[i])
+        assert a._volume == loaded._volume
+
     def test_dict_roundtrip(self):
         a = Analyzer._from_pymatgen(xd.structures, parser_params=da_params)
         b = Analyzer.from_dict(a.to_dict())
