@@ -36,8 +36,7 @@ class Analyzer:
 
         :param filename: Name for the file, no file extension is required and if one if given it is replaced with .hdf.
         """
-        if filename[-4:] != '.hdf':
-            raise ValueError("The expected file extension is .hdf")
+        filename = filename.rsplit('.', 1)[0] + '.hdf'
         my_dict = self.to_dict()
         try:
             import h5py
@@ -58,8 +57,7 @@ class Analyzer:
 
         :return: An :py:class:`Analyzer` object from the file.
         """
-        if filename[-4:] != '.hdf':
-            raise ValueError("The expected file extension is .hdf")
+        filename = filename.rsplit('.', 1)[0] + '.hdf'
         try:
             import h5py
         except ModuleNotFoundError:  # pragma: no cover

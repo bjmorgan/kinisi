@@ -47,7 +47,8 @@ dev = [
     'yapf',
     'pytest',
     'pytest-cov',
-    'ase'
+    'ase',
+    'h5py'
 ]
 docs = [
     'pymatgen',
