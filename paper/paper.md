@@ -41,7 +41,7 @@ A model covariance matrix, defined for freely diffusing atoms, is parameterised 
 In addition to the diffusion coefficient, `kinisi` can also determine the jump-diffusion coefficient and material conductivity directly from a simulation.
 Finally, temperature-dependent relationships can be studied with custom `uravu.relationship.Relationship` objects [@mccluskey_uravu_2020]. 
 
-`kinisi` supports simulation output from a variety of common simulation software packages, including VASP [@kresse_ab_1993,@kresse_ab_1994,@kresse_efficiency_1996,@kresse_efficient_1996] and those compatible with Pymatgen [@ong_python_2013], atomic simulation environment [@larsen_atomic_2017], and MDAnalysis [@michaud_mdanalysis_2011,gowers_python_2016]. 
+`kinisi` supports simulation output from a variety of common simulation software packages, including VASP [@kresse_ab_1993,@kresse_ab_1994,@kresse_efficiency_1996,@kresse_efficient_1996] and those compatible with Pymatgen [@ong_python_2013], atomic simulation environment [@larsen_atomic_2017], and MDAnalysis [@michaud_mdanalysis_2011,@gowers_python_2016]. 
 The availability of this software will offer users the ability to accurately quantify the uncertainties in atomic displacement and introduce this into downstream modelling in a quantitative manner. 
 Tutorials and API-level documentation are available online (kinisi.rtfd.io). 
 
