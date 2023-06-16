@@ -35,13 +35,13 @@ bibliography: paper.bib
 # Summary
 
 Molecular dynamics simulations are a popular tool for the study of diffusion and conductivity in materials. 
-However, the computational cost of these simulations limit the ``real-world'' timescale and system size that can the investigated. 
+However, the computational cost of these simulations limit the "real-world" timescale and system size that can the investigated. 
 `kinisi` provides a straightforward interface for the accurate and statistically efficient estimation of the mean-squared displacement and associated uncertainty of atoms and molecules in a material [@mccluskey_arxiv_2023]. 
 A model covariance matrix, defined for freely diffusing atoms, is parameterised from the available simulation data and Bayesian regression by Markov chain Monte Carlo [@foreman_emcee_2019] is then used to quantify the posterior probability for the linear Einstein relation.  
 In addition to the diffusion coefficient, `kinisi` can also determine the jump-diffusion coefficient and material conductivity directly from a simulation.
 Finally, temperature-dependent relationships can be studied with custom `uravu.relationship.Relationship` objects [@mccluskey_uravu_2020]. 
 
-`kinisi` supports simulation output from a variety of common simulation software packages, including VASP [@kresse_ab_1993,kresse_ab_1994,kresse_efficiency_1996,kresse_efficient_1996] and those compatible with Pymatgen [@ong_python_2013], atomic simulation environment [@larsen_atomic_2017], and MDAnalysis [@michaud_mdanalysis_2011,gowers_python_2016]. 
+`kinisi` supports simulation output from a variety of common simulation software packages, including VASP [@kresse_ab_1993,@kresse_ab_1994,@kresse_efficiency_1996,@kresse_efficient_1996] and those compatible with Pymatgen [@ong_python_2013], atomic simulation environment [@larsen_atomic_2017], and MDAnalysis [@michaud_mdanalysis_2011,gowers_python_2016]. 
 The availability of this software will offer users the ability to accurately quantify the uncertainties in atomic displacement and introduce this into downstream modelling in a quantitative manner. 
 Tutorials and API-level documentation are available online (kinisi.rtfd.io). 
 
