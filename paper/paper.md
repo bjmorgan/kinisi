@@ -12,13 +12,13 @@ authors:
     affiliation: 1
   - name: Samuel W. Coles
     orcid: 0000-0001-9722-5676
-    affiliation: "2,4"
+    affiliation: "2,3"
   - name: Alex G. Squires
     orcid: 0000-0001-6967-3690
     affiliation: "3,4"
   - name: Benjamin J. Morgan
     orcid: 0000-0002-3056-8233
-    affiliation: "2,4"
+    affiliation: "2,3"
 affiliations:
  - name: European Spallation Source ERIC, Ole Maaløes vej 3, 2200 København N, DK
    index: 1
