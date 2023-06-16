@@ -15,7 +15,7 @@ authors:
     affiliation: "2,4"
   - name: Alex G. Squires
     orcid: 0000-0001-6967-3690
-    affilation: "3,4"
+    affiliation: "3,4"
   - name: Benjamin J. Morgan
     orcid: 0000-0002-3056-8233
     affiliation: "2,4"
