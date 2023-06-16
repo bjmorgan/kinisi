@@ -54,6 +54,6 @@ While Pymatgen [@ong_python_2013] and others are capable of estimating displacem
 
 The authors thank all of the users of `kinisi` for contributing feedback, suggesting new features and filing bug reports. 
 S.W.C., A.G.S. and B.J.M. acknowledge the support of the Faraday Institution (grant numbers FIRG016, FIG017) 
-B.J.M. acknowledges support from the Royal Society (UF130329 and URF\R\191006). 
+B.J.M. acknowledges support from the Royal Society (UF130329 and URF R 191006). 
 
 # References
