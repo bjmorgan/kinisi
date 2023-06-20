@@ -35,7 +35,7 @@ bibliography: paper.bib
 # Summary
 
 Molecular dynamics simulations are a popular tool for the study of diffusion and conductivity in materials. 
-However, the computational cost of these simulations limit the "real-world" timescale and system size that can the investigated. 
+However, the computational cost of these simulations limit the "real-world" timescale and system size that can be investigated. 
 `kinisi` provides a straightforward interface for the accurate and statistically efficient estimation of the mean-squared displacement and associated uncertainty of atoms and molecules in a material [@mccluskey_arxiv_2023]. 
 A model covariance matrix, defined for freely diffusing atoms, is parameterised from the available simulation data and Bayesian regression by Markov chain Monte Carlo [@foreman_emcee_2019] is then used to quantify the posterior probability for the linear Einstein relation.  
 In addition to the diffusion coefficient, `kinisi` can also determine the jump-diffusion coefficient and material conductivity directly from a simulation.
