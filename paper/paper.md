@@ -34,21 +34,20 @@ bibliography: paper.bib
 
 # Summary
 
-Molecular dynamics simulations are a popular tool for the study of diffusion and conductivity in materials. 
-However, the computational cost of these simulations limit the "real-world" timescale and system size that can be investigated. 
-`kinisi` provides a straightforward interface for the accurate and statistically efficient estimation of the mean-squared displacement and associated uncertainty of atoms and molecules in a material [@mccluskey_arxiv_2023]. 
-A model covariance matrix, defined for freely diffusing atoms, is parameterised from the available simulation data and Bayesian regression by Markov chain Monte Carlo [@foreman_emcee_2019] is then used to quantify the posterior probability for the linear Einstein relation.  
-In addition to the diffusion coefficient, `kinisi` can also determine the jump-diffusion coefficient and material conductivity directly from a simulation.
-Finally, temperature-dependent relationships can be studied with custom `uravu.relationship.Relationship` objects [@mccluskey_uravu_2020]. 
+Molecular dynamics simulations are a popular tool for the study of diffusion and conductivity in materials.
+The large computational cost of these simulations, however, limits the "real-world" timescale and system size that can be investigated.  
+`kinisi` provides an interface, to a novel approach [@mccluskey_arxiv_2023], that allows accurate and statistically efficient estimates of the mean-squared displacement and associated uncertainty, for atoms and molecules, to be obtained.
+A model covariance matrix, defined with the assumption of freely diffusing atoms, is parameterised from the available simulation data and Bayesian regression by Markov chain Monte Carlo [@foreman_emcee_2019] is then used to quantify the posterior probability for the linear Einstein relation.  
+Additionally functionality of `kinisi` includes the ability to determine the jump-diffusion coefficient and material conductivity directly from simulation. 
+The availability of this software will offer users the ability to accurately quantify the uncertainties in atomic displacement and introduce this into downstream modelling in a quantitative manner, i.e. temperature-dependent relationships, such as the Arrhenius relationship, can be studied with custom `uravu.relationship.Relationship` objects [@mccluskey_uravu_2020]. 
 
 `kinisi` supports simulation output from a variety of common simulation software packages, including VASP [@kresse_ab_1993,@kresse_ab_1994,@kresse_efficiency_1996,@kresse_efficient_1996] and those compatible with Pymatgen [@ong_python_2013], atomic simulation environment [@larsen_atomic_2017], and MDAnalysis [@michaud_mdanalysis_2011,@gowers_python_2016]. 
-The availability of this software will offer users the ability to accurately quantify the uncertainties in atomic displacement and introduce this into downstream modelling in a quantitative manner. 
 Tutorials and API-level documentation are available online (kinisi.rtfd.io). 
 
 # Statement of Need
 
 Currently `kinisi` is the only software (to the authors' knowledge), that implements the use of the model covariance matrix approach described in [@mccluskey_arxiv_2023], which accurately quantifies the diffusion of atoms in materials. 
-While Pymatgen [@ong_python_2013] and others are capable of estimating displacement and uncertainty, the methods applied lack the accuracy and statistical efficiency available from the model covariance approach available in `kinisi`. 
+The model covariance approach, available in `kinisi`, gives greater accuracy and statistical efficiency in the estimation of displacement properties than is available in other approaches, such as that made available in Pymatgen [@ong_python_2013].
 
 # Acknowledgements
 
