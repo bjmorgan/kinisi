@@ -18,7 +18,7 @@
     
 - How does `kinisi` work?
 
-    > Please have a look at our [methodology](./methodology) to learn about how `kinisi` works. 
+    > Please have a look at our [arXiv preprint](https://arxiv.org/abs/2305.18244) to learn about how `kinisi` works. 
     
 - How does `kinisi` compare to the similar functionality in `pymatgen`?
 
