@@ -2,7 +2,7 @@
 Parser functions, including implementation for :py:mod:`pymatgen` compatible VASP files and :py:mod:`MDAnalysis`
 compatible trajectories.
 
-This parser borrows heavily from the :py:class`pymatgen.analysis.diffusion_analyzer.DiffusionAnalyzer` class,
+This parser borrows heavily from the :py:class:`pymatgen.analysis.diffusion_analyzer.DiffusionAnalyzer` class,
 originally authored by Will Richards (wrichard@mit.edu) and Shyue Ping Ong.
 We include this statement to note that we make no claim to authorship of that code and make no attack on the
 original authors.
