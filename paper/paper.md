@@ -20,9 +20,9 @@ authors:
     orcid: 0000-0002-3056-8233
     affiliation: "3,4"
 affiliations:
- - name: European Spallation Source ERIC, Ole Maaløes vej 3, 2200 København N, DK
-   index: 1
  - name: School of Chemistry, University of Bristol, Cantock's Close, Bristol, BS8 1TS, UK
+   index: 1
+ - name: European Spallation Source ERIC, Ole Maaløes vej 3, 2200 København N, DK
    index: 2
  - name: Department of Chemistry, University of Bath, Claverton Down, Bath, BA2 7AY, UK
    index: 3
