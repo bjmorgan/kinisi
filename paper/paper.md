@@ -58,7 +58,7 @@ OLS, however, is statistically inefficient and gives a large uncertainty in the 
 This approach gives more accurate estimates of $D^*$ from a given size of simulation data (number of atoms and simulation timescale) than ordinary least-squares or weighted least-squares, while the calculated uncertainties allow robust downstream analysis, such as estimating activation energies by fitting an Arrhenius model to $D^*(T)$.
 
 `kinisi` supports simulation output from a variety of common simulation software packages, including VASP [@kresse_ab_1993,@kresse_ab_1994,@kresse_efficiency_1996,@kresse_efficient_1996] and those compatible with Pymatgen [@ong_python_2013], atomic simulation environment [@larsen_atomic_2017], and MDAnalysis [@michaud_mdanalysis_2011,@gowers_python_2016]. 
-Tutorials and API-level documentation are provided online  at [kinisi.rtfd.io](kinisi.rtfd.io). 
+Tutorials and API-level documentation are provided online at [kinisi.rtfd.io](https://kinisi.rtfd.io). 
 
 `kinisi` has been used in the analysis of simulation data for a range of systems [refs].
 
