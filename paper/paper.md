@@ -10,12 +10,12 @@ authors:
   - name: Andrew R. McCluskey
     orcid: 0000-0003-3381-5911
     affiliation: "1,2"
-  - name: Samuel W. Coles
-    orcid: 0000-0001-9722-5676
-    affiliation: "3,4"
   - name: Alex G. Squires
     orcid: 0000-0001-6967-3690
     affiliation: "5,4"
+  - name: Samuel W. Coles
+    orcid: 0000-0001-9722-5676
+    affiliation: "3,4"
   - name: Benjamin J. Morgan
     orcid: 0000-0002-3056-8233
     affiliation: "3,4"
