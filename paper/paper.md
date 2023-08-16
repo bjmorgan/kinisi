@@ -33,26 +33,35 @@ bibliography: paper.bib
 ---
 
 # Summary
-
-Molecular dynamics simulations are a popular tool for the study of diffusion and conductivity in materials.
-The large computational cost of these simulations, however, limits the "real-world" timescale and system size that can be investigated.  
-`kinisi` provides an interface, to a novel approach [@mccluskey_arxiv_2023], that allows accurate and statistically efficient estimates of the mean-squared displacement and associated uncertainty, for atoms and molecules, to be obtained.
-A model covariance matrix, defined with the assumption of freely diffusing atoms, is parameterised from the available simulation data and Bayesian regression by Markov chain Monte Carlo [@foreman_emcee_2019] is then used to quantify the posterior probability for the linear Einstein relation.  
-Additional functionality of `kinisi` includes the ability to determine the jump-diffusion coefficient and material conductivity directly from simulation. 
-The availability of this software will offer users the ability to accurately quantify the uncertainties in atomic displacement and introduce this into downstream modelling in a quantitative manner, i.e. temperature-dependent relationships, such as the Arrhenius relationship, can be studied with custom `uravu.relationship.Relationship` objects [@mccluskey_uravu_2020]. 
-
-`kinisi` supports simulation output from a variety of common simulation software packages, including VASP [@kresse_ab_1993,@kresse_ab_1994,@kresse_efficiency_1996,@kresse_efficient_1996] and those compatible with Pymatgen [@ong_python_2013], atomic simulation environment [@larsen_atomic_2017], and MDAnalysis [@michaud_mdanalysis_2011,@gowers_python_2016]. 
-Tutorials and API-level documentation are available online (kinisi.rtfd.io). 
+`kinisi` is a Python package for estimating transport coefficients (e.g., self-diffusion coefficients, $D^*$) and their corresponding uncertainties from molecular dynamics simulation data; it includes an implementation of the approximate Bayesian regression scheme described in [@mccluskey_arxiv_2023], wherein the mean-squared displacement (MSD) of mobile atoms is modelled as a multivariate normal distribution with an analytical covariance matrix derived for a set of freely diffusing particles, which is parametrised from the input simulation data.
+`kinisi` uses Markov-chain Monte Carlo [@foreman_emcee_2019] to sample this model multivariate normal distribution to give a posterior distribution of linear model ensemble MSDs that are compatible with the observed simulation data.
+For each linear ensemble MSD, $\mathbf{x}(t)$, a corresponding estimate of the diffusion coefficient, $\widehat{D}^*$ is given via the Einstein relation,
+$$\widehat{D}* = \frac{1}{6}\frac{\mathrm{d}\mathbf{x}(t)}{\mathrm{d}t}$$
+where $t$ is time.
+The posterior distribution of compatible model ensemble MSDs calculated by `kinisi`can, therefore, be used to give a point estimate for the most probable value of $D^*$, given the observed simulation data, and an estimate of the corresponding uncertainty in $\widehat{D}^*$.
+A detailed description of the numerical method used in `kinisi` is given in Ref. [@mccluskey_arxiv_2023].
+`kinisi` also provides equivalent functionality for estimating collective transport coefficients (jump-diffusion coefficients and ionic conductivities).
 
 # Statement of Need
 
-Currently `kinisi` is the only software (to the authors' knowledge), that implements the use of the model covariance matrix approach described in [@mccluskey_arxiv_2023], which accurately quantifies the diffusion of atoms in materials. 
-The model covariance approach, available in `kinisi`, gives greater accuracy and statistical efficiency in the estimation of displacement properties than is available in other approaches, such as that made available in Pymatgen [@ong_python_2013].
+Molecular dynamics simulations are widely used to calculate transport coefficients such as self-diffusion coefficients and ionic conductivities [refs; e.g. My argyrodite + LLZO MD papers / others?].
+Because molecular dynamics simulations are limited in size and timescale, ensemble parameters, such as transport coefficients, calculated from simulation trajectories are estimates of the corresponding true (usually unknown) parameter value and exhibit some statistical uncertainty.
+The statistical properties of any such calculated ensemble parameters depend on the details of the input molecular dynamics simulation—e.g., choices of interatomic potential, system size, and simulation timescale—and the choice of estimator for the target calculated parameter.
+An optimal estimation method should minimise the statistical uncertainty in the derived parameter of interest (the method should be statistically efficient) and should also provide an accurate estimate of this uncertainty so that calculated values can be used in downstream statistical analyses.
+
+One widely-used approach to estimating the self-diffusion coefficient, $D^*$, from molecular dynamics simulation is to fit a linear model to the observed mean-square displacement, $\mathbf{x}t$ [cite Allen & Tildesley], where the slope of this &ldquo;best fit&rdquo; linear relationship gives a point-estimate for $D^*$ via the corresponding Einstein relation.
+The simplest approach to fitting a linear model to observed MSD data is ordinary least squares (OLS).
+OLS, however, is statistically inefficient and gives a large uncertainty in the resulting estimate of $D^*$, while also significantly underestimating this uncertainty [@mccluskey_arxiv_2023].
+`kinisi` implements the alternative approximate Bayesian regression scheme described in Ref. [@mccluskey_arxiv_2023], which gives a statistically efficient estimate for $D^*$ and an accurate estimate for the associated uncertainty $\sigma^2[\widehat{D}^*]$.
+This approach gives more accurate estimates of $D^*$ from a given size of simulation data (number of atoms and simulation timescale) than ordinary least-squares or weighted least-squares, while the calculated uncertainties allow robust downstream analysis, such as estimating activation energies by fitting an Arrhenius model to $D^*(T)$.
+
+`kinisi` supports simulation output from a variety of common simulation software packages, including VASP [@kresse_ab_1993,@kresse_ab_1994,@kresse_efficiency_1996,@kresse_efficient_1996] and those compatible with Pymatgen [@ong_python_2013], atomic simulation environment [@larsen_atomic_2017], and MDAnalysis [@michaud_mdanalysis_2011,@gowers_python_2016]. 
+Tutorials and API-level documentation are provided online  at [kinisi.rtfd.io](kinisi.rtfd.io). 
+
+`kinisi` has been used in the analysis of simulation data for a range of systems [refs].
 
 # Acknowledgements
 
-The authors thank all of the users of `kinisi` for contributing feedback, suggesting new features and filing bug reports. 
-S.W.C., A.G.S. and B.J.M. acknowledge the support of the Faraday Institution (grant numbers FIRG016, FIG017) 
+The authors thank all beta-users of `kinisi` for their feedback, suggestions of new features, and for filing bug reports. 
+S.W.C., A.G.S., and B.J.M. acknowledge the support of the Faraday Institution (grant numbers FIRG016, FIG017) 
 B.J.M. acknowledges support from the Royal Society (UF130329 and URF\textbackslash R\textbackslash 191006). 
-
-# References
