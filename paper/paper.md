@@ -36,7 +36,7 @@ bibliography: paper.bib
 
 # Summary
 `kinisi` is a Python package for estimating transport coefficients (e.g., self-diffusion coefficients, $D^*$) and their corresponding uncertainties from molecular dynamics simulation data; it includes an implementation of the approximate Bayesian regression scheme described in [@mccluskey_arxiv_2023], wherein the mean-squared displacement (MSD) of mobile atoms is modelled as a multivariate normal distribution with an analytical covariance matrix derived for a set of freely diffusing particles, which is parametrised from the input simulation data.
-`kinisi` uses Markov-chain Monte Carlo [@Goodman2010,@foreman_emcee_2019] to sample this model multivariate normal distribution to give a posterior distribution of linear model ensemble MSDs that are compatible with the observed simulation data.
+`kinisi` uses Markov-chain Monte Carlo [@Goodman2010;@foreman_emcee_2019] to sample this model multivariate normal distribution to give a posterior distribution of linear model ensemble MSDs that are compatible with the observed simulation data.
 For each linear ensemble MSD, $\mathbf{x}(t)$, a corresponding estimate of the diffusion coefficient, $\widehat{D}^*$ is given via the Einstein relation,
 $$\widehat{D}* = \frac{1}{6}\frac{\mathrm{d}\mathbf{x}(t)}{\mathrm{d}t}$$
 where $t$ is time.
@@ -57,7 +57,7 @@ OLS, however, is statistically inefficient and gives a large uncertainty in the 
 `kinisi` implements the alternative approximate Bayesian regression scheme described in Ref. [@mccluskey_arxiv_2023], which gives a statistically efficient estimate for $D^*$ and an accurate estimate for the associated uncertainty $\sigma^2[\widehat{D}^*]$.
 This approach gives more accurate estimates of $D^*$ from a given size of simulation data (number of atoms and simulation timescale) than ordinary least-squares or weighted least-squares, while the calculated uncertainties allow robust downstream analysis, such as estimating activation energies by fitting an Arrhenius model to $D^*(T)$.
 
-`kinisi` supports simulation output from a variety of common simulation software packages, including VASP [@kresse_ab_1993,@kresse_ab_1994,@kresse_efficiency_1996,@kresse_efficient_1996] and those compatible with Pymatgen [@ong_python_2013], atomic simulation environment [@larsen_atomic_2017], and MDAnalysis [@michaud_mdanalysis_2011,@gowers_python_2016]. 
+`kinisi` supports simulation output from a variety of common simulation software packages, including VASP [@kresse_ab_1993;@kresse_ab_1994;@kresse_efficiency_1996;@kresse_efficient_1996] and those compatible with Pymatgen [@ong_python_2013], atomic simulation environment [@larsen_atomic_2017], and MDAnalysis [@michaud_mdanalysis_2011;@gowers_python_2016]. 
 Tutorials and API-level documentation are provided online at [kinisi.rtfd.io](https://kinisi.rtfd.io). 
 
 A list of publications where `kinisi` has been used in the analysis of simulation data can be found at [kinisi.readthedocs.io/en/latest/papers.html](https://kinisi.readthedocs.io/en/latest/papers.html).
