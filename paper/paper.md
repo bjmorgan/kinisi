@@ -46,7 +46,7 @@ A detailed description of the numerical method used in `kinisi` is given in Ref.
 
 # Statement of Need
 
-Molecular dynamics simulations are widely used to calculate transport coefficients such as self-diffusion coefficients and ionic conductivities [refs; e.g. My argyrodite + LLZO MD papers / others?].
+Molecular dynamics simulations are widely used to calculate transport coefficients such as self-diffusion coefficients and ionic conductivities [@morgan_relationships_2014;morgan_mechanistic_2021;poletayev_defect_2022;klepis_long_2009;wang_application_2011;zelovich_hydroxide_2019].
 Because molecular dynamics simulations are limited in size and timescale, ensemble parameters, such as transport coefficients, calculated from simulation trajectories are estimates of the corresponding true (usually unknown) parameter value and exhibit some statistical uncertainty.
 The statistical properties of any such calculated ensemble parameters depend on the details of the input molecular dynamics simulation e.g., choices of interatomic potential, system size, and simulation timescale—and the choice of estimator for the target calculated parameter.
 An optimal estimation method should minimise the statistical uncertainty in the derived parameter of interest (the method should be statistically efficient) and should also provide an accurate estimate of this uncertainty so that calculated values can be used in downstream statistical analyses.
