@@ -9,26 +9,28 @@ tags:
 authors:
   - name: Andrew R. McCluskey
     orcid: 0000-0003-3381-5911
-    affiliation: 1
+    affiliation: "1,2"
   - name: Samuel W. Coles
     orcid: 0000-0001-9722-5676
-    affiliation: "2,3"
+    affiliation: "3,4"
   - name: Alex G. Squires
     orcid: 0000-0001-6967-3690
-    affiliation: "4,3"
+    affiliation: "5,4"
   - name: Benjamin J. Morgan
     orcid: 0000-0002-3056-8233
-    affiliation: "2,3"
+    affiliation: "3,4"
 affiliations:
- - name: European Spallation Source ERIC, Ole Maaløes vej 3, 2200 København N, DK
+ - name: School of Chemistry, University of Bristol, Cantock's Close, Bristol, BS8 1TS, UK
    index: 1
- - name: Department of Chemistry, University of Bath, Claverton Down, Bath, BA2 7AY, UK
+ - name: European Spallation Source ERIC, Ole Maaløes vej 3, 2200 København N, DK
    index: 2
- - name: The Faraday Institution, Quad One, Harwell Science and Innovation Campus, Didcot, OX11 0RA, UK
+ - name: Department of Chemistry, University of Bath, Claverton Down, Bath, BA2 7AY, UK
    index: 3
- - name: Department of Chemistry, University College London, 20 Gordon Street, London WC1H 0AJ, UK
+ - name: The Faraday Institution, Quad One, Harwell Science and Innovation Campus, Didcot, OX11 0RA, UK
    index: 4
-date: 15 June 2023
+ - name: Department of Chemistry, University College London, 20 Gordon Street, London WC1H 0AJ, UK
+   index: 5
+date: 25 July 2023
 bibliography: paper.bib
 ---
 
@@ -62,6 +64,6 @@ Tutorials and API-level documentation are provided online  at [kinisi.rtfd.io](k
 
 # Acknowledgements
 
-The authors thank all beta-users of `kinisi` for their feedback, suggestions of new features, and for filing bug reports. 
-S.W.C., A.G.S., and B.J.M. acknowledge the support of the Faraday Institution (grant numbers FIRG016, FIG017) 
+The authors thank all of the users of `kinisi` for contributing feedback, suggesting new features and filing bug reports. 
+S.W.C., A.G.S. and B.J.M. acknowledge the support of the Faraday Institution (grant numbers FIRG016, FIG017).
 B.J.M. acknowledges support from the Royal Society (UF130329 and URF\textbackslash R\textbackslash 191006). 
