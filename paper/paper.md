@@ -10,57 +10,58 @@ authors:
   - name: Andrew R. McCluskey
     orcid: 0000-0003-3381-5911
     affiliation: "1,2"
-  - name: Alex G. Squires
+  - name: Alexander G. Squires
     orcid: 0000-0001-6967-3690
-    affiliation: "5,4"
+    affiliation: "3,4"
   - name: Samuel W. Coles
     orcid: 0000-0001-9722-5676
-    affiliation: "3,4"
+    affiliation: "5,4"
   - name: Benjamin J. Morgan
     orcid: 0000-0002-3056-8233
-    affiliation: "3,4"
+    affiliation: "5,4"
 affiliations:
  - name: School of Chemistry, University of Bristol, Cantock's Close, Bristol, BS8 1TS, UK
    index: 1
  - name: European Spallation Source ERIC, Ole Maaløes vej 3, 2200 København N, DK
    index: 2
- - name: Department of Chemistry, University of Bath, Claverton Down, Bath, BA2 7AY, UK
+ - name: Department of Chemistry, University College London, 20 Gordon Street, London WC1H 0AJ, UK
    index: 3
  - name: The Faraday Institution, Quad One, Harwell Science and Innovation Campus, Didcot, OX11 0RA, UK
    index: 4
- - name: Department of Chemistry, University College London, 20 Gordon Street, London WC1H 0AJ, UK
+ - name: Department of Chemistry, University of Bath, Claverton Down, Bath, BA2 7AY, UK
    index: 5
-date: 25 July 2023
+date: 16 August 2023
 bibliography: paper.bib
 ---
 
 # Summary
-`kinisi` is a Python package for estimating transport coefficients (e.g., self-diffusion coefficients, $D^*$) and their corresponding uncertainties from molecular dynamics simulation data; it includes an implementation of the approximate Bayesian regression scheme described in [@mccluskey_arxiv_2023], wherein the mean-squared displacement (MSD) of mobile atoms is modelled as a multivariate normal distribution with an analytical covariance matrix derived for a set of freely diffusing particles, which is parametrised from the input simulation data.
-`kinisi` uses Markov-chain Monte Carlo [@foreman_emcee_2019] to sample this model multivariate normal distribution to give a posterior distribution of linear model ensemble MSDs that are compatible with the observed simulation data.
+`kinisi` is a Python package for estimating transport coefficients (e.g., self-diffusion coefficients, $D^*$) and their corresponding uncertainties from molecular dynamics simulation data.
+The approximate Bayesian regression scheme described in [@mccluskey_arxiv_2023] is implemented in `kinisi`, where the mean-squared displacement (MSD) of mobile atoms is modelled as a multivariate normal distribution with an analytical covariance matrix derived for a set of freely diffusing particles, which is parametrised from the input simulation data.
+`kinisi` then uses Markov-chain Monte Carlo [@Goodman2010;@foreman_emcee_2019] to sample this model multivariate normal distribution to give a posterior distribution of linear model ensemble MSDs that are compatible with the observed simulation data.
 For each linear ensemble MSD, $\mathbf{x}(t)$, a corresponding estimate of the diffusion coefficient, $\widehat{D}^*$ is given via the Einstein relation,
-$$\widehat{D}* = \frac{1}{6}\frac{\mathrm{d}\mathbf{x}(t)}{\mathrm{d}t}$$
+$$\widehat{D}^* = \frac{1}{6}\frac{\mathrm{d}\,\mathbf{x}(t)}{\mathrm{d}\,t}$$
 where $t$ is time.
-The posterior distribution of compatible model ensemble MSDs calculated by `kinisi`can, therefore, be used to give a point estimate for the most probable value of $D^*$, given the observed simulation data, and an estimate of the corresponding uncertainty in $\widehat{D}^*$.
+The posterior distribution of compatible model ensemble MSDs calculated by `kinisi` can, therefore, be used to give a point estimate for the most probable value of $D^*$, given the observed simulation data, and an estimate of the corresponding uncertainty in $\widehat{D}^*$.
 A detailed description of the numerical method used in `kinisi` is given in Ref. [@mccluskey_arxiv_2023].
 `kinisi` also provides equivalent functionality for estimating collective transport coefficients (jump-diffusion coefficients and ionic conductivities).
 
 # Statement of Need
 
-Molecular dynamics simulations are widely used to calculate transport coefficients such as self-diffusion coefficients and ionic conductivities [refs; e.g. My argyrodite + LLZO MD papers / others?].
+Molecular dynamics simulations are widely used to calculate transport coefficients such as self-diffusion coefficients and ionic conductivities [@morgan_relationships_2014;@morgan_mechanistic_2021;@poletayev_defect_2022;@klepis_long_2009;@wang_application_2011;@zelovich_hydroxide_2019].
 Because molecular dynamics simulations are limited in size and timescale, ensemble parameters, such as transport coefficients, calculated from simulation trajectories are estimates of the corresponding true (usually unknown) parameter value and exhibit some statistical uncertainty.
-The statistical properties of any such calculated ensemble parameters depend on the details of the input molecular dynamics simulation—e.g., choices of interatomic potential, system size, and simulation timescale—and the choice of estimator for the target calculated parameter.
+The statistical properties of any such calculated ensemble parameters depend on the details of the input molecular dynamics simulation e.g., choices of interatomic potential, system size, and simulation timescale—and the choice of estimator for the target calculated parameter.
 An optimal estimation method should minimise the statistical uncertainty in the derived parameter of interest (the method should be statistically efficient) and should also provide an accurate estimate of this uncertainty so that calculated values can be used in downstream statistical analyses.
 
-One widely-used approach to estimating the self-diffusion coefficient, $D^*$, from molecular dynamics simulation is to fit a linear model to the observed mean-square displacement, $\mathbf{x}t$ [cite Allen & Tildesley], where the slope of this &ldquo;best fit&rdquo; linear relationship gives a point-estimate for $D^*$ via the corresponding Einstein relation.
+One widely-used approach to estimating the self-diffusion coefficient, $D^*$, from molecular dynamics simulation is to fit a linear model to the observed mean-square displacement, $\mathbf{x}t$ [@allen2017], where the slope of this &ldquo;best fit&rdquo; linear relationship gives a point-estimate for $D^*$ via the corresponding Einstein relation.
 The simplest approach to fitting a linear model to observed MSD data is ordinary least squares (OLS).
 OLS, however, is statistically inefficient and gives a large uncertainty in the resulting estimate of $D^*$, while also significantly underestimating this uncertainty [@mccluskey_arxiv_2023].
 `kinisi` implements the alternative approximate Bayesian regression scheme described in Ref. [@mccluskey_arxiv_2023], which gives a statistically efficient estimate for $D^*$ and an accurate estimate for the associated uncertainty $\sigma^2[\widehat{D}^*]$.
 This approach gives more accurate estimates of $D^*$ from a given size of simulation data (number of atoms and simulation timescale) than ordinary least-squares or weighted least-squares, while the calculated uncertainties allow robust downstream analysis, such as estimating activation energies by fitting an Arrhenius model to $D^*(T)$.
 
-`kinisi` supports simulation output from a variety of common simulation software packages, including VASP [@kresse_ab_1993,@kresse_ab_1994,@kresse_efficiency_1996,@kresse_efficient_1996] and those compatible with Pymatgen [@ong_python_2013], atomic simulation environment [@larsen_atomic_2017], and MDAnalysis [@michaud_mdanalysis_2011,@gowers_python_2016]. 
+`kinisi` supports simulation output from a variety of common simulation software packages, including VASP [@kresse_ab_1993;@kresse_ab_1994;@kresse_efficiency_1996;@kresse_efficient_1996] and those compatible with Pymatgen [@ong_python_2013], atomic simulation environment [@larsen_atomic_2017], and MDAnalysis [@michaud_mdanalysis_2011;@gowers_python_2016]. 
 Tutorials and API-level documentation are provided online at [kinisi.rtfd.io](https://kinisi.rtfd.io). 
 
-`kinisi` has been used in the analysis of simulation data for a range of systems [refs].
+A list of publications where `kinisi` has been used in the analysis of simulation data can be found at [kinisi.readthedocs.io/en/latest/papers.html](https://kinisi.readthedocs.io/en/latest/papers.html).
 
 # Acknowledgements
 
