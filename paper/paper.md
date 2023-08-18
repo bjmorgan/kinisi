@@ -1,5 +1,5 @@
 ---
-title: 'kinisi: Accuracy and uncertainty quantification in diffusion'
+title: 'kinisi: Bayesian analysis of mass transport from molecular dynamics simulations'
 tags:
   - Python
   - molecular dynamics
