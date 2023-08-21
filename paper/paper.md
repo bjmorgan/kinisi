@@ -35,7 +35,7 @@ bibliography: paper.bib
 ---
 
 # Summary
-`kinisi` is a Python package for estimating transport coefficients&emdash;e.g., self-diffusion coefficients, $D^*$&emdash;and their corresponding uncertainties from molecular dynamics simulation data; it includes an implementation of the approximate Bayesian regression scheme described in [@mccluskey_arxiv_2023], wherein the mean-squared displacement (MSD) of mobile atoms is modelled as a multivariate normal distribution that is parametrised from the input simulation data.
+`kinisi` is a Python package for estimating transport coefficients&mdash;e.g., self-diffusion coefficients, $D^*$&mdash;and their corresponding uncertainties from molecular dynamics simulation data; it includes an implementation of the approximate Bayesian regression scheme described in [@mccluskey_arxiv_2023], wherein the mean-squared displacement (MSD) of mobile atoms is modelled as a multivariate normal distribution that is parametrised from the input simulation data.
 `kinisi` uses Markov-chain Monte Carlo [@Goodman2010;@foreman_emcee_2019] to sample this model multivariate normal distribution to give a posterior distribution of linear model ensemble MSDs that are compatible with the observed simulation data.
 For each linear ensemble MSD, $\mathbf{x}(t)$, a corresponding estimate of the diffusion coefficient, $\widehat{D}^*$ is given via the Einstein relation,
 $$\widehat{D}^* = \frac{1}{6}\frac{\mathrm{d}\,\mathbf{x}(t)}{\mathrm{d}\,t},$$
@@ -48,8 +48,8 @@ A detailed description of the numerical method used in `kinisi` is given in Ref.
 
 Molecular dynamics simulations are widely used to calculate transport coefficients such as self-diffusion coefficients and ionic conductivities [@morgan_relationships_2014;@morgan_mechanistic_2021;@poletayev_defect_2022;@klepis_long_2009;@wang_application_2011;@zelovich_hydroxide_2019;@sendner_interfacial_2009;@shimizu_structural_2015].
 Because molecular dynamics simulations are limited in size and timescale, ensemble parameters, such as transport coefficients, that are calculated from simulation trajectories are estimates of the corresponding true (unknown) parameter of interest and suffer from statistical uncertainty.
-The statistical properties of any calculated ensemble parameters depend on the details of the input molecular dynamics simulation&emdash;e.g., the choice of interacation potential, system size, and simulation timescale&emdash;and the choice of estimator for the target parameter to be calculated.
-An optimal estimation method should minimise the statistical uncertainty in the derived parameter of interest&emdash;the method should be statistically efficient&emdash;and should provide an accurate estimate of this uncertainty, so that calculated values can be used in downstream statistical analyses.
+The statistical properties of any calculated ensemble parameters depend on the details of the input molecular dynamics simulation&mdash;e.g., the choice of interacation potential, system size, and simulation timescale&mdash;and the choice of estimator for the target parameter to be calculated.
+An optimal estimation method should minimise the statistical uncertainty in the derived parameter of interest&mdash;the method should be statistically efficient&mdash;and should provide an accurate estimate of this uncertainty, so that calculated values can be used in downstream statistical analyses.
 
 One widely-used approach to estimating the self-diffusion coefficient, $D^*$, from molecular dynamics simulation is to fit a linear model to the observed mean-square displacement, $\mathbf{x}t$ [@allen2017], where the slope of this &ldquo;best fit&rdquo; linear relationship gives a point-estimate for $D^*$ via the corresponding Einstein relation.
 The simplest approach to fitting a linear model to observed MSD data is ordinary least squares (OLS).
