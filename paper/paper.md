@@ -35,13 +35,12 @@ bibliography: paper.bib
 ---
 
 # Summary
-`kinisi` is a Python package for estimating transport coefficients&mdash;e.g., self-diffusion coefficients, $D^*$&mdash;and their corresponding uncertainties from molecular dynamics simulation data; it includes an implementation of the approximate Bayesian regression scheme described in [@mccluskey_arxiv_2023], wherein the mean-squared displacement (MSD) of mobile atoms is modelled as a multivariate normal distribution that is parametrised from the input simulation data.
+`kinisi` is a Python package for estimating transport coefficients&mdash;e.g., self-diffusion coefficients, $D^*$&mdash;and their corresponding uncertainties from molecular dynamics simulation data: it includes an implementation of the approximate Bayesian regression scheme described in [@mccluskey_arxiv_2023], wherein the mean-squared displacement (MSD) of mobile atoms is modelled as a multivariate normal distribution that is parametrised from the input simulation data.
 `kinisi` uses Markov-chain Monte Carlo [@Goodman2010;@foreman_emcee_2019] to sample this model multivariate normal distribution to give a posterior distribution of linear model ensemble MSDs that are compatible with the observed simulation data.
 For each linear ensemble MSD, $\mathbf{x}(t)$, a corresponding estimate of the diffusion coefficient, $\widehat{D}^*$ is given via the Einstein relation,
 $$\widehat{D}^* = \frac{1}{6}\frac{\mathrm{d}\,\mathbf{x}(t)}{\mathrm{d}\,t},$$
 where $t$ is time.
 The posterior distribution of compatible model ensemble MSDs calculated by `kinisi` gives a point estimate for the most probable value of $D^*$, given the observed simulation data, and an estimate of the corresponding uncertainty in $\widehat{D}^*$.
-A detailed description of the numerical method used in `kinisi` is given in Ref. [@mccluskey_arxiv_2023].
 `kinisi` also provides equivalent functionality for estimating collective transport coefficients, i.e., jump-diffusion coefficients and ionic conductivities.
 
 # Statement of Need
