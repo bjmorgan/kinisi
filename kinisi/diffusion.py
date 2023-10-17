@@ -10,7 +10,7 @@ diffusion coefficient from a material.
 import warnings
 from typing import List, Union, Any
 import numpy as np
-from scipy.stats import normaltest, linregress
+from scipy.stats import normaltest, linregress, multivariate_normal
 from scipy.linalg import pinvh
 from scipy.optimize import minimize, curve_fit
 import scipy.constants as const
@@ -81,6 +81,7 @@ class Bootstrap:
         self.flatchain = None
         self._covariance_matrix = None
         self._slice = DIMENSIONALITY[dimension.lower()]
+        self._start_dt = None
         self.dims = len(dimension.lower())
 
     def to_dict(self) -> dict:
@@ -108,7 +109,8 @@ class Bootstrap:
             'jump_diffusion_coefficient': None,
             'sigma': None,
             'intercept': None,
-            'gradient': None
+            'gradient': None,
+            'start_dt': self._start_dt
         }
         if len(self._distributions) != 0:
             my_dict['distributions'] = [d.to_dict() for d in self._distributions]
@@ -165,6 +167,7 @@ class Bootstrap:
             boot.gradient = Distribution.from_dict(my_dict['gradient'])
         boot.flatchain = my_dict['flatchain']
         boot._covariance_matrix = my_dict['covariance_matrix']
+        boot._start_dt = my_dict['start_dt']
         return boot
 
     @property
@@ -322,7 +325,9 @@ class Bootstrap:
         if random_state is not None:
             np.random.seed(random_state.get_state()[1][1])
 
-        diff_regime = np.argwhere(self._dt >= start_dt)[0][0]
+        self._start_dt = start_dt
+
+        diff_regime = np.argwhere(self._dt >= self._start_dt)[0][0]
 
         self._covariance_matrix = self.generate_covariance_matrix(diff_regime)
 
@@ -463,6 +468,34 @@ class Bootstrap:
             units mScm:sup:`-1`.
         """
         return self._sigma
+    
+    def posterior_predictive(self, n_posterior_samples: int=None, n_predictive_samples: int=256, progress: bool = True) -> np.ndarray:
+        """
+        Sample the posterior predictive distribution. The shape of the resulting array will be
+        `(n_posterior_samples * n_predictive_samples, start_dt)`.
+        
+        :param n_posterior_samples: Number of samples from the posterior distribution.
+            Optional, default is the number of posterior samples.
+        :param n_predictive_samples: Number of random samples per sample from the posterior distribution.
+            Optional, default is :py:attr:`256`.
+        :param progress: Show tqdm progress for sampling. Optional, default is :py:attr:`True`.
+
+        :return: Samples from the posterior predictive distribution. 
+        """
+        if n_posterior_samples is None:
+            n_posterior_samples = self.gradient.size
+        diff_regime = np.argwhere(self._dt >= self._start_dt)[0][0]
+        ppd = np.zeros((n_posterior_samples, n_predictive_samples, self._dt[diff_regime:].size))
+        samples_to_draw = list(enumerate(np.random.randint(0, self.gradient.size, size=n_posterior_samples)))
+        if progress:
+            iterator = tqdm.tqdm(samples_to_draw, desc='Calculating Posterior Predictive')
+        else:
+            iterator = samples_to_draw
+        for i, n in iterator:
+            mu = self.gradient.samples[n] * self._dt[diff_regime:] + self.intercept.samples[n]
+            mv = multivariate_normal(mean=mu, cov=self._covariance_matrix)
+            ppd[i] = mv.rvs(n_predictive_samples)
+        return ppd.reshape(-1, self._dt[diff_regime:].size)
 
 
 class MSDBootstrap(Bootstrap):
