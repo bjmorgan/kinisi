@@ -107,7 +107,7 @@ class TestBootstrap(unittest.TestCase):
         assert_almost_equal(result, -0.3)
 
 
-class TesMSTDBootstrap(unittest.TestCase):
+class TesMSDBootstrap(unittest.TestCase):
     """
     Tests for the diffusion.MSDBootstrap class.
     """
@@ -356,6 +356,21 @@ class TesMSTDBootstrap(unittest.TestCase):
             assert isinstance(bs.intercept, Distribution)
             assert bs._diffusion_coefficient.size == 32000
             assert bs.intercept.size == 32000
+        
+    def test_bootstrap_ppd(self):
+        with warnings.catch_warnings(record=True) as _:
+            disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100
+            dt = np.linspace(100, 1000, 10)
+            bs = MSTDBootstrap(dt, disp_3d, n_o, random_state=RNG)
+            bs.diffusion(0)
+            ppd = bs.posterior_predictive(128, 128)
+            assert bs.covariance_matrix.shape == (5, 5)
+            assert isinstance(bs._diffusion_coefficient, Distribution)
+            assert isinstance(bs.intercept, Distribution)
+            assert bs._diffusion_coefficient.size == 3200
+            assert bs.intercept.size == 3200
+            assert ppd.shape == (128 * 128, 5)
 
     # Waiting on https://github.com/dfm/emcee/pull/376
     # def test_initialisation_random_state(self):
@@ -561,6 +576,21 @@ class TestMSTDBootstrap(unittest.TestCase):
             assert bs._jump_diffusion_coefficient.size == 32000
             assert bs.intercept.size == 32000
 
+    def test_bootstrap_ppd(self):
+        with warnings.catch_warnings(record=True) as _:
+            disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100
+            dt = np.linspace(100, 1000, 10)
+            bs = MSTDBootstrap(dt, disp_3d, n_o, random_state=RNG)
+            bs.jump_diffusion(0)
+            ppd = bs.posterior_predictive(128, 128)
+            assert bs.covariance_matrix.shape == (5, 5)
+            assert isinstance(bs._jump_diffusion_coefficient, Distribution)
+            assert isinstance(bs.intercept, Distribution)
+            assert bs._jump_diffusion_coefficient.size == 3200
+            assert bs.intercept.size == 3200
+            assert ppd.shape == (128 * 128, 5)
+
     # Waiting on https://github.com/dfm/emcee/pull/376
     # def test_initialisation_random_state(self):
     #     disp_3d = [RNG.randn(100, i, 3) + 1000 for i in range(20, 10, -1)]
@@ -757,16 +787,31 @@ class TestMSCDBootstrap(unittest.TestCase):
 
     def test_bootstrap_thin(self):
         with warnings.catch_warnings(record=True) as _:
-            disp_3d = [RNG.randn(100, i, 3) for i in range(200, 10, -1)]
+            disp_3d = [RNG.randn(100, i, 3) for i in range(210, 10, -1)]
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 190)
             bs = MSCDBootstrap(dt, disp_3d, 1, n_o, random_state=RNG)
             bs.conductivity(dt[bs.ngp.argmax()], 1, 10, thin=1)
-            assert bs.covariance_matrix.shape == (95 - np.argmax(bs.ngp), 95 - np.argmax(bs.ngp))
+            assert bs.covariance_matrix.shape == (100 - np.argmax(bs.ngp), 100 - np.argmax(bs.ngp))
             assert isinstance(bs.sigma, Distribution)
             assert isinstance(bs.intercept, Distribution)
             assert bs.sigma.size == 32000
             assert bs.intercept.size == 32000
+    
+    def test_bootstrap_ppd(self):
+        with warnings.catch_warnings(record=True) as _:
+            disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
+            n_o = np.ones(len(disp_3d)) * 100
+            dt = np.linspace(100, 1000, 10)
+            bs = MSTDBootstrap(dt, disp_3d, n_o, random_state=RNG)
+            bs.conductivity(0, 1, 10)
+            ppd = bs.posterior_predictive(128, 128)
+            assert bs.covariance_matrix.shape == (5, 5)
+            assert isinstance(bs.sigma, Distribution)
+            assert isinstance(bs.intercept, Distribution)
+            assert bs.sigma.size == 3200
+            assert bs.intercept.size == 3200
+            assert ppd.shape == (128 * 128, 5)
 
     # Waiting on https://github.com/dfm/emcee/pull/376
     # def test_initialisation_random_state(self):
