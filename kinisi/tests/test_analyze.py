@@ -236,6 +236,23 @@ class TestDiffusionAnalyzer(unittest.TestCase):
             assert isinstance(a.D, Distribution)
             assert a.flatchain.shape == (3200, 2)
 
+    def test_diffusion_ppd(self):
+        with warnings.catch_warnings(record=True) as _:
+            a = DiffusionAnalyzer.from_pymatgen(xd.structures,
+                                                parser_params=da_params,
+                                                bootstrap_params={'random_state': np.random.RandomState(0)})
+            assert_almost_equal(a.dt, a._diff.dt)
+            assert_almost_equal(a.msd, a._diff.n)
+            assert_almost_equal(a.msd_std, a._diff.s)
+            for i in range(len(a.dr)):
+                assert_almost_equal(a.dr[i].samples, a._diff.euclidian_displacements[i].samples)
+            a.diffusion(0)
+            assert a.ngp_max == a._diff.dt[a._diff.ngp.argmax()]
+            assert isinstance(a.D, Distribution)
+            assert a.flatchain.shape == (3200, 2)
+            ppd = a.posterior_predictive({'n_posterior_samples': 128, 'n_predictive_samples': 128})
+            assert ppd.shape == (128 * 128, a.dt.size)
+
     def test_dictionary_roundtrip(self):
         with warnings.catch_warnings(record=True) as _:
             a = DiffusionAnalyzer.from_pymatgen(xd.structures,

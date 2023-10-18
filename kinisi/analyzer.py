@@ -289,6 +289,20 @@ class Analyzer:
                 disp[u[0].disp_3d[i].shape[0] * j:u[0].disp_3d[i].shape[0] * (j + 1)] = u[j].disp_3d[i]
             joint_disp_3d.append(disp)
         return joint_disp_3d
+    
+    def posterior_predictive(self, posterior_predictive_params: Union[dict, None] = None):
+        """
+        Sample  the posterior predictive distribution. The shape of the resulting array will be
+        `(n_posterior_samples * n_predictive_samples, start_dt)`.
+        
+        :params posterior_predictive_params: Parameters for the :py:func:`diffusion.posterior_predictive` method. 
+            See the appropriate documentation for more guidence on this dictionary.
+
+        :return: Samples from the posterior predictive distribution. 
+        """
+        if posterior_predictive_params is None:
+            posterior_predictive_params = {}
+        return self._diff.posterior_predictive(**posterior_predictive_params)
 
     @property
     def distribution(self) -> np.ndarray:
