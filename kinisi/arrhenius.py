@@ -15,6 +15,7 @@ diffusion.
 from typing import List, Union, Tuple
 import numpy as np
 from uravu.relationship import Relationship
+from uravu.distribution import Distribution
 from scipy.constants import R, N_A, eV
 
 # Convert R to eV
@@ -67,7 +68,7 @@ class StandardArrhenius(Relationship):
         """
         return self.function(self.x[:, np.newaxis], self.flatchain[:, 0], self.flatchain[:, 1])
 
-    def extrapolate(self, extrapolated_temperature: float) -> 'uravu.distribution.Distribution':
+    def extrapolate(self, extrapolated_temperature: Union[float, List[float], np.ndarray], posterior_predictive_kwargs=None) -> 'uravu.distribution.Distribution':
         """
         Extrapolate the diffusion coefficient to some un-investigated value. This can also be
         used for interpolation.
@@ -75,7 +76,13 @@ class StandardArrhenius(Relationship):
         :param: Temperature to return diffusion coefficient at.
         :return: Diffusion coefficient at extrapolated temperature.
         """
-        return self.function(extrapolated_temperature, self.flatchain[:, 0], self.flatchain[:, 1])
+        if posterior_predictive_kwargs is None:
+            posterior_predictive_kwargs = {}
+        if isinstance(extrapolated_temperature, (float, int, complex)) :
+            extrapolated_temperature = np.array([extrapolated_temperature])
+        if isinstance(extrapolated_temperature, List):
+            extrapolated_temperature = np.array(extrapolated_temperature)
+        return self.posterior_predictive(abscissa_values=extrapolated_temperature, **posterior_predictive_kwargs)
 
 
 def arrhenius(abscissa: np.ndarray, activation_energy: float, prefactor: float) -> np.ndarray:
