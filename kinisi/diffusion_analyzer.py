@@ -86,13 +86,13 @@ class DiffusionAnalyzer(Analyzer):
         diff = super()._from_pymatgen(trajectory, parser_params, dtype=dtype)
         diff._diff = diffusion.MSDBootstrap(diff._delta_t, diff._disp_3d, diff._n_o, **bootstrap_params)
         return diff
-    
+
     @classmethod
     def from_ase(cls,
-                    trajectory: List[Union['ase.atoms.Atoms', List['ase.atoms.Atoms']]],
-                    parser_params: dict,
-                    dtype: str = None,
-                    bootstrap_params: dict = None):
+                 trajectory: List[Union['ase.atoms.Atoms', List['ase.atoms.Atoms']]],
+                 parser_params: dict,
+                 dtype: str = None,
+                 bootstrap_params: dict = None):
         """
         Create a :py:class:`DiffusionAnalyzer` object from a list or nested list of
         :py:class:`ase.atoms.Atoms` objects.

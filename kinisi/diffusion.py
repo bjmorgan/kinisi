@@ -468,8 +468,11 @@ class Bootstrap:
             units mScm:sup:`-1`.
         """
         return self._sigma
-    
-    def posterior_predictive(self, n_posterior_samples: int=None, n_predictive_samples: int=256, progress: bool = True) -> np.ndarray:
+
+    def posterior_predictive(self,
+                             n_posterior_samples: int = None,
+                             n_predictive_samples: int = 256,
+                             progress: bool = True) -> np.ndarray:
         """
         Sample the posterior predictive distribution. The shape of the resulting array will be
         `(n_posterior_samples * n_predictive_samples, start_dt)`.
@@ -611,7 +614,8 @@ class MSTDBootstrap(Bootstrap):
                 continue
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
             if bootstrap:
-                distro = self.sample_until_normal(coll_motion, n_o[i] / d_squared.shape[0], n_resamples, max_resamples, alpha, random_state)
+                distro = self.sample_until_normal(coll_motion, n_o[i] / d_squared.shape[0], n_resamples, max_resamples,
+                                                  alpha, random_state)
                 self._distributions.append(distro)
                 self._n_bootstrap = np.append(self._n_bootstrap, np.mean(distro.samples))
                 self._v_bootstrap = np.append(self._v_bootstrap, np.var(distro.samples, ddof=1))
@@ -682,7 +686,8 @@ class MSCDBootstrap(Bootstrap):
                 continue
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
             if bootstrap:
-                distro = self.sample_until_normal(sq_chg_motion, n_o[i] / d_squared.shape[0], n_resamples, max_resamples, alpha, random_state)
+                distro = self.sample_until_normal(sq_chg_motion, n_o[i] / d_squared.shape[0], n_resamples,
+                                                  max_resamples, alpha, random_state)
                 self._distributions.append(distro)
                 self._n_bootstrap = np.append(self._n_bootstrap, np.mean(distro.samples))
                 self._v_bootstrap = np.append(self._v_bootstrap, np.var(distro.samples, ddof=1))

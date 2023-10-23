@@ -86,13 +86,13 @@ class JumpDiffusionAnalyzer(Analyzer):
         jdiff_anal._diff = diffusion.MSTDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
                                                    **bootstrap_params)
         return jdiff_anal
-    
+
     @classmethod
     def from_ase(cls,
-                    trajectory: List[Union['ase.atoms.Atoms', List['ase.atoms.Atoms']]],
-                    parser_params: dict,
-                    dtype: str = None,
-                    bootstrap_params: dict = None):
+                 trajectory: List[Union['ase.atoms.Atoms', List['ase.atoms.Atoms']]],
+                 parser_params: dict,
+                 dtype: str = None,
+                 bootstrap_params: dict = None):
         """
         Create a :py:class:`JumpDiffusionAnalyzer` object from a list or nested list of
         :py:class:`ase.atoms.Atoms` objects.
@@ -114,7 +114,7 @@ class JumpDiffusionAnalyzer(Analyzer):
             bootstrap_params = {}
         jdiff_anal = super()._from_ase(trajectory, parser_params, dtype=dtype)
         jdiff_anal._diff = diffusion.MSTDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
-                                                    **bootstrap_params)
+                                                   **bootstrap_params)
         return jdiff_anal
 
     @classmethod

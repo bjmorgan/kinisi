@@ -91,16 +91,14 @@ class ConductivityAnalyzer(Analyzer):
         cond_anal._diff = diffusion.MSCDBootstrap(cond_anal._delta_t, cond_anal._disp_3d, ionic_charge, cond_anal._n_o,
                                                   **bootstrap_params)
         return cond_anal
-    
 
     @classmethod
     def from_ase(cls,
-                      trajectory: List[Union['ase.atoms.Atoms',
-                                             List['ase.atom.Atoms']]],
-                      parser_params: dict,
-                      dtype: str = None,
-                      bootstrap_params: dict = None,
-                      ionic_charge: Union[np.ndarray, int] = 1):
+                 trajectory: List[Union['ase.atoms.Atoms', List['ase.atom.Atoms']]],
+                 parser_params: dict,
+                 dtype: str = None,
+                 bootstrap_params: dict = None,
+                 ionic_charge: Union[np.ndarray, int] = 1):
         """
         Create a :py:class:`ConductivityAnalyzer` object from a list or nested list of
         :py:class:`ase.Atoms` objects.

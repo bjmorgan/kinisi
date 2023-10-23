@@ -120,14 +120,13 @@ class Analyzer:
             return cls(u.delta_t, u.disp_3d, u._n_o, u.volume, **kwargs)
         else:
             raise ValueError('The dtype specified was not recognised, please consult the kinisi documentation.')
-        
+
     @classmethod
     def _from_ase(cls,
-                       trajectory: List[Union['ase.atoms.Atoms',
-                                              List['ase.atoms.Atoms']]],
-                       parser_params: dict,
-                       dtype: str = None,
-                       **kwargs):
+                  trajectory: List[Union['ase.atoms.Atoms', List['ase.atoms.Atoms']]],
+                  parser_params: dict,
+                  dtype: str = None,
+                  **kwargs):
         """
         Create a :py:class:`Analyzer` object from a list or nested list of
         :py:class:`ase.atoms.Atoms` objects.
@@ -289,7 +288,7 @@ class Analyzer:
                 disp[u[0].disp_3d[i].shape[0] * j:u[0].disp_3d[i].shape[0] * (j + 1)] = u[j].disp_3d[i]
             joint_disp_3d.append(disp)
         return joint_disp_3d
-    
+
     def posterior_predictive(self, posterior_predictive_params: Union[dict, None] = None):
         """
         Sample  the posterior predictive distribution. The shape of the resulting array will be
