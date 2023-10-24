@@ -356,7 +356,7 @@ class TesMSDBootstrap(unittest.TestCase):
             assert isinstance(bs.intercept, Distribution)
             assert bs._diffusion_coefficient.size == 32000
             assert bs.intercept.size == 32000
-        
+
     def test_bootstrap_ppd(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
@@ -797,7 +797,7 @@ class TestMSCDBootstrap(unittest.TestCase):
             assert isinstance(bs.intercept, Distribution)
             assert bs.sigma.size == 32000
             assert bs.intercept.size == 32000
-    
+
     def test_bootstrap_ppd(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]

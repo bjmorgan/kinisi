@@ -33,7 +33,6 @@ traj = Trajectory(ase_file_path, 'r')
 dc_params = {'specie': 'Li', 'time_step': 1.0 * 1e-3, 'step_skip': 1}
 
 
-
 class TestAnalyzer(unittest.TestCase):
     """
     Tests for the Analyzer base class.
@@ -45,7 +44,7 @@ class TestAnalyzer(unittest.TestCase):
         for test_file in test_files:
             if os.path.exists(test_file):
                 os.remove(test_file)
-    
+
     def test_save(self):
         a = Analyzer._from_pymatgen(xd.structures, parser_params=da_params)
         filename = "test_save"

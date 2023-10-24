@@ -578,6 +578,8 @@ class MDAnalysisParser(Parser):
         for i, site in enumerate(structure):
             if site.type in specie:
                 indices.append(i)
+            elif i in specie:
+                indices.append(i)
             else:
                 framework_indices.append(i)
         return indices, framework_indices
