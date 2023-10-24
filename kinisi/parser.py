@@ -588,7 +588,18 @@ class MDAnalysisParser(Parser):
     def get_molecules(structure: "MDAnalysis.universe.Universe", coords: List[np.ndarray],
                       indices: List[int]) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
         """
+        Determine framework and non-framework indices for an :py:mod:`MDAnalysis` compatible file when 
+            s_indices are provided and contain multiple molecules
+            
+        :param structure: Initial structure.
+        :param coords: fractional coordinates for all atoms.
+        :param s_indices: indices for the atoms in the molecules in the trajectory used in the calculation 
+            of the diffusion.
         
+        
+        :return: Tuple containing: Tuple containing: initial structure, fractional coordinates for all 
+            atoms and Tuple containing: indices for the atoms in the trajectory used in the calculation 
+            of the diffusion and indices of framework atoms.
         """
         framework_indices = []
         flat_indices = np.concatenate(indices)
@@ -601,7 +612,14 @@ class MDAnalysisParser(Parser):
     @staticmethod
     def get_framework(structure: "MDAnalysis.universe.Universe", indices: List[int]) -> Tuple[np.ndarray, np.ndarray]:
         """
+        Determine the framework indices from an :py:mod:`MDAnalysis` compatible file when s_indices are provided
         
+        :param structure: Initial structure.
+        :param s_indices: indices for the atoms in the trajectory used in the calculation of the 
+            diffusion.
+        
+        :return: Tuple containing: indices for the atoms in the trajectory used in the calculation of the
+            diffusion and indices of framework atoms. 
         """
         framework_indices = []
 
