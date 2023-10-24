@@ -250,10 +250,20 @@ class ASEParser(Parser):
                  spacing: str = 'linear',
                  sampling: str = 'multi-origin',
                  memory_limit: float = 8.,
-                 progress: bool = True):
+                 progress: bool = True,
+                 s_indices: List[int] = None):
 
         structure, coords, latt = self.get_structure_coords_latt(atoms, sub_sample_traj, progress)
-        indices = self.get_indices(structure, specie)
+
+        if specie != None:
+            indices = self.get_indices(structure, specie)
+        elif isinstance(s_indices, list):
+            if isinstance(s_indices[0], list):
+                structure, coords, indices = self.get_molecules(structure, coords, s_indices)
+            else:
+                indices = self.get_framework(structure, s_indices)
+        else:
+            raise TypeError('Unrecognized type for Specie or Indices')
 
         super().__init__(self.get_disp(coords, latt), indices[0], indices[1], time_step, step_skip, min_dt, max_dt,
                          n_steps, spacing, sampling, memory_limit, progress)
@@ -318,6 +328,32 @@ class ASEParser(Parser):
             raise ValueError("There are no species selected to calculate the mean-squared displacement of.")
         return indices, framework_indices
 
+    @staticmethod
+    def get_molecules(structure: "ase.atoms.Atoms", coords: List[np.ndarray],
+                      indices: List[int]) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+        """
+        
+        """
+        framework_indices = []
+        flat_indices = np.concatenate(indices)
+        for i, site in enumerate(structure):
+            if i not in indices:
+                framework_indices.append(i)
+
+        return structure, coords, (flat_indices, framework_indices)
+
+    @staticmethod
+    def get_framework(structure: "ase.atoms.Atoms", indices: List[int]) -> Tuple[np.ndarray, np.ndarray]:
+        """
+         
+        """
+        framework_indices = []
+
+        for i, site in enumerate(structure):
+            if i not in indices:
+                framework_indices.append(i)
+        return indices, framework_indices
+
 
 class PymatgenParser(Parser):
     """
@@ -361,10 +397,19 @@ class PymatgenParser(Parser):
                  spacing: str = 'linear',
                  sampling: str = 'multi-origin',
                  memory_limit: float = 8.,
-                 progress: bool = True):
+                 progress: bool = True,
+                 s_indices: List[int] = None):
         structure, coords, latt = self.get_structure_coords_latt(structures, sub_sample_traj, progress)
 
-        indices = self.get_indices(structure, specie)
+        if specie != None:
+            indices = self.get_indices(structure, specie)
+        elif isinstance(s_indices, list):
+            if isinstance(s_indices[0], list):
+                structure, coords, indices = self.get_molecules(structure, coords, s_indices)
+            else:
+                indices = self.get_framework(structure, s_indices)
+        else:
+            raise TypeError('Unrecognized type for Specie or Indices')
 
         super().__init__(disp=self.get_disp(coords, latt),
                          indices=indices[0],
@@ -444,6 +489,33 @@ class PymatgenParser(Parser):
             raise ValueError("There are no species selected to calculate the mean-squared displacement of.")
         return indices, framework_indices
 
+    @staticmethod
+    def get_molecules(structure: "pymatgen.core.structure.Structure", coords: List[np.ndarray],
+                      indices: List[int]) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+        """
+        
+        """
+        framework_indices = []
+        flat_indices = np.concatenate(indices)
+        for i, site in enumerate(structure):
+            if i not in indices:
+                framework_indices.append(i)
+
+        return structure, coords, (flat_indices, framework_indices)
+
+    @staticmethod
+    def get_framework(structure: "pymatgen.core.structure.Structure",
+                      indices: List[int]) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        
+        """
+        framework_indices = []
+
+        for i, site in enumerate(structure):
+            if i not in indices:
+                framework_indices.append(i)
+        return indices, framework_indices
+
 
 class MDAnalysisParser(Parser):
     """
@@ -503,7 +575,7 @@ class MDAnalysisParser(Parser):
             else:
                 indices = self.get_framework(structure, s_indices)
         else:
-            raise TypeError('Unregonised type for Specie or Indices')
+            raise TypeError('Unrecognized type for Specie or Indices')
 
         super().__init__(disp=self.get_disp(coords, latt),
                          indices=indices[0],
