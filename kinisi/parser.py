@@ -207,6 +207,7 @@ class Parser:
             n_samples = np.append(n_samples, disp.shape[0] * timesteps[-1] / timestep)
         return delta_t, disp_3d, n_samples
 
+
 class ASEParser(Parser):
     """
     A parser for ASE Atoms objects
@@ -236,7 +237,8 @@ class ASEParser(Parser):
         gigabytes (GB). Optional, defaults to :py:attr:`8.`.
     :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
     """
-    def __init__(self, 
+
+    def __init__(self,
                  atoms: List["ase.atoms.Atoms"],
                  specie: str,
                  time_step: float,
@@ -249,31 +251,20 @@ class ASEParser(Parser):
                  sampling: str = 'multi-origin',
                  memory_limit: float = 8.,
                  progress: bool = True):
-        
-            structure, coords, latt = self.get_structure_coords_latt(atoms, sub_sample_traj, progress)
-            indices = self.get_indices(structure, specie)
 
-            super().__init__(self.get_disp(coords, latt),
-                         indices[0], 
-                         indices[1], 
-                         time_step, 
-                         step_skip, 
-                         min_dt, 
-                         max_dt, 
-                         n_steps, 
-                         spacing, 
-                         sampling, 
-                         memory_limit, 
-                         progress)
-            self._volume = structure.get_volume()
-            
-        
+        structure, coords, latt = self.get_structure_coords_latt(atoms, sub_sample_traj, progress)
+        indices = self.get_indices(structure, specie)
+
+        super().__init__(self.get_disp(coords, latt), indices[0], indices[1], time_step, step_skip, min_dt, max_dt,
+                         n_steps, spacing, sampling, memory_limit, progress)
+        self._volume = structure.get_volume()
+
     @staticmethod
     def get_structure_coords_latt(
-                atoms: List["ase.atoms.Atoms"],
-                sub_sample_traj: int = 1,
-                progress: bool = True) -> Tuple["ase.atoms.Atoms", List[np.ndarray], List[np.ndarray]]:
-            """
+            atoms: List["ase.atoms.Atoms"],
+            sub_sample_traj: int = 1,
+            progress: bool = True) -> Tuple["ase.atoms.Atoms", List[np.ndarray], List[np.ndarray]]:
+        """
             Obtain the initial structure and displacement from a :py:attr:`list`
             of :py:class`pymatgen.core.structure.Structure`.
 
@@ -285,29 +276,26 @@ class ASEParser(Parser):
             :return: Tuple containing: initial structure, fractional coordinates for all atoms,
                 and lattice descriptions.
             """
-            coords, latt = [], []
-            first = True
-            if progress:
-                iterator = tqdm(atoms[::sub_sample_traj], desc='Reading Trajectory')
-            else:
-                iterator = atoms[::sub_sample_traj]
-            for struct in iterator:
-                if first:
-                    structure = struct
-                    first = False
-                scaled_positions = struct.get_scaled_positions()
-                coords.append(np.array(scaled_positions)[:, None])
-                latt.append(struct.cell[:])
-            
-            coords.insert(0, coords[0])
-            latt.insert(0, latt[0])
-            return structure, coords, latt
-    
+        coords, latt = [], []
+        first = True
+        if progress:
+            iterator = tqdm(atoms[::sub_sample_traj], desc='Reading Trajectory')
+        else:
+            iterator = atoms[::sub_sample_traj]
+        for struct in iterator:
+            if first:
+                structure = struct
+                first = False
+            scaled_positions = struct.get_scaled_positions()
+            coords.append(np.array(scaled_positions)[:, None])
+            latt.append(struct.cell[:])
+
+        coords.insert(0, coords[0])
+        latt.insert(0, latt[0])
+        return structure, coords, latt
+
     @staticmethod
-    def get_indices(
-        structure: "ase.atoms.Atoms",
-        specie: "str"
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    def get_indices(structure: "ase.atoms.Atoms", specie: "str") -> Tuple[np.ndarray, np.ndarray]:
         """
         Determine framework and non-framework indices for a :py:mod:`pymatgen` compatible file.
 
@@ -329,6 +317,7 @@ class ASEParser(Parser):
         if len(indices) == 0:
             raise ValueError("There are no species selected to calculate the mean-squared displacement of.")
         return indices, framework_indices
+
 
 class PymatgenParser(Parser):
     """
@@ -502,11 +491,19 @@ class MDAnalysisParser(Parser):
                  spacing: str = 'linear',
                  sampling: str = 'multi-origin',
                  memory_limit: float = 8.,
-                 progress: bool = True):
+                 progress: bool = True,
+                 s_indices: List[int] = None):
         structure, coords, latt, volume = self.get_structure_coords_latt(universe, sub_sample_atoms, sub_sample_traj,
                                                                          progress)
-
-        indices = self.get_indices(structure, specie)
+        if specie != None:
+            indices = self.get_indices(structure, specie)
+        elif isinstance(s_indices, list):
+            if isinstance(s_indices[0], list):
+                structure, coords, indices = self.get_molecules(structure, coords, s_indices)
+            else:
+                indices = self.get_framework(structure, s_indices)
+        else:
+            raise TypeError('Unregonised type for Specie or Indices')
 
         super().__init__(disp=self.get_disp(coords, latt),
                          indices=indices[0],
@@ -574,12 +571,40 @@ class MDAnalysisParser(Parser):
         """
         indices = []
         framework_indices = []
+
         if not isinstance(specie, list):
             specie = [specie]
+
         for i, site in enumerate(structure):
             if site.type in specie:
                 indices.append(i)
             else:
+                framework_indices.append(i)
+        return indices, framework_indices
+
+    @staticmethod
+    def get_molecules(structure: "MDAnalysis.universe.Universe", coords: List[np.ndarray],
+                      indices: List[int]) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+        """
+        
+        """
+        framework_indices = []
+        flat_indices = np.concatenate(indices)
+        for i, site in enumerate(structure):
+            if i not in indices:
+                framework_indices.append(i)
+
+        return structure, coords, (flat_indices, framework_indices)
+
+    @staticmethod
+    def get_framework(structure: "MDAnalysis.universe.Universe", indices: List[int]) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        
+        """
+        framework_indices = []
+
+        for i, site in enumerate(structure):
+            if i not in indices:
                 framework_indices.append(i)
         return indices, framework_indices
 

@@ -113,7 +113,6 @@ class TestParser(unittest.TestCase):
         assert_almost_equal(data.time_step, 1e-3)
         assert_almost_equal(data.step_skip, 1)
         assert_equal(data.indices, list(range(180)))
-        
 
     def test_mda_init(self):
         xd = mda.Universe(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS.data'),
@@ -124,6 +123,26 @@ class TestParser(unittest.TestCase):
         assert_almost_equal(data.time_step, 0.005)
         assert_almost_equal(data.step_skip, 250)
         assert_equal(data.indices, list(range(204)))
+
+    def test_mda_init_with_indices(self):
+        xd = mda.Universe(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS.data'),
+                          os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS.dcd'),
+                          format='LAMMPS')
+        da_params = {'specie': None, 'time_step': 0.005, 'step_skip': 250, 's_indices': [208, 212]}
+        data = parser.MDAnalysisParser(xd, **da_params)
+        assert_almost_equal(data.time_step, 0.005)
+        assert_almost_equal(data.step_skip, 250)
+        assert_equal(data.indices, [208, 212])
+
+    def test_mda_init_with_molecules(self):
+        xd = mda.Universe(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS.data'),
+                          os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS.dcd'),
+                          format='LAMMPS')
+        da_params = {'specie': None, 'time_step': 0.005, 'step_skip': 250, 's_indices': [[208, 212], [1, 2, 3]]}
+        data = parser.MDAnalysisParser(xd, **da_params)
+        assert_almost_equal(data.time_step, 0.005)
+        assert_almost_equal(data.step_skip, 250)
+        assert_equal(data.indices, [208, 212, 1, 2, 3])
 
     def test_get_matrix(self):
         matrix = parser._get_matrix([10, 10, 10, 90, 90, 90])
