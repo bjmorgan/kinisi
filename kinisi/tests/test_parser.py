@@ -100,7 +100,7 @@ class TestParser(unittest.TestCase):
 
     def test_pymatgen_init_with_indices(self):
         xd = Xdatcar(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_XDATCAR.gz'))
-        da_params = {'specie': None, 'time_step': 2.0, 'step_skip': 50, 'specie_indices': [3, 4, 5]}
+        da_params = {'specie': None, 'time_step': 2.0, 'step_skip': 50, 's_indices': [3, 4, 5]}
         data = parser.PymatgenParser(xd.structures, **da_params)
         assert_almost_equal(data.time_step, 2.0)
         assert_almost_equal(data.step_skip, 50)
@@ -108,7 +108,7 @@ class TestParser(unittest.TestCase):
 
     def test_pymatgen_init_with_molecules(self):
         xd = Xdatcar(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_XDATCAR.gz'))
-        da_params = {'specie': None, 'time_step': 2.0, 'step_skip': 50, 'specie_indices': [[3, 4, 5], [6, 7]]}
+        da_params = {'specie': None, 'time_step': 2.0, 'step_skip': 50, 's_indices': [[3, 4, 5], [6, 7]]}
         data = parser.PymatgenParser(xd.structures, **da_params)
         assert_almost_equal(data.time_step, 2.0)
         assert_almost_equal(data.step_skip, 50)
@@ -132,7 +132,7 @@ class TestParser(unittest.TestCase):
 
     def test_ase_init_with_indices(self):
         traj = Trajectory(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_ase.traj'))
-        da_params = {'specie': None, 'time_step': 1e-3, 'step_skip': 1, 'specie_indices': [100, 101, 90]}
+        da_params = {'specie': None, 'time_step': 1e-3, 'step_skip': 1, 's_indices': [100, 101, 90]}
         data = parser.ASEParser(traj, **da_params)
         assert_almost_equal(data.time_step, 1e-3)
         assert_almost_equal(data.step_skip, 1)
@@ -140,7 +140,7 @@ class TestParser(unittest.TestCase):
 
     def test_ase_init_with_molecules(self):
         traj = Trajectory(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_ase.traj'))
-        da_params = {'specie': None, 'time_step': 1e-3, 'step_skip': 1, 'specie_indices': [[100, 101], [103]]}
+        da_params = {'specie': None, 'time_step': 1e-3, 'step_skip': 1, 's_indices': [[100, 101], [103]]}
         data = parser.ASEParser(traj, **da_params)
         assert_almost_equal(data.time_step, 1e-3)
         assert_almost_equal(data.step_skip, 1)
@@ -160,7 +160,7 @@ class TestParser(unittest.TestCase):
         xd = mda.Universe(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS.data'),
                           os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS.dcd'),
                           format='LAMMPS')
-        da_params = {'specie': None, 'time_step': 0.005, 'step_skip': 250, 'specie_indices': [208, 212]}
+        da_params = {'specie': None, 'time_step': 0.005, 'step_skip': 250, 's_indices': [208, 212]}
         data = parser.MDAnalysisParser(xd, **da_params)
         assert_almost_equal(data.time_step, 0.005)
         assert_almost_equal(data.step_skip, 250)
@@ -170,11 +170,12 @@ class TestParser(unittest.TestCase):
         xd = mda.Universe(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS.data'),
                           os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS.dcd'),
                           format='LAMMPS')
-        da_params = {'specie': None, 'time_step': 0.005, 'step_skip': 250, 'specie_indices': [[208, 212], [1, 2, 3]]}
+        molecules = [[1, 2, 3], [4, 5, 6]]
+        da_params = {'specie': None, 'time_step': 0.005, 'step_skip': 250, 's_indices': molecules}
         data = parser.MDAnalysisParser(xd, **da_params)
         assert_almost_equal(data.time_step, 0.005)
         assert_almost_equal(data.step_skip, 250)
-        assert_equal(data.indices, [208, 212, 1, 2, 3])
+        assert_equal(data.indices, list(range(len(molecules))))
 
     def test_get_matrix(self):
         matrix = parser._get_matrix([10, 10, 10, 90, 90, 90])
