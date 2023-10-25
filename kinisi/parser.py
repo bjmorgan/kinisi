@@ -564,14 +564,17 @@ class MDAnalysisParser(Parser):
                  sampling: str = 'multi-origin',
                  memory_limit: float = 8.,
                  progress: bool = True,
-                 s_indices: List[int] = None):
+                 s_indices: List[int] = None,
+                 center: str = 'Geometry'):
         structure, coords, latt, volume = self.get_structure_coords_latt(universe, sub_sample_atoms, sub_sample_traj,
                                                                          progress)
         if specie != None:
             indices = self.get_indices(structure, specie)
         elif isinstance(s_indices, list):
             if isinstance(s_indices[0], list):
-                structure, coords, indices = self.get_molecules(structure, coords, s_indices)
+                coords, indices = self.get_molecules(
+                    structure, coords, s_indices,
+                    center)  #Warning: This function changes the structure without changing the MDAnalysis object
             else:
                 indices = self.get_framework(structure, s_indices)
         else:
@@ -657,13 +660,14 @@ class MDAnalysisParser(Parser):
         return indices, framework_indices
 
     @staticmethod
-    def get_molecules(structure: "MDAnalysis.universe.Universe", coords: List[np.ndarray],
-                      indices: List[int]) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    def get_molecules(structure: "MDAnalysis.universe.Universe", coords: List[np.ndarray], indices: List[int],
+                      center: str) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
         """
         Determine framework and non-framework indices for an :py:mod:`MDAnalysis` compatible file when 
             s_indices are provided and contain multiple molecules
+        
+        Warning: This function changes the structure without changing the MDAnalysis object
             
-        :param structure: Initial structure.
         :param coords: fractional coordinates for all atoms.
         :param s_indices: indices for the atoms in the molecules in the trajectory used in the calculation 
             of the diffusion.
@@ -674,12 +678,38 @@ class MDAnalysisParser(Parser):
             of the diffusion and indices of framework atoms.
         """
         framework_indices = []
-        flat_indices = np.concatenate(indices)
+        try:
+            indices = np.array(indices)
+        except:
+            raise ValueError('Molecules must be of same length')
+
+        n_molecules = indices.shape[0]
+
         for i, site in enumerate(structure):
             if i not in indices:
                 framework_indices.append(i)
 
-        return structure, coords, (flat_indices, framework_indices)
+        if center == 'Geometry':
+            weights = None
+
+        sq_coords = np.squeeze(coords, axis=2)
+        s_coords = sq_coords[:, indices]
+        theta = s_coords * (2 * np.pi)
+        xi = np.cos(theta)
+        zeta = np.sin(theta)
+        xi_bar = np.average(xi, axis=-2, weights=weights)
+        zeta_bar = np.average(zeta, axis=-2, weights=weights)
+        theta_bar = np.arctan2(zeta_bar, xi_bar)
+        new_s_coords = theta_bar / (2 * np.pi)
+
+        new_coords = np.concatenate((new_s_coords, sq_coords[:, framework_indices]), axis=1)
+        new_indices = list(range(n_molecules))
+        new_framework_indices = list(range(n_molecules, n_molecules + len(framework_indices)))
+
+        if new_coords.shape[2] != 1:
+            new_coords = np.expand_dims(new_coords, axis=2)
+
+        return new_coords, (new_indices, new_framework_indices)
 
     @staticmethod
     def get_framework(structure: "MDAnalysis.universe.Universe", indices: List[int]) -> Tuple[np.ndarray, np.ndarray]:
