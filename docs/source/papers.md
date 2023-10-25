@@ -9,3 +9,4 @@ Here we will try and list publications that have used or cited `kinisi` (if you 
 5. Krenzer, G., Klarbring, J., Tolborg K., Rossignol H., McCluskey, A. R., Morgan, B. J., Walsh, A., *Chem. Matter*, **35**, 6133-6140, 2023. doi: [10.1021/acs.chemmater.3c01271](https://doi.org/10.1021/acs.chemmater.3c01271).
 6. McColl, K., Coles, S. W., Zarabadi-Poor, P., Morgan, B. J., Islam, M. S., *ChemRxiv*, doi: [10.26434/chemrxiv-2023-9v2dw](https://doi.org/10.26434/chemrxiv-2023-9v2dw).
 7. McCluskey, A. R., Coles, S. W., Morgan, B. J. [*arXiv*:2305.18244](https://arxiv.org/abs/2305.18244).
+8. Coles, S. W., Morgan, B. J., Rotenberg, B. [*arXiv*:2310.06149](https://arxiv.org/abs/2310.06149).
