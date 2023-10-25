@@ -570,8 +570,8 @@ class MDAnalysisParser(Parser):
                                                                          progress)
         if specie != None:
             indices = self.get_indices(structure, specie)
-        elif isinstance(s_indices, list):
-            if isinstance(s_indices[0], list):
+        elif isinstance(s_indices, (list, tuple)):
+            if isinstance(s_indices[0], (list, tuple)):
                 coords, indices = self.get_molecules(
                     structure, coords, s_indices,
                     center)  #Warning: This function changes the structure without changing the MDAnalysis object
