@@ -667,13 +667,15 @@ class MDAnalysisParser(Parser):
             s_indices are provided and contain multiple molecules
         
         Warning: This function changes the structure without changing the MDAnalysis object
-            
+         
+        :param structure: Initial structure.
         :param coords: fractional coordinates for all atoms.
         :param s_indices: indices for the atoms in the molecules in the trajectory used in the calculation 
             of the diffusion.
+        :param center: String describing center to calculate: Geometry or Mass
         
         
-        :return: Tuple containing: Tuple containing: initial structure, fractional coordinates for all 
+        :return: Tuple containing: Tuple containing: fractional coordinates for all 
             atoms and Tuple containing: indices for the atoms in the trajectory used in the calculation 
             of the diffusion and indices of framework atoms.
         """
