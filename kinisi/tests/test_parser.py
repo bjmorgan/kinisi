@@ -170,12 +170,12 @@ class TestParser(unittest.TestCase):
         xd = mda.Universe(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS.data'),
                           os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS.dcd'),
                           format='LAMMPS')
-        molecules = [[1, 2, 3], [4, 5, 6]]
+        molecules = [[2, 3, 4], [5, 6, 7]]
         da_params = {'specie': None, 'time_step': 0.005, 'step_skip': 250, 's_indices': molecules}
         data = parser.MDAnalysisParser(xd, **da_params)
         assert_almost_equal(data.time_step, 0.005)
         assert_almost_equal(data.step_skip, 250)
-        assert_almost_equal(data.coords[0, 0, 0], [0.46465184, 0.03090944, 0.4023758])
+        assert_almost_equal(data.coords_check[0, 0], [0.46465184, 0.03090944, 0.4023758])
         assert_equal(data.indices, list(range(len(molecules))))
 
     def test_get_matrix(self):
