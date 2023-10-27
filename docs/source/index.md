@@ -4,7 +4,7 @@
 
 This is achieved by modelling the diffusion process as a [multivariate normal distribution](https://en.wikipedia.org/wiki/Multivariate_normal_distribution), based on that for a random walker. 
 This ensures and accurate estimation of the diffusion coefficient and it's uncertainty.
-More information about the approach `kinisi` uses can be found in the [methodology preprint article](https://arxiv.org/abs/2305.18244).
+More information about the approach `kinisi` uses can be found in the [methodology preprint article](https://arxiv.org/abs/2305.18244), which is also introduced in this [poster](./_static/poster.pdf).
 
 `kinisi` can handle simulation trajectories from many common molecular dynamics packages, including [VASP](https://www.vasp.at/wiki/index.php/XDATCAR) and those that can be read by [MDAnalysis](https://userguide.mdanalysis.org/stable/reading_and_writing.html).
 Examples of some of these analyses are shown in the [notebooks](./notebooks), also given there is an example of using `kinisi` to investigate the Arrhenius relationship of diffusion as a function of temperature.
