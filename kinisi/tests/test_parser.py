@@ -175,6 +175,7 @@ class TestParser(unittest.TestCase):
         data = parser.MDAnalysisParser(xd, **da_params)
         assert_almost_equal(data.time_step, 0.005)
         assert_almost_equal(data.step_skip, 250)
+        assert_almost_equal(data.coords[0, 0, 0], [0.46465184, 0.03090944, 0.4023758])
         assert_equal(data.indices, list(range(len(molecules))))
 
     def test_get_matrix(self):

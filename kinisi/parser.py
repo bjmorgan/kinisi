@@ -565,7 +565,8 @@ class MDAnalysisParser(Parser):
                  memory_limit: float = 8.,
                  progress: bool = True,
                  s_indices: List[int] = None,
-                 center: str = 'Geometry'):
+                 center: str = 'Geometry',
+                 masses: List[float] = None):
         structure, coords, latt, volume = self.get_structure_coords_latt(universe, sub_sample_atoms, sub_sample_traj,
                                                                          progress)
         if specie != None:
@@ -573,12 +574,14 @@ class MDAnalysisParser(Parser):
         elif isinstance(s_indices, (list, tuple)):
             if isinstance(s_indices[0], (list, tuple)):
                 coords, indices = self.get_molecules(
-                    structure, coords, s_indices,
-                    center)  #Warning: This function changes the structure without changing the MDAnalysis object
+                    structure, coords, s_indices, center,
+                    masses)  #Warning: This function changes the structure without changing the MDAnalysis object
             else:
                 indices = self.get_framework(structure, s_indices)
         else:
             raise TypeError('Unrecognized type for Specie or Indices')
+
+        self.coords = coords
 
         super().__init__(disp=self.get_disp(coords, latt),
                          indices=indices[0],
@@ -661,7 +664,7 @@ class MDAnalysisParser(Parser):
 
     @staticmethod
     def get_molecules(structure: "MDAnalysis.universe.Universe", coords: List[np.ndarray], indices: List[int],
-                      center: str) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+                      center: str, masses: List[float]) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
         """
         Determine framework and non-framework indices for an :py:mod:`MDAnalysis` compatible file when 
             s_indices are provided and contain multiple molecules
@@ -693,6 +696,9 @@ class MDAnalysisParser(Parser):
 
         if center == 'Geometry':
             weights = None
+        elif center == 'Mass':
+            masses = np.array(masses)
+            weights = masses
 
         sq_coords = np.squeeze(coords, axis=2)
         s_coords = sq_coords[:, indices]
