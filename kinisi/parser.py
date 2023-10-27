@@ -581,7 +581,7 @@ class MDAnalysisParser(Parser):
         else:
             raise TypeError('Unrecognized type for Specie or Indices')
 
-        self.coords = coords
+        self.coords_check = coords[0]
 
         super().__init__(disp=self.get_disp(coords, latt),
                          indices=indices[0],
@@ -684,7 +684,7 @@ class MDAnalysisParser(Parser):
         """
         framework_indices = []
         try:
-            indices = np.array(indices)
+            indices = np.array(indices) - 1
         except:
             raise ValueError('Molecules must be of same length')
 
