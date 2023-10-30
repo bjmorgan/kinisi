@@ -548,6 +548,12 @@ class MDAnalysisParser(Parser):
         gigabytes (GB). Optional, defaults to :py:attr:`8.`.
     :param n_steps: Number of steps to be used in the timestep function. Optional, defaults to all of them.
     :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
+    :param s_indices: Optional, list of indices to calculate diffusivity for as a list of Intergers, Specie 
+        must be set to None for this to function. Molecules can be specificed as a list of lists of indices.
+        This inner lists must all be on the same length, the type of center can be set by hte center keyword.
+    :param center: Optional, the type of molecular center to calculate for moelcules specified in s_indices, defaults 
+        to :py:attr:`'Geometry'`, :py:attr:`'Mass'` also valid.
+    :param masses: Optional, list of masses associated with the indices in s_indices. Must be same shape as s_indices.
     """
 
     def __init__(self,
