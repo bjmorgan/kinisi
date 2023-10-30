@@ -679,13 +679,14 @@ class MDAnalysisParser(Parser):
          
         :param structure: Initial structure.
         :param coords: fractional coordinates for all atoms.
-        :param s_indices: indices for the atoms in the molecules in the trajectory used in the calculation 
+        :param indices: indices for the atoms in the molecules in the trajectory used in the calculation 
             of the diffusion.
-        :param center: String describing center to calculate: Geometry or Mass
+        :param center: String describing center to calculate: Geometry or Mass.
+        :param masses: Masses associated with indices in indices.
         
         
-        :return: Tuple containing: Tuple containing: fractional coordinates for all 
-            atoms and Tuple containing: indices for the atoms in the trajectory used in the calculation 
+        :return: Tuple containing: Tuple containing: fractional coordinates for centers and framework atoms
+            and Tuple containing: indices for centers used in the calculation 
             of the diffusion and indices of framework atoms.
         """
         framework_indices = []
@@ -728,10 +729,10 @@ class MDAnalysisParser(Parser):
     @staticmethod
     def get_framework(structure: "MDAnalysis.universe.Universe", indices: List[int]) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Determine the framework indices from an :py:mod:`MDAnalysis` compatible file when s_indices are provided
+        Determine the framework indices from an :py:mod:`MDAnalysis` compatible file when indices are provided
         
         :param structure: Initial structure.
-        :param s_indices: indices for the atoms in the trajectory used in the calculation of the 
+        :param indices: Indices for the atoms in the trajectory used in the calculation of the 
             diffusion.
         
         :return: Tuple containing: indices for the atoms in the trajectory used in the calculation of the
