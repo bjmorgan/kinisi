@@ -4,7 +4,7 @@
   <img alt="The kinisi logo" src="https://github.com/bjmorgan/kinisi/blob/master/docs/source/_static/logo_light.png?raw=true">
 </picture>
 
-Pronunciation: *kee-nee-si*
+Pronunciation: *kee-nee-see*
 
 [![Test Coverage](https://api.codeclimate.com/v1/badges/3e64239fb6cb6c837b62/test_coverage)](https://codeclimate.com/github/bjmorgan/kinisi/test_coverage)
 [![Documentation Status](https://readthedocs.org/projects/kinisi/badge/?version=latest)](https://kinisi.readthedocs.io/en/latest/?badge=latest)
