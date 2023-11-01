@@ -1,5 +1,3 @@
-.. highlight:: shell
-
 ============
 Contributing
 ============
@@ -68,7 +66,7 @@ Ready to contribute? Here's how to set up `kinisi` for local development.
 
     $ mkvirtualenv kinisi
     $ cd kinisi/
-    $ python setup.py develop
+    $ pip install .[dev]
 
 4. Create a branch for local development::
 
