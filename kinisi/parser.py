@@ -251,17 +251,17 @@ class ASEParser(Parser):
                  sampling: str = 'multi-origin',
                  memory_limit: float = 8.,
                  progress: bool = True,
-                 s_indices: List[int] = None):
+                 specie_indices: List[int] = None):
 
         structure, coords, latt = self.get_structure_coords_latt(atoms, sub_sample_traj, progress)
 
         if specie != None:
             indices = self.get_indices(structure, specie)
-        elif isinstance(s_indices, list):
-            if isinstance(s_indices[0], list):
-                structure, coords, indices = self.get_molecules(structure, coords, s_indices)
+        elif isinstance(specie_indices, list):
+            if isinstance(specie_indices[0], list):
+                structure, coords, indices = self.get_molecules(structure, coords, specie_indices)
             else:
-                indices = self.get_framework(structure, s_indices)
+                indices = self.get_framework(structure, specie_indices)
         else:
             raise TypeError('Unrecognized type for Specie or Indices')
 
@@ -329,10 +329,21 @@ class ASEParser(Parser):
         return indices, framework_indices
 
     @staticmethod
-    def get_molecules(structure: "ase.atoms.Atoms", coords: List[np.ndarray],
+    def get_molecules(structure: "MDAnalysis.universe.Universe", coords: List[np.ndarray],
                       indices: List[int]) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
         """
+        Determine framework and non-framework indices for an :py:mod:`MDAnalysis` compatible file when 
+            specie_indices are provided and contain multiple molecules
+            
+        :param structure: Initial structure.
+        :param coords: fractional coordinates for all atoms.
+        :param specie_indices: indices for the atoms in the molecules in the trajectory used in the calculation 
+            of the diffusion.
         
+        
+        :return: Tuple containing: Tuple containing: initial structure, fractional coordinates for all 
+            atoms and Tuple containing: indices for the atoms in the trajectory used in the calculation 
+            of the diffusion and indices of framework atoms.
         """
         framework_indices = []
         flat_indices = np.concatenate(indices)
@@ -343,9 +354,16 @@ class ASEParser(Parser):
         return structure, coords, (flat_indices, framework_indices)
 
     @staticmethod
-    def get_framework(structure: "ase.atoms.Atoms", indices: List[int]) -> Tuple[np.ndarray, np.ndarray]:
+    def get_framework(structure: "MDAnalysis.universe.Universe", indices: List[int]) -> Tuple[np.ndarray, np.ndarray]:
         """
-         
+        Determine the framework indices from an :py:mod:`MDAnalysis` compatible file when specie_indices are provided
+        
+        :param structure: Initial structure.
+        :param specie_indices: indices for the atoms in the trajectory used in the calculation of the 
+            diffusion.
+        
+        :return: Tuple containing: indices for the atoms in the trajectory used in the calculation of the
+            diffusion and indices of framework atoms. 
         """
         framework_indices = []
 
@@ -398,16 +416,16 @@ class PymatgenParser(Parser):
                  sampling: str = 'multi-origin',
                  memory_limit: float = 8.,
                  progress: bool = True,
-                 s_indices: List[int] = None):
+                 specie_indices: List[int] = None):
         structure, coords, latt = self.get_structure_coords_latt(structures, sub_sample_traj, progress)
 
         if specie != None:
             indices = self.get_indices(structure, specie)
-        elif isinstance(s_indices, list):
-            if isinstance(s_indices[0], list):
-                structure, coords, indices = self.get_molecules(structure, coords, s_indices)
+        elif isinstance(specie_indices, list):
+            if isinstance(specie_indices[0], list):
+                structure, coords, indices = self.get_molecules(structure, coords, specie_indices)
             else:
-                indices = self.get_framework(structure, s_indices)
+                indices = self.get_framework(structure, specie_indices)
         else:
             raise TypeError('Unrecognized type for Specie or Indices')
 
@@ -490,10 +508,21 @@ class PymatgenParser(Parser):
         return indices, framework_indices
 
     @staticmethod
-    def get_molecules(structure: "pymatgen.core.structure.Structure", coords: List[np.ndarray],
+    def get_molecules(structure: "MDAnalysis.universe.Universe", coords: List[np.ndarray],
                       indices: List[int]) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
         """
+        Determine framework and non-framework indices for an :py:mod:`MDAnalysis` compatible file when 
+            specie_indices are provided and contain multiple molecules
+            
+        :param structure: Initial structure.
+        :param coords: fractional coordinates for all atoms.
+        :param specie_indices: indices for the atoms in the molecules in the trajectory used in the calculation 
+            of the diffusion.
         
+        
+        :return: Tuple containing: Tuple containing: initial structure, fractional coordinates for all 
+            atoms and Tuple containing: indices for the atoms in the trajectory used in the calculation 
+            of the diffusion and indices of framework atoms.
         """
         framework_indices = []
         flat_indices = np.concatenate(indices)
@@ -504,10 +533,16 @@ class PymatgenParser(Parser):
         return structure, coords, (flat_indices, framework_indices)
 
     @staticmethod
-    def get_framework(structure: "pymatgen.core.structure.Structure",
-                      indices: List[int]) -> Tuple[np.ndarray, np.ndarray]:
+    def get_framework(structure: "MDAnalysis.universe.Universe", indices: List[int]) -> Tuple[np.ndarray, np.ndarray]:
         """
+        Determine the framework indices from an :py:mod:`MDAnalysis` compatible file when specie_indices are provided
         
+        :param structure: Initial structure.
+        :param specie_indices: indices for the atoms in the trajectory used in the calculation of the 
+            diffusion.
+        
+        :return: Tuple containing: indices for the atoms in the trajectory used in the calculation of the
+            diffusion and indices of framework atoms. 
         """
         framework_indices = []
 
@@ -564,16 +599,16 @@ class MDAnalysisParser(Parser):
                  sampling: str = 'multi-origin',
                  memory_limit: float = 8.,
                  progress: bool = True,
-                 s_indices: List[int] = None):
+                 specie_indices: List[int] = None):
         structure, coords, latt, volume = self.get_structure_coords_latt(universe, sub_sample_atoms, sub_sample_traj,
                                                                          progress)
         if specie != None:
             indices = self.get_indices(structure, specie)
-        elif isinstance(s_indices, list):
-            if isinstance(s_indices[0], list):
-                structure, coords, indices = self.get_molecules(structure, coords, s_indices)
+        elif isinstance(specie_indices, list):
+            if isinstance(specie_indices[0], list):
+                structure, coords, indices = self.get_molecules(structure, coords, specie_indices)
             else:
-                indices = self.get_framework(structure, s_indices)
+                indices = self.get_framework(structure, specie_indices)
         else:
             raise TypeError('Unrecognized type for Specie or Indices')
 
@@ -661,11 +696,11 @@ class MDAnalysisParser(Parser):
                       indices: List[int]) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
         """
         Determine framework and non-framework indices for an :py:mod:`MDAnalysis` compatible file when 
-            s_indices are provided and contain multiple molecules
+            specie_indices are provided and contain multiple molecules
             
         :param structure: Initial structure.
         :param coords: fractional coordinates for all atoms.
-        :param s_indices: indices for the atoms in the molecules in the trajectory used in the calculation 
+        :param specie_indices: indices for the atoms in the molecules in the trajectory used in the calculation 
             of the diffusion.
         
         
@@ -684,10 +719,10 @@ class MDAnalysisParser(Parser):
     @staticmethod
     def get_framework(structure: "MDAnalysis.universe.Universe", indices: List[int]) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Determine the framework indices from an :py:mod:`MDAnalysis` compatible file when s_indices are provided
+        Determine the framework indices from an :py:mod:`MDAnalysis` compatible file when specie_indices are provided
         
         :param structure: Initial structure.
-        :param s_indices: indices for the atoms in the trajectory used in the calculation of the 
+        :param specie_indices: indices for the atoms in the trajectory used in the calculation of the 
             diffusion.
         
         :return: Tuple containing: indices for the atoms in the trajectory used in the calculation of the
