@@ -35,3 +35,10 @@ $ git clone https://github.com/bjmorgan/kinisi.git
 $ cd kinisi
 $ pip install -e '.[docs]'
 ```
+
+The documentation can then be built from the `Makefile` as follows. 
+
+```console
+$ cd docs
+$ make html 
+```
