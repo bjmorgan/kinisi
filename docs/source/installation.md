@@ -26,4 +26,12 @@ If you are interesting in modifying the `kinisi` code, you should clone the git 
 $ git clone https://github.com/bjmorgan/kinisi.git
 $ cd kinisi
 $ pip install -e '.[dev]'
-``` 
+```
+
+To run the notebooks included in the `docs` directory of the GitHub repository, it is necessary that the `[docs]` installation is performed. 
+
+```console
+$ git clone https://github.com/bjmorgan/kinisi.git
+$ cd kinisi
+$ pip install -e '.[docs]'
+```
