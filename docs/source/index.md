@@ -38,6 +38,7 @@ hidden: True
 ---
 
 installation
+methodology
 notebooks
 faq
 papers
