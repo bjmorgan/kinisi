@@ -13,6 +13,9 @@ authors:
   - name: Alexander G. Squires
     orcid: 0000-0001-6967-3690
     affiliation: "3,4"
+  - name: Josh Dunn
+    orcid: 0000-0003-2659-0806
+    affiliation: "1"
   - name: Samuel W. Coles
     orcid: 0000-0001-9722-5676
     affiliation: "5,4"
