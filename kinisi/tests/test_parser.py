@@ -113,7 +113,6 @@ class TestParser(unittest.TestCase):
         assert_almost_equal(data.time_step, 1e-3)
         assert_almost_equal(data.step_skip, 1)
         assert_equal(data.indices, list(range(180)))
-        
 
     def test_mda_init(self):
         xd = mda.Universe(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS.data'),
