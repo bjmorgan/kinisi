@@ -27,7 +27,7 @@ affiliations:
    index: 1
  - name: European Spallation Source ERIC, Ole Maaløes vej 3, 2200 København N, DK
    index: 2
- - name: Department of Chemistry, University College London, 20 Gordon Street, London WC1H 0AJ, UK
+ - name: School of Chemistry, University of Birmingham, Edgbaston, Birmingham, B15 2TT, UK
    index: 3
  - name: The Faraday Institution, Quad One, Harwell Science and Innovation Campus, Didcot, OX11 0RA, UK
    index: 4
