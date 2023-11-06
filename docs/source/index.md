@@ -30,7 +30,7 @@ the estimated Einstein diffusion relationship (blue regions representing descrea
 
 ## Contributors
 
-[Andrew R. McCluskey](https://www.mccluskey.scot) | [Benjamin J. Morgan](https://morgan-group-bath.github.io) | [Alex G. Squires](https://alexsquires.github.io)
+[Andrew R. McCluskey](https://www.mccluskey.scot) | [Benjamin J. Morgan](https://morgan-group-bath.github.io) | [Alex G. Squires](https://alexsquires.github.io) | Josh Dunn
 
 ```{toctree}
 ---
