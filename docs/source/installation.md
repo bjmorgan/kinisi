@@ -36,7 +36,7 @@ $ cd kinisi
 $ pip install -e '.[docs]'
 ```
 
-The documentation can then be built from the `Makefile` as follows (note that `pandoc` needs to be installed for this). 
+The documentation can then be built from the `Makefile` as follows (note that `pandoc` needs to be installed, either on `conda`/`mamba` or by following the [online instructions](https://pandoc.org/installing.html)). 
 
 ```console
 $ cd docs
