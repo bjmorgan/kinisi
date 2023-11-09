@@ -590,6 +590,8 @@ class PymatgenParser(Parser):
         elif center == 'Mass':
             masses = np.array(masses)
             weights = masses
+            if indices.shape != masses.shape:
+                raise ValueError(f'indices shape {indices.shape} not equal to masses shape {masses.shape}')
 
         sq_coords = np.squeeze(coords, axis=2)
         s_coords = sq_coords[:, indices]
@@ -795,7 +797,7 @@ class MDAnalysisParser(Parser):
         :param indices: indices for the atoms in the molecules in the trajectory used in the calculation 
             of the diffusion.
         :param center: String describing center to calculate: Geometry or Mass.
-        :param masses: Masses associated with indices in indices.
+        :param masses: Masses associated with the molecule in indices.
         
         
         :return: Tuple containing: Tuple containing: fractional coordinates for centers and framework atoms
@@ -819,6 +821,9 @@ class MDAnalysisParser(Parser):
         elif center == 'Mass':
             masses = np.array(masses)
             weights = masses
+            if indices.shape[-1] != masses.shape[0]:
+                raise ValueError(
+                    f'Atoms in molecule {indices.shape[-1]} not equal to number of masses {masses.shape[0]}')
 
         sq_coords = np.squeeze(coords, axis=2)
         s_coords = sq_coords[:, indices]
