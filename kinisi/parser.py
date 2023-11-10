@@ -824,6 +824,8 @@ class MDAnalysisParser(Parser):
             if indices.shape[-1] != masses.shape[0]:
                 raise ValueError(
                     f'Atoms in molecule {indices.shape[-1]} not equal to number of masses {masses.shape[0]}')
+        else:
+            weights = None
 
         sq_coords = np.squeeze(coords, axis=2)
         s_coords = sq_coords[:, indices]
