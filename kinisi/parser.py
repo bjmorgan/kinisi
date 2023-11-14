@@ -688,6 +688,10 @@ class MDAnalysisParser(Parser):
                  specie_indices: List[int] = None,
                  center: str = 'Geometry',
                  masses: List[float] = None):
+        
+        if sub_sample_atoms != 1 and specie_indices != None:
+            raise ValueError('sub_sample_atom cannot be used with specie_indices. Please specify only inidices you wish to sample.')
+            
         structure, coords, latt, volume = self.get_structure_coords_latt(universe, sub_sample_atoms, sub_sample_traj,
                                                                          progress)
         if specie != None:
