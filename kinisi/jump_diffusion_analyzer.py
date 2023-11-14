@@ -27,7 +27,7 @@ class JumpDiffusionAnalyzer(Analyzer):
         There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as
         the number of observations is not necessary the same at each data point.
     :param volume: The volume of the simulation cell.
-    :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.DiffBootstrap` object. See
+    :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.DiffBootstrap` object. See
         the appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
     """
 
@@ -62,7 +62,7 @@ class JumpDiffusionAnalyzer(Analyzer):
                                              List['pymatgen.core.structure.Structure']]],
                       parser_params: dict,
                       dtype: str = None,
-                      bootstrap_params: dict = None):
+                      uncertainty_params: dict = None):
         """
         Create a :py:class:`JumpDiffusionAnalyzer` object from a list or nested list of
         :py:class:`pymatgen.core.structure.Structure` objects.
@@ -75,16 +75,16 @@ class JumpDiffusionAnalyzer(Analyzer):
             these constitute a series of :py:attr:`consecutive` trajectories or a series of :py:attr:`identical`
             starting points with different random seeds, in which case the `dtype` should be either
             :py:attr:`consecutive` or :py:attr:`identical`.
-        :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
+        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
             appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
 
         :return: Relevant :py:class:`JumpDiffusionAnalyzer` object.
         """
-        if bootstrap_params is None:
-            bootstrap_params = {}
+        if uncertainty_params is None:
+            uncertainty_params = {}
         jdiff_anal = super()._from_pymatgen(trajectory, parser_params, dtype=dtype)
         jdiff_anal._diff = diffusion.MSTDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
-                                                   **bootstrap_params)
+                                                   **uncertainty_params)
         return jdiff_anal
 
     @classmethod
@@ -92,7 +92,7 @@ class JumpDiffusionAnalyzer(Analyzer):
                  trajectory: List[Union['ase.atoms.Atoms', List['ase.atoms.Atoms']]],
                  parser_params: dict,
                  dtype: str = None,
-                 bootstrap_params: dict = None):
+                 uncertainty_params: dict = None):
         """
         Create a :py:class:`JumpDiffusionAnalyzer` object from a list or nested list of
         :py:class:`ase.atoms.Atoms` objects.
@@ -105,16 +105,16 @@ class JumpDiffusionAnalyzer(Analyzer):
             these constitute a series of :py:attr:`consecutive` trajectories or a series of :py:attr:`identical`
             starting points with different random seeds, in which case the `dtype` should be either
             :py:attr:`consecutive` or :py:attr:`identical`.
-        :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
+        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
             appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
         
         :return: Relevant :py:class:`JumpDiffusionAnalyzer` object.
         """
-        if bootstrap_params is None:
-            bootstrap_params = {}
+        if uncertainty_params is None:
+            uncertainty_params = {}
         jdiff_anal = super()._from_ase(trajectory, parser_params, dtype=dtype)
         jdiff_anal._diff = diffusion.MSTDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
-                                                   **bootstrap_params)
+                                                   **uncertainty_params)
         return jdiff_anal
 
     @classmethod
@@ -122,7 +122,7 @@ class JumpDiffusionAnalyzer(Analyzer):
                      trajectory: Union['pymatgen.io.vasp.outputs.Xdatcar', List['pymatgen.io.vasp.outputs.Xdatcar']],
                      parser_params: dict,
                      dtype: str = None,
-                     bootstrap_params: dict = None):
+                     uncertainty_params: dict = None):
         """
         Create a :py:class:`JumpDiffusionAnalyzer` object from a single or a list of
         :py:class:`pymatgen.io.vasp.outputs.Xdatcar` objects.
@@ -135,16 +135,16 @@ class JumpDiffusionAnalyzer(Analyzer):
             then it is necessary to identify if these constitute a series of :py:attr:`consecutive` trajectories or a
             series of :py:attr:`identical` starting points with different random seeds, in which case the `dtype`
             should be either :py:attr:`consecutive` or :py:attr:`identical`.
-        :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
+        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
             appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
 
         :return: Relevant :py:class:`JumpDiffusionAnalyzer` object.
         """
-        if bootstrap_params is None:
-            bootstrap_params = {}
+        if uncertainty_params is None:
+            uncertainty_params = {}
         jdiff_anal = super()._from_Xdatcar(trajectory, parser_params, dtype=dtype)
         jdiff_anal._diff = diffusion.MSTDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
-                                                   **bootstrap_params)
+                                                   **uncertainty_params)
         return jdiff_anal
 
     @classmethod
@@ -152,7 +152,7 @@ class JumpDiffusionAnalyzer(Analyzer):
                   trajectory: Union[str, List[str]],
                   parser_params: dict,
                   dtype: str = None,
-                  bootstrap_params: dict = None):
+                  uncertainty_params: dict = None):
         """
         Create a :py:class:`JumpDiffusionAnalyzer` object from a single or a list of Xdatcar file(s).
 
@@ -163,16 +163,16 @@ class JumpDiffusionAnalyzer(Analyzer):
             list of files is passed, then it is necessary to identify if these constitute a series of
             :py:attr:`consecutive` trajectories or a series of :py:attr:`identical` starting points with different
             random seeds, in which case the `dtype` should be either :py:attr:`consecutive` or :py:attr:`identical`.
-        :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
+        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
             appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
 
         :return: Relevant :py:class:`JumpDiffusionAnalyzer` object.
         """
-        if bootstrap_params is None:
-            bootstrap_params = {}
+        if uncertainty_params is None:
+            uncertainty_params = {}
         jdiff_anal = super()._from_file(trajectory, parser_params, dtype=dtype)
         jdiff_anal._diff = diffusion.MSTDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
-                                                   **bootstrap_params)
+                                                   **uncertainty_params)
         return jdiff_anal
 
     @classmethod
@@ -180,7 +180,7 @@ class JumpDiffusionAnalyzer(Analyzer):
                       trajectory: 'MDAnalysis.core.universe.Universe',
                       parser_params: dict,
                       dtype: str = None,
-                      bootstrap_params: dict = None):
+                      uncertainty_params: dict = None):
         """
         Create an :py:class:`JumpDiffusionAnalyzer` object from an :py:class:`MDAnalysis.core.universe.Universe` object.
 
@@ -192,16 +192,16 @@ class JumpDiffusionAnalyzer(Analyzer):
             :py:attr:`identical` starting points with different random seeds, in which case the `dtype` should
             be :py:attr:`identical`. For a series of consecutive trajectories, please construct the relevant
             object using :py:mod:`MDAnalysis`.
-        :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
+        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
             appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
 
         :return: Relevant :py:class:`JumpDiffusionAnalyzer` object.
         """
-        if bootstrap_params is None:
-            bootstrap_params = {}
+        if uncertainty_params is None:
+            uncertainty_params = {}
         jdiff_anal = super()._from_universe(trajectory, parser_params, dtype=dtype)
         jdiff_anal._diff = diffusion.MSTDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
-                                                   **bootstrap_params)
+                                                   **uncertainty_params)
         return jdiff_anal
 
     def jump_diffusion(self, start_dt: float, jump_diffusion_params: Union[dict, None] = None):

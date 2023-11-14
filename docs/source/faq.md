@@ -30,3 +30,11 @@
 
     > Check out the [specific page](./memory_limit) that we have related to this error. 
 
+- Running the documentation locally gave me different numbers, how come?
+
+    > `kinisi` aims to be reproducible on a per-environment basis. Therefore, we do not pin versions in 
+    > the `pyproject.toml` hence, when you run `pip install '.[docs]'` you might get different package 
+    > versions and due to the stochastic nature of the sampling in `kinisi`, this leads to *slightly* 
+    > different values in the results. `kinisi` allows a `random_state` to be passed to many methods, 
+    > however, this will only ensure reproducibility when the same enviroment is present. Consider using 
+    > pinned versions in a conda/mamba environment if you want to enable *true* reproducibility.

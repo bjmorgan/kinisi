@@ -27,7 +27,7 @@ class ConductivityAnalyzer(Analyzer):
         There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as
         the number of observations is not necessary the same at each data point.
     :param volume: The volume of the simulation cell.
-    :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.DiffBootstrap` object. See
+    :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.DiffBootstrap` object. See
         the appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
     :param ionic_charge: The charge on the mobile ions, either an array with a value for each ion or a scalar
         if all values are the same. Optional, default is :py:attr:`1`.
@@ -64,7 +64,7 @@ class ConductivityAnalyzer(Analyzer):
                                              List['pymatgen.core.structure.Structure']]],
                       parser_params: dict,
                       dtype: str = None,
-                      bootstrap_params: dict = None,
+                      uncertainty_params: dict = None,
                       ionic_charge: Union[np.ndarray, int] = 1):
         """
         Create a :py:class:`ConductivityAnalyzer` object from a list or nested list of
@@ -78,18 +78,18 @@ class ConductivityAnalyzer(Analyzer):
             these constitute a series of :py:attr:`consecutive` trajectories or a series of :py:attr:`identical`
             starting points with different random seeds, in which case the `dtype` should be either
             :py:attr:`consecutive` or :py:attr:`identical`.
-        :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
+        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
             appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
         :param ionic_charge: The charge on the mobile ions, either an array with a value for each ion or a scalar
             if all values are the same. Optional, default is :py:attr:`1`.
 
         :return: Relevant :py:class:`ConductivityAnalyzer` object.
         """
-        if bootstrap_params is None:
-            bootstrap_params = {}
+        if uncertainty_params is None:
+            uncertainty_params = {}
         cond_anal = super()._from_pymatgen(trajectory, parser_params, dtype=dtype)
         cond_anal._diff = diffusion.MSCDBootstrap(cond_anal._delta_t, cond_anal._disp_3d, ionic_charge, cond_anal._n_o,
-                                                  **bootstrap_params)
+                                                  **uncertainty_params)
         return cond_anal
 
     @classmethod
@@ -97,7 +97,7 @@ class ConductivityAnalyzer(Analyzer):
                  trajectory: List[Union['ase.atoms.Atoms', List['ase.atom.Atoms']]],
                  parser_params: dict,
                  dtype: str = None,
-                 bootstrap_params: dict = None,
+                 uncertainty_params: dict = None,
                  ionic_charge: Union[np.ndarray, int] = 1):
         """
         Create a :py:class:`ConductivityAnalyzer` object from a list or nested list of
@@ -111,18 +111,18 @@ class ConductivityAnalyzer(Analyzer):
             these constitute a series of :py:attr:`consecutive` trajectories or a series of :py:attr:`identical`
             starting points with different random seeds, in which case the `dtype` should be either
             :py:attr:`consecutive` or :py:attr:`identical`.
-        :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
+        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
             appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
         :param ionic_charge: The charge on the mobile ions, either an array with a value for each ion or a scalar
             if all values are the same. Optional, default is :py:attr:`1`.
 
         :return: Relevant :py:class:`ConductivityAnalyzer` object.
         """
-        if bootstrap_params is None:
-            bootstrap_params = {}
+        if uncertainty_params is None:
+            uncertainty_params = {}
         cond_anal = super()._from_ase(trajectory, parser_params, dtype=dtype)
         cond_anal._diff = diffusion.MSCDBootstrap(cond_anal._delta_t, cond_anal._disp_3d, ionic_charge, cond_anal._n_o,
-                                                  **bootstrap_params)
+                                                  **uncertainty_params)
         return cond_anal
 
     @classmethod
@@ -130,7 +130,7 @@ class ConductivityAnalyzer(Analyzer):
                      trajectory: Union['pymatgen.io.vasp.outputs.Xdatcar', List['pymatgen.io.vasp.outputs.Xdatcar']],
                      parser_params: dict,
                      dtype: str = None,
-                     bootstrap_params: dict = None,
+                     uncertainty_params: dict = None,
                      ionic_charge: Union[np.ndarray, int] = 1):
         """
         Create a :py:class:`ConductivityAnalyzer` object from a single or a list of
@@ -144,18 +144,18 @@ class ConductivityAnalyzer(Analyzer):
             then it is necessary to identify if these constitute a series of :py:attr:`consecutive` trajectories or a
             series of :py:attr:`identical` starting points with different random seeds, in which case the `dtype`
             should be either :py:attr:`consecutive` or :py:attr:`identical`.
-        :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
+        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
             appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
         :param ionic_charge: The charge on the mobile ions, either an array with a value for each ion or a scalar
             if all values are the same. Optional, default is :py:attr:`1`.
 
         :return: Relevant :py:class:`ConductivityAnalyzer` object.
         """
-        if bootstrap_params is None:
-            bootstrap_params = {}
+        if uncertainty_params is None:
+            uncertainty_params = {}
         cond_anal = super()._from_Xdatcar(trajectory, parser_params, dtype=dtype)
         cond_anal._diff = diffusion.MSCDBootstrap(cond_anal._delta_t, cond_anal._disp_3d, ionic_charge, cond_anal._n_o,
-                                                  **bootstrap_params)
+                                                  **uncertainty_params)
         return cond_anal
 
     @classmethod
@@ -163,7 +163,7 @@ class ConductivityAnalyzer(Analyzer):
                   trajectory: Union[str, List[str]],
                   parser_params: dict,
                   dtype: str = None,
-                  bootstrap_params: dict = None,
+                  uncertainty_params: dict = None,
                   ionic_charge: Union[np.ndarray, int] = 1):
         """
         Create a :py:class:`ConductivityAnalyzer` object from a single or a list of Xdatcar file(s).
@@ -175,18 +175,18 @@ class ConductivityAnalyzer(Analyzer):
             list of files is passed, then it is necessary to identify if these constitute a series of
             :py:attr:`consecutive` trajectories or a series of :py:attr:`identical` starting points with different
             random seeds, in which case the `dtype` should be either :py:attr:`consecutive` or :py:attr:`identical`.
-        :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
+        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
             appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
         :param ionic_charge: The charge on the mobile ions, either an array with a value for each ion or a scalar
             if all values are the same. Optional, default is :py:attr:`1`.
 
         :return: Relevant :py:class:`ConductivityAnalyzer` object.
         """
-        if bootstrap_params is None:
-            bootstrap_params = {}
+        if uncertainty_params is None:
+            uncertainty_params = {}
         cond_anal = super()._from_file(trajectory, parser_params, dtype=dtype)
         cond_anal._diff = diffusion.MSCDBootstrap(cond_anal._delta_t, cond_anal._disp_3d, ionic_charge, cond_anal._n_o,
-                                                  **bootstrap_params)
+                                                  **uncertainty_params)
         return cond_anal
 
     @classmethod
@@ -194,7 +194,7 @@ class ConductivityAnalyzer(Analyzer):
                       trajectory: 'MDAnalysis.core.universe.Universe',
                       parser_params: dict,
                       dtype: str = None,
-                      bootstrap_params: dict = None,
+                      uncertainty_params: dict = None,
                       ionic_charge: Union[np.ndarray, int] = 1):
         """
         Create an :py:class:`ConductivityAnalyzer` object from an :py:class:`MDAnalysis.core.universe.Universe` object.
@@ -207,18 +207,18 @@ class ConductivityAnalyzer(Analyzer):
             :py:attr:`identical` starting points with different random seeds, in which case the `dtype` should
             be :py:attr:`identical`. For a series of consecutive trajectories, please construct the relevant
             object using :py:mod:`MDAnalysis`.
-        :param bootstrap_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
+        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
             appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
         :param ionic_charge: The charge on the mobile ions, either an array with a value for each ion or a scalar
             if all values are the same. Optional, default is :py:attr:`1`.
 
         :return: Relevant :py:class:`ConductivityAnalyzer` object.
         """
-        if bootstrap_params is None:
-            bootstrap_params = {}
+        if uncertainty_params is None:
+            uncertainty_params = {}
         cond_anal = super()._from_universe(trajectory, parser_params, dtype=dtype)
         cond_anal._diff = diffusion.MSCDBootstrap(cond_anal._delta_t, cond_anal._disp_3d, ionic_charge, cond_anal._n_o,
-                                                  **bootstrap_params)
+                                                  **uncertainty_params)
         return cond_anal
 
     def conductivity(self, start_dt: float, temperature: float, conductivity_params: Union[dict, None] = None):

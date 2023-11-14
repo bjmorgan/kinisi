@@ -338,10 +338,7 @@ class ASEParser(Parser):
     def get_molecules(structure: "MDAnalysis.universe.Universe", coords: List[np.ndarray], indices: List[int],
                       center: str, masses: List[float]) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
         """
-        Determine framework and non-framework indices for an :py:mod:`MDAnalysis` compatible file when 
-            specie_indices are provided and contain multiple molecules
-        
-        Warning: This function changes the structure without changing the MDAnalysis object
+        Determine framework and non-framework indices for an :py:mod:`MDAnalysis` compatible file when specie_indices are provided and contain multiple molecules. Warning: This function changes the structure without changing the MDAnalysis object
          
         :param structure: Initial structure.
         :param coords: fractional coordinates for all atoms.
@@ -556,10 +553,7 @@ class PymatgenParser(Parser):
     def get_molecules(structure: "MDAnalysis.universe.Universe", coords: List[np.ndarray], indices: List[int],
                       center: str, masses: List[float]) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
         """
-        Determine framework and non-framework indices for an :py:mod:`MDAnalysis` compatible file when 
-            specie_indices are provided and contain multiple molecules
-        
-        Warning: This function changes the structure without changing the MDAnalysis object
+        Determine framework and non-framework indices for an :py:mod:`MDAnalysis` compatible file when specie_indices are provided and contain multiple molecules. Warning: This function changes the structure without changing the MDAnalysis object
          
         :param structure: Initial structure.
         :param coords: fractional coordinates for all atoms.
@@ -688,6 +682,10 @@ class MDAnalysisParser(Parser):
                  specie_indices: List[int] = None,
                  center: str = 'Geometry',
                  masses: List[float] = None):
+        
+        if sub_sample_atoms != 1 and specie_indices != None:
+            raise ValueError('sub_sample_atom cannot be used with specie_indices. Please specify only inidices you wish to sample.')
+            
         structure, coords, latt, volume = self.get_structure_coords_latt(universe, sub_sample_atoms, sub_sample_traj,
                                                                          progress)
         if specie != None:
@@ -787,10 +785,7 @@ class MDAnalysisParser(Parser):
     def get_molecules(structure: "MDAnalysis.universe.Universe", coords: List[np.ndarray], indices: List[int],
                       center: str, masses: List[float]) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
         """
-        Determine framework and non-framework indices for an :py:mod:`MDAnalysis` compatible file when 
-            specie_indices are provided and contain multiple molecules
-        
-        Warning: This function changes the structure without changing the MDAnalysis object
+        Determine framework and non-framework indices for an :py:mod:`MDAnalysis` compatible file when specie_indices are provided and contain multiple molecules. Warning: This function changes the structure without changing the MDAnalysis object
          
         :param structure: Initial structure.
         :param coords: fractional coordinates for all atoms.

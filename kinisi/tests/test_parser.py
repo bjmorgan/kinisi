@@ -185,31 +185,32 @@ class TestParser(unittest.TestCase):
                           os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS_center.traj'),
                           topology_format='DATA',
                           format='LAMMPSDUMP')
-        da_params = {'specie': None, 'time_step': 1, 'step_skip': 1, 'specie_indices': [[1,2,3]]}
+        da_params = {'specie': None, 'time_step': 1, 'step_skip': 1, 'specie_indices': [[1, 2, 3]]}
         data = parser.MDAnalysisParser(xd, **da_params)
         assert_almost_equal(data.time_step, 1)
         assert_almost_equal(data.step_skip, 1)
         assert_equal(data.indices, [0])
-        assert_almost_equal(data.coords_check, [[[0.269634905,0.262183827,0.2]]])
-        
+        assert_almost_equal(data.coords_check, [[[0.269634905, 0.262183827, 0.2]]])
+
     def test_mda_init_with_COM(self):
         xd = mda.Universe(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS_center.data'),
                           os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS_center.traj'),
                           topology_format='DATA',
                           format='LAMMPSDUMP')
-        da_params = {'specie': None,
-                     'time_step': 1,
-                     'step_skip': 1,
-                     'specie_indices': [[1,2,3]],
-                     'center': 'Mass',
-                     'masses': [1,16,1]}
+        da_params = {
+            'specie': None,
+            'time_step': 1,
+            'step_skip': 1,
+            'specie_indices': [[1, 2, 3]],
+            'center': 'Mass',
+            'masses': [1, 16, 1]
+        }
         data = parser.MDAnalysisParser(xd, **da_params)
         assert_almost_equal(data.time_step, 1)
         assert_almost_equal(data.step_skip, 1)
         assert_equal(data.indices, [0])
-        assert_almost_equal(data.coords_check, [[[0.382421597,0.2087361,0.2]]])
+        assert_almost_equal(data.coords_check, [[[0.382421597, 0.2087361, 0.2]]])
 
     def test_get_matrix(self):
         matrix = parser._get_matrix([10, 10, 10, 90, 90, 90])
         assert_almost_equal(matrix, np.diag((10, 10, 10)))
-        

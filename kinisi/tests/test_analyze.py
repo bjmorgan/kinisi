@@ -211,7 +211,7 @@ class TestDiffusionAnalyzer(unittest.TestCase):
     def test_properties(self):
         a = DiffusionAnalyzer.from_pymatgen(xd.structures,
                                             parser_params=da_params,
-                                            bootstrap_params={'random_state': np.random.RandomState(0)})
+                                            uncertainty_params={'random_state': np.random.RandomState(0)})
         assert_almost_equal(a.dt, a._diff.dt)
         assert_almost_equal(a.msd, a._diff.n)
         assert_almost_equal(a.msd_std, a._diff.s)
@@ -224,7 +224,7 @@ class TestDiffusionAnalyzer(unittest.TestCase):
         with warnings.catch_warnings(record=True) as _:
             a = DiffusionAnalyzer.from_pymatgen(xd.structures,
                                                 parser_params=da_params,
-                                                bootstrap_params={'random_state': np.random.RandomState(0)})
+                                                uncertainty_params={'random_state': np.random.RandomState(0)})
             assert_almost_equal(a.dt, a._diff.dt)
             assert_almost_equal(a.msd, a._diff.n)
             assert_almost_equal(a.msd_std, a._diff.s)
@@ -239,7 +239,7 @@ class TestDiffusionAnalyzer(unittest.TestCase):
         with warnings.catch_warnings(record=True) as _:
             a = DiffusionAnalyzer.from_pymatgen(xd.structures,
                                                 parser_params=da_params,
-                                                bootstrap_params={'random_state': np.random.RandomState(0)})
+                                                uncertainty_params={'random_state': np.random.RandomState(0)})
             assert_almost_equal(a.dt, a._diff.dt)
             assert_almost_equal(a.msd, a._diff.n)
             assert_almost_equal(a.msd_std, a._diff.s)
@@ -256,7 +256,7 @@ class TestDiffusionAnalyzer(unittest.TestCase):
         with warnings.catch_warnings(record=True) as _:
             a = DiffusionAnalyzer.from_pymatgen(xd.structures,
                                                 parser_params=da_params,
-                                                bootstrap_params={'random_state': np.random.RandomState(0)})
+                                                uncertainty_params={'random_state': np.random.RandomState(0)})
             assert_almost_equal(a.dt, a._diff.dt)
             assert_almost_equal(a.msd, a._diff.n)
             assert_almost_equal(a.msd_std, a._diff.s)
@@ -286,7 +286,7 @@ class TestJumpDiffusionAnalyzer(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w:
             a = JumpDiffusionAnalyzer.from_pymatgen(xd.structures,
                                                     parser_params=da_params,
-                                                    bootstrap_params={'random_state': np.random.RandomState(0)})
+                                                    uncertainty_params={'random_state': np.random.RandomState(0)})
             assert_almost_equal(a.dt, a._diff.dt)
             assert_almost_equal(a.mstd, a._diff.n)
             assert_almost_equal(a.mstd_std, a._diff.s)
@@ -298,7 +298,7 @@ class TestJumpDiffusionAnalyzer(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w:
             a = JumpDiffusionAnalyzer.from_pymatgen(xd.structures,
                                                     parser_params=da_params,
-                                                    bootstrap_params={'random_state': np.random.RandomState(0)})
+                                                    uncertainty_params={'random_state': np.random.RandomState(0)})
             assert_almost_equal(a.dt, a._diff.dt)
             assert_almost_equal(a.mstd, a._diff.n)
             assert_almost_equal(a.mstd_std, a._diff.s)
@@ -313,7 +313,7 @@ class TestJumpDiffusionAnalyzer(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w:
             a = JumpDiffusionAnalyzer.from_pymatgen(xd.structures,
                                                     parser_params=da_params,
-                                                    bootstrap_params={'random_state': np.random.RandomState(0)})
+                                                    uncertainty_params={'random_state': np.random.RandomState(0)})
             assert_almost_equal(a.dt, a._diff.dt)
             assert_almost_equal(a.mstd, a._diff.n)
             assert_almost_equal(a.mstd_std, a._diff.s)
@@ -343,7 +343,7 @@ class TestConductivityAnalyzer(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w:
             a = ConductivityAnalyzer.from_pymatgen(xd.structures,
                                                    parser_params=da_params,
-                                                   bootstrap_params={'random_state': np.random.RandomState(0)},
+                                                   uncertainty_params={'random_state': np.random.RandomState(0)},
                                                    ionic_charge=1)
             assert_almost_equal(a.dt, a._diff.dt)
             assert_almost_equal(a.mscd, a._diff.n)
@@ -356,7 +356,7 @@ class TestConductivityAnalyzer(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w:
             a = ConductivityAnalyzer.from_pymatgen(xd.structures,
                                                    parser_params=da_params,
-                                                   bootstrap_params={'random_state': np.random.RandomState(0)},
+                                                   uncertainty_params={'random_state': np.random.RandomState(0)},
                                                    ionic_charge=1)
             assert_almost_equal(a.dt, a._diff.dt)
             assert_almost_equal(a.mscd, a._diff.n)
@@ -372,7 +372,7 @@ class TestConductivityAnalyzer(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w:
             a = ConductivityAnalyzer.from_pymatgen(xd.structures,
                                                    parser_params=da_params,
-                                                   bootstrap_params={'random_state': np.random.RandomState(0)})
+                                                   uncertainty_params={'random_state': np.random.RandomState(0)})
             assert_almost_equal(a.dt, a._diff.dt)
             assert_almost_equal(a.mscd, a._diff.n)
             assert_almost_equal(a.mscd_std, a._diff.s)

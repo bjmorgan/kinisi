@@ -12,23 +12,26 @@ authors:
     affiliation: "1,2"
   - name: Alexander G. Squires
     orcid: 0000-0001-6967-3690
-    affiliation: "3,4"
+    affiliation: "3"
+  - name: Josh Dunn
+    orcid: 0000-0003-2659-0806
+    affiliation: "1"
   - name: Samuel W. Coles
     orcid: 0000-0001-9722-5676
-    affiliation: "5,4"
+    affiliation: "4,5"
   - name: Benjamin J. Morgan
     orcid: 0000-0002-3056-8233
-    affiliation: "5,4"
+    affiliation: "4,5"
 affiliations:
  - name: School of Chemistry, University of Bristol, Cantock's Close, Bristol, BS8 1TS, UK
    index: 1
  - name: European Spallation Source ERIC, Ole Maaløes vej 3, 2200 København N, DK
    index: 2
- - name: Department of Chemistry, University College London, 20 Gordon Street, London WC1H 0AJ, UK
+ - name: School of Chemistry, University of Birmingham, Edgbaston, Birmingham, B15 2TT, UK
    index: 3
- - name: The Faraday Institution, Quad One, Harwell Science and Innovation Campus, Didcot, OX11 0RA, UK
-   index: 4
  - name: Department of Chemistry, University of Bath, Claverton Down, Bath, BA2 7AY, UK
+   index: 4
+ - name: The Faraday Institution, Quad One, Harwell Science and Innovation Campus, Didcot, OX11 0RA, UK
    index: 5
 date: 16 August 2023
 bibliography: paper.bib
