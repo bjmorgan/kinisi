@@ -62,6 +62,7 @@ class Parser:
                  sampling: str = 'multi-origin',
                  memory_limit: float = 8.,
                  progress: bool = True):
+
         self.time_step = time_step
         self.step_skip = step_skip
         self.indices = indices
@@ -252,7 +253,6 @@ class ASEParser(Parser):
                  memory_limit: float = 8.,
                  progress: bool = True,
                  specie_indices: List[int] = None,
-                 center: str = 'Geometry',
                  masses: List[float] = None,
                  framework_indices: List[int] = None):
 
@@ -263,7 +263,7 @@ class ASEParser(Parser):
         elif isinstance(specie_indices, (list, tuple)):
             if isinstance(specie_indices[0], (list, tuple)):
                 coords, indices = self.get_molecules(
-                    structure, coords, specie_indices, center,
+                    structure, coords, specie_indices,
                     masses)  #Warning: This function changes the structure without changing the MDAnalysis object
             else:
                 indices = self.get_framework(structure, specie_indices)
@@ -337,7 +337,7 @@ class ASEParser(Parser):
 
     @staticmethod
     def get_molecules(structure: "MDAnalysis.universe.Universe", coords: List[np.ndarray], indices: List[int],
-                      center: str, masses: List[float]) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+                      masses: List[float]) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
         """
         Determine framework and non-framework indices for an :py:mod:`MDAnalysis` compatible file when specie_indices are provided and contain multiple molecules. Warning: This function changes the structure without changing the MDAnalysis object
          
@@ -345,7 +345,6 @@ class ASEParser(Parser):
         :param coords: fractional coordinates for all atoms.
         :param indices: indices for the atoms in the molecules in the trajectory used in the calculation 
             of the diffusion.
-        :param center: String describing center to calculate: Geometry or Mass.
         :param masses: Masses associated with indices in indices.
         
         
@@ -365,9 +364,11 @@ class ASEParser(Parser):
             if i not in indices:
                 drift_indices.append(i)
 
-        if center == 'Geometry':
+        if masses == None:
             weights = None
-        elif center == 'Mass':
+        elif len(masses) != indices.shape[-1]:
+            raise ValueError('Masses must be the same length as a molecule')
+        else:
             masses = np.array(masses)
             weights = masses
 
@@ -454,7 +455,6 @@ class PymatgenParser(Parser):
                  memory_limit: float = 8.,
                  progress: bool = True,
                  specie_indices: List[int] = None,
-                 center: str = 'Geometry',
                  masses: List[float] = None,
                  framework_indices: List[int] = None):
 
@@ -465,7 +465,7 @@ class PymatgenParser(Parser):
         elif isinstance(specie_indices, (list, tuple)):
             if isinstance(specie_indices[0], (list, tuple)):
                 coords, indices = self.get_molecules(
-                    structure, coords, specie_indices, center,
+                    structure, coords, specie_indices,
                     masses)  #Warning: This function changes the structure without changing the MDAnalysis object
             else:
                 indices = self.get_framework(structure, specie_indices)
@@ -554,7 +554,7 @@ class PymatgenParser(Parser):
 
     @staticmethod
     def get_molecules(structure: "MDAnalysis.universe.Universe", coords: List[np.ndarray], indices: List[int],
-                      center: str, masses: List[float]) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+                      masses: List[float]) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
         """
         Determine framework and non-framework indices for an :py:mod:`MDAnalysis` compatible file when specie_indices are provided and contain multiple molecules. Warning: This function changes the structure without changing the MDAnalysis object
          
@@ -562,7 +562,6 @@ class PymatgenParser(Parser):
         :param coords: fractional coordinates for all atoms.
         :param indices: indices for the atoms in the molecules in the trajectory used in the calculation 
             of the diffusion.
-        :param center: String describing center to calculate: Geometry or Mass.
         :param masses: Masses associated with indices in indices.
         
         
@@ -582,13 +581,13 @@ class PymatgenParser(Parser):
             if i not in indices:
                 drift_indices.append(i)
 
-        if center == 'Geometry':
+        if masses == None:
             weights = None
-        elif center == 'Mass':
+        elif len(masses) != indices.shape[-1]:
+            raise ValueError('Masses must be the same length as a molecule')
+        else:
             masses = np.array(masses)
             weights = masses
-            if indices.shape != masses.shape:
-                raise ValueError(f'indices shape {indices.shape} not equal to masses shape {masses.shape}')
 
         sq_coords = np.squeeze(coords, axis=2)
         s_coords = sq_coords[:, indices]
@@ -662,9 +661,7 @@ class MDAnalysisParser(Parser):
     :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
     :param specie_indices: Optional, list of indices to calculate diffusivity for as a list of Intergers, Specie 
         must be set to None for this to function. Molecules can be specificed as a list of lists of indices.
-        This inner lists must all be on the same length, the type of center can be set by hte center keyword.
-    :param center: Optional, the type of molecular center to calculate for moelcules specified in specie_indices, defaults 
-        to :py:attr:`'Geometry'`, :py:attr:`'Mass'` also valid.
+        This inner lists must all be on the same length.
     :param masses: Optional, list of masses associated with the indices in specie_indices. Must be same shape as specie_indices.
     """
 
@@ -683,7 +680,6 @@ class MDAnalysisParser(Parser):
                  memory_limit: float = 8.,
                  progress: bool = True,
                  specie_indices: List[int] = None,
-                 center: str = 'Geometry',
                  masses: List[float] = None,
                  framework_indices: List[int] = None):
 
@@ -698,7 +694,7 @@ class MDAnalysisParser(Parser):
         elif isinstance(specie_indices, (list, tuple)):
             if isinstance(specie_indices[0], (list, tuple)):
                 coords, indices = self.get_molecules(
-                    structure, coords, specie_indices, center,
+                    structure, coords, specie_indices,
                     masses)  #Warning: This function changes the structure without changing the MDAnalysis object
             else:
                 indices = self.get_framework(structure, specie_indices)
@@ -788,7 +784,7 @@ class MDAnalysisParser(Parser):
 
     @staticmethod
     def get_molecules(structure: "MDAnalysis.universe.Universe", coords: List[np.ndarray], indices: List[int],
-                      center: str, masses: List[float]) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+                      masses: List[float]) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
         """
         Determine framework and non-framework indices for an :py:mod:`MDAnalysis` compatible file when specie_indices are provided and contain multiple molecules. Warning: This function changes the structure without changing the MDAnalysis object
          
@@ -796,7 +792,6 @@ class MDAnalysisParser(Parser):
         :param coords: fractional coordinates for all atoms.
         :param indices: indices for the atoms in the molecules in the trajectory used in the calculation 
             of the diffusion.
-        :param center: String describing center to calculate: Geometry or Mass.
         :param masses: Masses associated with the molecule in indices.
         
         
@@ -816,16 +811,13 @@ class MDAnalysisParser(Parser):
             if i not in indices:
                 drift_indices.append(i)
 
-        if center == 'Geometry':
+        if masses == None:
             weights = None
-        elif center == 'Mass':
+        elif len(masses) != indices.shape[-1]:
+            raise ValueError('Masses must be the same length as a molecule')
+        else:
             masses = np.array(masses)
             weights = masses
-            if indices.shape[-1] != masses.shape[0]:
-                raise ValueError(
-                    f'Atoms in molecule {indices.shape[-1]} not equal to number of masses {masses.shape[0]}')
-        else:
-            weights = None
 
         sq_coords = np.squeeze(coords, axis=2)
         s_coords = sq_coords[:, indices]
