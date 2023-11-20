@@ -25,7 +25,7 @@ class Parser:
 
     :param disp: Displacements of atoms with the shape [site, time step, axis].
     :param indices: Indices for the atoms in the trajectory used in the diffusion calculation.
-    :param framework_indices: Indices for the atoms in the trajectory that should not be used in the diffusion
+    :param drift_indices: Indices for the atoms in the trajectory that should not be used in the diffusion
         calculation.
     :param time_step: Time step, in picoseconds, between steps in trajectory.
     :param step_skip: Sampling freqency of the trajectory (time_step is multiplied by this number to get the real
@@ -52,7 +52,7 @@ class Parser:
     def __init__(self,
                  disp: np.ndarray,
                  indices: np.ndarray,
-                 framework_indices: np.ndarray,
+                 drift_indices: np.ndarray,
                  time_step: float,
                  step_skip: int,
                  min_dt: float = None,
@@ -71,7 +71,7 @@ class Parser:
         self.sampling = sampling
         self._volume = None
 
-        drift_corrected = self.correct_drift(framework_indices, disp)
+        drift_corrected = self.correct_drift(drift_indices, disp)
         self.dc = drift_corrected
 
         if self.max_dt is None:
@@ -116,19 +116,19 @@ class Parser:
         return disp
 
     @staticmethod
-    def correct_drift(framework_indices: np.ndarray, disp: np.ndarray) -> np.ndarray:
+    def correct_drift(drift_indices: np.ndarray, disp: np.ndarray) -> np.ndarray:
         """
         Perform drift correction, such that the displacement is calculated normalised to any framework drift.
 
-        :param framework_indices: Indices for the atoms in the trajectory that should not be used in the diffusion
+        :param drift_indices: Indices for the atoms in the trajectory that should not be used in the diffusion
             calculation.
         :param disp: Numpy array of with shape [site, time step, axis] that describes the displacements.
 
         :return: Displacements corrected to account for drift of a framework.
         """
         # drift corrected position
-        if len(framework_indices) > 0:
-            framework_disp = disp[framework_indices]
+        if len(drift_indices) > 0:
+            framework_disp = disp[drift_indices]
             drift_corrected = disp - np.average(framework_disp, axis=0)[None, :, :]
         else:
             drift_corrected = disp
@@ -253,7 +253,8 @@ class ASEParser(Parser):
                  progress: bool = True,
                  specie_indices: List[int] = None,
                  center: str = 'Geometry',
-                 masses: List[float] = None):
+                 masses: List[float] = None,
+                 framework_indices: List[int] = None):
 
         structure, coords, latt = self.get_structure_coords_latt(atoms, sub_sample_traj, progress)
 
@@ -322,17 +323,17 @@ class ASEParser(Parser):
             and indices of framework atoms.
         """
         indices = []
-        framework_indices = []
+        drift_indices = []
         if not isinstance(specie, List):
             specie = [specie]
         for i, site in enumerate(structure):
             if site.symbol in specie:
                 indices.append(i)
             else:
-                framework_indices.append(i)
+                drift_indices.append(i)
         if len(indices) == 0:
             raise ValueError("There are no species selected to calculate the mean-squared displacement of.")
-        return indices, framework_indices
+        return indices, drift_indices
 
     @staticmethod
     def get_molecules(structure: "MDAnalysis.universe.Universe", coords: List[np.ndarray], indices: List[int],
@@ -352,7 +353,7 @@ class ASEParser(Parser):
             and Tuple containing: indices for centers used in the calculation 
             of the diffusion and indices of framework atoms.
         """
-        framework_indices = []
+        drift_indices = []
         try:
             indices = np.array(indices) - 1
         except:
@@ -362,7 +363,7 @@ class ASEParser(Parser):
 
         for i, site in enumerate(structure):
             if i not in indices:
-                framework_indices.append(i)
+                drift_indices.append(i)
 
         if center == 'Geometry':
             weights = None
@@ -380,14 +381,14 @@ class ASEParser(Parser):
         theta_bar = np.arctan2(zeta_bar, xi_bar)
         new_s_coords = theta_bar / (2 * np.pi)
 
-        new_coords = np.concatenate((new_s_coords, sq_coords[:, framework_indices]), axis=1)
+        new_coords = np.concatenate((new_s_coords, sq_coords[:, drift_indices]), axis=1)
         new_indices = list(range(n_molecules))
-        new_framework_indices = list(range(n_molecules, n_molecules + len(framework_indices)))
+        new_drift_indices = list(range(n_molecules, n_molecules + len(drift_indices)))
 
         if new_coords.shape[2] != 1:
             new_coords = np.expand_dims(new_coords, axis=2)
 
-        return new_coords, (new_indices, new_framework_indices)
+        return new_coords, (new_indices, new_drift_indices)
 
     @staticmethod
     def get_framework(structure: "MDAnalysis.universe.Universe", indices: List[int]) -> Tuple[np.ndarray, np.ndarray]:
@@ -401,12 +402,12 @@ class ASEParser(Parser):
         :return: Tuple containing: indices for the atoms in the trajectory used in the calculation of the
             diffusion and indices of framework atoms. 
         """
-        framework_indices = []
+        drift_indices = []
 
         for i, site in enumerate(structure):
             if i not in indices:
-                framework_indices.append(i)
-        return indices, framework_indices
+                drift_indices.append(i)
+        return indices, drift_indices
 
 
 class PymatgenParser(Parser):
@@ -454,7 +455,9 @@ class PymatgenParser(Parser):
                  progress: bool = True,
                  specie_indices: List[int] = None,
                  center: str = 'Geometry',
-                 masses: List[float] = None):
+                 masses: List[float] = None,
+                 framework_indices: List[int] = None):
+
         structure, coords, latt = self.get_structure_coords_latt(structures, sub_sample_traj, progress)
 
         if specie != None:
@@ -473,7 +476,7 @@ class PymatgenParser(Parser):
 
         super().__init__(disp=self.get_disp(coords, latt),
                          indices=indices[0],
-                         framework_indices=indices[1],
+                         drift_indices=indices[1],
                          time_step=time_step,
                          step_skip=step_skip * sub_sample_traj,
                          min_dt=min_dt,
@@ -537,17 +540,17 @@ class PymatgenParser(Parser):
             and indices of framework atoms.
         """
         indices = []
-        framework_indices = []
+        drift_indices = []
         if not isinstance(specie, List):
             specie = [specie]
         for i, site in enumerate(structure):
             if site.specie.__str__() in specie:
                 indices.append(i)
             else:
-                framework_indices.append(i)
+                drift_indices.append(i)
         if len(indices) == 0:
             raise ValueError("There are no species selected to calculate the mean-squared displacement of.")
-        return indices, framework_indices
+        return indices, drift_indices
 
     @staticmethod
     def get_molecules(structure: "MDAnalysis.universe.Universe", coords: List[np.ndarray], indices: List[int],
@@ -567,7 +570,7 @@ class PymatgenParser(Parser):
             and Tuple containing: indices for centers used in the calculation 
             of the diffusion and indices of framework atoms.
         """
-        framework_indices = []
+        drift_indices = []
         try:
             indices = np.array(indices) - 1
         except:
@@ -577,7 +580,7 @@ class PymatgenParser(Parser):
 
         for i, site in enumerate(structure):
             if i not in indices:
-                framework_indices.append(i)
+                drift_indices.append(i)
 
         if center == 'Geometry':
             weights = None
@@ -597,14 +600,14 @@ class PymatgenParser(Parser):
         theta_bar = np.arctan2(zeta_bar, xi_bar)
         new_s_coords = theta_bar / (2 * np.pi)
 
-        new_coords = np.concatenate((new_s_coords, sq_coords[:, framework_indices]), axis=1)
+        new_coords = np.concatenate((new_s_coords, sq_coords[:, drift_indices]), axis=1)
         new_indices = list(range(n_molecules))
-        new_framework_indices = list(range(n_molecules, n_molecules + len(framework_indices)))
+        new_drift_indices = list(range(n_molecules, n_molecules + len(drift_indices)))
 
         if new_coords.shape[2] != 1:
             new_coords = np.expand_dims(new_coords, axis=2)
 
-        return new_coords, (new_indices, new_framework_indices)
+        return new_coords, (new_indices, new_drift_indices)
 
     @staticmethod
     def get_framework(structure: "MDAnalysis.universe.Universe", indices: List[int]) -> Tuple[np.ndarray, np.ndarray]:
@@ -618,12 +621,12 @@ class PymatgenParser(Parser):
         :return: Tuple containing: indices for the atoms in the trajectory used in the calculation of the
             diffusion and indices of framework atoms. 
         """
-        framework_indices = []
+        drift_indices = []
 
         for i, site in enumerate(structure):
             if i not in indices:
-                framework_indices.append(i)
-        return indices, framework_indices
+                drift_indices.append(i)
+        return indices, drift_indices
 
 
 class MDAnalysisParser(Parser):
@@ -681,11 +684,13 @@ class MDAnalysisParser(Parser):
                  progress: bool = True,
                  specie_indices: List[int] = None,
                  center: str = 'Geometry',
-                 masses: List[float] = None):
-        
+                 masses: List[float] = None,
+                 framework_indices: List[int] = None):
+
         if sub_sample_atoms != 1 and specie_indices != None:
-            raise ValueError('sub_sample_atom cannot be used with specie_indices. Please specify only inidices you wish to sample.')
-            
+            raise ValueError(
+                'sub_sample_atom cannot be used with specie_indices. Please specify only inidices you wish to sample.')
+
         structure, coords, latt, volume = self.get_structure_coords_latt(universe, sub_sample_atoms, sub_sample_traj,
                                                                          progress)
         if specie != None:
@@ -704,7 +709,7 @@ class MDAnalysisParser(Parser):
 
         super().__init__(disp=self.get_disp(coords, latt),
                          indices=indices[0],
-                         framework_indices=indices[1],
+                         drift_indices=indices[1],
                          time_step=time_step,
                          step_skip=step_skip * sub_sample_traj,
                          min_dt=min_dt,
@@ -767,7 +772,7 @@ class MDAnalysisParser(Parser):
             diffusion and indices of framework atoms.
         """
         indices = []
-        framework_indices = []
+        drift_indices = []
 
         if not isinstance(specie, list):
             specie = [specie]
@@ -778,8 +783,8 @@ class MDAnalysisParser(Parser):
             elif i in specie:
                 indices.append(i)
             else:
-                framework_indices.append(i)
-        return indices, framework_indices
+                drift_indices.append(i)
+        return indices, drift_indices
 
     @staticmethod
     def get_molecules(structure: "MDAnalysis.universe.Universe", coords: List[np.ndarray], indices: List[int],
@@ -799,7 +804,7 @@ class MDAnalysisParser(Parser):
             and Tuple containing: indices for centers used in the calculation 
             of the diffusion and indices of framework atoms.
         """
-        framework_indices = []
+        drift_indices = []
         try:
             indices = np.array(indices) - 1
         except:
@@ -809,7 +814,7 @@ class MDAnalysisParser(Parser):
 
         for i, site in enumerate(structure):
             if i not in indices:
-                framework_indices.append(i)
+                drift_indices.append(i)
 
         if center == 'Geometry':
             weights = None
@@ -832,14 +837,14 @@ class MDAnalysisParser(Parser):
         theta_bar = np.arctan2(zeta_bar, xi_bar)
         new_s_coords = theta_bar / (2 * np.pi)
 
-        new_coords = np.concatenate((new_s_coords, sq_coords[:, framework_indices]), axis=1)
+        new_coords = np.concatenate((new_s_coords, sq_coords[:, drift_indices]), axis=1)
         new_indices = list(range(n_molecules))
-        new_framework_indices = list(range(n_molecules, n_molecules + len(framework_indices)))
+        new_drift_indices = list(range(n_molecules, n_molecules + len(drift_indices)))
 
         if new_coords.shape[2] != 1:
             new_coords = np.expand_dims(new_coords, axis=2)
 
-        return new_coords, (new_indices, new_framework_indices)
+        return new_coords, (new_indices, new_drift_indices)
 
     @staticmethod
     def get_framework(structure: "MDAnalysis.universe.Universe", indices: List[int]) -> Tuple[np.ndarray, np.ndarray]:
@@ -853,12 +858,12 @@ class MDAnalysisParser(Parser):
         :return: Tuple containing: indices for the atoms in the trajectory used in the calculation of the
             diffusion and indices of framework atoms. 
         """
-        framework_indices = []
+        drift_indices = []
 
         for i, site in enumerate(structure):
             if i not in indices:
-                framework_indices.append(i)
-        return indices, framework_indices
+                drift_indices.append(i)
+        return indices, drift_indices
 
 
 def _get_matrix(dimensions: np.ndarray) -> np.ndarray:
