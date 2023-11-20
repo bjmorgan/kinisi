@@ -202,7 +202,6 @@ class TestParser(unittest.TestCase):
             'time_step': 1,
             'step_skip': 1,
             'specie_indices': [[1, 2, 3]],
-            'center': 'Mass',
             'masses': [1, 16, 1]
         }
         data = parser.MDAnalysisParser(xd, **da_params)
