@@ -66,6 +66,7 @@ class Parser:
         self.time_step = time_step
         self.step_skip = step_skip
         self.indices = indices
+        self.drift_indices = drift_indices
         self.memory_limit = memory_limit
         self.min_dt = min_dt
         self.max_dt = max_dt
@@ -669,7 +670,7 @@ class MDAnalysisParser(Parser):
         must be set to None for this to function. Molecules can be specificed as a list of lists of indices.
         This inner lists must all be on the same length.
     :param masses: Optional, list of masses associated with the indices in specie_indices. Must be same shape as specie_indices.
-    :param framework_indices: Optional, list of framework indices to be used to correct framework drift.
+    :param framework_indices: Optional, list of framework indices to be used to correct framework drift. If an empty list is passed no drift correction will be performed.
     """
 
     def __init__(self,
