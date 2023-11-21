@@ -533,6 +533,7 @@ class MSDBootstrap(Bootstrap):
                  n_o: np.ndarray,
                  sub_sample_dt: int = 1,
                  bootstrap: bool = False,
+                 block: bool = False,
                  n_resamples: int = 1000,
                  max_resamples: int = 10000,
                  dimension: str = 'xyz',
@@ -554,6 +555,19 @@ class MSDBootstrap(Bootstrap):
                 self._n_bootstrap = np.append(self._n_bootstrap, np.mean(distro.samples))
                 self._v_bootstrap = np.append(self._v_bootstrap, np.var(distro.samples, ddof=1))
                 self._s_bootstrap = np.append(self._s_bootstrap, np.std(distro.samples, ddof=1))
+            if block:
+                import pyblock
+                reblock = pyblock.blocking.reblock(d_squared)
+                kk = pyblock.blocking.find_optimal_block(d2.size, reblock)
+                try:
+                    mean = reblock[kk[0]].mean
+                    var = reblock[kk[0]].std_err ** 2
+                except TypeError:
+                    mean = reblock[-1].mean
+                    var = reblock[-1].std_err ** 2
+                self._n = np.append(self._n, mean)
+                self._v = np.append(self._v, var)
+                self._s = np.append(self._s, np.sqrt(self._v[i]))
             self._n = np.append(self._n, d_squared.mean())
             self._v = np.append(self._v, np.var(d_squared, ddof=1) / n_o[i])
             self._s = np.append(self._s, np.sqrt(self._v[i]))
