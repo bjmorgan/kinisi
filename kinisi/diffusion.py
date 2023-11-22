@@ -83,6 +83,7 @@ class Bootstrap:
         self._slice = DIMENSIONALITY[dimension.lower()]
         self._start_dt = None
         self.dims = len(dimension.lower())
+        self._model = None
 
     def to_dict(self) -> dict:
         """
@@ -110,7 +111,8 @@ class Bootstrap:
             'sigma': None,
             'intercept': None,
             'gradient': None,
-            'start_dt': self._start_dt
+            'start_dt': self._start_dt,
+            'model' : self._model
         }
         if len(self._distributions) != 0:
             my_dict['distributions'] = [d.to_dict() for d in self._distributions]
@@ -168,6 +170,7 @@ class Bootstrap:
         boot.flatchain = my_dict['flatchain']
         boot._covariance_matrix = my_dict['covariance_matrix']
         boot._start_dt = my_dict['start_dt']
+        boot._model = my_dict['model']
         return boot
 
     @property
@@ -329,6 +332,7 @@ class Bootstrap:
             np.random.seed(random_state.get_state()[1][1])
 
         self._start_dt = start_dt
+        self._model = model
 
         diff_regime = np.argwhere(self._dt >= self._start_dt)[0][0]
 
@@ -401,7 +405,7 @@ class Bootstrap:
             """
             return a / self._n_o[diff_regime:] * dt**2
 
-        if self.model:
+        if self._model:
             self._popt, _ = curve_fit(_model_variance, self.dt[diff_regime:], self._v[diff_regime:])
             self._model_v = _model_variance(self.dt[diff_regime:], *self._popt)
         else:
@@ -625,6 +629,7 @@ class MSTDBootstrap(Bootstrap):
                  n_o: np.ndarray,
                  sub_sample_dt: int = 1,
                  bootstrap: bool = False,
+                 block: bool = False,
                  n_resamples: int = 1000,
                  max_resamples: int = 10000,
                  dimension: str = 'xyz',
@@ -712,6 +717,7 @@ class MSCDBootstrap(Bootstrap):
                  n_o: np.ndarray,
                  sub_sample_dt: int = 1,
                  bootstrap: bool = False,
+                 block: bool = False,
                  n_resamples: int = 1000,
                  max_resamples: int = 10000,
                  dimension: str = 'xyz',
