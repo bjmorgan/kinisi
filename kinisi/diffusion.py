@@ -298,6 +298,7 @@ class Bootstrap:
 
     def bootstrap_GLS(self,
                       start_dt: float,
+                      model: bool = True,
                       fit_intercept: bool = True,
                       n_samples: int = 1000,
                       n_walkers: int = 32,
@@ -311,6 +312,8 @@ class Bootstrap:
 
         :param start_dt: The starting time for the analysis to find the diffusion coefficient.
             This should be the start of the diffusive regime in the simulation.
+        :param model: Use the model for the covariance matrix, if False this may lead to numerical instability.
+            Optional, default is :py:attr:`True`.
         :param fit_intercept: Should the intercept of the diffusion relationship be fit. Optional, default
             is :py:attr:`True`.
         :param n_samples: Number of samples of the Gaussian process to perform. Optional, default is :py:attr:`1000`.
@@ -398,8 +401,11 @@ class Bootstrap:
             """
             return a / self._n_o[diff_regime:] * dt**2
 
-        self._popt, _ = curve_fit(_model_variance, self.dt[diff_regime:], self._v[diff_regime:])
-        self._model_v = _model_variance(self.dt[diff_regime:], *self._popt)
+        if self.model:
+            self._popt, _ = curve_fit(_model_variance, self.dt[diff_regime:], self._v[diff_regime:])
+            self._model_v = _model_variance(self.dt[diff_regime:], *self._popt)
+        else:
+            self._model_v = self._v[diff_regime:] 
         self._covariance_matrix = _populate_covariance_matrix(self._model_v, self._n_o[diff_regime:])
         self._npd_covariance_matrix = self._covariance_matrix
         return find_nearest_positive_definite(self._covariance_matrix)
@@ -515,6 +521,8 @@ class MSDBootstrap(Bootstrap):
     :param sub_sample_dt: The frequency in observations to be sampled. Default is :py:attr:`1` (every observation)
     :param bootstrap: Should bootstrap resampling be used to estimate the observed MSD distribution.
         Optional, default is :py:attr:`False`.
+    :param block: Should the blocking method be used to estimate the variance, if :py:attr:`False` an 
+        approximation is used to estimate the variance. Optional, default is :py:attr:`False`.
     :param n_resamples: The initial number of resamples to be performed. Default is :py:attr:`1000`
     :param max_resamples: The max number of resamples to be performed by the distribution is assumed to be normal.
         This is present to allow user control over the time taken for the resampling to occur. Default
@@ -544,7 +552,7 @@ class MSDBootstrap(Bootstrap):
         self._iterator = self.iterator(progress, range(len(self._displacements)))
         if block:
             print('You are using the blocking method to estimate variances, please cite '
-                  'doi:10.1063/1.457480 and the yblock pacakge.')
+                  'doi:10.1063/1.457480 and the pyblock pacakge.')
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, self._slice].reshape(self._displacements[i].shape[0],
                                                                            self._displacements[i].shape[1], self.dims)
@@ -595,6 +603,8 @@ class MSTDBootstrap(Bootstrap):
         is :py:attr:`1` (every observation).
     :param bootstrap: Should bootstrap resampling be used to estimate the observed MSD distribution.
         Optional, default is :py:attr:`False`.
+    :param block: Should the blocking method be used to estimate the variance, if :py:attr:`False` an 
+        approximation is used to estimate the variance. Optional, default is :py:attr:`False`.
     :param n_resamples: The initial number of resamples to be performed. Optional, default
         is :py:attr:`1000`
     :param max_resamples: The max number of resamples to be performed by the distribution is assumed to be
@@ -625,7 +635,7 @@ class MSTDBootstrap(Bootstrap):
         self._iterator = self.iterator(progress, range(int(len(self._displacements) / 2)))
         if block:
             print('You are using the blocking method to estimate variances, please cite '
-                  'doi:10.1063/1.457480 and the yblock pacakge.')
+                  'doi:10.1063/1.457480 and the pyblock pacakge.')
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, self._slice].reshape(self._displacements[i].shape[0],
                                                                            self._displacements[i].shape[1], self.dims)
@@ -678,6 +688,8 @@ class MSCDBootstrap(Bootstrap):
     :param n_o: Number of statistically independent observations of the MSD at each timestep.
     :param bootstrap: Should bootstrap resampling be used to estimate the observed MSD distribution.
         Optional, default is :py:attr:`False`.
+    :param block: Should the blocking method be used to estimate the variance, if :py:attr:`False` an 
+        approximation is used to estimate the variance. Optional, default is :py:attr:`False`.
     :param sub_sample_dt: The frequency in observations to be sampled. Optional, default is :py:attr:`1`
         (every observation).
     :param n_resamples: The initial number of resamples to be performed. Optional, default is :py:attr:`1000`.
@@ -714,7 +726,7 @@ class MSCDBootstrap(Bootstrap):
             ionic_charge = np.ones(self._displacements[0].shape[0]) * ionic_charge
         if block:
             print('You are using the blocking method to estimate variances, please cite '
-                  'doi:10.1063/1.457480 and the yblock pacakge.')
+                  'doi:10.1063/1.457480 and the pyblock pacakge.')
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, self._slice].reshape(self._displacements[i].shape[0],
                                                                            self._displacements[i].shape[1], self.dims)
