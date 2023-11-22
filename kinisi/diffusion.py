@@ -542,6 +542,9 @@ class MSDBootstrap(Bootstrap):
                  progress: bool = True):
         super().__init__(delta_t, disp_3d, n_o, sub_sample_dt, dimension)
         self._iterator = self.iterator(progress, range(len(self._displacements)))
+        if block:
+            print('You are using the blocking method to estimate variances, please cite '
+                  'doi:10.1063/1.457480 and the yblock pacakge.')
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, self._slice].reshape(self._displacements[i].shape[0],
                                                                            self._displacements[i].shape[1], self.dims)
@@ -557,20 +560,21 @@ class MSDBootstrap(Bootstrap):
                 self._s_bootstrap = np.append(self._s_bootstrap, np.std(distro.samples, ddof=1))
             if block:
                 import pyblock
-                reblock = pyblock.blocking.reblock(d_squared)
-                kk = pyblock.blocking.find_optimal_block(d2.size, reblock)
+                reblock = pyblock.blocking.reblock(d_squared.flatten())
+                opt_block = pyblock.blocking.find_optimal_block(d_squared.flatten().size, reblock)
                 try:
-                    mean = reblock[kk[0]].mean
-                    var = reblock[kk[0]].std_err ** 2
+                    mean = reblock[opt_block[0]].mean
+                    var = reblock[opt_block[0]].std_err ** 2
                 except TypeError:
                     mean = reblock[-1].mean
                     var = reblock[-1].std_err ** 2
                 self._n = np.append(self._n, mean)
                 self._v = np.append(self._v, var)
                 self._s = np.append(self._s, np.sqrt(self._v[i]))
-            self._n = np.append(self._n, d_squared.mean())
-            self._v = np.append(self._v, np.var(d_squared, ddof=1) / n_o[i])
-            self._s = np.append(self._s, np.sqrt(self._v[i]))
+            else:
+                self._n = np.append(self._n, d_squared.mean())
+                self._v = np.append(self._v, np.var(d_squared, ddof=1) / n_o[i])
+                self._s = np.append(self._s, np.sqrt(self._v[i]))
             self._ngp = np.append(self._ngp, self.ngp_calculation(d_squared))
             self._dt = np.append(self._dt, self._delta_t[i])
         self._n_o = self._n_o[:self._n.size]
@@ -619,6 +623,9 @@ class MSTDBootstrap(Bootstrap):
                  progress: bool = True):
         super().__init__(delta_t, disp_3d, n_o, sub_sample_dt, dimension)
         self._iterator = self.iterator(progress, range(int(len(self._displacements) / 2)))
+        if block:
+            print('You are using the blocking method to estimate variances, please cite '
+                  'doi:10.1063/1.457480 and the yblock pacakge.')
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, self._slice].reshape(self._displacements[i].shape[0],
                                                                            self._displacements[i].shape[1], self.dims)
@@ -634,9 +641,23 @@ class MSTDBootstrap(Bootstrap):
                 self._n_bootstrap = np.append(self._n_bootstrap, np.mean(distro.samples))
                 self._v_bootstrap = np.append(self._v_bootstrap, np.var(distro.samples, ddof=1))
                 self._s_bootstrap = np.append(self._s_bootstrap, np.std(distro.samples, ddof=1))
-            self._n = np.append(self._n, coll_motion.mean())
-            self._v = np.append(self._v, np.var(coll_motion, ddof=1) / (n_o[i] / d_squared.shape[0]))
-            self._s = np.append(self._s, np.sqrt(self._v[i]))
+            if block:
+                import pyblock
+                reblock = pyblock.blocking.reblock(coll_motion.flatten())
+                opt_block = pyblock.blocking.find_optimal_block(coll_motion.flatten().size, reblock)
+                try:
+                    mean = reblock[opt_block[0]].mean
+                    var = reblock[opt_block[0]].std_err ** 2
+                except TypeError:
+                    mean = reblock[-1].mean
+                    var = reblock[-1].std_err ** 2
+                self._n = np.append(self._n, mean)
+                self._v = np.append(self._v, var)
+                self._s = np.append(self._s, np.sqrt(self._v[i]))
+            else:
+                self._n = np.append(self._n, coll_motion.mean())
+                self._v = np.append(self._v, np.var(coll_motion, ddof=1) / (n_o[i] / d_squared.shape[0]))
+                self._s = np.append(self._s, np.sqrt(self._v[i]))
             self._ngp = np.append(self._ngp, self.ngp_calculation(d_squared.flatten()))
             self._dt = np.append(self._dt, self._delta_t[i])
         self._n_o = self._n_o[:self._n.size]
@@ -691,6 +712,9 @@ class MSCDBootstrap(Bootstrap):
             _ = len(ionic_charge)
         except TypeError:
             ionic_charge = np.ones(self._displacements[0].shape[0]) * ionic_charge
+        if block:
+            print('You are using the blocking method to estimate variances, please cite '
+                  'doi:10.1063/1.457480 and the yblock pacakge.')
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, self._slice].reshape(self._displacements[i].shape[0],
                                                                            self._displacements[i].shape[1], self.dims)
@@ -706,9 +730,23 @@ class MSCDBootstrap(Bootstrap):
                 self._n_bootstrap = np.append(self._n_bootstrap, np.mean(distro.samples))
                 self._v_bootstrap = np.append(self._v_bootstrap, np.var(distro.samples, ddof=1))
                 self._s_bootstrap = np.append(self._s_bootstrap, np.std(distro.samples, ddof=1))
-            self._n = np.append(self._n, sq_chg_motion.mean())
-            self._v = np.append(self._v, np.var(sq_chg_motion, ddof=1) / (n_o[i] / d_squared.shape[0]))
-            self._s = np.append(self._s, np.sqrt(self._v[i]))
+            if block:
+                import pyblock
+                reblock = pyblock.blocking.reblock(sq_chg_motion.flatten())
+                opt_block = pyblock.blocking.find_optimal_block(sq_chg_motion.flatten().size, reblock)
+                try:
+                    mean = reblock[opt_block[0]].mean
+                    var = reblock[opt_block[0]].std_err ** 2
+                except TypeError:
+                    mean = reblock[-1].mean
+                    var = reblock[-1].std_err ** 2
+                self._n = np.append(self._n, mean)
+                self._v = np.append(self._v, var)
+                self._s = np.append(self._s, np.sqrt(self._v[i]))
+            else:
+                self._n = np.append(self._n, sq_chg_motion.mean())
+                self._v = np.append(self._v, np.var(sq_chg_motion, ddof=1) / (n_o[i] / d_squared.shape[0]))
+                self._s = np.append(self._s, np.sqrt(self._v[i]))
             self._ngp = np.append(self._ngp, self.ngp_calculation(d_squared.flatten()))
             self._dt = np.append(self._dt, self._delta_t[i])
         self._n_o = self._n_o[:self._n.size]
