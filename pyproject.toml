@@ -50,7 +50,8 @@ dev = [
     'pytest',
     'pytest-cov',
     'ase',
-    'h5py'
+    'h5py',
+    'pyblock'
 ]
 docs = [
     'pymatgen',
