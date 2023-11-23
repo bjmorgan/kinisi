@@ -36,7 +36,8 @@ dependencies = [
     'scikit-learn',
     'scipy>=1.9.3',
     'tqdm',
-    'uravu>=1.3.0'
+    'uravu>=1.3.0',
+    'statsmodels>=0.14.0'
 ]
 
 [project.optional-dependencies]
@@ -49,7 +50,8 @@ dev = [
     'pytest',
     'pytest-cov',
     'ase',
-    'h5py'
+    'h5py',
+    'pyblock'
 ]
 docs = [
     'pymatgen',
