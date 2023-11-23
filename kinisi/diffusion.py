@@ -18,7 +18,7 @@ import tqdm
 from uravu.distribution import Distribution
 from sklearn.utils import resample
 from emcee import EnsembleSampler
-from kinisi.matrix import find_nearest_positive_definite
+from statsmodels.stats.correlation_tools import cov_nearest
 
 DIMENSIONALITY = {
     'x': np.s_[0],
@@ -402,7 +402,7 @@ class Bootstrap:
         self._model_v = _model_variance(self.dt[diff_regime:], *self._popt)
         self._covariance_matrix = _populate_covariance_matrix(self._model_v, self._n_o[diff_regime:])
         self._npd_covariance_matrix = self._covariance_matrix
-        return find_nearest_positive_definite(self._covariance_matrix)
+        return cov_nearest(self._covariance_matrix)
 
     def diffusion(self, start_dt: float, **kwargs):
         """
