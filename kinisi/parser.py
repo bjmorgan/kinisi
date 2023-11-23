@@ -238,9 +238,11 @@ class ASEParser(Parser):
     :param memory_limit: Upper limit in the amount of computer memory that the displacements can occupy in
         gigabytes (GB). Optional, defaults to :py:attr:`8.`.
     :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
-    :param specie_indices: 
-    :param masses: 
-    :param framework_indices: 
+    :param specie_indices: Optional, list of indices to calculate diffusivity for as a list of Intergers, Specie 
+        must be set to None for this to function. Molecules can be specificed as a list of lists of indices.
+        This inner lists must all be on the same length.
+    :param masses: Optional, list of masses associated with the indices in specie_indices. Must be same shape as specie_indices.
+    :param framework_indices: Optional, list of framework indices to be used to correct framework drift. If an empty list is passed no drift correction will be performed. 
     """
 
     def __init__(self,
@@ -321,6 +323,7 @@ class ASEParser(Parser):
 
         :param structure: Initial structure.
         :param specie: Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
+        :param framework_indices: Indices of framework to be used in drift correction. If set to None will return all indices that are not in indices.
 
         :returns: Tuple containing: indices for the atoms in the trajectory used in the calculation of the diffusion
             and indices of framework atoms.
@@ -353,6 +356,7 @@ class ASEParser(Parser):
         :param indices: indices for the atoms in the molecules in the trajectory used in the calculation 
             of the diffusion.
         :param masses: Masses associated with indices in indices.
+        :param framework_indices: Indices of framework to be used in drift correction. If set to None will return all indices that are not in indices.
         
         
         :return: Tuple containing: Tuple containing: fractional coordinates for centers and framework atoms
@@ -410,6 +414,7 @@ class ASEParser(Parser):
         :param structure: Initial structure.
         :param indices: Indices for the atoms in the trajectory used in the calculation of the 
             diffusion.
+        :param framework_indices: Indices of framework to be used in drift correction. If set to None will return all indices that are not in indices.
         
         :return: Tuple containing: indices for the atoms in the trajectory used in the calculation of the
             diffusion and indices of framework atoms. 
@@ -453,9 +458,11 @@ class PymatgenParser(Parser):
     :param memory_limit: Upper limit in the amount of computer memory that the displacements can occupy in
         gigabytes (GB). Optional, defaults to :py:attr:`8.`.
     :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
-    :param specie_indices: 
-    :param masses: 
-    :param framework_indices:
+    :param specie_indices: Optional, list of indices to calculate diffusivity for as a list of Intergers, Specie 
+        must be set to None for this to function. Molecules can be specificed as a list of lists of indices.
+        This inner lists must all be on the same length.
+    :param masses: Optional, list of masses associated with the indices in specie_indices. Must be same shape as specie_indices.
+    :param framework_indices: Optional, list of framework indices to be used to correct framework drift. If an empty list is passed no drift correction will be performed.
     """
 
     def __init__(self,
@@ -550,6 +557,7 @@ class PymatgenParser(Parser):
 
         :param structure: Initial structure.
         :param specie: Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
+        :param framework_indices: Indices of framework to be used in drift correction. If set to None will return all indices that are not in indices.
 
         :returns: Tuple containing: indices for the atoms in the trajectory used in the calculation of the diffusion
             and indices of framework atoms.
@@ -583,7 +591,7 @@ class PymatgenParser(Parser):
         :param indices: indices for the atoms in the molecules in the trajectory used in the calculation 
             of the diffusion.
         :param masses: Masses associated with indices in indices.
-        
+        :param framework_indices: Indices of framework to be used in drift correction. If set to None will return all indices that are not in indices.        
         
         :return: Tuple containing: Tuple containing: fractional coordinates for centers and framework atoms
             and Tuple containing: indices for centers used in the calculation 
@@ -640,6 +648,7 @@ class PymatgenParser(Parser):
         :param structure: Initial structure.
         :param indices: Indices for the atoms in the trajectory used in the calculation of the 
             diffusion.
+        :param framework_indices: Indices of framework to be used in drift correction. If set to None will return all indices that are not in indices.
         
         :return: Tuple containing: indices for the atoms in the trajectory used in the calculation of the
             diffusion and indices of framework atoms. 
