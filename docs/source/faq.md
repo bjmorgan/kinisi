@@ -41,9 +41,9 @@
     
 - How are trajectories unwrapped?
 
-  > When calculating displacements `kinisi` uses a simple heuristic to unwrap the trajectory. 
-  > If the displacement, between two steps, is greater than half the simulation cell length, `kinisi` wraps that
+  > When calculating displacements, `kinisi` uses a simple heuristic to unwrap the trajectory. 
+  > If the displacement between two steps, is more significant than half the simulation cell length, `kinisi` wraps that
   > displacement. This scheme assumes that no particle moves more than one cell between steps. Therefore, it requires that
-  > enough simulation data is provided to the programme. This process is performed for each dimension of the trajectory,
-  > allowing for any orthorhombic cell. However, this heuristic does not support simulation cells that change size or shape.
-  > This is the reason for not supporting NPT simulations, althought this is being investigated.
+  > enough simulation data is provided to `kinisi`. This process is performed for each dimension of the trajectory,
+  > allowing for any orthorhombic (and cubic) cell. However, this heuristic does not support simulation cells that change size or shape.
+  > This is the reason for not supporting NPT simulations, although this is being investigated.
