@@ -555,8 +555,9 @@ class MSDBootstrap(Bootstrap):
         super().__init__(delta_t, disp_3d, n_o, sub_sample_dt, dimension)
         self._iterator = self.iterator(progress, range(len(self._displacements)))
         if block:
+            import pyblock
             print('You are using the blocking method to estimate variances, please cite '
-                  'doi:10.1063/1.457480 and the pyblock pacakge.')
+                'doi:10.1063/1.457480 and the pyblock pacakge.')
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, self._slice].reshape(self._displacements[i].shape[0],
                                                                            self._displacements[i].shape[1], self.dims)
@@ -571,7 +572,6 @@ class MSDBootstrap(Bootstrap):
                 self._v_bootstrap = np.append(self._v_bootstrap, np.var(distro.samples, ddof=1))
                 self._s_bootstrap = np.append(self._s_bootstrap, np.std(distro.samples, ddof=1))
             if block:
-                import pyblock
                 reblock = pyblock.blocking.reblock(d_squared.flatten())
                 opt_block = pyblock.blocking.find_optimal_block(d_squared.flatten().size, reblock)
                 try:
@@ -639,8 +639,9 @@ class MSTDBootstrap(Bootstrap):
         super().__init__(delta_t, disp_3d, n_o, sub_sample_dt, dimension)
         self._iterator = self.iterator(progress, range(int(len(self._displacements) / 2)))
         if block:
+            import pyblock
             print('You are using the blocking method to estimate variances, please cite '
-                  'doi:10.1063/1.457480 and the pyblock pacakge.')
+                'doi:10.1063/1.457480 and the pyblock pacakge.')
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, self._slice].reshape(self._displacements[i].shape[0],
                                                                            self._displacements[i].shape[1], self.dims)
@@ -657,7 +658,6 @@ class MSTDBootstrap(Bootstrap):
                 self._v_bootstrap = np.append(self._v_bootstrap, np.var(distro.samples, ddof=1))
                 self._s_bootstrap = np.append(self._s_bootstrap, np.std(distro.samples, ddof=1))
             if block:
-                import pyblock
                 reblock = pyblock.blocking.reblock(coll_motion.flatten())
                 opt_block = pyblock.blocking.find_optimal_block(coll_motion.flatten().size, reblock)
                 try:
@@ -731,8 +731,9 @@ class MSCDBootstrap(Bootstrap):
         except TypeError:
             ionic_charge = np.ones(self._displacements[0].shape[0]) * ionic_charge
         if block:
+            import pyblock
             print('You are using the blocking method to estimate variances, please cite '
-                  'doi:10.1063/1.457480 and the pyblock pacakge.')
+                'doi:10.1063/1.457480 and the pyblock pacakge.')
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, self._slice].reshape(self._displacements[i].shape[0],
                                                                            self._displacements[i].shape[1], self.dims)
@@ -749,7 +750,6 @@ class MSCDBootstrap(Bootstrap):
                 self._v_bootstrap = np.append(self._v_bootstrap, np.var(distro.samples, ddof=1))
                 self._s_bootstrap = np.append(self._s_bootstrap, np.std(distro.samples, ddof=1))
             if block:
-                import pyblock
                 reblock = pyblock.blocking.reblock(sq_chg_motion.flatten())
                 opt_block = pyblock.blocking.find_optimal_block(sq_chg_motion.flatten().size, reblock)
                 try:
