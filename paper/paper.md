@@ -23,15 +23,15 @@ authors:
     orcid: 0000-0002-3056-8233
     affiliation: "4,5"
 affiliations:
- - name: School of Chemistry, University of Bristol, Cantock's Close, Bristol, BS8 1TS, UK
+ - name: School of Chemistry, University of Bristol, Cantock's Close, Bristol, BS8 1TS, United Kingdom
    index: 1
- - name: European Spallation Source ERIC, Ole Maaløes vej 3, 2200 København N, DK
+ - name: European Spallation Source ERIC, Ole Maaløes vej 3, 2200 København N, Denmark
    index: 2
- - name: School of Chemistry, University of Birmingham, Edgbaston, Birmingham, B15 2TT, UK
+ - name: School of Chemistry, University of Birmingham, Edgbaston, Birmingham, B15 2TT, United Kingdom
    index: 3
- - name: Department of Chemistry, University of Bath, Claverton Down, Bath, BA2 7AY, UK
+ - name: Department of Chemistry, University of Bath, Claverton Down, Bath, BA2 7AY, United Kingdom
    index: 4
- - name: The Faraday Institution, Quad One, Harwell Science and Innovation Campus, Didcot, OX11 0RA, UK
+ - name: The Faraday Institution, Quad One, Harwell Science and Innovation Campus, Didcot, OX11 0RA, United Kingdom
    index: 5
 date: 16 August 2023
 bibliography: paper.bib
