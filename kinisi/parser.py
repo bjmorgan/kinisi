@@ -98,7 +98,7 @@ class Parser:
         return self._volume
 
     @staticmethod
-    def get_disp(coords: List[np.ndarray], latt: List[np.ndarray]) -> np.ndarray:
+    def get_disp(coords: List[np.ndarray], latt: List[np.ndarray], progress: bool = True) -> np.ndarray:
         """
         Calculate displacements.
 
@@ -112,7 +112,13 @@ class Parser:
         d_coords = d_coords - np.round(d_coords)
         f_disp = np.cumsum(d_coords, axis=1)
         c_disp = []
-        for i in f_disp:
+
+        if progress == True:
+            iterator = tqdm(f_disp, desc='Applying lattice parameters')
+        else:
+            iterator = f_disp
+
+        for i in iterator:
             c_disp.append([np.dot(d, m) for d, m in zip(i, latt[1:])])
         disp = np.array(c_disp)
         return disp
@@ -276,8 +282,8 @@ class ASEParser(Parser):
 
         self.coords_check = coords[0]
 
-        super().__init__(self.get_disp(coords, latt), indices[0], indices[1], time_step, step_skip, min_dt, max_dt,
-                         n_steps, spacing, sampling, memory_limit, progress)
+        super().__init__(self.get_disp(coords, latt, progress=progress), indices[0], indices[1], time_step, step_skip,
+                         min_dt, max_dt, n_steps, spacing, sampling, memory_limit, progress)
         self._volume = structure.get_volume()
 
     @staticmethod
@@ -496,7 +502,7 @@ class PymatgenParser(Parser):
 
         self.coords_check = coords[0]
 
-        super().__init__(disp=self.get_disp(coords, latt),
+        super().__init__(disp=self.get_disp(coords, latt, progress=progress),
                          indices=indices[0],
                          drift_indices=indices[1],
                          time_step=time_step,
@@ -740,7 +746,7 @@ class MDAnalysisParser(Parser):
 
         self.coords_check = coords[0]
 
-        super().__init__(disp=self.get_disp(coords, latt),
+        super().__init__(disp=self.get_disp(coords, latt, progress=progress),
                          indices=indices[0],
                          drift_indices=indices[1],
                          time_step=time_step,
