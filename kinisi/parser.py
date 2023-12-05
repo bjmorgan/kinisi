@@ -111,16 +111,9 @@ class Parser:
         d_coords = coords[:, 1:] - coords[:, :-1]
         d_coords = d_coords - np.round(d_coords)
         f_disp = np.cumsum(d_coords, axis=1)
-        c_disp = []
-
-        if progress == True:
-            iterator = tqdm(f_disp, desc='Applying lattice parameters')
-        else:
-            iterator = f_disp
-
-        for i in iterator:
-            c_disp.append([np.dot(d, m) for d, m in zip(i, latt[1:])])
-        disp = np.array(c_disp)
+        latt_reshaped = np.array(latt)[1:]
+        disp = np.einsum('ijk,jkl->jik', f_disp, latt_reshaped)
+        disp = np.transpose(disp, (1, 0, 2))
         return disp
 
     @staticmethod
