@@ -112,7 +112,7 @@ class Bootstrap:
             'intercept': None,
             'gradient': None,
             'start_dt': self._start_dt,
-            'model' : self._model
+            'model': self._model
         }
         if len(self._distributions) != 0:
             my_dict['distributions'] = [d.to_dict() for d in self._distributions]
@@ -409,7 +409,7 @@ class Bootstrap:
             self._popt, _ = curve_fit(_model_variance, self.dt[diff_regime:], self._v[diff_regime:])
             self._model_v = _model_variance(self.dt[diff_regime:], *self._popt)
         else:
-            self._model_v = self._v[diff_regime:] 
+            self._model_v = self._v[diff_regime:]
         self._covariance_matrix = _populate_covariance_matrix(self._model_v, self._n_o[diff_regime:])
         self._npd_covariance_matrix = self._covariance_matrix
         return cov_nearest(self._covariance_matrix)
@@ -557,7 +557,7 @@ class MSDBootstrap(Bootstrap):
         if block:
             import pyblock
             print('You are using the blocking method to estimate variances, please cite '
-                'doi:10.1063/1.457480 and the pyblock pacakge.')
+                  'doi:10.1063/1.457480 and the pyblock pacakge.')
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, self._slice].reshape(self._displacements[i].shape[0],
                                                                            self._displacements[i].shape[1], self.dims)
@@ -576,10 +576,10 @@ class MSDBootstrap(Bootstrap):
                 opt_block = pyblock.blocking.find_optimal_block(d_squared.flatten().size, reblock)
                 try:
                     mean = reblock[opt_block[0]].mean
-                    var = reblock[opt_block[0]].std_err ** 2
+                    var = reblock[opt_block[0]].std_err**2
                 except TypeError:
                     mean = reblock[-1].mean
-                    var = reblock[-1].std_err ** 2
+                    var = reblock[-1].std_err**2
                 self._n = np.append(self._n, mean)
                 self._v = np.append(self._v, var)
                 self._s = np.append(self._s, np.sqrt(self._v[i]))
@@ -641,7 +641,7 @@ class MSTDBootstrap(Bootstrap):
         if block:
             import pyblock
             print('You are using the blocking method to estimate variances, please cite '
-                'doi:10.1063/1.457480 and the pyblock pacakge.')
+                  'doi:10.1063/1.457480 and the pyblock pacakge.')
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, self._slice].reshape(self._displacements[i].shape[0],
                                                                            self._displacements[i].shape[1], self.dims)
@@ -662,10 +662,10 @@ class MSTDBootstrap(Bootstrap):
                 opt_block = pyblock.blocking.find_optimal_block(coll_motion.flatten().size, reblock)
                 try:
                     mean = reblock[opt_block[0]].mean
-                    var = reblock[opt_block[0]].std_err ** 2
+                    var = reblock[opt_block[0]].std_err**2
                 except TypeError:
                     mean = reblock[-1].mean
-                    var = reblock[-1].std_err ** 2
+                    var = reblock[-1].std_err**2
                 self._n = np.append(self._n, mean)
                 self._v = np.append(self._v, var)
                 self._s = np.append(self._s, np.sqrt(self._v[i]))
@@ -733,7 +733,7 @@ class MSCDBootstrap(Bootstrap):
         if block:
             import pyblock
             print('You are using the blocking method to estimate variances, please cite '
-                'doi:10.1063/1.457480 and the pyblock pacakge.')
+                  'doi:10.1063/1.457480 and the pyblock pacakge.')
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, self._slice].reshape(self._displacements[i].shape[0],
                                                                            self._displacements[i].shape[1], self.dims)
@@ -754,10 +754,10 @@ class MSCDBootstrap(Bootstrap):
                 opt_block = pyblock.blocking.find_optimal_block(sq_chg_motion.flatten().size, reblock)
                 try:
                     mean = reblock[opt_block[0]].mean
-                    var = reblock[opt_block[0]].std_err ** 2
+                    var = reblock[opt_block[0]].std_err**2
                 except TypeError:
                     mean = reblock[-1].mean
-                    var = reblock[-1].std_err ** 2
+                    var = reblock[-1].std_err**2
                 self._n = np.append(self._n, mean)
                 self._v = np.append(self._v, var)
                 self._s = np.append(self._s, np.sqrt(self._v[i]))
