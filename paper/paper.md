@@ -50,7 +50,7 @@ The posterior distribution of compatible model ensemble MSDs calculated by `kini
 
 Molecular dynamics simulations are widely used to calculate transport coefficients such as self-diffusion coefficients and ionic conductivities [@morgan_relationships_2014;@morgan_mechanistic_2021;@poletayev_defect_2022;@klepis_long_2009;@wang_application_2011;@zelovich_hydroxide_2019;@sendner_interfacial_2009;@shimizu_structural_2015].
 Because molecular dynamics simulations are limited in size and timescale, ensemble parameters, such as transport coefficients, that are calculated from simulation trajectories are estimates of the corresponding true (unknown) parameter of interest and suffer from statistical uncertainty.
-The statistical properties of any calculated ensemble parameters depend on the details of the input molecular dynamics simulation&mdash;e.g., the choice of interacation potential, system size, and simulation timescale&mdash;and the choice of estimator for the target parameter to be calculated.
+The statistical properties of any calculated ensemble parameters depend on the details of the input molecular dynamics simulation&mdash;e.g., the choice of interaction potential, system size, and simulation timescale&mdash;and the choice of estimator for the target parameter to be calculated.
 An optimal estimation method should minimise the statistical uncertainty in the derived parameter of interest&mdash;the method should be statistically efficient&mdash;and should provide an accurate estimate of this uncertainty, so that calculated values can be used in downstream statistical analyses.
 
 One widely-used approach to estimating the self-diffusion coefficient, $D^*$, from molecular dynamics simulation is to fit a linear model to the observed mean-square displacement, $\mathbf{x}t$ [@allen2017], where the slope of this &ldquo;best fit&rdquo; linear relationship gives a point-estimate for $D^*$ via the corresponding Einstein relation.
@@ -62,7 +62,7 @@ This approach gives more accurate estimates of $D^*$ from a given size of simula
 `kinisi` supports simulation output from a variety of common simulation software packages, including VASP [@kresse_ab_1993;@kresse_ab_1994;@kresse_efficiency_1996;@kresse_efficient_1996] and those compatible with Pymatgen [@ong_python_2013], atomic simulation environment (ASE) [@larsen_atomic_2017], and MDAnalysis [@michaud_mdanalysis_2011;@gowers_python_2016]. 
 Tutorials and API-level documentation are provided online at [kinisi.rtfd.io](https://kinisi.rtfd.io). 
 
-Full details of the approimate Bayesian regression method implemented in `kinisi` are provided in @mccluskey_arxiv_2023.
+Full details of the approximate Bayesian regression method implemented in `kinisi` are provided in @mccluskey_arxiv_2023.
 A list of publications where `kinisi` has been used in the analysis of simulation data is available at [kinisi.readthedocs.io/en/latest/papers.html](https://kinisi.readthedocs.io/en/latest/papers.html).
 
 # Acknowledgements
