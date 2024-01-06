@@ -16,7 +16,6 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
-
 # -- Project information -----------------------------------------------------
 
 project = 'kinisi'
@@ -30,7 +29,6 @@ version = __version__
 # The full version, including alpha/beta/rc tags
 release = __version__
 
-
 # -- General configuration ---------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -41,11 +39,7 @@ release = __version__
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'myst_parser',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.mathjax',
-    'sphinx_autodoc_typehints',
+    'sphinx.ext.autodoc', 'myst_parser', 'sphinx.ext.intersphinx', 'sphinx.ext.mathjax', 'sphinx_autodoc_typehints',
     'nbsphinx'
 ]
 
@@ -63,7 +57,7 @@ autodoc_member_order = 'bysource'
 # You can specify multiple suffix as a list of string:
 #
 source_suffix = ['.rst', '.md']
-# source_suffix = '.md' 
+# source_suffix = '.md'
 
 # The master toctree document.
 master_doc = 'index'
@@ -80,7 +74,6 @@ language = 'en'
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
 
-
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -95,21 +88,22 @@ html_theme = 'pydata_sphinx_theme'
 html_static_path = ['_static']
 
 html_theme_options = {
-   "logo": {
-      "image_light": "logo_light.png",
-      "image_dark": "logo_dark.png",
-   },
-  "header_links_before_dropdown": 6,
-  "icon_links": [
-        {
-            "name": "GitHub",
-            "url": "https://github.com/bjmorgan/kinisi",
-            "icon": "fab fa-github-square fa-xl",
-            "type": "fontawesome",
-        }
-   ],
-   "pygment_light_style": "tango",
-   "pygment_dark_style": "monokai"
+    "logo": {
+        "image_light": "logo_light.png",
+        "image_dark": "logo_dark.png",
+    },
+    "header_links_before_dropdown":
+    6,
+    "icon_links": [{
+        "name": "GitHub",
+        "url": "https://github.com/bjmorgan/kinisi",
+        "icon": "fab fa-github-square fa-xl",
+        "type": "fontawesome",
+    }],
+    "pygment_light_style":
+    "tango",
+    "pygment_dark_style":
+    "monokai"
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -127,12 +121,10 @@ html_theme_options = {
 #
 html_sidebars = {}
 
-
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'kinisidoc'
-
 
 # -- Options for LaTeX output ------------------------------------------------
 
@@ -158,20 +150,14 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'kinisi.tex', 'kinisi Documentation',
-     'Andrew R. McCluskey and Benjamin J. Morgan', 'manual'),
+    (master_doc, 'kinisi.tex', 'kinisi Documentation', 'Andrew R. McCluskey and Benjamin J. Morgan', 'manual'),
 ]
-
 
 # -- Options for manual page output ------------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, 'kinisi', 'kinisi Documentation',
-     [author], 1)
-]
-
+man_pages = [(master_doc, 'kinisi', 'kinisi Documentation', [author], 1)]
 
 # -- Options for Texinfo output ----------------------------------------------
 
@@ -179,11 +165,9 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'kinisi', 'kinisi Documentation',
-     author, 'kinisi', 'One line description of project.',
+    (master_doc, 'kinisi', 'kinisi Documentation', author, 'kinisi', 'One line description of project.',
      'Miscellaneous'),
 ]
-
 
 # -- Options for Epub output -------------------------------------------------
 
@@ -201,7 +185,6 @@ texinfo_documents = [
 
 # A list of files that should not be packed into the epub file.
 epub_exclude_files = ['search.html']
-
 
 # -- Extension configuration -------------------------------------------------
 

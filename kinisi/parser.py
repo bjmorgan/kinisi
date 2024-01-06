@@ -318,7 +318,7 @@ class ASEParser(Parser):
     def get_indices(structure: "ase.atoms.Atoms", specie: "str",
                     framework_indices: List[int]) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Determine framework and non-framework indices for a :py:mod:`pymatgen` compatible file.
+        Determine framework and non-framework indices for a :py:mod:`ase` compatible file.
 
         :param structure: Initial structure.
         :param specie: Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
@@ -348,7 +348,7 @@ class ASEParser(Parser):
     def get_molecules(structure: "ase.atoms.Atoms", coords: List[np.ndarray], indices: List[int], masses: List[float],
                       framework_indices) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
         """
-        Determine framework and non-framework indices for an :py:mod:`MDAnalysis` compatible file when specie_indices are provided and contain multiple molecules. Warning: This function changes the structure without changing the MDAnalysis object
+        Determine framework and non-framework indices for an :py:mod:`ase` compatible file when specie_indices are provided and contain multiple molecules. Warning: This function changes the structure without changing the MDAnalysis object
          
         :param structure: Initial structure.
         :param coords: fractional coordinates for all atoms.
@@ -408,7 +408,7 @@ class ASEParser(Parser):
     def get_framework(structure: "MDAnalysis.universe.Universe", indices: List[int],
                       framework_indices: List[int]) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Determine the framework indices from an :py:mod:`MDAnalysis` compatible file when indices are provided
+        Determine the framework indices from an :py:mod:`ase` compatible file when indices are provided
         
         :param structure: Initial structure.
         :param indices: Indices for the atoms in the trajectory used in the calculation of the 
@@ -579,11 +579,11 @@ class PymatgenParser(Parser):
         return indices, drift_indices
 
     @staticmethod
-    def get_molecules(structure: "MDAnalysis.universe.Universe", coords: List[np.ndarray], indices: List[int],
+    def get_molecules(structure: "pymatgen.core.structure.Structure", coords: List[np.ndarray], indices: List[int],
                       masses: List[float],
                       framework_indices: List[int]) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
         """
-        Determine framework and non-framework indices for an :py:mod:`MDAnalysis` compatible file when specie_indices are provided and contain multiple molecules. Warning: This function changes the structure without changing the MDAnalysis object
+        Determine framework and non-framework indices for an :py:mod:`pymatgen` compatible file when specie_indices are provided and contain multiple molecules. Warning: This function changes the structure without changing the MDAnalysis object
          
         :param structure: Initial structure.
         :param coords: fractional coordinates for all atoms.
@@ -639,10 +639,10 @@ class PymatgenParser(Parser):
         return new_coords, (new_indices, new_drift_indices)
 
     @staticmethod
-    def get_framework(structure: "MDAnalysis.universe.Universe", indices: List[int],
+    def get_framework(structure: "pymatgen.core.structure.Structure", indices: List[int],
                       framework_indices: List[int]) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Determine the framework indices from an :py:mod:`MDAnalysis` compatible file when indices are provided
+        Determine the framework indices from an :py:mod:`pymatgen` compatible file when indices are provided
         
         :param structure: Initial structure.
         :param indices: Indices for the atoms in the trajectory used in the calculation of the 
