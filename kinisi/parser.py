@@ -269,7 +269,7 @@ class ASEParser(Parser):
             if isinstance(specie_indices[0], (list, tuple)):
                 coords, indices = _get_molecules(structure, coords, specie_indices, masses, framework_indices)
             else:
-                indices = self.get_framework(structure, specie_indices, framework_indices)
+                indices = _get_framework(structure, specie_indices, framework_indices)
         else:
             raise TypeError('Unrecognized type for specie or specie_indices')
 
@@ -345,30 +345,6 @@ class ASEParser(Parser):
 
         return indices, drift_indices
 
-    @staticmethod
-    def get_framework(structure: "MDAnalysis.universe.Universe", indices: List[int],
-                      framework_indices: List[int]) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Determine the framework indices from an :py:mod:`ase` compatible file when indices are provided
-        
-        :param structure: Initial structure.
-        :param indices: Indices for the atoms in the trajectory used in the calculation of the 
-            diffusion.
-        :param framework_indices: Indices of framework to be used in drift correction. If set to None will return all indices that are not in indices.
-        
-        :return: Tuple containing: indices for the atoms in the trajectory used in the calculation of the
-            diffusion and indices of framework atoms. 
-        """
-        if isinstance(framework_indices, (list, tuple)):
-            drift_indices = framework_indices
-        else:
-            drift_indices = []
-
-        for i, site in enumerate(structure):
-            if i not in indices:
-                drift_indices.append(i)
-        return indices, drift_indices
-
 
 class PymatgenParser(Parser):
     """
@@ -430,7 +406,7 @@ class PymatgenParser(Parser):
             if isinstance(specie_indices[0], (list, tuple)):
                 coords, indices = _get_molecules(structure, coords, specie_indices, masses, framework_indices)
             else:
-                indices = self.get_framework(structure, specie_indices, framework_indices)
+                indices = _get_framework(structure, specie_indices, framework_indices)
         else:
             raise TypeError('Unrecognized type for specie or specie_indices')
 
@@ -520,30 +496,6 @@ class PymatgenParser(Parser):
 
         return indices, drift_indices
 
-    @staticmethod
-    def get_framework(structure: "pymatgen.core.structure.Structure", indices: List[int],
-                      framework_indices: List[int]) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Determine the framework indices from an :py:mod:`pymatgen` compatible file when indices are provided
-        
-        :param structure: Initial structure.
-        :param indices: Indices for the atoms in the trajectory used in the calculation of the 
-            diffusion.
-        :param framework_indices: Indices of framework to be used in drift correction. If set to None will return all indices that are not in indices.
-        
-        :return: Tuple containing: indices for the atoms in the trajectory used in the calculation of the
-            diffusion and indices of framework atoms. 
-        """
-        if isinstance(framework_indices, (list, tuple)):
-            drift_indices = framework_indices
-        else:
-            drift_indices = []
-
-        for i, site in enumerate(structure):
-            if i not in indices:
-                drift_indices.append(i)
-        return indices, drift_indices
-
 
 class MDAnalysisParser(Parser):
     """
@@ -615,7 +567,7 @@ class MDAnalysisParser(Parser):
                     structure, coords, specie_indices, masses, framework_indices
                 )  #Warning: This function changes the structure without changing the MDAnalysis object
             else:
-                indices = self.get_framework(structure, specie_indices, framework_indices)
+                indices = _get_framework(structure, specie_indices, framework_indices)
         else:
             raise TypeError('Unrecognized type for specie or specie_indices')
 
@@ -707,31 +659,6 @@ class MDAnalysisParser(Parser):
 
         return indices, drift_indices
 
-    @staticmethod
-    def get_framework(structure: "MDAnalysis.universe.Universe", indices: List[int],
-                      framework_indices: List[int]) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Determine the framework indices from an :py:mod:`MDAnalysis` compatible file when indices are provided
-        
-        :param structure: Initial structure.
-        :param indices: Indices for the atoms in the trajectory used in the calculation of the 
-            diffusion.
-        :param framework_indices: Indices of framework to be used in drift correction. If set to None will return all indices that are not in indices.
-        
-        :return: Tuple containing: indices for the atoms in the trajectory used in the calculation of the
-            diffusion and indices of framework atoms. 
-        """
-        if isinstance(framework_indices, (list, tuple)):
-            drift_indices = framework_indices
-        else:
-            drift_indices = []
-
-            for i, site in enumerate(structure):
-                if i not in indices:
-                    drift_indices.append(i)
-
-        return indices, drift_indices
-
 
 def _get_matrix(dimensions: np.ndarray) -> np.ndarray:
     """
@@ -819,3 +746,29 @@ def _get_molecules(structure: "ase.atoms.Atoms" or "pymatgen.core.structure.Stru
         new_coords = np.expand_dims(new_coords, axis=2)
 
     return new_coords, (new_indices, new_drift_indices)
+
+
+def _get_framework(structure: "ase.atoms.Atoms" or "pymatgen.core.structure.Structure"
+                   or "MDAnalysis.universe.Universe", indices: List[int],
+                   framework_indices: List[int]) -> Tuple[np.ndarray, np.ndarray]:
+    """
+        Determine the framework indices from an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when indices are provided
+        
+        :param structure: Initial structure.
+        :param indices: Indices for the atoms in the trajectory used in the calculation of the 
+            diffusion.
+        :param framework_indices: Indices of framework to be used in drift correction. If set to None will return all indices that are not in indices.
+        
+        :return: Tuple containing: indices for the atoms in the trajectory used in the calculation of the
+            diffusion and indices of framework atoms. 
+        """
+    if isinstance(framework_indices, (list, tuple)):
+        drift_indices = framework_indices
+    else:
+        drift_indices = []
+
+    for i, site in enumerate(structure):
+        if i not in indices:
+            drift_indices.append(i)
+
+    return indices, drift_indices
