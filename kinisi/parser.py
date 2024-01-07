@@ -267,7 +267,7 @@ class ASEParser(Parser):
             indices = self.get_indices(structure, specie, framework_indices)
         elif isinstance(specie_indices, (list, tuple)):
             if isinstance(specie_indices[0], (list, tuple)):
-                coords, indices = self.get_molecules(structure, coords, specie_indices, masses, framework_indices)
+                coords, indices = _get_molecules(structure, coords, specie_indices, masses, framework_indices)
             else:
                 indices = self.get_framework(structure, specie_indices, framework_indices)
         else:
@@ -336,7 +336,7 @@ class ASEParser(Parser):
                 indices.append(i)
             else:
                 drift_indices.append(i)
-        
+
         if len(indices) == 0:
             raise ValueError("There are no species selected to calculate the mean-squared displacement of.")
 
@@ -344,66 +344,6 @@ class ASEParser(Parser):
             drift_indices = framework_indices
 
         return indices, drift_indices
-
-    @staticmethod
-    def get_molecules(structure: "ase.atoms.Atoms", coords: List[np.ndarray], indices: List[int], masses: List[float],
-                      framework_indices) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
-        """
-        Determine framework and non-framework indices for an :py:mod:`ase` compatible file when specie_indices are provided and contain multiple molecules. Warning: This function changes the structure without changing the MDAnalysis object
-         
-        :param structure: Initial structure.
-        :param coords: fractional coordinates for all atoms.
-        :param indices: indices for the atoms in the molecules in the trajectory used in the calculation 
-            of the diffusion.
-        :param masses: Masses associated with indices in indices.
-        :param framework_indices: Indices of framework to be used in drift correction. If set to None will return all indices that are not in indices.
-        
-        
-        :return: Tuple containing: Tuple containing: fractional coordinates for centers and framework atoms
-            and Tuple containing: indices for centers used in the calculation 
-            of the diffusion and indices of framework atoms.
-        """
-        drift_indices = []
-        try:
-            indices = np.array(indices) - 1
-        except:
-            raise ValueError('Molecules must be of same length')
-
-        n_molecules = indices.shape[0]
-
-        if isinstance(framework_indices, (list, tuple)):
-            drift_indices = framework_indices
-        else:
-            for i, site in enumerate(structure):
-                if i not in indices:
-                    drift_indices.append(i)
-
-        if masses == None:
-            weights = None
-        elif len(masses) != indices.shape[-1]:
-            raise ValueError('Masses must be the same length as a molecule')
-        else:
-            masses = np.array(masses)
-            weights = masses
-
-        sq_coords = np.squeeze(coords, axis=2)
-        s_coords = sq_coords[:, indices]
-        theta = s_coords * (2 * np.pi)
-        xi = np.cos(theta)
-        zeta = np.sin(theta)
-        xi_bar = np.average(xi, axis=-2, weights=weights)
-        zeta_bar = np.average(zeta, axis=-2, weights=weights)
-        theta_bar = np.arctan2(zeta_bar, xi_bar)
-        new_s_coords = theta_bar / (2 * np.pi)
-
-        new_coords = np.concatenate((new_s_coords, sq_coords[:, drift_indices]), axis=1)
-        new_indices = list(range(n_molecules))
-        new_drift_indices = list(range(n_molecules, n_molecules + len(drift_indices)))
-
-        if new_coords.shape[2] != 1:
-            new_coords = np.expand_dims(new_coords, axis=2)
-
-        return new_coords, (new_indices, new_drift_indices)
 
     @staticmethod
     def get_framework(structure: "MDAnalysis.universe.Universe", indices: List[int],
@@ -488,7 +428,7 @@ class PymatgenParser(Parser):
             indices = self.get_indices(structure, specie, framework_indices)
         elif isinstance(specie_indices, (list, tuple)):
             if isinstance(specie_indices[0], (list, tuple)):
-                coords, indices = self.get_molecules(structure, coords, specie_indices, masses, framework_indices)
+                coords, indices = _get_molecules(structure, coords, specie_indices, masses, framework_indices)
             else:
                 indices = self.get_framework(structure, specie_indices, framework_indices)
         else:
@@ -571,7 +511,7 @@ class PymatgenParser(Parser):
                 indices.append(i)
             else:
                 drift_indices.append(i)
-        
+
         if len(indices) == 0:
             raise ValueError("There are no species selected to calculate the mean-squared displacement of.")
 
@@ -579,66 +519,6 @@ class PymatgenParser(Parser):
             drift_indices = framework_indices
 
         return indices, drift_indices
-
-    @staticmethod
-    def get_molecules(structure: "pymatgen.core.structure.Structure", coords: List[np.ndarray], indices: List[int],
-                      masses: List[float],
-                      framework_indices: List[int]) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
-        """
-        Determine framework and non-framework indices for an :py:mod:`pymatgen` compatible file when specie_indices are provided and contain multiple molecules. Warning: This function changes the structure without changing the MDAnalysis object
-         
-        :param structure: Initial structure.
-        :param coords: fractional coordinates for all atoms.
-        :param indices: indices for the atoms in the molecules in the trajectory used in the calculation 
-            of the diffusion.
-        :param masses: Masses associated with indices in indices.
-        :param framework_indices: Indices of framework to be used in drift correction. If set to None will return all indices that are not in indices.        
-        
-        :return: Tuple containing: Tuple containing: fractional coordinates for centers and framework atoms
-            and Tuple containing: indices for centers used in the calculation 
-            of the diffusion and indices of framework atoms.
-        """
-        drift_indices = []
-        try:
-            indices = np.array(indices) - 1
-        except:
-            raise ValueError('Molecules must be of same length')
-
-        n_molecules = indices.shape[0]
-
-        if isinstance(framework_indices, (list, tuple)):
-            drift_indices = framework_indices
-        else:
-            for i, site in enumerate(structure):
-                if i not in indices:
-                    drift_indices.append(i)
-
-        if masses == None:
-            weights = None
-        elif len(masses) != indices.shape[-1]:
-            raise ValueError('Masses must be the same length as a molecule')
-        else:
-            masses = np.array(masses)
-            weights = masses
-
-        sq_coords = np.squeeze(coords, axis=2)
-        s_coords = sq_coords[:, indices]
-        theta = s_coords * (2 * np.pi)
-        xi = np.cos(theta)
-        zeta = np.sin(theta)
-        xi_bar = np.average(xi, axis=-2, weights=weights)
-        zeta_bar = np.average(zeta, axis=-2, weights=weights)
-        theta_bar = np.arctan2(zeta_bar, xi_bar)
-        new_s_coords = theta_bar / (2 * np.pi)
-
-        new_coords = np.concatenate((new_s_coords, sq_coords[:, drift_indices]), axis=1)
-        new_indices = list(range(n_molecules))
-        new_drift_indices = list(range(n_molecules, n_molecules + len(drift_indices)))
-
-        if new_coords.shape[2] != 1:
-            new_coords = np.expand_dims(new_coords, axis=2)
-
-        return new_coords, (new_indices, new_drift_indices)
 
     @staticmethod
     def get_framework(structure: "pymatgen.core.structure.Structure", indices: List[int],
@@ -731,7 +611,7 @@ class MDAnalysisParser(Parser):
             indices = self.get_indices(structure, specie, framework_indices)
         elif isinstance(specie_indices, (list, tuple)):
             if isinstance(specie_indices[0], (list, tuple)):
-                coords, indices = self.get_molecules(
+                coords, indices = _get_molecules(
                     structure, coords, specie_indices, masses, framework_indices
                 )  #Warning: This function changes the structure without changing the MDAnalysis object
             else:
@@ -821,71 +701,11 @@ class MDAnalysisParser(Parser):
 
         if len(indices) == 0:
             raise ValueError("There are no species selected to calculate the mean-squared displacement of.")
-        
+
         if isinstance(framework_indices, (list, tuple)):
             drift_indices = framework_indices
 
         return indices, drift_indices
-
-    @staticmethod
-    def get_molecules(structure: "MDAnalysis.universe.Universe", coords: List[np.ndarray], indices: List[int],
-                      masses: List[float],
-                      framework_indices: List[int]) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
-        """
-        Determine framework and non-framework indices for an :py:mod:`MDAnalysis` compatible file when specie_indices are provided and contain multiple molecules. Warning: This function changes the structure without changing the MDAnalysis object
-         
-        :param structure: Initial structure.
-        :param coords: fractional coordinates for all atoms.
-        :param indices: indices for the atoms in the molecules in the trajectory used in the calculation 
-            of the diffusion.
-        :param masses: Masses associated with the molecule in indices.
-        :param framework_indices: Indices of framework to be used in drift correction. If set to None will return all indices that are not indices.
-        
-        :return: Tuple containing: Tuple containing: fractional coordinates for centers and framework atoms
-            and Tuple containing: indices for centers used in the calculation 
-            of the diffusion and indices of framework atoms.
-        """
-        drift_indices = []
-        try:
-            indices = np.array(indices) - 1
-        except:
-            raise ValueError('Molecules must be of same length')
-
-        n_molecules = indices.shape[0]
-
-        if isinstance(framework_indices, (list, tuple)):
-            drift_indices = framework_indices
-        else:
-            for i, site in enumerate(structure):
-                if i not in indices:
-                    drift_indices.append(i)
-
-        if masses == None:
-            weights = None
-        elif len(masses) != indices.shape[-1]:
-            raise ValueError('Masses must be the same length as a molecule')
-        else:
-            masses = np.array(masses)
-            weights = masses
-
-        sq_coords = np.squeeze(coords, axis=2)
-        s_coords = sq_coords[:, indices]
-        theta = s_coords * (2 * np.pi)
-        xi = np.cos(theta)
-        zeta = np.sin(theta)
-        xi_bar = np.average(xi, axis=-2, weights=weights)
-        zeta_bar = np.average(zeta, axis=-2, weights=weights)
-        theta_bar = np.arctan2(zeta_bar, xi_bar)
-        new_s_coords = theta_bar / (2 * np.pi)
-
-        new_coords = np.concatenate((new_s_coords, sq_coords[:, drift_indices]), axis=1)
-        new_indices = list(range(n_molecules))
-        new_drift_indices = list(range(n_molecules, n_molecules + len(drift_indices)))
-
-        if new_coords.shape[2] != 1:
-            new_coords = np.expand_dims(new_coords, axis=2)
-
-        return new_coords, (new_indices, new_drift_indices)
 
     @staticmethod
     def get_framework(structure: "MDAnalysis.universe.Universe", indices: List[int],
@@ -938,3 +758,64 @@ def _get_matrix(dimensions: np.ndarray) -> np.ndarray:
     vector_c = [0.0, 0.0, float(dimensions[2])]
 
     return np.array([vector_a, vector_b, vector_c], dtype=np.float64).reshape((3, 3))
+
+
+def _get_molecules(structure: "ase.atoms.Atoms" or "pymatgen.core.structure.Structure"
+                   or "MDAnalysis.universe.Universe", coords: List[np.ndarray], indices: List[int], masses: List[float],
+                   framework_indices) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    """
+        Determine framework and non-framework indices for an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when specie_indices are provided and contain multiple molecules. Warning: This function changes the structure without changing the object.
+         
+        :param structure: Initial structure.
+        :param coords: fractional coordinates for all atoms.
+        :param indices: indices for the atoms in the molecules in the trajectory used in the calculation 
+            of the diffusion.
+        :param masses: Masses associated with indices in indices.
+        :param framework_indices: Indices of framework to be used in drift correction. If set to None will return all indices that are not in indices.
+        
+        
+        :return: Tuple containing: Tuple containing: fractional coordinates for centers and framework atoms
+            and Tuple containing: indices for centers used in the calculation 
+            of the diffusion and indices of framework atoms.
+        """
+    drift_indices = []
+    try:
+        indices = np.array(indices) - 1
+    except:
+        raise ValueError('Molecules must be of same length')
+
+    n_molecules = indices.shape[0]
+
+    if isinstance(framework_indices, (list, tuple)):
+        drift_indices = framework_indices
+    else:
+        for i, site in enumerate(structure):
+            if i not in indices:
+                drift_indices.append(i)
+
+    if masses == None:
+        weights = None
+    elif len(masses) != indices.shape[-1]:
+        raise ValueError('Masses must be the same length as a molecule')
+    else:
+        masses = np.array(masses)
+        weights = masses
+
+    sq_coords = np.squeeze(coords, axis=2)
+    s_coords = sq_coords[:, indices]
+    theta = s_coords * (2 * np.pi)
+    xi = np.cos(theta)
+    zeta = np.sin(theta)
+    xi_bar = np.average(xi, axis=-2, weights=weights)
+    zeta_bar = np.average(zeta, axis=-2, weights=weights)
+    theta_bar = np.arctan2(zeta_bar, xi_bar)
+    new_s_coords = theta_bar / (2 * np.pi)
+
+    new_coords = np.concatenate((new_s_coords, sq_coords[:, drift_indices]), axis=1)
+    new_indices = list(range(n_molecules))
+    new_drift_indices = list(range(n_molecules, n_molecules + len(drift_indices)))
+
+    if new_coords.shape[2] != 1:
+        new_coords = np.expand_dims(new_coords, axis=2)
+
+    return new_coords, (new_indices, new_drift_indices)
