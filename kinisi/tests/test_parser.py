@@ -123,7 +123,7 @@ class TestParser(unittest.TestCase):
         assert_almost_equal(data.time_step, 20.0)
         assert_almost_equal(data.step_skip, 100)
         assert_equal(data.indices, list(range(xd.natoms[0])))
-    
+
     def test_pymatgen_init_with_COG(self):
         xd = Xdatcar(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_center.XDATCAR'))
         da_params = {'specie': None, 'time_step': 1.0, 'step_skip': 1, 'specie_indices': [[1, 2, 3]]}
@@ -320,7 +320,7 @@ class TestParser(unittest.TestCase):
         print(data_2.dc[0])
         disp_array = [[0.0, 0.0, 0.0], [0.2, 0.2, 0.2], [0.4, 0.4, 0.4], [1, 1, 1]]
         assert_almost_equal(data_2.dc[0], disp_array)
-        
+
     #Matrix test
     def test_get_matrix(self):
         matrix = parser._get_matrix([10, 10, 10, 90, 90, 90])
