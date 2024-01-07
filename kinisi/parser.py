@@ -691,20 +691,20 @@ def _get_molecules(structure: "ase.atoms.Atoms" or "pymatgen.core.structure.Stru
                    or "MDAnalysis.universe.Universe", coords: List[np.ndarray], indices: List[int], masses: List[float],
                    framework_indices) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """
-        Determine framework and non-framework indices for an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when specie_indices are provided and contain multiple molecules. Warning: This function changes the structure without changing the object.
-         
-        :param structure: Initial structure.
-        :param coords: fractional coordinates for all atoms.
-        :param indices: indices for the atoms in the molecules in the trajectory used in the calculation 
-            of the diffusion.
-        :param masses: Masses associated with indices in indices.
-        :param framework_indices: Indices of framework to be used in drift correction. If set to None will return all indices that are not in indices.
+    Determine framework and non-framework indices for an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when specie_indices are provided and contain multiple molecules. Warning: This function changes the structure without changing the object.
         
-        
-        :return: Tuple containing: Tuple containing: fractional coordinates for centers and framework atoms
-            and Tuple containing: indices for centers used in the calculation 
-            of the diffusion and indices of framework atoms.
-        """
+    :param structure: Initial structure.
+    :param coords: fractional coordinates for all atoms.
+    :param indices: indices for the atoms in the molecules in the trajectory used in the calculation 
+        of the diffusion.
+    :param masses: Masses associated with indices in indices.
+    :param framework_indices: Indices of framework to be used in drift correction. If set to None will return all indices that are not in indices.
+    
+    
+    :return: Tuple containing: Tuple containing: fractional coordinates for centers and framework atoms
+        and Tuple containing: indices for centers used in the calculation 
+        of the diffusion and indices of framework atoms.
+    """
     drift_indices = []
     try:
         indices = np.array(indices) - 1
@@ -752,16 +752,16 @@ def _get_framework(structure: "ase.atoms.Atoms" or "pymatgen.core.structure.Stru
                    or "MDAnalysis.universe.Universe", indices: List[int],
                    framework_indices: List[int]) -> Tuple[np.ndarray, np.ndarray]:
     """
-        Determine the framework indices from an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when indices are provided
-        
-        :param structure: Initial structure.
-        :param indices: Indices for the atoms in the trajectory used in the calculation of the 
-            diffusion.
-        :param framework_indices: Indices of framework to be used in drift correction. If set to None will return all indices that are not in indices.
-        
-        :return: Tuple containing: indices for the atoms in the trajectory used in the calculation of the
-            diffusion and indices of framework atoms. 
-        """
+    Determine the framework indices from an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when indices are provided
+    
+    :param structure: Initial structure.
+    :param indices: Indices for the atoms in the trajectory used in the calculation of the 
+        diffusion.
+    :param framework_indices: Indices of framework to be used in drift correction. If set to None will return all indices that are not in indices.
+    
+    :return: Tuple containing: indices for the atoms in the trajectory used in the calculation of the
+        diffusion and indices of framework atoms. 
+    """
     if isinstance(framework_indices, (list, tuple)):
         drift_indices = framework_indices
     else:
