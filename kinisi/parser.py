@@ -263,7 +263,7 @@ class ASEParser(Parser):
 
         structure, coords, latt = self.get_structure_coords_latt(atoms, sub_sample_traj, progress)
 
-        if specie != None:
+        if specie is not None:
             indices = self.get_indices(structure, specie, framework_indices)
         elif isinstance(specie_indices, (list, tuple)):
             if isinstance(specie_indices[0], (list, tuple)):
@@ -336,6 +336,7 @@ class ASEParser(Parser):
                 indices.append(i)
             else:
                 drift_indices.append(i)
+        
         if len(indices) == 0:
             raise ValueError("There are no species selected to calculate the mean-squared displacement of.")
 
@@ -483,7 +484,7 @@ class PymatgenParser(Parser):
 
         structure, coords, latt = self.get_structure_coords_latt(structures, sub_sample_traj, progress)
 
-        if specie != None:
+        if specie is not None:
             indices = self.get_indices(structure, specie, framework_indices)
         elif isinstance(specie_indices, (list, tuple)):
             if isinstance(specie_indices[0], (list, tuple)):
@@ -570,6 +571,7 @@ class PymatgenParser(Parser):
                 indices.append(i)
             else:
                 drift_indices.append(i)
+        
         if len(indices) == 0:
             raise ValueError("There are no species selected to calculate the mean-squared displacement of.")
 
@@ -719,13 +721,13 @@ class MDAnalysisParser(Parser):
                  masses: List[float] = None,
                  framework_indices: List[int] = None):
 
-        if sub_sample_atoms != 1 and specie_indices != None:
+        if sub_sample_atoms != 1 and specie_indices is not None:
             raise ValueError(
                 'sub_sample_atom cannot be used with specie_indices. Please specify only inidices you wish to sample.')
 
         structure, coords, latt, volume = self.get_structure_coords_latt(universe, sub_sample_atoms, sub_sample_traj,
                                                                          progress)
-        if specie != None:
+        if specie is not None:
             indices = self.get_indices(structure, specie, framework_indices)
         elif isinstance(specie_indices, (list, tuple)):
             if isinstance(specie_indices[0], (list, tuple)):
@@ -814,11 +816,12 @@ class MDAnalysisParser(Parser):
         for i, site in enumerate(structure):
             if site.type in specie:
                 indices.append(i)
-            elif i in specie:
-                indices.append(i)
             else:
                 drift_indices.append(i)
 
+        if len(indices) == 0:
+            raise ValueError("There are no species selected to calculate the mean-squared displacement of.")
+        
         if isinstance(framework_indices, (list, tuple)):
             drift_indices = framework_indices
 
