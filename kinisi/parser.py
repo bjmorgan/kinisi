@@ -26,7 +26,7 @@ class Parser:
     :param disp: Displacements of atoms with the shape [site, time step, axis].
     :param indices: Indices for the atoms in the trajectory used in the diffusion calculation.
     :param drift_indices: Indices for the atoms in the trajectory that should not be used in the diffusion
-        calculation.
+        calculation, instead being used to correct for framework drift.
     :param time_step: Time step, in picoseconds, between steps in trajectory.
     :param step_skip: Sampling freqency of the trajectory (time_step is multiplied by this number to get the real
         time between output from the simulation file).
@@ -237,9 +237,9 @@ class ASEParser(Parser):
     :param memory_limit: Upper limit in the amount of computer memory that the displacements can occupy in
         gigabytes (GB). Optional, defaults to :py:attr:`8.`.
     :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
-    :param specie_indices: Optional, list of indices to calculate diffusivity for as a list of Intergers, Specie 
+    :param specie_indices: Optional, list of indices to calculate diffusivity for as a list of indices. Specie 
         must be set to None for this to function. Molecules can be specificed as a list of lists of indices.
-        This inner lists must all be on the same length.
+        The inner lists must all be on the same length.
     :param masses: Optional, list of masses associated with the indices in specie_indices. Must be same shape as specie_indices.
     :param framework_indices: Optional, list of framework indices to be used to correct framework drift. If an empty list is passed no drift correction will be performed. 
     """
@@ -285,17 +285,14 @@ class ASEParser(Parser):
             sub_sample_traj: int = 1,
             progress: bool = True) -> Tuple["ase.atoms.Atoms", List[np.ndarray], List[np.ndarray]]:
         """
-            Obtain the initial structure and displacement from a :py:attr:`list`
-            of :py:class`pymatgen.core.structure.Structure`.
+        Obtain the initial structure and displacement from a :py:attr:`list` of :py:class`pymatgen.core.structure.Structure`.
 
-            :param structures: Structures ordered in sequence of run.
-            :param sub_sample_traj: Multiple of the :py:attr:`time_step` to sub sample at.
-                Optional, default is :py:attr:`1`.
-            :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
+        :param structures: Structures ordered in sequence of run.
+        :param sub_sample_traj: Multiple of the :py:attr:`time_step` to sub sample at. Optional, default is :py:attr:`1`.
+        :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
 
-            :return: Tuple containing: initial structure, fractional coordinates for all atoms,
-                and lattice descriptions.
-            """
+        :return: Tuple containing: initial structure, fractional coordinates for all atoms, and lattice descriptions.
+        """
         coords, latt = [], []
         first = True
         if progress:
@@ -374,9 +371,9 @@ class PymatgenParser(Parser):
     :param memory_limit: Upper limit in the amount of computer memory that the displacements can occupy in
         gigabytes (GB). Optional, defaults to :py:attr:`8.`.
     :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
-    :param specie_indices: Optional, list of indices to calculate diffusivity for as a list of Intergers, Specie 
+    :param specie_indices: Optional, list of indices to calculate diffusivity for as a list of indices. Specie 
         must be set to None for this to function. Molecules can be specificed as a list of lists of indices.
-        This inner lists must all be on the same length.
+        The inner lists must all be on the same length.
     :param masses: Optional, list of masses associated with the indices in specie_indices. Must be same shape as specie_indices.
     :param framework_indices: Optional, list of framework indices to be used to correct framework drift. If an empty list is passed no drift correction will be performed.
     """
@@ -528,9 +525,9 @@ class MDAnalysisParser(Parser):
         gigabytes (GB). Optional, defaults to :py:attr:`8.`.
     :param n_steps: Number of steps to be used in the timestep function. Optional, defaults to all of them.
     :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
-    :param specie_indices: Optional, list of indices to calculate diffusivity for as a list of Intergers, Specie 
+    :param specie_indices: Optional, list of indices to calculate diffusivity for as a list of indices. Specie 
         must be set to None for this to function. Molecules can be specificed as a list of lists of indices.
-        This inner lists must all be on the same length.
+        The inner lists must all be on the same length.
     :param masses: Optional, list of masses associated with the indices in specie_indices. Must be same shape as specie_indices.
     :param framework_indices: Optional, list of framework indices to be used to correct framework drift. If an empty list is passed no drift correction will be performed.
     """
