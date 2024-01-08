@@ -1,0 +1,17 @@
+3 atoms
+3 atom types
+
+0 5 xlo xhi
+0 5 ylo yhi
+0 5 zlo zhi
+
+Masses
+
+1 1
+2 16
+
+Atoms # full
+
+1 0 1 0.0 1.0 1.0 1.0 0 0 0
+2 0 2 0.0 2.0 1.0 1.0 0 0 0
+3 0 1 0.0 1.0 2.0 1.0 0 0 0
