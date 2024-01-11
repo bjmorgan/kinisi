@@ -558,6 +558,7 @@ class MSDBootstrap(Bootstrap):
             import pyblock
             print('You are using the blocking method to estimate variances, please cite '
                   'doi:10.1063/1.457480 and the pyblock pacakge.')
+        self._f = np.array([])
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, self._slice].reshape(self._displacements[i].shape[0],
                                                                            self._displacements[i].shape[1], self.dims)
