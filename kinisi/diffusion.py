@@ -562,33 +562,22 @@ class MSDBootstrap(Bootstrap):
             disp_slice = self._displacements[i][:, :, self._slice].reshape(self._displacements[i].shape[0],
                                                                            self._displacements[i].shape[1], self.dims)
             d_squared = np.sum(disp_slice**2, axis=-1)
+            dd = np.sum(disp_slice * disp_slice[:, np.newaxis], axis=-1)
+            f = dd.sum() / dd.diagonal().sum()
+            if np.isnan(f):
+                f = 1
+            self._f = np.append(self._f, f)
+            self._n_o[i] = self._n_o[i]
             if d_squared.size <= 1:
                 continue
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
-            if bootstrap:
-                distro = self.sample_until_normal(d_squared, n_o[i], n_resamples, max_resamples, alpha, random_state)
-                self._distributions.append(distro)
-                self._n_bootstrap = np.append(self._n_bootstrap, np.mean(distro.samples))
-                self._v_bootstrap = np.append(self._v_bootstrap, np.var(distro.samples, ddof=1))
-                self._s_bootstrap = np.append(self._s_bootstrap, np.std(distro.samples, ddof=1))
-            if block:
-                reblock = pyblock.blocking.reblock(d_squared.flatten())
-                opt_block = pyblock.blocking.find_optimal_block(d_squared.flatten().size, reblock)
-                try:
-                    mean = reblock[opt_block[0]].mean
-                    var = reblock[opt_block[0]].std_err**2
-                except TypeError:
-                    mean = reblock[-1].mean
-                    var = reblock[-1].std_err**2
-                self._n = np.append(self._n, mean)
-                self._v = np.append(self._v, var)
-                self._s = np.append(self._s, np.sqrt(self._v[i]))
-            else:
-                self._n = np.append(self._n, d_squared.mean())
-                self._v = np.append(self._v, np.var(d_squared, ddof=1) / n_o[i])
-                self._s = np.append(self._s, np.sqrt(self._v[i]))
+            self._n = np.append(self._n, d_squared.mean())
+            self._v = np.append(self._v, np.var(d_squared, ddof=1))
             self._ngp = np.append(self._ngp, self.ngp_calculation(d_squared))
             self._dt = np.append(self._dt, self._delta_t[i])
+        self._n_o /= self._f.mean()
+        self._v /= self._n_o
+        self._s = np.sqrt(self._v)
         self._n_o = self._n_o[:self._n.size]
 
 
@@ -670,9 +659,9 @@ class MSTDBootstrap(Bootstrap):
                 self._v = np.append(self._v, var)
                 self._s = np.append(self._s, np.sqrt(self._v[i]))
             else:
-                self._n = np.append(self._n, coll_motion.mean())
-                self._v = np.append(self._v, np.var(coll_motion, ddof=1) / (n_o[i] / d_squared.shape[0]))
-                self._s = np.append(self._s, np.sqrt(self._v[i]))
+            self._n = np.append(self._n, coll_motion.mean())
+            self._v = np.append(self._v, np.var(coll_motion, ddof=1) / (n_o[i] / d_squared.shape[0]))
+            self._s = np.append(self._s, np.sqrt(self._v[i]))
             self._ngp = np.append(self._ngp, self.ngp_calculation(d_squared.flatten()))
             self._dt = np.append(self._dt, self._delta_t[i])
         self._n_o = self._n_o[:self._n.size]
