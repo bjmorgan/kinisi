@@ -659,9 +659,9 @@ class MSTDBootstrap(Bootstrap):
                 self._v = np.append(self._v, var)
                 self._s = np.append(self._s, np.sqrt(self._v[i]))
             else:
-            self._n = np.append(self._n, coll_motion.mean())
-            self._v = np.append(self._v, np.var(coll_motion, ddof=1) / (n_o[i] / d_squared.shape[0]))
-            self._s = np.append(self._s, np.sqrt(self._v[i]))
+                self._n = np.append(self._n, coll_motion.mean())
+                self._v = np.append(self._v, np.var(coll_motion, ddof=1) / (n_o[i] / d_squared.shape[0]))
+                self._s = np.append(self._s, np.sqrt(self._v[i]))
             self._ngp = np.append(self._ngp, self.ngp_calculation(d_squared.flatten()))
             self._dt = np.append(self._dt, self._delta_t[i])
         self._n_o = self._n_o[:self._n.size]
