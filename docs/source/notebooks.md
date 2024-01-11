@@ -10,7 +10,7 @@ maxdepth: 1
 vasp_msd
 vasp_d
 vasp_dj
-mda_COG
+ase_COG
 arrhenius_t
 pymatgen
 ```
