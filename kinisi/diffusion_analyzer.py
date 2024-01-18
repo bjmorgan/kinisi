@@ -17,7 +17,7 @@ class DiffusionAnalyzer(Analyzer):
     """
     The :py:class:`kinisi.analyze.DiffusionAnalyzer` class performs analysis of diffusion relationships in
     materials.
-    This is achieved through the application of a bootstrapping methodology to obtain the most statistically
+    This is achieved through the application of a Bayesian regression methodology to obtain the most statistically
     accurate values for mean squared displacement uncertainty and estimating the covariance.
     The time-dependence of the MSD is then modelled in a generalised least squares fashion to obtain the diffusion
     coefficient and offset using Markov chain Monte Carlo maximum likelihood sampling.
@@ -27,8 +27,8 @@ class DiffusionAnalyzer(Analyzer):
         There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as
         the number of observations is not necessary the same at each data point.
     :param volume: The volume of the simulation cell.
-    :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.DiffBootstrap` object. See
-        the appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+    :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.Diffusion` object. See
+        the appropriate documentation for more guidance on this. Optional, default is the default diffusion parameters.
     """
 
     def __init__(self, delta_t: np.ndarray, disp_3d: List[np.ndarray], n_o: np.ndarray, volume: float):
@@ -53,7 +53,7 @@ class DiffusionAnalyzer(Analyzer):
         :return: New :py:class:`DiffusionAnalyzer` object.
         """
         diff_anal = cls(my_dict['delta_t'], my_dict['disp_3d'], my_dict['n_o'], my_dict['volume'])
-        diff_anal._diff = diffusion.Bootstrap.from_dict(my_dict['diff'])
+        diff_anal._diff = diffusion.Diffusion .from_dict(my_dict['diff'])
         return diff_anal
 
     @classmethod
@@ -76,15 +76,15 @@ class DiffusionAnalyzer(Analyzer):
             these constitute a series of :py:attr:`consecutive` trajectories or a series of :py:attr:`identical`
             starting points with different random seeds, in which case the `dtype` should be either
             :py:attr:`consecutive` or :py:attr:`identical`.
-        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
-            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDDiffusion ` object. See the
+            appropriate documentation for more guidance on this. Optional, default is the default diffusion  parameters.
 
         :return: Relevant :py:class:`DiffusionAnalyzer` object.
         """
         if uncertainty_params is None:
             uncertainty_params = {}
         diff = super()._from_pymatgen(trajectory, parser_params, dtype=dtype)
-        diff._diff = diffusion.MSDBootstrap(diff._delta_t, diff._disp_3d, diff._n_o, **uncertainty_params)
+        diff._diff = diffusion.MSDDiffusion(diff._delta_t, diff._disp_3d, diff._n_o, **uncertainty_params)
         return diff
 
     @classmethod
@@ -106,15 +106,15 @@ class DiffusionAnalyzer(Analyzer):
             these constitute a series of :py:attr:`consecutive` trajectories or a series of :py:attr:`identical`
             starting points with different random seeds, in which case the `dtype` should be either
             :py:attr:`consecutive` or :py:attr:`identical`.
-        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
-            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDDiffusion ` object. See the
+            appropriate documentation for more guidance on this. Optional, default is the default diffusion parameters.
 
         :return: Relevant :py:class:`DiffusionAnalyzer` object.
         """
         if uncertainty_params is None:
             uncertainty_params = {}
         diff = super()._from_ase(trajectory, parser_params, dtype=dtype)
-        diff._diff = diffusion.MSDBootstrap(diff._delta_t, diff._disp_3d, diff._n_o, **uncertainty_params)
+        diff._diff = diffusion.MSDDiffusion(diff._delta_t, diff._disp_3d, diff._n_o, **uncertainty_params)
         return diff
 
     @classmethod
@@ -135,15 +135,15 @@ class DiffusionAnalyzer(Analyzer):
             then it is necessary to identify if these constitute a series of :py:attr:`consecutive` trajectories or a
             series of :py:attr:`identical` starting points with different random seeds, in which case the `dtype`
             should be either :py:attr:`consecutive` or :py:attr:`identical`.
-        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
-            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDDiffusion` object. See the
+            appropriate documentation for more guidance on this. Optional, default is the default diffusion parameters.
 
         :return: Relevant :py:class:`DiffusionAnalyzer` object.
         """
         if uncertainty_params is None:
             uncertainty_params = {}
         diff = super()._from_Xdatcar(trajectory, parser_params, dtype=dtype)
-        diff._diff = diffusion.MSDBootstrap(diff._delta_t, diff._disp_3d, diff._n_o, **uncertainty_params)
+        diff._diff = diffusion.MSDDiffusion(diff._delta_t, diff._disp_3d, diff._n_o, **uncertainty_params)
         return diff
 
     @classmethod
@@ -162,15 +162,15 @@ class DiffusionAnalyzer(Analyzer):
             list of files is passed, then it is necessary to identify if these constitute a series of
             :py:attr:`consecutive` trajectories or a series of :py:attr:`identical` starting points with different
             random seeds, in which case the `dtype` should be either :py:attr:`consecutive` or :py:attr:`identical`.
-        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
-            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDDiffusion` object. See the
+            appropriate documentation for more guidance on this. Optional, default is the default diffusion parameters.
 
         :return: Relevant :py:class:`DiffusionAnalyzer` object.
         """
         if uncertainty_params is None:
             uncertainty_params = {}
         diff = super()._from_file(trajectory, parser_params, dtype=dtype)
-        diff._diff = diffusion.MSDBootstrap(diff._delta_t, diff._disp_3d, diff._n_o, **uncertainty_params)
+        diff._diff = diffusion.MSDDiffusion(diff._delta_t, diff._disp_3d, diff._n_o, **uncertainty_params)
         return diff
 
     @classmethod
@@ -190,25 +190,25 @@ class DiffusionAnalyzer(Analyzer):
             :py:attr:`identical` starting points with different random seeds, in which case the `dtype` should
             be :py:attr:`identical`. For a series of consecutive trajectories, please construct the relevant
             object using :py:mod:`MDAnalysis`.
-        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
-            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDDiffusion` object. See the
+            appropriate documentation for more guidance on this. Optional, default is the default diffusion parameters.
 
         :return: Relevant :py:class:`DiffusionAnalyzer` object.
         """
         if uncertainty_params is None:
             uncertainty_params = {}
         diff = super()._from_universe(trajectory, parser_params, dtype=dtype)
-        diff._diff = diffusion.MSDBootstrap(diff._delta_t, diff._disp_3d, diff._n_o, **uncertainty_params)
+        diff._diff = diffusion.MSDDiffusion(diff._delta_t, diff._disp_3d, diff._n_o, **uncertainty_params)
         return diff
 
     def diffusion(self, start_dt: float, diffusion_params: Union[dict, None] = None):
         """
-        Calculate the diffusion coefficicent using the bootstrap-GLS methodology.
+        Calculate the diffusion coefficicent using the Bayesian regression methodology.
 
         :param start_dt: The starting time for the analysis to find the diffusion coefficient.
             This should be the start of the diffusive regime in the simulation.
-        :param diffusion_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object.
-            See the appropriate documentation for more guidance on this. Optional, default is the default bootstrap
+        :param diffusion_params: The parameters for the :py:class:`kinisi.diffusion.MSDDiffusion` object.
+            See the appropriate documentation for more guidance on this. Optional, default is the default diffusion
             parameters.
         """
         if diffusion_params is None:
@@ -218,8 +218,7 @@ class DiffusionAnalyzer(Analyzer):
     @property
     def msd(self) -> np.ndarray:
         """
-        :return: MSD for the input trajectories. Note that this is the bootstrap sampled MSD, not the numerical
-        average from the data.
+        :return: MSD for the input trajectories.
         """
         return self._diff.n
 

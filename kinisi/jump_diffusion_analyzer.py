@@ -17,7 +17,7 @@ class JumpDiffusionAnalyzer(Analyzer):
     """
     The :py:class:`kinisi.analyze.JumpDiffusionAnalyzer` class performs analysis of collective diffusion
     relationships in materials.
-    This is achieved through the application of a bootstrapping methodology to obtain the most statistically
+    This is achieved through the application of a Bayesian regression methodology to obtain the most statistically
     accurate values for total mean squared displacement uncertainty and covariance.
     The time-dependence of the MSTD is then modelled in a generalised least squares fashion to obtain the jump
     diffusion coefficient and offset using Markov chain Monte Carlo maximum likelihood sampling.
@@ -27,8 +27,8 @@ class JumpDiffusionAnalyzer(Analyzer):
         There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as
         the number of observations is not necessary the same at each data point.
     :param volume: The volume of the simulation cell.
-    :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.DiffBootstrap` object. See
-        the appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+    :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.DiffDiffusion` object. See
+        the appropriate documentation for more guidance on this. Optional, default is the default diffusion parameters.
     """
 
     def __init__(self, delta_t: np.ndarray, disp_3d: List[np.ndarray], n_o: np.ndarray, volume: float):
@@ -53,7 +53,7 @@ class JumpDiffusionAnalyzer(Analyzer):
         :return: New :py:class:`DiffusionAnalyzer` object.
         """
         jdiff_anal = cls(my_dict['delta_t'], my_dict['disp_3d'], my_dict['n_o'], my_dict['volume'])
-        jdiff_anal._diff = diffusion.Bootstrap.from_dict(my_dict['diff'])
+        jdiff_anal._diff = diffusion.Diffusion.from_dict(my_dict['diff'])
         return jdiff_anal
 
     @classmethod
@@ -75,15 +75,15 @@ class JumpDiffusionAnalyzer(Analyzer):
             these constitute a series of :py:attr:`consecutive` trajectories or a series of :py:attr:`identical`
             starting points with different random seeds, in which case the `dtype` should be either
             :py:attr:`consecutive` or :py:attr:`identical`.
-        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
-            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDDiffusion` object. See the
+            appropriate documentation for more guidance on this. Optional, default is the default diffusion parameters.
 
         :return: Relevant :py:class:`JumpDiffusionAnalyzer` object.
         """
         if uncertainty_params is None:
             uncertainty_params = {}
         jdiff_anal = super()._from_pymatgen(trajectory, parser_params, dtype=dtype)
-        jdiff_anal._diff = diffusion.MSTDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
+        jdiff_anal._diff = diffusion.MSTDDiffusion(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
                                                    **uncertainty_params)
         return jdiff_anal
 
@@ -105,15 +105,15 @@ class JumpDiffusionAnalyzer(Analyzer):
             these constitute a series of :py:attr:`consecutive` trajectories or a series of :py:attr:`identical`
             starting points with different random seeds, in which case the `dtype` should be either
             :py:attr:`consecutive` or :py:attr:`identical`.
-        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
-            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDDiffusion` object. See the
+            appropriate documentation for more guidance on this. Optional, default is the default diffusion parameters.
         
         :return: Relevant :py:class:`JumpDiffusionAnalyzer` object.
         """
         if uncertainty_params is None:
             uncertainty_params = {}
         jdiff_anal = super()._from_ase(trajectory, parser_params, dtype=dtype)
-        jdiff_anal._diff = diffusion.MSTDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
+        jdiff_anal._diff = diffusion.MSTDDiffusion(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
                                                    **uncertainty_params)
         return jdiff_anal
 
@@ -135,15 +135,15 @@ class JumpDiffusionAnalyzer(Analyzer):
             then it is necessary to identify if these constitute a series of :py:attr:`consecutive` trajectories or a
             series of :py:attr:`identical` starting points with different random seeds, in which case the `dtype`
             should be either :py:attr:`consecutive` or :py:attr:`identical`.
-        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
-            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDDiffusion` object. See the
+            appropriate documentation for more guidance on this. Optional, default is the default diffusion parameters.
 
         :return: Relevant :py:class:`JumpDiffusionAnalyzer` object.
         """
         if uncertainty_params is None:
             uncertainty_params = {}
         jdiff_anal = super()._from_Xdatcar(trajectory, parser_params, dtype=dtype)
-        jdiff_anal._diff = diffusion.MSTDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
+        jdiff_anal._diff = diffusion.MSTDDiffusion(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
                                                    **uncertainty_params)
         return jdiff_anal
 
@@ -163,15 +163,15 @@ class JumpDiffusionAnalyzer(Analyzer):
             list of files is passed, then it is necessary to identify if these constitute a series of
             :py:attr:`consecutive` trajectories or a series of :py:attr:`identical` starting points with different
             random seeds, in which case the `dtype` should be either :py:attr:`consecutive` or :py:attr:`identical`.
-        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
-            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDDiffusion` object. See the
+            appropriate documentation for more guidance on this. Optional, default is the default diffusion parameters.
 
         :return: Relevant :py:class:`JumpDiffusionAnalyzer` object.
         """
         if uncertainty_params is None:
             uncertainty_params = {}
         jdiff_anal = super()._from_file(trajectory, parser_params, dtype=dtype)
-        jdiff_anal._diff = diffusion.MSTDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
+        jdiff_anal._diff = diffusion.MSTDDiffusion(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
                                                    **uncertainty_params)
         return jdiff_anal
 
@@ -192,27 +192,27 @@ class JumpDiffusionAnalyzer(Analyzer):
             :py:attr:`identical` starting points with different random seeds, in which case the `dtype` should
             be :py:attr:`identical`. For a series of consecutive trajectories, please construct the relevant
             object using :py:mod:`MDAnalysis`.
-        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
-            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDDiffusion` object. See the
+            appropriate documentation for more guidance on this. Optional, default is the default diffusion parameters.
 
         :return: Relevant :py:class:`JumpDiffusionAnalyzer` object.
         """
         if uncertainty_params is None:
             uncertainty_params = {}
         jdiff_anal = super()._from_universe(trajectory, parser_params, dtype=dtype)
-        jdiff_anal._diff = diffusion.MSTDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
+        jdiff_anal._diff = diffusion.MSTDDiffusion(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
                                                    **uncertainty_params)
         return jdiff_anal
 
     def jump_diffusion(self, start_dt: float, jump_diffusion_params: Union[dict, None] = None):
         """
-        Calculate the jump diffusion coefficicent using the bootstrap-GLS methodology.
+        Calculate the jump diffusion coefficicent using the Bayesian regression methodology.
 
         :param start_dt: The starting time for the analysis to find the diffusion coefficient.
             This should be the start of the diffusive regime in the simulation.
-        :param ump_diffusion_params: The parameters for the :py:class:`kinisi.diffusion.MSTDBootstrap`
+        :param ump_diffusion_params: The parameters for the :py:class:`kinisi.diffusion.MSTDDiffusion`
             object. See the appropriate documentation for more guidance on this. Optional, default is the
-            default bootstrap parameters.
+            default diffusion parameters.
         """
         if jump_diffusion_params is None:
             jump_diffusion_params = {}
@@ -221,8 +221,7 @@ class JumpDiffusionAnalyzer(Analyzer):
     @property
     def mstd(self) -> np.ndarray:
         """
-        :return: MSTD for the input trajectories. Note that this is the bootstrap sampled MSD, not the numerical
-            average from the data.
+        :return: MSTD for the input trajectories. 
         """
         return self._diff.n
 

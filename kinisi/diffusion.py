@@ -37,9 +37,9 @@ DIMENSIONALITY = {
 }
 
 
-class Bootstrap:
+class Diffusion:
     """
-    The top-level class for bootstrapping.
+    The top-level class for diffusion
 
     :param delta_t: An array of the timestep values.
     :param disp_3d: A list of arrays, where each array has the axes [atom, displacement observation, dimension].
@@ -84,7 +84,7 @@ class Bootstrap:
 
     def to_dict(self) -> dict:
         """
-        :return: Dictionary description of the :py:class:`Bootstrap`.
+        :return: Dictionary description of the :py:class:`Diffusion`.
         """
         my_dict = {
             'displacements': self._displacements,
@@ -126,13 +126,13 @@ class Bootstrap:
         return my_dict
 
     @classmethod
-    def from_dict(cls, my_dict: dict) -> 'Bootstrap':
+    def from_dict(cls, my_dict: dict) -> 'Diffusion':
         """
-        Generate a :py:class:`Bootstrap` object from a dictionary.
+        Generate a :py:class:`Diffusion` object from a dictionary.
 
         :param my_dict: The input dictionary.
 
-        :return: New :py:class`Bootstrap` object.
+        :return: New :py:class`Diffusion` object.
         """
         boot = cls(my_dict['delta_t'],
                    my_dict['displacements'],
@@ -176,14 +176,14 @@ class Bootstrap:
     @property
     def n(self) -> np.ndarray:
         """
-        :return: The mean MSD/MSTD/MSCD, as determined from the bootstrap resampling process, in units Å:sup:`2`.
+        :return: The mean MSD/MSTD/MSCD, as determined from the normalisation process, in units Å:sup:`2`.
         """
         return self._n
 
     @property
     def s(self) -> np.ndarray:
         """
-        :return: The MSD/MSTD/MSCD standard deviation, as determined from the bootstrap resampling process, in
+        :return: The MSD/MSTD/MSCD standard deviation, as determined from the normalisation process, in
             units Å:sup:`2`.
         """
         return self._s
@@ -191,7 +191,7 @@ class Bootstrap:
     @property
     def v(self) -> np.ndarray:
         """
-        :return: The MSD/MSTD/MSCD variance as determined from the bootstrap resampling process, in units Å:sup:`4`.
+        :return: The MSD/MSTD/MSCD variance as determined from the normalisation process, in units Å:sup:`4`.
         """
         return self._v
 
@@ -259,7 +259,7 @@ class Bootstrap:
         bottom = np.square(np.mean(d_squared)) * 5
         return top / bottom - 1
 
-    def bootstrap_GLS(self,
+    def diffusion_bayes(self,
                       start_dt: float,
                       model: bool = True,
                       fit_intercept: bool = True,
@@ -380,13 +380,13 @@ class Bootstrap:
 
     def diffusion(self, start_dt: float, **kwargs):
         """
-        Use the bootstrap-GLS method to determine the diffusivity for the system. Keyword arguments will be
-        passed of the :py:func:`bootstrap_GLS` method.
+        Use the diffusion-GLS method to determine the diffusivity for the system. Keyword arguments will be
+        passed of the :py:func:`diffusion_bayes` method.
 
         :param start_dt: The starting time for the analysis to find the diffusion coefficient.
             This should be the start of the diffusive regime in the simulation.
         """
-        self.bootstrap_GLS(start_dt, **kwargs)
+        self.diffusion_bayes(start_dt, **kwargs)
         self._diffusion_coefficient = Distribution(self.gradient.samples / (2e4 * self.dims))
 
     @property
@@ -400,13 +400,13 @@ class Bootstrap:
 
     def jump_diffusion(self, start_dt: float, **kwargs):
         """
-        Use the bootstrap-GLS method to determine the jump diffusivity for the system. Keyword arguments
-        will be passed of the :py:func:`bootstrap_GLS` method.
+        Use the diffusion-GLS method to determine the jump diffusivity for the system. Keyword arguments
+        will be passed of the :py:func:`diffusion_bayes` method.
 
         :param start_dt: The starting time for the analysis to find the diffusion coefficient.
             This should be the start of the diffusive regime in the simulation.
         """
-        self.bootstrap_GLS(start_dt, **kwargs)
+        self.diffusion_bayes(start_dt, **kwargs)
         self._jump_diffusion_coefficient = Distribution(self.gradient.samples /
                                                         (2e4 * self.dims * self._displacements[0].shape[0]))
 
@@ -421,15 +421,15 @@ class Bootstrap:
 
     def conductivity(self, start_dt: float, temperature: float, volume: float, **kwargs):
         """
-        Use the bootstrap-GLS method to determine the ionic conductivity for the system, in units of mScm:sup:`-1`.
-        Keyword arguments will be passed of the :py:func:`bootstrap_GLS` method.
+        Use the diffusion-GLS method to determine the ionic conductivity for the system, in units of mScm:sup:`-1`.
+        Keyword arguments will be passed of the :py:func:`diffusion_bayes` method.
 
         :param start_dt: The starting time for the analysis to find the diffusion coefficient.
             This should be the start of the diffusive regime in the simulation.
         :param temperature: System temperature, in Kelvin.
         :param volume: System volume, in Å^{3}.
         """
-        self.bootstrap_GLS(start_dt, **kwargs)
+        self.diffusion_bayes(start_dt, **kwargs)
         volume = volume * 1e-24  # cm^3
         D = self.gradient.samples / (2e4 * self.dims)  # cm^2s^-1
         conversion = 1000 / (volume * const.N_A) * (const.N_A * const.e)**2 / (const.R * temperature)
@@ -475,10 +475,9 @@ class Bootstrap:
         return ppd.reshape(-1, self._dt[diff_regime:].size)
 
 
-class MSDBootstrap(Bootstrap):
+class MSDDiffusion(Diffusion):
     """
-    Perform a bootstrap resampling to obtain accurate estimates for the mean and uncertainty for the mean
-    squared displacements.
+    Obtain accurate estimates for the mean and uncertainty for the mean squared displacements.
 
     :param delta_t: An array of the timestep values, units of ps
     :param disp_3d: A list of arrays, where each array has the axes
@@ -543,10 +542,9 @@ class MSDBootstrap(Bootstrap):
         self._s = np.sqrt(self._v)
 
 
-class MSTDBootstrap(Bootstrap):
+class MSTDDiffusion(Diffusion):
     """
-    Perform a bootstrap resampling to obtain accurate estimates for the mean and uncertainty for the total
-    mean squared displacements.
+    Obtain accurate estimates for the mean and uncertainty for the total mean squared displacements.
 
     :param delta_t: An array of the timestep values.
     :param disp_3d: A list of arrays, where each array has the axes
@@ -611,10 +609,9 @@ class MSTDBootstrap(Bootstrap):
         self._s = np.sqrt(self._v)
 
 
-class MSCDBootstrap(Bootstrap):
+class MSCDDiffusion(Diffusion):
     """
-    Perform a bootstrap resampling to obtain accurate estimates for the mean and uncertainty for the mean
-    squared charge displacements.
+    Obtain accurate estimates for the mean and uncertainty for the mean squared charge displacements.
 
     :param delta_t: An array of the timestep values.
     :param disp_3d: A list of arrays, where each array has the axes

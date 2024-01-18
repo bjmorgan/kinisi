@@ -17,7 +17,7 @@ class ConductivityAnalyzer(Analyzer):
     """
     The :py:class:`kinisi.analyze.ConductivityAnalyzer` class performs analysis of conductive relationships in
     materials.
-    This is achieved through the application of a bootstrapping methodology to obtain the most statistically
+    This is achieved through the application of a Bayesian regression methodology to obtain the most statistically
     accurate values for mean squared charge displacement uncertainty and covariance.
     The time-dependence of the MSCD is then modelled in a generalised least squares fashion to obtain the jump
     diffusion coefficient and offset using Markov chain Monte Carlo maximum likelihood sampling.
@@ -27,8 +27,8 @@ class ConductivityAnalyzer(Analyzer):
         There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as
         the number of observations is not necessary the same at each data point.
     :param volume: The volume of the simulation cell.
-    :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.DiffBootstrap` object. See
-        the appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+    :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.DiffDiffusion` object. See
+        the appropriate documentation for more guidance on this. Optional, default is the default diffusion parameters.
     :param ionic_charge: The charge on the mobile ions, either an array with a value for each ion or a scalar
         if all values are the same. Optional, default is :py:attr:`1`.
     """
@@ -55,7 +55,7 @@ class ConductivityAnalyzer(Analyzer):
         :return: New :py:class`ConductivityAnalyzer` object.
         """
         cond_anal = cls(my_dict['delta_t'], my_dict['disp_3d'], my_dict['n_o'], my_dict['volume'])
-        cond_anal._diff = diffusion.Bootstrap.from_dict(my_dict['diff'])
+        cond_anal._diff = diffusion.Diffusion.from_dict(my_dict['diff'])
         return cond_anal
 
     @classmethod
@@ -78,8 +78,8 @@ class ConductivityAnalyzer(Analyzer):
             these constitute a series of :py:attr:`consecutive` trajectories or a series of :py:attr:`identical`
             starting points with different random seeds, in which case the `dtype` should be either
             :py:attr:`consecutive` or :py:attr:`identical`.
-        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
-            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDDiffusion` object. See the
+            appropriate documentation for more guidance on this. Optional, default is the default diffusion parameters.
         :param ionic_charge: The charge on the mobile ions, either an array with a value for each ion or a scalar
             if all values are the same. Optional, default is :py:attr:`1`.
 
@@ -88,7 +88,7 @@ class ConductivityAnalyzer(Analyzer):
         if uncertainty_params is None:
             uncertainty_params = {}
         cond_anal = super()._from_pymatgen(trajectory, parser_params, dtype=dtype)
-        cond_anal._diff = diffusion.MSCDBootstrap(cond_anal._delta_t, cond_anal._disp_3d, ionic_charge, cond_anal._n_o,
+        cond_anal._diff = diffusion.MSCDDiffusion(cond_anal._delta_t, cond_anal._disp_3d, ionic_charge, cond_anal._n_o,
                                                   **uncertainty_params)
         return cond_anal
 
@@ -111,8 +111,8 @@ class ConductivityAnalyzer(Analyzer):
             these constitute a series of :py:attr:`consecutive` trajectories or a series of :py:attr:`identical`
             starting points with different random seeds, in which case the `dtype` should be either
             :py:attr:`consecutive` or :py:attr:`identical`.
-        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
-            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDDiffusion` object. See the
+            appropriate documentation for more guidance on this. Optional, default is the default diffusion parameters.
         :param ionic_charge: The charge on the mobile ions, either an array with a value for each ion or a scalar
             if all values are the same. Optional, default is :py:attr:`1`.
 
@@ -121,7 +121,7 @@ class ConductivityAnalyzer(Analyzer):
         if uncertainty_params is None:
             uncertainty_params = {}
         cond_anal = super()._from_ase(trajectory, parser_params, dtype=dtype)
-        cond_anal._diff = diffusion.MSCDBootstrap(cond_anal._delta_t, cond_anal._disp_3d, ionic_charge, cond_anal._n_o,
+        cond_anal._diff = diffusion.MSCDDiffusion(cond_anal._delta_t, cond_anal._disp_3d, ionic_charge, cond_anal._n_o,
                                                   **uncertainty_params)
         return cond_anal
 
@@ -144,8 +144,8 @@ class ConductivityAnalyzer(Analyzer):
             then it is necessary to identify if these constitute a series of :py:attr:`consecutive` trajectories or a
             series of :py:attr:`identical` starting points with different random seeds, in which case the `dtype`
             should be either :py:attr:`consecutive` or :py:attr:`identical`.
-        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
-            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDDiffusion` object. See the
+            appropriate documentation for more guidance on this. Optional, default is the default diffusion parameters.
         :param ionic_charge: The charge on the mobile ions, either an array with a value for each ion or a scalar
             if all values are the same. Optional, default is :py:attr:`1`.
 
@@ -154,7 +154,7 @@ class ConductivityAnalyzer(Analyzer):
         if uncertainty_params is None:
             uncertainty_params = {}
         cond_anal = super()._from_Xdatcar(trajectory, parser_params, dtype=dtype)
-        cond_anal._diff = diffusion.MSCDBootstrap(cond_anal._delta_t, cond_anal._disp_3d, ionic_charge, cond_anal._n_o,
+        cond_anal._diff = diffusion.MSCDDiffusion(cond_anal._delta_t, cond_anal._disp_3d, ionic_charge, cond_anal._n_o,
                                                   **uncertainty_params)
         return cond_anal
 
@@ -175,8 +175,8 @@ class ConductivityAnalyzer(Analyzer):
             list of files is passed, then it is necessary to identify if these constitute a series of
             :py:attr:`consecutive` trajectories or a series of :py:attr:`identical` starting points with different
             random seeds, in which case the `dtype` should be either :py:attr:`consecutive` or :py:attr:`identical`.
-        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
-            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDDiffusion` object. See the
+            appropriate documentation for more guidance on this. Optional, default is the default diffusion parameters.
         :param ionic_charge: The charge on the mobile ions, either an array with a value for each ion or a scalar
             if all values are the same. Optional, default is :py:attr:`1`.
 
@@ -185,7 +185,7 @@ class ConductivityAnalyzer(Analyzer):
         if uncertainty_params is None:
             uncertainty_params = {}
         cond_anal = super()._from_file(trajectory, parser_params, dtype=dtype)
-        cond_anal._diff = diffusion.MSCDBootstrap(cond_anal._delta_t, cond_anal._disp_3d, ionic_charge, cond_anal._n_o,
+        cond_anal._diff = diffusion.MSCDDiffusion(cond_anal._delta_t, cond_anal._disp_3d, ionic_charge, cond_anal._n_o,
                                                   **uncertainty_params)
         return cond_anal
 
@@ -207,8 +207,8 @@ class ConductivityAnalyzer(Analyzer):
             :py:attr:`identical` starting points with different random seeds, in which case the `dtype` should
             be :py:attr:`identical`. For a series of consecutive trajectories, please construct the relevant
             object using :py:mod:`MDAnalysis`.
-        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
-            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDDiffusion` object. See the
+            appropriate documentation for more guidance on this. Optional, default is the default diffusion parameters.
         :param ionic_charge: The charge on the mobile ions, either an array with a value for each ion or a scalar
             if all values are the same. Optional, default is :py:attr:`1`.
 
@@ -217,20 +217,20 @@ class ConductivityAnalyzer(Analyzer):
         if uncertainty_params is None:
             uncertainty_params = {}
         cond_anal = super()._from_universe(trajectory, parser_params, dtype=dtype)
-        cond_anal._diff = diffusion.MSCDBootstrap(cond_anal._delta_t, cond_anal._disp_3d, ionic_charge, cond_anal._n_o,
+        cond_anal._diff = diffusion.MSCDDiffusion(cond_anal._delta_t, cond_anal._disp_3d, ionic_charge, cond_anal._n_o,
                                                   **uncertainty_params)
         return cond_anal
 
     def conductivity(self, start_dt: float, temperature: float, conductivity_params: Union[dict, None] = None):
         """
-        Calculate the jump diffusion coefficicent using the bootstrap-GLS methodology.
+        Calculate the jump diffusion coefficicent using the Bayesian regression methodology.
 
         :param start_dt: The starting time for the analysis to find the diffusion coefficient.
             This should be the start of the diffusive regime in the simulation.
         :param temperature: Simulation temperature in Kelvin
-        :param conductivity_params: The parameters for the :py:class:`kinisi.diffusion.MSCDBootstrap` object.
+        :param conductivity_params: The parameters for the :py:class:`kinisi.diffusion.MSCDDiffusion` object.
             See the appropriate documentation for more guidance on this. Optional, default is the default
-            bootstrap parameters
+            diffusion parameters
         """
         if conductivity_params is None:
             conductivity_params = {}
@@ -239,8 +239,7 @@ class ConductivityAnalyzer(Analyzer):
     @property
     def mscd(self) -> np.ndarray:
         """
-        :return: MSCD for the input trajectories. Note that this is the bootstrap sampled value, not the numerical
-            average from the data.
+        :return: MSCD for the input trajectories.
         """
         return self._diff.n
 
