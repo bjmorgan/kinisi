@@ -8,7 +8,7 @@ diffusion coefficient from a material.
 # author: Andrew R. McCluskey (arm61)
 
 import warnings
-from typing import List, Union, Any
+from typing import List, Union
 import numpy as np
 from scipy.stats import normaltest, linregress, multivariate_normal
 from scipy.linalg import pinvh
@@ -16,7 +16,6 @@ from scipy.optimize import minimize, curve_fit
 import scipy.constants as const
 import tqdm
 from uravu.distribution import Distribution
-from sklearn.utils import resample
 from emcee import EnsembleSampler
 from statsmodels.stats.correlation_tools import cov_nearest
 
@@ -65,9 +64,7 @@ class Bootstrap:
         self._n = np.array([])
         self._s = np.array([])
         self._v = np.array([])
-        self._n_bootstrap = np.array([])
-        self._s_bootstrap = np.array([])
-        self._v_bootstrap = np.array([])
+        self._hr = np.array([])
         self._n_o = n_o
         self._ngp = np.array([])
         self._sub_sample_dt = sub_sample_dt
@@ -98,9 +95,7 @@ class Bootstrap:
             'n': self._n,
             's': self._s,
             'v': self._v,
-            'n_bootstrap': self._n_bootstrap,
-            's_bootstrap': self._s_bootstrap,
-            'v_bootstrap': self._v_bootstrap,
+            'hr': self._hr,
             'sub_sample_dt': self._sub_sample_dt,
             'dimension': self._dimension,
             'ngp': self._ngp,
@@ -150,9 +145,7 @@ class Bootstrap:
         boot._n = my_dict['n']
         boot._s = my_dict['s']
         boot._v = my_dict['v']
-        boot._n_bootstrap = my_dict['n_bootstrap']
-        boot._s_bootstrap = my_dict['s_bootstrap']
-        boot._v_bootstrap = my_dict['v_bootstrap']
+        boot._hr = my_dict['hr']
         boot._n_o = my_dict['n_o']
         boot._ngp = my_dict['ngp']
         if my_dict['distributions'] is not None:
@@ -253,39 +246,6 @@ class Bootstrap:
         return loop
 
     @staticmethod
-    def sample_until_normal(array: np.ndarray,
-                            n_samples: float,
-                            n_resamples: int,
-                            max_resamples: int,
-                            alpha: float = 1e-3,
-                            random_state: np.random.mtrand.RandomState = None) -> Distribution:
-        """
-        Resample from the distribution until a normal distribution is obtained or a maximum is reached.
-
-        Args:
-        :param array: The array to sample from.
-        :param n_samples: Number of samples.
-        :param r_resamples: Number of resamples to perform initially.
-        :param max_resamples: The maximum number of resamples to perform.
-        :param alpha: Level that p-value should be below in :py:func:`scipy.stats.normaltest` for the distribution
-            to be normal. Optional, default is :py:attr:`1e-3`.
-        :param random_state: A :py:attr:`RandomState` object to be used to ensure reproducibility. Optional,
-            default is :py:attr:`None`.
-
-        :return: The resampled distribution.
-        """
-        # values = _bayesian_bootstrap(array, n_samples, n_resamples, random_state)
-        values = _bootstrap(array, n_samples, n_resamples, random_state)
-        p_value = normaltest(values)[1]
-        while p_value < alpha and len(values) < max_resamples:
-            # values += _bayesian_bootstrap(array, n_samples, 100, random_state)
-            values += _bootstrap(array, n_samples, 100, random_state)
-            p_value = normaltest(values)[1]
-        if len(values) >= max_resamples:
-            warnings.warn("The maximum number of resamples has been reached, and the distribution is not yet normal.")
-        return Distribution(values)
-
-    @staticmethod
     def ngp_calculation(d_squared: np.ndarray) -> float:
         """
         Determine the non-Gaussian parameter, from S. Song et al, "Transport dynamics of complex fluids"
@@ -335,6 +295,10 @@ class Bootstrap:
         self._model = model
 
         diff_regime = np.argwhere(self._dt >= self._start_dt)[0][0]
+        self._v *= self._n_o
+        self._n_o *= self._hr[diff_regime]
+        self._v /= self._n_o
+        self._s = np.sqrt(self._v)
 
         self._covariance_matrix = self.generate_covariance_matrix(diff_regime)
 
@@ -523,17 +487,10 @@ class MSDBootstrap(Bootstrap):
         not necessary the same at each data point.
     :param n_o: Number of statistically independent observations of the MSD at each timestep.
     :param sub_sample_dt: The frequency in observations to be sampled. Default is :py:attr:`1` (every observation)
-    :param bootstrap: Should bootstrap resampling be used to estimate the observed MSD distribution.
-        Optional, default is :py:attr:`False`.
     :param block: Should the blocking method be used to estimate the variance, if :py:attr:`False` an 
         approximation is used to estimate the variance. Optional, default is :py:attr:`False`.
-    :param n_resamples: The initial number of resamples to be performed. Default is :py:attr:`1000`
-    :param max_resamples: The max number of resamples to be performed by the distribution is assumed to be normal.
-        This is present to allow user control over the time taken for the resampling to occur. Default
-        is :py:attr:`100000`
     :param dimension: Dimension/s to find the displacement along, this should be some subset of `'xyz'` indicating
         the axes of interest. Optional, defaults to `'xyz'`.
-    :param alpha: Value that p-value for the normal test must be greater than to accept. Default is :py:attr:`1e-3`
     :param random_state : A :py:attr:`RandomState` object to be used to ensure reproducibility. Default
         is :py:attr:`None`
     :param progress: Show tqdm progress for sampling. Default is :py:attr:`True`
@@ -544,12 +501,8 @@ class MSDBootstrap(Bootstrap):
                  disp_3d: List[np.ndarray],
                  n_o: np.ndarray,
                  sub_sample_dt: int = 1,
-                 bootstrap: bool = False,
                  block: bool = False,
-                 n_resamples: int = 1000,
-                 max_resamples: int = 10000,
                  dimension: str = 'xyz',
-                 alpha: float = 1e-3,
                  random_state: np.random.mtrand.RandomState = None,
                  progress: bool = True):
         super().__init__(delta_t, disp_3d, n_o, sub_sample_dt, dimension)
@@ -557,29 +510,37 @@ class MSDBootstrap(Bootstrap):
         if block:
             import pyblock
             print('You are using the blocking method to estimate variances, please cite '
-                  'doi:10.1063/1.457480 and the pyblock pacakge.')
-        self._f = np.array([])
+                  'doi:10.1063/1.457480 and the pyblock package.')
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, self._slice].reshape(self._displacements[i].shape[0],
                                                                            self._displacements[i].shape[1], self.dims)
             d_squared = np.sum(disp_slice**2, axis=-1)
-            dd = np.sum(disp_slice * disp_slice[:, np.newaxis], axis=-1)
-            f = dd.sum() / dd.diagonal().sum()
-            if np.isnan(f):
-                f = 1
-            self._f = np.append(self._f, f)
-            self._n_o[i] = self._n_o[i]
+            coll_motion = np.sum(np.sum(disp_slice, axis=0)**2, axis=-1) / disp_slice.shape[0]
+            hr = d_squared.mean() / coll_motion.mean()
+            self._hr = np.append(self._hr, hr)
             if d_squared.size <= 1:
                 continue
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
-            self._n = np.append(self._n, d_squared.mean())
-            self._v = np.append(self._v, np.var(d_squared, ddof=1))
+            if block:
+                reblock = pyblock.blocking.reblock(d_squared.flatten())
+                opt_block = pyblock.blocking.find_optimal_block(d_squared.flatten().size, reblock)
+                try:
+                    mean = reblock[opt_block[0]].mean
+                    var = reblock[opt_block[0]].std_err**2
+                except TypeError:
+                    mean = reblock[-1].mean
+                    var = reblock[-1].std_err**2
+                self._n = np.append(self._n, mean)
+                self._v = np.append(self._v, var)
+                self._n_o[i] = 1
+            else:
+                self._n = np.append(self._n, d_squared.mean())
+                self._v = np.append(self._v, np.var(d_squared, ddof=1))
             self._ngp = np.append(self._ngp, self.ngp_calculation(d_squared))
             self._dt = np.append(self._dt, self._delta_t[i])
-        self._n_o /= self._f.mean()
+        self._n_o = self._n_o[:self._n.size]
         self._v /= self._n_o
         self._s = np.sqrt(self._v)
-        self._n_o = self._n_o[:self._n.size]
 
 
 class MSTDBootstrap(Bootstrap):
@@ -595,19 +556,10 @@ class MSTDBootstrap(Bootstrap):
     :param n_o: Number of statistically independent observations of the MSD at each timestep.
     :param sub_sample_dt: The frequency in observations to be sampled. Optional, default
         is :py:attr:`1` (every observation).
-    :param bootstrap: Should bootstrap resampling be used to estimate the observed MSD distribution.
-        Optional, default is :py:attr:`False`.
     :param block: Should the blocking method be used to estimate the variance, if :py:attr:`False` an 
         approximation is used to estimate the variance. Optional, default is :py:attr:`False`.
-    :param n_resamples: The initial number of resamples to be performed. Optional, default
-        is :py:attr:`1000`
-    :param max_resamples: The max number of resamples to be performed by the distribution is assumed to be
-        normal. This is present to allow user control over the time taken for the resampling to occur.
-        Optional, default is :py:attr:`100000`
     :param dimension: Dimension/s to find the displacement along, this should be some subset of `'xyz'` indicating
         the axes of interest. Optional, defaults to `'xyz'`.
-    :param alpha: Value that p-value for the normal test must be greater than to accept. Optional, default
-        is :py:attr:`1e-3`
     :param random_state : A :py:attr:`RandomState` object to be used to ensure reproducibility. Optional,
         default is :py:attr:`None`
     :param progress: Show tqdm progress for sampling. Optional, default is :py:attr:`True`
@@ -618,12 +570,8 @@ class MSTDBootstrap(Bootstrap):
                  disp_3d: List[np.ndarray],
                  n_o: np.ndarray,
                  sub_sample_dt: int = 1,
-                 bootstrap: bool = False,
                  block: bool = False,
-                 n_resamples: int = 1000,
-                 max_resamples: int = 10000,
                  dimension: str = 'xyz',
-                 alpha: float = 1e-3,
                  random_state: np.random.mtrand.RandomState = None,
                  progress: bool = True):
         super().__init__(delta_t, disp_3d, n_o, sub_sample_dt, dimension)
@@ -631,22 +579,16 @@ class MSTDBootstrap(Bootstrap):
         if block:
             import pyblock
             print('You are using the blocking method to estimate variances, please cite '
-                  'doi:10.1063/1.457480 and the pyblock pacakge.')
+                  'doi:10.1063/1.457480 and the pyblock package.')
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, self._slice].reshape(self._displacements[i].shape[0],
                                                                            self._displacements[i].shape[1], self.dims)
             d_squared = np.sum(disp_slice**2, axis=-1)
             coll_motion = np.sum(np.sum(disp_slice, axis=0)**2, axis=-1)
+            self._hr = np.append(self._hr, 1)
             if coll_motion.size <= 1:
                 continue
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
-            if bootstrap:
-                distro = self.sample_until_normal(coll_motion, n_o[i] / d_squared.shape[0], n_resamples, max_resamples,
-                                                  alpha, random_state)
-                self._distributions.append(distro)
-                self._n_bootstrap = np.append(self._n_bootstrap, np.mean(distro.samples))
-                self._v_bootstrap = np.append(self._v_bootstrap, np.var(distro.samples, ddof=1))
-                self._s_bootstrap = np.append(self._s_bootstrap, np.std(distro.samples, ddof=1))
             if block:
                 reblock = pyblock.blocking.reblock(coll_motion.flatten())
                 opt_block = pyblock.blocking.find_optimal_block(coll_motion.flatten().size, reblock)
@@ -658,14 +600,15 @@ class MSTDBootstrap(Bootstrap):
                     var = reblock[-1].std_err**2
                 self._n = np.append(self._n, mean)
                 self._v = np.append(self._v, var)
-                self._s = np.append(self._s, np.sqrt(self._v[i]))
+                self._n_o[i] = 1
             else:
                 self._n = np.append(self._n, coll_motion.mean())
-                self._v = np.append(self._v, np.var(coll_motion, ddof=1) / (n_o[i] / d_squared.shape[0]))
-                self._s = np.append(self._s, np.sqrt(self._v[i]))
+                self._v = np.append(self._v, np.var(coll_motion, ddof=1) / (d_squared.shape[0]))
             self._ngp = np.append(self._ngp, self.ngp_calculation(d_squared.flatten()))
             self._dt = np.append(self._dt, self._delta_t[i])
         self._n_o = self._n_o[:self._n.size]
+        self._v /= self._n_o
+        self._s = np.sqrt(self._v)
 
 
 class MSCDBootstrap(Bootstrap):
@@ -681,20 +624,12 @@ class MSCDBootstrap(Bootstrap):
     :param ionic_charge: The charge on the mobile ions, either an array with a value for each ion or a scalar
         if all values are the same.
     :param n_o: Number of statistically independent observations of the MSD at each timestep.
-    :param bootstrap: Should bootstrap resampling be used to estimate the observed MSD distribution.
-        Optional, default is :py:attr:`False`.
     :param block: Should the blocking method be used to estimate the variance, if :py:attr:`False` an 
         approximation is used to estimate the variance. Optional, default is :py:attr:`False`.
     :param sub_sample_dt: The frequency in observations to be sampled. Optional, default is :py:attr:`1`
         (every observation).
-    :param n_resamples: The initial number of resamples to be performed. Optional, default is :py:attr:`1000`.
-    :param max_resamples: The max number of resamples to be performed by the distribution is assumed to be normal.
-        This is present to allow user control over the time taken for the resampling to occur. Optional, default
-        is :py:attr:`100000`.
     :param dimension: Dimension/s to find the displacement along, this should be some subset of `'xyz'` indicating
         the axes of interest. Optional, defaults to `'xyz'`.
-    :param alpha: Value that p-value for the normal test must be greater than to accept. Optional, default
-        is :py:attr:`1e-3`.
     :param random_state: A :py:attr:`RandomState` object to be used to ensure reproducibility. Optional,
         default is :py:attr:`None`.
     :param progress: Show tqdm progress for sampling. Optional, default is :py:attr:`True`.
@@ -706,12 +641,8 @@ class MSCDBootstrap(Bootstrap):
                  ionic_charge: Union[np.ndarray, int],
                  n_o: np.ndarray,
                  sub_sample_dt: int = 1,
-                 bootstrap: bool = False,
                  block: bool = False,
-                 n_resamples: int = 1000,
-                 max_resamples: int = 10000,
                  dimension: str = 'xyz',
-                 alpha: float = 1e-3,
                  random_state: np.random.mtrand.RandomState = None,
                  progress: bool = True):
         super().__init__(delta_t, disp_3d, n_o, sub_sample_dt, dimension)
@@ -723,22 +654,16 @@ class MSCDBootstrap(Bootstrap):
         if block:
             import pyblock
             print('You are using the blocking method to estimate variances, please cite '
-                  'doi:10.1063/1.457480 and the pyblock pacakge.')
+                  'doi:10.1063/1.457480 and the pyblock package.')
         for i in self._iterator:
             disp_slice = self._displacements[i][:, :, self._slice].reshape(self._displacements[i].shape[0],
                                                                            self._displacements[i].shape[1], self.dims)
             d_squared = np.sum(disp_slice**2, axis=-1)
             sq_chg_motion = np.sum(np.sum((ionic_charge * self._displacements[i].T).T, axis=0)**2, axis=-1)
+            self._hr = np.append(self._hr, 1)
             if sq_chg_motion.size <= 1:
                 continue
             self._euclidian_displacements.append(Distribution(np.sqrt(d_squared.flatten())))
-            if bootstrap:
-                distro = self.sample_until_normal(sq_chg_motion, n_o[i] / d_squared.shape[0], n_resamples,
-                                                  max_resamples, alpha, random_state)
-                self._distributions.append(distro)
-                self._n_bootstrap = np.append(self._n_bootstrap, np.mean(distro.samples))
-                self._v_bootstrap = np.append(self._v_bootstrap, np.var(distro.samples, ddof=1))
-                self._s_bootstrap = np.append(self._s_bootstrap, np.std(distro.samples, ddof=1))
             if block:
                 reblock = pyblock.blocking.reblock(sq_chg_motion.flatten())
                 opt_block = pyblock.blocking.find_optimal_block(sq_chg_motion.flatten().size, reblock)
@@ -750,69 +675,15 @@ class MSCDBootstrap(Bootstrap):
                     var = reblock[-1].std_err**2
                 self._n = np.append(self._n, mean)
                 self._v = np.append(self._v, var)
-                self._s = np.append(self._s, np.sqrt(self._v[i]))
+                self._n_o[i] = 1
             else:
                 self._n = np.append(self._n, sq_chg_motion.mean())
-                self._v = np.append(self._v, np.var(sq_chg_motion, ddof=1) / (n_o[i] / d_squared.shape[0]))
-                self._s = np.append(self._s, np.sqrt(self._v[i]))
+                self._v = np.append(self._v, np.var(sq_chg_motion, ddof=1) / (d_squared.shape[0]))
             self._ngp = np.append(self._ngp, self.ngp_calculation(d_squared.flatten()))
             self._dt = np.append(self._dt, self._delta_t[i])
         self._n_o = self._n_o[:self._n.size]
-
-
-def _bootstrap(array: np.ndarray,
-               n_samples: int,
-               n_resamples: float,
-               random_state: np.random.mtrand.RandomState = None) -> List[float]:
-    """
-    Perform a set of resamples.
-
-    :param array: The array to sample from.
-    :param n_samples: Number of samples.
-    :param n_resamples: Number of resamples to perform.
-    :param random_state: A :py:attr:`RandomState` object to be used to ensure reproducibility. Optional,
-        default is :py:attr:`None`
-
-    :return: Simulated means from resampling the array.
-    """
-    return [
-        np.mean(resample(array.flatten(), n_samples=int(n_samples), random_state=random_state).flatten())
-        for j in range(n_resamples)
-    ]
-
-
-def _bayesian_bootstrap(array: np.ndarray,
-                        n_samples: float,
-                        n_resamples: int,
-                        random_state: np.random.mtrand.RandomState = None) -> List[float]:
-    """
-    Performs a Bayesian bootstrap simulation of the posterior distribution of the mean of observed values,
-    using a sparse Dirichlet prior for sample weights.
-    
-    The sparsity of the Dirichlet prior for the sample weights is controlled by a concentration parameter
-    alpha, where alpha = k(N-1)/(k-1). k is the dimensionality of the array of observed values, and 
-    N can be considered an effective number of samples for each set of sample weights.
-    alpha has been chosen to vary linearly with N, and gives a flat Dirichlet prior when N=k,
-    and a uniform categorical prior when N=1.
-    
-    :param array: The array to sample from.
-    :param n_samples: The effective number of samples for each set of simulated weights.
-    :param n_resamples: Number of resamples to perform.
-    :param random_state: A :py:attr:`RandomState` object. Optional, default is :py:attr:`None`
-    
-    :return: Samples from the simulated posterior distribution of the mean of the array.
-    """
-    if random_state == None:
-        random_state = np.random.mtrand.RandomState()
-    values = array.flatten()
-    k = len(values)
-    alphak = (n_samples - 1) / (k - 1)
-    if alphak > 0:
-        weights = random_state.dirichlet(alpha=np.ones(k) * alphak, size=n_resamples)
-    else:
-        # Sample from a uniform categorical distribution, equivalent to Dirichlet([0,0,0,…])
-        weights = random_state.multinomial(n=1, pvals=np.ones(k) / k, size=n_resamples)
-    return list(np.sum(weights * values, axis=1))
+        self._v /= self._n_o
+        self._s = np.sqrt(self._v)
 
 
 def _populate_covariance_matrix(variances: np.ndarray, n_samples: np.ndarray) -> np.ndarray:

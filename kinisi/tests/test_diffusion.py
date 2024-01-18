@@ -15,7 +15,7 @@ import warnings
 import numpy as np
 from tqdm import tqdm
 from numpy.testing import assert_almost_equal, assert_equal
-from kinisi.diffusion import Bootstrap, MSDBootstrap, MSTDBootstrap, MSCDBootstrap, _bootstrap
+from kinisi.diffusion import Bootstrap, MSDBootstrap, MSTDBootstrap, MSCDBootstrap
 from uravu.distribution import Distribution
 
 RNG = np.random.RandomState(43)
@@ -36,7 +36,6 @@ class TestBootstrap(unittest.TestCase):
             assert_almost_equal(a._displacements[i], b._displacements[i])
         assert_almost_equal(a._delta_t, b._delta_t)
         assert a._max_obs == b._max_obs
-        assert a._distributions == b._distributions
         assert a.dt.size == b.dt.size
         assert isinstance(b.dt, np.ndarray)
         assert b._diffusion_coefficient is None
@@ -51,7 +50,6 @@ class TestBootstrap(unittest.TestCase):
             assert_almost_equal(bs._displacements[i], d)
         assert_almost_equal(bs._delta_t, dt)
         assert bs._max_obs == 20
-        assert bs._distributions == []
         assert bs.dt.size == 0
         assert isinstance(bs.dt, np.ndarray)
         assert bs._diffusion_coefficient is None
@@ -66,7 +64,6 @@ class TestBootstrap(unittest.TestCase):
             assert_almost_equal(bs._displacements[i], d)
         assert_almost_equal(bs._delta_t, dt[::2])
         assert bs._max_obs == 20
-        assert bs._distributions == []
         assert bs.dt.size == 0
         assert isinstance(bs.dt, np.ndarray)
         assert bs._diffusion_coefficient is None
@@ -80,34 +77,12 @@ class TestBootstrap(unittest.TestCase):
         result = Bootstrap.iterator(False, range(10))
         assert isinstance(result, range)
 
-    def test_sample_until_normal(self):
-        distro1 = Bootstrap.sample_until_normal(RNG.normal(0, 1, size=2000),
-                                                50,
-                                                1000,
-                                                100000,
-                                                random_state=np.random.RandomState(1))
-        assert distro1.size == 1000
-
-    def test_sample_until_normal_random(self):
-        with warnings.catch_warnings(record=True) as _:
-            distro1 = Bootstrap.sample_until_normal(np.arange(1, 10, 1),
-                                                    5,
-                                                    100,
-                                                    100,
-                                                    random_state=np.random.RandomState(0))
-            distro2 = Bootstrap.sample_until_normal(np.arange(1, 10, 1),
-                                                    5,
-                                                    100,
-                                                    100,
-                                                    random_state=np.random.RandomState(0))
-            assert_almost_equal(distro1.samples, distro2.samples)
-
     def test_ngp_calculation(self):
         result = Bootstrap.ngp_calculation(np.array([1, 2, 3]))
         assert_almost_equal(result, -0.3)
 
 
-class TesMSDBootstrap(unittest.TestCase):
+class TestMSDBootstrap(unittest.TestCase):
     """
     Tests for the diffusion.MSDBootstrap class.
     """
@@ -127,8 +102,6 @@ class TesMSDBootstrap(unittest.TestCase):
             assert_equal(a.s, b.s)
             assert_equal(a.v, b.v)
             assert_equal(a.ngp, b.ngp)
-            for i, d in enumerate(a._distributions):
-                assert_almost_equal(d.samples, b._distributions[i].samples)
             for i, d in enumerate(a.euclidian_displacements):
                 assert_equal(d.samples, b.euclidian_displacements[i].samples)
             assert a.dt.size == b.dt.size
@@ -149,52 +122,13 @@ class TesMSDBootstrap(unittest.TestCase):
             assert len(bs.euclidian_displacements) == 10
             for i in bs.euclidian_displacements:
                 assert isinstance(i, Distribution)
-            for i in bs._distributions:
-                assert i.samples.size >= 1000
-
-    def test_initialisation_n_resamples(self):
-        with warnings.catch_warnings(record=True) as _:
-            disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
-            n_o = np.ones(len(disp_3d)) * 100
-            dt = np.linspace(100, 1000, 10)
-            bs = MSDBootstrap(dt, disp_3d, n_o, n_resamples=10, random_state=np.random.RandomState(0))
-            assert bs.n.shape == (10, )
-            assert bs.s.shape == (10, )
-            assert_almost_equal(bs.v, np.square(bs.s))
-            assert bs.ngp.shape == (10, )
-            assert len(bs.euclidian_displacements) == 10
-            for i in bs.euclidian_displacements:
-                assert isinstance(i, Distribution)
-            for i in bs._distributions:
-                assert i.samples.size >= 10
-
-    def test_initialisation_max_resamples(self):
-        with warnings.catch_warnings(record=True) as _:
-            disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
-            n_o = np.ones(len(disp_3d)) * 100
-            dt = np.linspace(100, 1000, 10)
-            bs = MSDBootstrap(dt,
-                              disp_3d,
-                              n_o,
-                              n_resamples=10,
-                              max_resamples=100,
-                              random_state=np.random.RandomState(0))
-            assert bs.n.shape == (10, )
-            assert bs.s.shape == (10, )
-            assert_almost_equal(bs.v, np.square(bs.s))
-            assert bs.ngp.shape == (10, )
-            assert len(bs.euclidian_displacements) == 10
-            for i in bs.euclidian_displacements:
-                assert isinstance(i, Distribution)
-            for i in bs._distributions:
-                assert i.samples.size <= 110
 
     def test_initialisation_random_state(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs1 = MSDBootstrap(dt, disp_3d, n_o, bootstrap=True, random_state=np.random.RandomState(0))
+            bs1 = MSDBootstrap(dt, disp_3d, n_o, random_state=np.random.RandomState(0))
             assert bs1.n.shape == (10, )
             assert bs1.s.shape == (10, )
             assert_almost_equal(bs1.v, np.square(bs1.s))
@@ -202,11 +136,7 @@ class TesMSDBootstrap(unittest.TestCase):
             assert len(bs1.euclidian_displacements) == 10
             for i in bs1.euclidian_displacements:
                 assert isinstance(i, Distribution)
-            for i in bs1._distributions:
-                assert i.samples.size >= 1000
-            bs2 = MSDBootstrap(dt, disp_3d, n_o, bootstrap=True, random_state=np.random.RandomState(0))
-            assert bs1._distributions[-1].size == bs2._distributions[-1].size
-            assert_almost_equal(bs1._distributions[-1].samples, bs2._distributions[-1].samples)
+            bs2 = MSDBootstrap(dt, disp_3d, n_o, random_state=np.random.RandomState(0))
 
     def test_initialisation_progress(self):
         with warnings.catch_warnings(record=True) as _:
@@ -221,8 +151,6 @@ class TesMSDBootstrap(unittest.TestCase):
             assert len(bs.euclidian_displacements) == 10
             for i in bs.euclidian_displacements:
                 assert isinstance(i, Distribution)
-            for i in bs._distributions:
-                assert i.samples.size >= 1000
             assert isinstance(bs._iterator, range)
 
     def test_initialisation_skip_where_low_samples(self):
@@ -238,8 +166,6 @@ class TesMSDBootstrap(unittest.TestCase):
             assert len(bs.euclidian_displacements) == 9
             for i in bs.euclidian_displacements:
                 assert isinstance(i, Distribution)
-            for i in bs._distributions:
-                assert i.samples.size >= 1000
             assert isinstance(bs._iterator, range)
 
     def test_bootstrap_dictionary_roundtrip(self):
@@ -258,8 +184,6 @@ class TesMSDBootstrap(unittest.TestCase):
             assert_equal(a.s, b.s)
             assert_equal(a.v, b.v)
             assert_equal(a.ngp, b.ngp)
-            for i, d in enumerate(a._distributions):
-                assert_almost_equal(d.samples, b._distributions[i].samples)
             for i, d in enumerate(a.euclidian_displacements):
                 assert_equal(d.samples, b.euclidian_displacements[i].samples)
             assert a.dt.size == b.dt.size
@@ -406,52 +330,13 @@ class TestMSTDBootstrap(unittest.TestCase):
             assert len(bs.euclidian_displacements) == 5
             for i in bs.euclidian_displacements:
                 assert isinstance(i, Distribution)
-            for i in bs._distributions:
-                assert i.samples.size >= 1000
-
-    def test_initialisation_n_resamples(self):
-        with warnings.catch_warnings(record=True) as _:
-            disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
-            n_o = np.ones(len(disp_3d)) * 100
-            dt = np.linspace(100, 1000, 10)
-            bs = MSTDBootstrap(dt, disp_3d, n_o, n_resamples=10, random_state=np.random.RandomState(0))
-            assert bs.n.shape == (5, )
-            assert bs.s.shape == (5, )
-            assert_almost_equal(bs.v, np.square(bs.s))
-            assert bs.ngp.shape == (5, )
-            assert len(bs.euclidian_displacements) == 5
-            for i in bs.euclidian_displacements:
-                assert isinstance(i, Distribution)
-            for i in bs._distributions:
-                assert i.samples.size >= 10
-
-    def test_initialisation_max_resamples(self):
-        with warnings.catch_warnings(record=True) as _:
-            disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
-            n_o = np.ones(len(disp_3d)) * 100
-            dt = np.linspace(100, 1000, 10)
-            bs = MSTDBootstrap(dt,
-                               disp_3d,
-                               n_o,
-                               n_resamples=10,
-                               max_resamples=100,
-                               random_state=np.random.RandomState(0))
-            assert bs.n.shape == (5, )
-            assert bs.s.shape == (5, )
-            assert_almost_equal(bs.v, np.square(bs.s))
-            assert bs.ngp.shape == (5, )
-            assert len(bs.euclidian_displacements) == 5
-            for i in bs.euclidian_displacements:
-                assert isinstance(i, Distribution)
-            for i in bs._distributions:
-                assert i.samples.size <= 110
 
     def test_initialisation_random_state(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs1 = MSTDBootstrap(dt, disp_3d, n_o, bootstrap=True, random_state=np.random.RandomState(0))
+            bs1 = MSTDBootstrap(dt, disp_3d, n_o, random_state=np.random.RandomState(0))
             assert bs1.n.shape == (5, )
             assert bs1.s.shape == (5, )
             assert_almost_equal(bs1.v, np.square(bs1.s))
@@ -459,11 +344,7 @@ class TestMSTDBootstrap(unittest.TestCase):
             assert len(bs1.euclidian_displacements) == 5
             for i in bs1.euclidian_displacements:
                 assert isinstance(i, Distribution)
-            for i in bs1._distributions:
-                assert i.samples.size >= 1000
-            bs2 = MSTDBootstrap(dt, disp_3d, n_o, bootstrap=True, random_state=np.random.RandomState(0))
-            assert bs1._distributions[-1].size == bs2._distributions[-1].size
-            assert_almost_equal(bs1._distributions[-1].samples, bs2._distributions[-1].samples)
+            bs2 = MSTDBootstrap(dt, disp_3d, n_o, random_state=np.random.RandomState(0))
 
     def test_initialisation_progress(self):
         with warnings.catch_warnings(record=True) as _:
@@ -478,8 +359,6 @@ class TestMSTDBootstrap(unittest.TestCase):
             assert len(bs.euclidian_displacements) == 5
             for i in bs.euclidian_displacements:
                 assert isinstance(i, Distribution)
-            for i in bs._distributions:
-                assert i.samples.size >= 1000
             assert isinstance(bs._iterator, range)
 
     def test_initialisation_skip_where_low_samples(self):
@@ -495,8 +374,6 @@ class TestMSTDBootstrap(unittest.TestCase):
             assert len(bs.euclidian_displacements) == 4
             for i in bs.euclidian_displacements:
                 assert isinstance(i, Distribution)
-            for i in bs._distributions:
-                assert i.samples.size >= 1000
             assert isinstance(bs._iterator, range)
 
     def test_bootstrap(self):
@@ -627,53 +504,13 @@ class TestMSCDBootstrap(unittest.TestCase):
             assert len(bs.euclidian_displacements) == 5
             for i in bs.euclidian_displacements:
                 assert isinstance(i, Distribution)
-            for i in bs._distributions:
-                assert i.samples.size >= 1000
-
-    def test_initialisation_n_resamples(self):
-        with warnings.catch_warnings(record=True) as _:
-            disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
-            n_o = np.ones(len(disp_3d)) * 100
-            dt = np.linspace(100, 1000, 10)
-            bs = MSCDBootstrap(dt, disp_3d, np.ones(100), n_o, n_resamples=10, random_state=np.random.RandomState(0))
-            assert bs.n.shape == (5, )
-            assert bs.s.shape == (5, )
-            assert_almost_equal(bs.v, np.square(bs.s))
-            assert bs.ngp.shape == (5, )
-            assert len(bs.euclidian_displacements) == 5
-            for i in bs.euclidian_displacements:
-                assert isinstance(i, Distribution)
-            for i in bs._distributions:
-                assert i.samples.size >= 10
-
-    def test_initialisation_max_resamples(self):
-        with warnings.catch_warnings(record=True) as _:
-            disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
-            n_o = np.ones(len(disp_3d)) * 100
-            dt = np.linspace(100, 1000, 10)
-            bs = MSCDBootstrap(dt,
-                               disp_3d,
-                               1,
-                               n_o,
-                               n_resamples=10,
-                               max_resamples=100,
-                               random_state=np.random.RandomState(0))
-            assert bs.n.shape == (5, )
-            assert bs.s.shape == (5, )
-            assert_almost_equal(bs.v, np.square(bs.s))
-            assert bs.ngp.shape == (5, )
-            assert len(bs.euclidian_displacements) == 5
-            for i in bs.euclidian_displacements:
-                assert isinstance(i, Distribution)
-            for i in bs._distributions:
-                assert i.samples.size <= 110
 
     def test_initialisation_random_state(self):
         with warnings.catch_warnings(record=True) as _:
             disp_3d = [RNG.randn(100, i, 3) for i in range(20, 10, -1)]
             n_o = np.ones(len(disp_3d)) * 100
             dt = np.linspace(100, 1000, 10)
-            bs1 = MSCDBootstrap(dt, disp_3d, 1, n_o, bootstrap=True, random_state=np.random.RandomState(0))
+            bs1 = MSCDBootstrap(dt, disp_3d, 1, n_o, random_state=np.random.RandomState(0))
             assert bs1.n.shape == (5, )
             assert bs1.s.shape == (5, )
             assert_almost_equal(bs1.v, np.square(bs1.s))
@@ -681,11 +518,7 @@ class TestMSCDBootstrap(unittest.TestCase):
             assert len(bs1.euclidian_displacements) == 5
             for i in bs1.euclidian_displacements:
                 assert isinstance(i, Distribution)
-            for i in bs1._distributions:
-                assert i.samples.size >= 1000
-            bs2 = MSCDBootstrap(dt, disp_3d, 1, n_o, bootstrap=True, random_state=np.random.RandomState(0))
-            assert bs1._distributions[-1].size == bs2._distributions[-1].size
-            assert_almost_equal(bs1._distributions[-1].samples, bs2._distributions[-1].samples)
+            bs2 = MSCDBootstrap(dt, disp_3d, 1, n_o, random_state=np.random.RandomState(0))
 
     def test_initialisation_progress(self):
         with warnings.catch_warnings(record=True) as _:
@@ -700,8 +533,6 @@ class TestMSCDBootstrap(unittest.TestCase):
             assert len(bs.euclidian_displacements) == 5
             for i in bs.euclidian_displacements:
                 assert isinstance(i, Distribution)
-            for i in bs._distributions:
-                assert i.samples.size >= 1000
             assert isinstance(bs._iterator, range)
 
     def test_initialisation_skip_where_low_samples(self):
@@ -717,8 +548,6 @@ class TestMSCDBootstrap(unittest.TestCase):
             assert len(bs.euclidian_displacements) == 4
             for i in bs.euclidian_displacements:
                 assert isinstance(i, Distribution)
-            for i in bs._distributions:
-                assert i.samples.size >= 1000
             assert isinstance(bs._iterator, range)
 
     def test_bootstrap(self):
@@ -828,13 +657,3 @@ class TestMSCDBootstrap(unittest.TestCase):
     #     assert_almost_equal(bs1.covariance_matrix, bs2.covariance_matrix)
     #     assert_almost_equal(bs1.diffusion_coefficient.samples, bs2.diffusion_coefficient.samples)
 
-
-class TestFunctions(unittest.TestCase):
-    """
-    Testing other functions.
-    """
-
-    def test__bootstrap_random(self):
-        result1 = _bootstrap(np.arange(1, 100, 1), 200, 100, np.random.RandomState(0))
-        result2 = _bootstrap(np.arange(1, 100, 1), 200, 100, np.random.RandomState(0))
-        assert_almost_equal(result1, result2)
