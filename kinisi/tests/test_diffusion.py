@@ -656,4 +656,3 @@ class TestMSCDBootstrap(unittest.TestCase):
     #     assert_almost_equal(bs1.v, bs2.v)
     #     assert_almost_equal(bs1.covariance_matrix, bs2.covariance_matrix)
     #     assert_almost_equal(bs1.diffusion_coefficient.samples, bs2.diffusion_coefficient.samples)
-
