@@ -711,7 +711,7 @@ def _get_molecules(structure: "ase.atoms.Atoms" or "pymatgen.core.structure.Stru
     n_molecules = indices.shape[0]
 
     if isinstance(framework_indices, (list, tuple)):
-        drift_indices = framework_indices - 1
+        drift_indices = np.array(framework_indices) - 1
     else:
         for i, site in enumerate(structure):
             if i not in indices:
@@ -760,7 +760,7 @@ def _get_framework(structure: "ase.atoms.Atoms" or "pymatgen.core.structure.Stru
         diffusion and indices of framework atoms. 
     """
     if isinstance(framework_indices, (list, tuple)):
-        drift_indices = framework_indices - 1
+        drift_indices = np.array(framework_indices) - 1
     else:
         drift_indices = []
 
