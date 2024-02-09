@@ -485,7 +485,9 @@ class MSDDiffusion(Diffusion):
         delta_t value. Note: it is necessary to use a list of arrays as the number of observations is
         not necessary the same at each data point.
     :param n_o: Number of statistically independent observations of the MSD at each timestep.
-    :param sub_sample_dt: The frequency in observations to be sampled. Default is :py:attr:`1` (every observation)
+    :param sub_sample_dt: The frequency in observations to be sampled. Default is :py:attr:`1` (every observation).
+    :param correlation_normalisation: Perform a correlation normalisation based on the time-dependent 
+        Haven ratio. Default is :py:attr:`False`.
     :param block: Should the blocking method be used to estimate the variance, if :py:attr:`False` an 
         approximation is used to estimate the variance. Optional, default is :py:attr:`False`.
     :param dimension: Dimension/s to find the displacement along, this should be some subset of `'xyz'` indicating
@@ -500,6 +502,7 @@ class MSDDiffusion(Diffusion):
                  disp_3d: List[np.ndarray],
                  n_o: np.ndarray,
                  sub_sample_dt: int = 1,
+                 correlation_normalisation: bool = False,
                  block: bool = False,
                  dimension: str = 'xyz',
                  random_state: np.random.mtrand.RandomState = None,
@@ -514,8 +517,11 @@ class MSDDiffusion(Diffusion):
             disp_slice = self._displacements[i][:, :, self._slice].reshape(self._displacements[i].shape[0],
                                                                            self._displacements[i].shape[1], self.dims)
             d_squared = np.sum(disp_slice**2, axis=-1)
-            coll_motion = np.sum(np.sum(disp_slice, axis=0)**2, axis=-1) / disp_slice.shape[0]
-            hr = d_squared.mean() / coll_motion.mean()
+            if correlation_normalisation:
+                coll_motion = np.sum(np.sum(disp_slice, axis=0)**2, axis=-1) / disp_slice.shape[0]
+                hr = d_squared.mean() / coll_motion.mean()
+            else: 
+                hr = 1
             self._hr = np.append(self._hr, hr)
             if d_squared.size <= 1:
                 continue
