@@ -518,7 +518,7 @@ class MSDDiffusion(Diffusion):
                                                                            self._displacements[i].shape[1], self.dims)
             d_squared = np.sum(disp_slice**2, axis=-1)
             if correlation_normalisation:
-                coll_motion = np.sum(np.sum(disp_slice, axis=0)**2, axis=-1) / disp_slice.shape[0]
+                coll_motion = np.sum(np.sum(np.abs(disp_slice), axis=0)**2, axis=-1) / disp_slice.shape[0]
                 hr = d_squared.mean() / coll_motion.mean()
             else: 
                 hr = 1
