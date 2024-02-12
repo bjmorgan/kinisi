@@ -19,8 +19,8 @@
 # -- Project information -----------------------------------------------------
 
 project = 'kinisi'
-copyright = '2022, Andrew R. McCluskey, Alex G. Squires and Benjamin J. Morgan'
-author = 'Andrew R. McCluskey, Alex G. Squires and Benjamin J. Morgan'
+copyright = '2024, Andrew R. McCluskey, Alex G. Squires, Josh Dunn, and Benjamin J. Morgan'
+author = 'Andrew R. McCluskey, Alex G. Squires, Josh Dunn, and Benjamin J. Morgan'
 
 from kinisi import __version__
 
