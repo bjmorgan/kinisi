@@ -23,7 +23,7 @@ authors:
     orcid: 0000-0002-3056-8233
     affiliation: "4,5"
 affiliations:
- - name: School of Chemistry, University of Bristol, Cantock's Close, Bristol, BS8 1TS, United Kingdom
+ - name: Centre for Computational Chemistry, School of Chemistry, University of Bristol, Cantock's Close, Bristol, BS8 1TS, United Kingdom
    index: 1
  - name: European Spallation Source ERIC, Ole Maaløes vej 3, 2200 København N, Denmark
    index: 2
@@ -33,7 +33,7 @@ affiliations:
    index: 4
  - name: The Faraday Institution, Quad One, Harwell Science and Innovation Campus, Didcot, OX11 0RA, United Kingdom
    index: 5
-date: 16 August 2023
+date: 12 February 2024
 bibliography: paper.bib
 ---
 
@@ -68,5 +68,5 @@ A list of publications where `kinisi` has been used in the analysis of simulatio
 # Acknowledgements
 
 The authors thank all of the users of `kinisi` for contributing feedback, suggesting new features and filing bug reports. 
-S.W.C., A.G.S. and B.J.M. acknowledge the support of the Faraday Institution (grant numbers FIRG016, FIRG017).
+S.W.C., A.G.S., and B.J.M. acknowledge the support of the Faraday Institution (grant numbers FIRG016 and FIRG017).
 B.J.M. acknowledges support from the Royal Society (UF130329 and URF\textbackslash R\textbackslash 191006). 
