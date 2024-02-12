@@ -23,7 +23,7 @@ authors:
     orcid: 0000-0002-3056-8233
     affiliation: "4,5"
 affiliations:
- - name: School of Chemistry, University of Bristol, Cantock's Close, Bristol, BS8 1TS, United Kingdom
+ - name: Centre for Computational Chemistry, School of Chemistry, University of Bristol, Cantock's Close, Bristol, BS8 1TS, United Kingdom
    index: 1
  - name: European Spallation Source ERIC, Ole Maaløes vej 3, 2200 København N, Denmark
    index: 2
