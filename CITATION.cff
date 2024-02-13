@@ -5,15 +5,15 @@ authors:
   family-names: McCluskey
   given-names: "Andrew R."
   orcid: "https://orcid.org/0000-0003-3381-5911"
-- affilation: "School of Chemistry, University of Birmingham"
+- affiliation: "School of Chemistry, University of Birmingham"
   family-names: Squires
   given-names: "Alex G."
   orcid: "https://orcid.org/0000-0001-6967-3690"
-- affilation: "Centre for Computational Chemistry, School of Chemistry, University of Bristol"
+- affiliation: "Centre for Computational Chemistry, School of Chemistry, University of Bristol"
   family-names: Dunn
   given-names: "Josh"
   orcid: "https://orcid.org/0000-0003-2659-0806"
-- affilation: "Department of Chemistry, University of Bath and The Faraday Institution"
+- affiliation: "Department of Chemistry, University of Bath and The Faraday Institution"
   family-names: Coles
   given-names: "Samuel W."
   orcid: "https://orcid.org/0000-0001-9722-5676"
