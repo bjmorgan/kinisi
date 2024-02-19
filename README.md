@@ -20,3 +20,7 @@ Pronunciation: *kee-nee-see*
 ```
 pip install .
 ```
+
+## Contributing
+
+If you would like to contribute to `kinisi`, have a look at the [CONTRIBUTING.md](https://github.com/bjmorgan/kinisi/blob/master/CONTRIBUTING.md) that outlines the different ways to help out.
