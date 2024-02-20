@@ -13,8 +13,9 @@
 
 - I have been using `kinisi` in my research and would like to cite the package, how should I do this?
 
-    > Thanks for using `kinisi`, we recommend that you cite the [arXiv preprint](https://arxiv.org/abs/2305.18244) which 
-    > discusses the methodology along with a specific reference to the version of `kinisi` that has been used. 
+    > Thanks for using `kinisi`. Please cite the [JOSS publication](https://doi.org/10.21105/joss.05984), the
+    > methodological [arXiv preprint](https://arxiv.org/abs/2305.18244), and specifically refer to the
+    > version of `kinisi` that has been used. 
     
 - How does `kinisi` work?
 
