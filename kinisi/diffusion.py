@@ -304,13 +304,13 @@ class Bootstrap:
 
     def bootstrap_GLS(self,
                       start_dt: float,
+                      cond_max: float = 1e10,
                       model: bool = False,
                       fit_intercept: bool = True,
                       n_samples: int = 1000,
                       n_walkers: int = 32,
                       n_burn: int = 500,
                       thin: int = 10,
-                      cond_max: float = 1e10,
                       progress: bool = True,
                       random_state: np.random.mtrand.RandomState = None):
         """
@@ -319,6 +319,10 @@ class Bootstrap:
 
         :param start_dt: The starting time for the analysis to find the diffusion coefficient.
             This should be the start of the diffusive regime in the simulation.
+        :param cond_max: The maximum condition number of the covariance matrix, in the event that the diffusion
+            coefficient appears very wrong (from plotting), this should be increased until it looks reasonable.
+            For more information, about the poor condition of estimated covariance matricies, have a look
+            at doi:10.1080/16000870.2019.1696646.
         :param model: Use the model for the covariance matrix, if :py:attr:`True` a model for a random walk
             will be used to generate that covariance matrix. Optional, default is :py:attr:`True`.
         :param fit_intercept: Should the intercept of the diffusion relationship be fit. Optional, default
