@@ -15,7 +15,7 @@ import warnings
 import numpy as np
 from tqdm import tqdm
 from numpy.testing import assert_almost_equal, assert_equal
-from kinisi.diffusion import Bootstrap, MSDBootstrap, MSTDBootstrap, MSCDBootstrap, _bootstrap
+from kinisi.diffusion import Bootstrap, MSDBootstrap, MSTDBootstrap, MSCDBootstrap, _bootstrap, minimum_eigenvalue_method
 from uravu.distribution import Distribution
 
 RNG = np.random.RandomState(43)
@@ -838,3 +838,13 @@ class TestFunctions(unittest.TestCase):
         result1 = _bootstrap(np.arange(1, 100, 1), 200, 100, np.random.RandomState(0))
         result2 = _bootstrap(np.arange(1, 100, 1), 200, 100, np.random.RandomState(0))
         assert_almost_equal(result1, result2)
+
+    def test_minimum_eigenvalue_method(self):
+        matrix = np.random.random((100, 100))
+        reconditioned_amtrix = minimum_eigenvalue_method(matrix, 1e16)
+        assert_almost_equal(matrix, reconditioned_matrix)
+
+    def test_minimum_eigenvalue_method(self):
+        matrix = np.random.random((100, 100))
+        reconditioned_matrix = minimum_eigenvalue_method(matrix, 1)
+        assert not np.allclose(matrix, reconditioned_matrix)

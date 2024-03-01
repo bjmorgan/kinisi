@@ -29,7 +29,25 @@
 
 - I got a strange `memory_limit` related error, what's happening?
 
-    > Check out the [specific page](./memory_limit) that we have related to this error. 
+    > Check out the [specific page](./memory_limit) that we have related to this error.
+
+- I ran `kinisi` on my system and the diffusion coefficient value was really very unrealistic, i.e. 
+    like 1e+128 cm<sup>2</sup>/s. What happened?
+
+    > In short, the way to fix this is to decrease the value of the `cond_max` parameter in the `diffusion` method 
+    > until the value is realistic (the best way to check this is with a plot of the model and the data). 
+    > Try to find the highest value that gives a realistic result, as going too low can affect accuracy. 
+    > This problem is because the covariance matrix used by `kinisi` is an estimate of the true covariance matrix 
+    > for the mean-squared displacement. 
+    > This estimation can mean that the matrix is ill-conditioned, which is where the ratio between the largest 
+    > and smallest eigenvalues of the matrix is very large (you can read more about condition numbers of matrix 
+    > on [Wikipedia](https://en.wikipedia.org/wiki/Condition_number#Matrices)). When the matrix is 
+    > ill-conditioned, linear algebra can have numerical precision issues. 
+    > To solve this, `kinisi` uses the [minimum eigenvalue method](https://doi.org/10.1080/16000870.2019.1696646) to 
+    > recondition the matrix, and the `cond_max` parameter is the condition number of the reconditioned covariance 
+    > matrix. 
+    > So, decreasing the value of `cond_max` will reduce the condition number of the covariance matrix, but if you 
+    > decrease it too much, necessary information will be lost from the covariance matrix, leading to a loss of accuracy.
 
 - Running the documentation locally gave me different numbers, how come?
 
