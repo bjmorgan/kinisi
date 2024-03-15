@@ -100,21 +100,21 @@ class Parser:
     @staticmethod
     def get_disp(coords: List[np.ndarray], latt: List[np.ndarray], progress: bool = True) -> np.ndarray:
         """
-        Calculate displacements.
+        Calculate displacements with support for NPT simualtions. Issues a warning about non-orthorhombic cells.
 
         :param coords: Fractional coordinates for all atoms.
         :param latt: Lattice descriptions.
 
         :return: Numpy array of with shape [site, time step, axis] describing displacements.
         """
-        coords = np.concatenate(coords, axis=1)
-        d_coords = coords[:, 1:] - coords[:, :-1]
-        d_coords = d_coords - np.round(d_coords)
-        f_disp = np.cumsum(d_coords, axis=1)
-        latt = np.array(latt)
-        disp = np.einsum('ijk,jkl->jik', f_disp, latt[1:])
-        disp = np.transpose(disp, (1, 0, 2))
-        return disp
+        coords = np.concatenate(coords, axis=1) #change array shape and removes extra dim
+        latt_inv = np.linalg.inv(latt) #invert lattice vectors
+        wrapped = np.einsum('ijk,jkl->ijk', coords, latt) #apply lattice vectors to get cartisian coords
+        wrapped_diff = np.diff(wrapped, axis=1) #calculate difference in cart
+
+        unwrapped_disp = wrapped_diff - (np.einsum('ijk,jkl->ijk', np.floor(np.einsum('ijk,jkl->ijk', wrapped_diff, latt_inv[1:]) + (1 / 2)), latt[1:])) #should split this up for readability
+
+        return np.cumsum(unwrapped_disp, axis=1)
 
     @staticmethod
     def correct_drift(drift_indices: np.ndarray, disp: np.ndarray) -> np.ndarray:
