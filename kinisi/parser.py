@@ -17,6 +17,7 @@ In fact, we love pymatgen!
 from typing import List, Tuple, Union
 import numpy as np
 from tqdm import tqdm
+import warnings
 
 
 class Parser:
@@ -107,6 +108,16 @@ class Parser:
 
         :return: Numpy array of with shape [site, time step, axis] describing displacements.
         """
+        latt = np.array(latt)
+        off_diags = np.array([[False, True, True], [True, False, True], [True, True, False]])
+        triclinic_test = np.tile(off_diags, (latt.shape[0], 1, 1))
+        if np.any(latt[triclinic_test] != 0):
+            warnings.warn(
+                'Converting triclinic cell to orthorhombic: this may have unexpected results. '
+                'Triclinic a, b, c are not equilivalent to orthorhombic x, y, z. '
+                'It is recommended that the user convert triclinic coordinates to orthorhombic coordinates before passing to kinisi.',
+                UserWarning)
+
         coords = np.concatenate(coords, axis=1)  #change array shape and removes extra dim
         latt_inv = np.linalg.inv(latt)  #invert lattice vectors
         wrapped = np.einsum('ijk,jkl->ijk', coords, latt)  #apply lattice vectors to get cartisian coords
