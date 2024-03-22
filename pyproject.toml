@@ -8,11 +8,11 @@ dynamic = ["version"]
 description = "Efficient estimation of diffusion processes from molecular dynamics."
 readme = "README.md"
 authors = [
-    {name = "Andrew R. McCluskey", email = "andrew.mccluskey@ess.eu"}, 
+    {name = "Andrew R. McCluskey", email = "andrew.mccluskey@bristol.ac.uk"}, 
     {name = "Benjamin J. Morgan", email="b.j.morgan@bath.ac.uk"}
 ]
 maintainers = [
-    {name = "Andrew R. McCluskey", email = "andrew.mccluskey@ess.eu"}, 
+    {name = "Andrew R. McCluskey", email = "andrew.mccluskey@bristol.ac.uk"}, 
     {name = "Benjamin J. Morgan", email="b.j.morgan@bath.ac.uk"}
 ]
 license = "MIT"
