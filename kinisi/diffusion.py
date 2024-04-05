@@ -304,7 +304,7 @@ class Bootstrap:
 
     def bootstrap_GLS(self,
                       start_dt: float,
-                      cond_max: float = 1e10,
+                      cond_max: float = 1e16,
                       model: bool = False,
                       fit_intercept: bool = True,
                       n_samples: int = 1000,
@@ -416,12 +416,13 @@ class Bootstrap:
             return a / self._n_o[diff_regime:] * dt**2
 
         if self._model:
-            self._popt, _ = curve_fit(_model_variance, self.dt[diff_regime:], self._v[diff_regime:])
+            self._popt, _ = curve_fit(_model_variance, self.dt[diff_regime:], self._v[diff_regime:], bounds=(0, np.inf))
             self._model_v = _model_variance(self.dt[diff_regime:], *self._popt)
         else:
             self._model_v = self._v[diff_regime:]
         self._covariance_matrix = _populate_covariance_matrix(self._model_v, self._n_o[diff_regime:])
         self._npd_covariance_matrix = self._covariance_matrix
+        print(np.linalg.cond(self._covariance_matrix))
         return cov_nearest(minimum_eigenvalue_method(self._covariance_matrix, self._cond_max))
 
     def diffusion(self, start_dt: float, **kwargs):
@@ -867,7 +868,7 @@ def _straight_line(abscissa: np.ndarray, gradient: float, intercept: float = 0.0
     return gradient * abscissa + intercept
 
 
-def minimum_eigenvalue_method(matrix: np.ndarray, cond_max=1e10) -> np.ndarray:
+def minimum_eigenvalue_method(matrix: np.ndarray, cond_max=1e16) -> np.ndarray:
     """
     Implementation of the matrix reconditioning method known as the minimum
     eigenvalue method, as outlined in doi:10.1080/16000870.2019.1696646. This
@@ -884,5 +885,5 @@ def minimum_eigenvalue_method(matrix: np.ndarray, cond_max=1e10) -> np.ndarray:
     eigenvalues = eigenthings.eigenvalues
     new_eigenvalues = np.copy(eigenvalues)
     T = eigenvalues[0] / cond_max
-    new_eigenvalues[np.where(np.abs(new_eigenvalues) <= T)] = T
-    return eigenthings.eigenvectors @ np.diag(new_eigenvalues) @ eigenthings.eigenvectors.T
+    new_eigenvalues[np.where(new_eigenvalues < T)] = T
+    return np.real(eigenthings.eigenvectors @ np.diag(new_eigenvalues) @ eigenthings.eigenvectors.T)
