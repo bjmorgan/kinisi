@@ -422,7 +422,6 @@ class Bootstrap:
             self._model_v = self._v[diff_regime:]
         self._covariance_matrix = _populate_covariance_matrix(self._model_v, self._n_o[diff_regime:])
         self._npd_covariance_matrix = self._covariance_matrix
-        print(np.linalg.cond(self._covariance_matrix))
         return cov_nearest(minimum_eigenvalue_method(self._covariance_matrix, self._cond_max))
 
     def diffusion(self, start_dt: float, **kwargs):
