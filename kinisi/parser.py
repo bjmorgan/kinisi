@@ -615,7 +615,7 @@ class MDAnalysisParser(Parser):
                 structure = universe.atoms[::sub_sample_atoms]
                 first = False
                 volume = timestep.volume
-            matrix = _get_matrix(timestep.dimensions)
+            matrix = timestep.triclinic_dimensions
             inv_matrix = np.linalg.inv(matrix)
             coords.append(np.array(np.dot(universe.atoms[::sub_sample_atoms].positions, inv_matrix))[:, None])
             latt.append(matrix)
@@ -655,33 +655,6 @@ class MDAnalysisParser(Parser):
             drift_indices = framework_indices
 
         return indices, drift_indices
-
-
-def _get_matrix(dimensions: np.ndarray) -> np.ndarray:
-    """
-    Determine the lattice matrix.
-
-    :param dimensions: a, b, c, vectors and alpha, beta, gamma angles.
-
-    :return: Lattice matrix
-    """
-    angles_r = np.radians(dimensions[3:])
-    cos_alpha, cos_beta, cos_gamma = np.cos(angles_r)
-    sin_alpha, sin_beta = np.sin(angles_r)[:2]
-
-    val = (cos_alpha * cos_beta - cos_gamma) / (sin_alpha * sin_beta)
-    # Sometimes rounding errors result in values slightly > 1.
-    val = max(min(val, 1), -1)
-    gamma_star = np.arccos(val)
-
-    vector_a = [dimensions[0] * sin_beta, 0.0, dimensions[0] * cos_beta]
-    vector_b = [
-        -dimensions[1] * sin_alpha * np.cos(gamma_star), dimensions[1] * sin_alpha * np.sin(gamma_star),
-        dimensions[1] * cos_alpha
-    ]
-    vector_c = [0.0, 0.0, float(dimensions[2])]
-
-    return np.array([vector_a, vector_b, vector_c], dtype=np.float64).reshape((3, 3))
 
 
 def _get_molecules(structure: "ase.atoms.Atoms" or "pymatgen.core.structure.Structure"
