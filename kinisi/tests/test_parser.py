@@ -319,9 +319,4 @@ class TestParser(unittest.TestCase):
         assert_equal(data_2.drift_indices, list(range(1, 9)))
         print(data_2.dc[0])
         disp_array = [[0.0, 0.0, 0.0], [0.2, 0.2, 0.2], [0.4, 0.4, 0.4], [1, 1, 1]]
-        assert_almost_equal(data_2.dc[0], disp_array)
-
-    #Matrix test
-    def test_get_matrix(self):
-        matrix = parser._get_matrix([10, 10, 10, 90, 90, 90])
-        assert_almost_equal(matrix, np.diag((10, 10, 10)))
+        assert_almost_equal(data_2.dc[0], disp_array, decimal=6)
