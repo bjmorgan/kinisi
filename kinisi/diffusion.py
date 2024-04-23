@@ -173,7 +173,7 @@ class Bootstrap:
         boot._covariance_matrix = my_dict['covariance_matrix']
         boot._start_dt = my_dict['start_dt']
         boot._model = my_dict['model']
-        boot._cond_amx = my_dict['cond_max']
+        boot._cond_max = my_dict['cond_max']
         return boot
 
     @property
