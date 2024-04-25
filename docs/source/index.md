@@ -9,6 +9,8 @@ More information about the approach `kinisi` uses can be found in the [methodolo
 `kinisi` can handle simulation trajectories from many common molecular dynamics packages, including [VASP](https://www.vasp.at/wiki/index.php/XDATCAR) and those that can be read by [MDAnalysis](https://userguide.mdanalysis.org/stable/reading_and_writing.html).
 Examples of some of these analyses are shown in the [notebooks](./notebooks), also given there is an example of using `kinisi` to investigate the Arrhenius relationship of diffusion as a function of temperature.
 
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.05984/status.svg)](https://doi.org/10.21105/joss.05984)
+
 ```{image} ./_static/example_light.png
   :width: 450
   :align: center
