@@ -1,5 +1,10 @@
 # Uncertainty quantification in diffusion
 
+[![JOSS Status](https://joss.theoj.org/papers/1ae102ffb6b3c63b04c002976440815d/status.svg)](https://joss.theoj.org/papers/1ae102ffb6b3c63b04c002976440815d)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/3e64239fb6cb6c837b62/test_coverage)](https://codeclimate.com/github/bjmorgan/kinisi/test_coverage)
+[![Documentation Status](https://readthedocs.org/projects/kinisi/badge/?version=latest)](https://kinisi.readthedocs.io/en/latest/?badge=latest)
+[![PyPI version](https://badge.fury.io/py/kinisi.svg)](https://badge.fury.io/py/kinisi)
+
 `kinisi` is an open-source Python package that can accurately estimate diffusion processes in atomic and molecular systems and determine an accurate estimate of the uncertainty in these processes.
 
 This is achieved by modelling the diffusion process as a [multivariate normal distribution](https://en.wikipedia.org/wiki/Multivariate_normal_distribution), based on that for a random walker. 
@@ -8,8 +13,6 @@ More information about the approach `kinisi` uses can be found in the [methodolo
 
 `kinisi` can handle simulation trajectories from many common molecular dynamics packages, including [VASP](https://www.vasp.at/wiki/index.php/XDATCAR) and those that can be read by [MDAnalysis](https://userguide.mdanalysis.org/stable/reading_and_writing.html).
 Examples of some of these analyses are shown in the [notebooks](./notebooks), also given there is an example of using `kinisi` to investigate the Arrhenius relationship of diffusion as a function of temperature.
-
-[![DOI](https://joss.theoj.org/papers/10.21105/joss.05984/status.svg)](https://doi.org/10.21105/joss.05984)
 
 ```{image} ./_static/example_light.png
   :width: 450
