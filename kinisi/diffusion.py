@@ -84,6 +84,7 @@ class Bootstrap:
         self._start_dt = None
         self.dims = len(dimension.lower())
         self._model = None
+        self._cond_max = None
 
     def to_dict(self) -> dict:
         """
@@ -112,7 +113,8 @@ class Bootstrap:
             'intercept': None,
             'gradient': None,
             'start_dt': self._start_dt,
-            'model': self._model
+            'model': self._model,
+            'cond_max': self._cond_max
         }
         if len(self._distributions) != 0:
             my_dict['distributions'] = [d.to_dict() for d in self._distributions]
@@ -171,6 +173,7 @@ class Bootstrap:
         boot._covariance_matrix = my_dict['covariance_matrix']
         boot._start_dt = my_dict['start_dt']
         boot._model = my_dict['model']
+        boot._cond_max = my_dict['cond_max']
         return boot
 
     @property
@@ -301,7 +304,8 @@ class Bootstrap:
 
     def bootstrap_GLS(self,
                       start_dt: float,
-                      model: bool = True,
+                      cond_max: float = 1e16,
+                      model: bool = False,
                       fit_intercept: bool = True,
                       n_samples: int = 1000,
                       n_walkers: int = 32,
@@ -315,8 +319,12 @@ class Bootstrap:
 
         :param start_dt: The starting time for the analysis to find the diffusion coefficient.
             This should be the start of the diffusive regime in the simulation.
-        :param model: Use the model for the covariance matrix, if False this may lead to numerical instability.
-            Optional, default is :py:attr:`True`.
+        :param cond_max: The maximum condition number of the covariance matrix, in the event that the diffusion
+            coefficient appears very wrong (from plotting), this should be increased until it looks reasonable.
+            For more information, about the poor condition of estimated covariance matricies, have a look
+            at doi:10.1080/16000870.2019.1696646.
+        :param model: Use the model for the covariance matrix, if :py:attr:`True` a model for a random walk
+            will be used to generate that covariance matrix. Optional, default is :py:attr:`True`.
         :param fit_intercept: Should the intercept of the diffusion relationship be fit. Optional, default
             is :py:attr:`True`.
         :param n_samples: Number of samples of the Gaussian process to perform. Optional, default is :py:attr:`1000`.
@@ -333,6 +341,7 @@ class Bootstrap:
 
         self._start_dt = start_dt
         self._model = model
+        self._cond_max = cond_max
 
         diff_regime = np.argwhere(self._dt >= self._start_dt)[0][0]
 
@@ -401,18 +410,19 @@ class Bootstrap:
 
             :param dt: Timestep value
             :param a: Quadratic coefficient
+            :param b: Offset value
             :return: Model variances
             """
             return a / self._n_o[diff_regime:] * dt**2
 
         if self._model:
-            self._popt, _ = curve_fit(_model_variance, self.dt[diff_regime:], self._v[diff_regime:])
+            self._popt, _ = curve_fit(_model_variance, self.dt[diff_regime:], self._v[diff_regime:], bounds=(0, np.inf))
             self._model_v = _model_variance(self.dt[diff_regime:], *self._popt)
         else:
             self._model_v = self._v[diff_regime:]
         self._covariance_matrix = _populate_covariance_matrix(self._model_v, self._n_o[diff_regime:])
         self._npd_covariance_matrix = self._covariance_matrix
-        return cov_nearest(self._covariance_matrix)
+        return cov_nearest(minimum_eigenvalue_method(self._covariance_matrix, self._cond_max))
 
     def diffusion(self, start_dt: float, **kwargs):
         """
@@ -506,7 +516,7 @@ class Bootstrap:
             iterator = samples_to_draw
         for i, n in iterator:
             mu = self.gradient.samples[n] * self._dt[diff_regime:] + self.intercept.samples[n]
-            mv = multivariate_normal(mean=mu, cov=self._covariance_matrix)
+            mv = multivariate_normal(mean=mu, cov=self._covariance_matrix, allow_singular=True)
             ppd[i] = mv.rvs(n_predictive_samples)
         return ppd.reshape(-1, self._dt[diff_regime:].size)
 
@@ -855,3 +865,24 @@ def _straight_line(abscissa: np.ndarray, gradient: float, intercept: float = 0.0
     :return: The resulting ordinate.
     """
     return gradient * abscissa + intercept
+
+
+def minimum_eigenvalue_method(matrix: np.ndarray, cond_max=1e16) -> np.ndarray:
+    """
+    Implementation of the matrix reconditioning method known as the minimum
+    eigenvalue method, as outlined in doi:10.1080/16000870.2019.1696646. This
+    should produce a matrix with a condition number of :py:attr:`cond_max` based
+    on the eigenvalues and eigenvectors of the input matrix. 
+
+    :param matrix: Matrix to recondition.
+    :param cond_max: Expected condition number of output matrix. Optional,
+        default is :py:attr:`1e10`.
+
+    :return: Reconditioned matrix.
+    """
+    eigenthings = np.linalg.eig(matrix)
+    eigenvalues = eigenthings.eigenvalues
+    new_eigenvalues = np.copy(eigenvalues)
+    T = eigenvalues[0] / cond_max
+    new_eigenvalues[np.where(new_eigenvalues < T)] = T
+    return np.real(eigenthings.eigenvectors @ np.diag(new_eigenvalues) @ eigenthings.eigenvectors.T)
