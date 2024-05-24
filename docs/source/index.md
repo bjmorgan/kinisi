@@ -1,5 +1,10 @@
 # Uncertainty quantification in diffusion
 
+[![JOSS Status](https://joss.theoj.org/papers/1ae102ffb6b3c63b04c002976440815d/status.svg)](https://joss.theoj.org/papers/1ae102ffb6b3c63b04c002976440815d)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/3e64239fb6cb6c837b62/test_coverage)](https://codeclimate.com/github/bjmorgan/kinisi/test_coverage)
+[![Documentation Status](https://readthedocs.org/projects/kinisi/badge/?version=latest)](https://kinisi.readthedocs.io/en/latest/?badge=latest)
+[![PyPI version](https://badge.fury.io/py/kinisi.svg)](https://badge.fury.io/py/kinisi)
+
 `kinisi` is an open-source Python package that can accurately estimate diffusion processes in atomic and molecular systems and determine an accurate estimate of the uncertainty in these processes.
 
 This is achieved by modelling the diffusion process as a [multivariate normal distribution](https://en.wikipedia.org/wiki/Multivariate_normal_distribution), based on that for a random walker. 
