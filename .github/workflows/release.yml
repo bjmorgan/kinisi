@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
-    - name: setup python 3.9
+    - name: setup python 3.12
       uses: actions/setup-python@v2
       with:
-        python-version: 3.9
+        python-version: 3.12
     - name: install pypa/build
       run: >- 
         python -m 
