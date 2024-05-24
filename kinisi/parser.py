@@ -101,7 +101,8 @@ class Parser:
     @staticmethod
     def get_disp(coords: List[np.ndarray], latt: List[np.ndarray], progress: bool = True) -> np.ndarray:
         """
-        Calculate displacements with support for NPT simualtions. Issues a warning about non-orthorhombic cells.
+        Calculate displacements with support for NPT simualtions, using the TOR scheme outlined in doi: 10.1021/acs.jctc.3c00308.
+        Issues a warning about non-orthorhombic cells. 
 
         :param coords: Fractional coordinates for all atoms.
         :param latt: Lattice descriptions.
@@ -114,17 +115,16 @@ class Parser:
         if np.any(latt[triclinic_test] != 0):
             warnings.warn(
                 'Converting triclinic cell to orthorhombic this may have unexpected results. '
-                'Triclinic a, b, c are not equilivalent to orthorhombic x, y, z.',
-                UserWarning)
+                'Triclinic a, b, c are not equilivalent to orthorhombic x, y, z.', UserWarning)
 
         coords = np.concatenate(coords, axis=1)  #change array shape and removes extra dim
         latt_inv = np.linalg.inv(latt)  #invert lattice vectors
         wrapped = np.einsum('ijk,jkl->ijk', coords, latt)  #apply lattice vectors to get cartisian coords
         wrapped_diff = np.diff(wrapped, axis=1)  #calculate difference in cart
 
-        unwrapped_disp = wrapped_diff - (np.einsum(
-            'ijk,jkl->ijk', np.floor(np.einsum('ijk,jkl->ijk', wrapped_diff, latt_inv[1:]) +
-                                     (1 / 2)), latt[1:]))  #could split this up for readability
+        diff_diff = np.einsum('ijk,jkl->ijk', np.floor(np.einsum('ijk,jkl->ijk', wrapped_diff, latt_inv[1:]) + (1 / 2)),
+                              latt[1:])  # calculated the correction needed for the change in cell dimensions
+        unwrapped_disp = wrapped_diff - diff_diff
 
         return np.cumsum(unwrapped_disp, axis=1)
 
