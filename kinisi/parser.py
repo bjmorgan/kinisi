@@ -113,9 +113,8 @@ class Parser:
         triclinic_test = np.tile(off_diags, (latt.shape[0], 1, 1))
         if np.any(latt[triclinic_test] != 0):
             warnings.warn(
-                'Converting triclinic cell to orthorhombic: this may have unexpected results. '
-                'Triclinic a, b, c are not equilivalent to orthorhombic x, y, z. '
-                'It is recommended that the user convert triclinic coordinates to orthorhombic coordinates before passing to kinisi.',
+                'Converting triclinic cell to orthorhombic this may have unexpected results. '
+                'Triclinic a, b, c are not equilivalent to orthorhombic x, y, z.',
                 UserWarning)
 
         coords = np.concatenate(coords, axis=1)  #change array shape and removes extra dim
@@ -125,7 +124,7 @@ class Parser:
 
         unwrapped_disp = wrapped_diff - (np.einsum(
             'ijk,jkl->ijk', np.floor(np.einsum('ijk,jkl->ijk', wrapped_diff, latt_inv[1:]) +
-                                     (1 / 2)), latt[1:]))  #should split this up for readability
+                                     (1 / 2)), latt[1:]))  #could split this up for readability
 
         return np.cumsum(unwrapped_disp, axis=1)
 
