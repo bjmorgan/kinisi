@@ -10,6 +10,6 @@ Here we will try and list publications that have used or cited `kinisi` (if you 
 6. Moustafa, S. G., Andrew J. Schultz, A. J., Douglas, J. F., *J. Chem. Phys.*, **160**, 024114, 2024. doi: [10.1063/5.0188081](https://doi.org/10.1063/5.0188081).
 7. McColl, K., Coles, S.W., Zarabadi-Poor, P., Morgan, B. J., Islam, M. S., *Nat. Mater.*, 2024. doi: [10.1038/s41563-024-01873-5](https://doi.org/10.1038/s41563-024-01873-5).
 8. Choi, Y.-S., Lee, Y., Ahn, H., Jeong, J., Chung, K. Y., Scanlon, D. O., Lee, J.-C., *Carbon Energy*, 2024. doi: [10.1002/cey2.564](https://doi.org/10.1002/cey2.564).
-9. Dunn, J., Crossley-Lewis, J. M., McCluskey, A. R., Jackson, F., Buda, C., Sunley, G., Mulholland, A. J., Allan, N, L. [*ChemRxiv:chemrxiv-2024-r3lpq-v2](https://doi.org/10.26434/chemrxiv-2024-r3lpq-v2).
+9. Dunn, J., Crossley-Lewis, J. M., McCluskey, A. R., Jackson, F., Buda, C., Sunley, G., Mulholland, A. J., Allan, N, L. [*ChemRxiv*:chemrxiv-2024-r3lpq-v2](https://doi.org/10.26434/chemrxiv-2024-r3lpq-v2).
 10. McCluskey, A. R., Coles, S. W., Morgan, B. J. [*arXiv*:2305.18244](https://arxiv.org/abs/2305.18244).
 11. Coles, S. W., Morgan, B. J., Rotenberg, B. [*arXiv*:2310.06149](https://arxiv.org/abs/2310.06149).
