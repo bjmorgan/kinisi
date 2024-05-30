@@ -9,7 +9,9 @@
     > the `parser_params` should use in the input unit (i.e. femtoseconds VASP objects or picoseconds for MDAnalysis objects). 
     > The `msd` attribute are in units of **squared-angstrom** and the `dt` attribute are in units of **picoseconds**. 
     > The diffusion or jump-diffusion coefficient has units of **squared-centimetre per second** and the conductivity is 
-    > **millisiemens per centimetre** (these were chosen as they are common units for these parameters).
+    > **millisiemens per centimetre** (these were chosen as they are common units for these
+    > parameters, see [this issue](https://github.com/bjmorgan/kinisi/issues/65#issuecomment-2138777775) for
+    > more discussion).
 
 - I have been using `kinisi` in my research and would like to cite the package, how should I do this?
 
