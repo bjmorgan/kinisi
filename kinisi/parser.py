@@ -112,7 +112,7 @@ class Parser:
         d_coords = d_coords - np.round(d_coords)
         f_disp = np.cumsum(d_coords, axis=1)
         latt = np.array(latt)
-        disp = np.einsum('ijk,jkl->jik', f_disp, latt[1:])
+        disp = np.einsum('ijk,jkl->jil', f_disp, latt[1:])
         disp = np.transpose(disp, (1, 0, 2))
         return disp
 
