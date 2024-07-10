@@ -10,7 +10,7 @@ Here we will try and list publications that have used or cited `kinisi` (if you 
 6. Moustafa, S. G., Andrew J. Schultz, A. J., Douglas, J. F., *J. Chem. Phys.*, **160**, 024114, 2024. doi: [10.1063/5.0188081](https://doi.org/10.1063/5.0188081).
 7. McColl, K., Coles, S.W., Zarabadi-Poor, P., Morgan, B. J., Islam, M. S., *Nat. Mater.*, **23**, 826–833, 2024. doi: [10.1038/s41563-024-01873-5](https://doi.org/10.1038/s41563-024-01873-5).
 8. Choi, Y.-S., Lee, Y., Ahn, H., Jeong, J., Chung, K. Y., Scanlon, D. O., Lee, J.-C., *Carbon Energy*, 2024. doi: [10.1002/cey2.564](https://doi.org/10.1002/cey2.564).
-9. Dunn, J., Crossley-Lewis, J. M., McCluskey, A. R., Jackson, F., Buda, C., Sunley, G., Mulholland, A. J., Allan, N, L., *Catal. Sci. Technolo.*, 2024. doi:[10.1039/D4CY00506F](https://doi.org/10.1039/D4CY00506F).
+9. Dunn, J., Crossley-Lewis, J. M., McCluskey, A. R., Jackson, F., Buda, C., Sunley, G., Mulholland, A. J., Allan, N, L., *Catal. Sci. Technolo.*, **14**, 3674-3681, 2024. doi:[10.1039/D4CY00506F](https://doi.org/10.1039/D4CY00506F).
 10. Hu, J., Squires, A. G., Kondek, J., Johnson, M. J., Youd, A. B., Vadhva, P. Paul, P., Withers, P. J., Di Michiel, M., Keeble, D. S., Hansen, M. R., Scanlon, D. O., Rettie, A. J. E. [*ChemRxiv*-2024-3s0kh](https://doi.org/10.26434/chemrxiv-2024-3s0kh).
 11. McCluskey, A. R., Coles, S. W., Morgan, B. J. [*arXiv*:2305.18244](https://arxiv.org/abs/2305.18244).
 12. Coles, S. W., Morgan, B. J., Rotenberg, B. [*arXiv*:2310.06149](https://arxiv.org/abs/2310.06149).
