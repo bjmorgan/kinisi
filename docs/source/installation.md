@@ -8,6 +8,12 @@ The [latest release](https://github.com/bjmorgan/kinisi/releases/latest) of `kin
 $ pip install kinisi
 ```
 
+Or using `conda`/`mamba`: 
+
+```console
+$ conda install kinisi
+```
+
 ## Bleeding-edge
 
 Alternatively, the latest development build can be installed  [Github](https://github.com/bjmorgan/kinisi), which can be installed directly from Github with `pip`:
