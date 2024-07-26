@@ -42,7 +42,7 @@ class Bootstrap:
     """
     The top-level class for bootstrapping.
 
-    :param delta_t: An array of the timestep values.
+    :param delta_t: An array of the time interval values.
     :param disp_3d: A list of arrays, where each array has the axes [atom, displacement observation, dimension].
         There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as
         the number of observations is not necessary the same at each data point.
@@ -526,12 +526,12 @@ class MSDBootstrap(Bootstrap):
     Perform a bootstrap resampling to obtain accurate estimates for the mean and uncertainty for the mean
     squared displacements.
 
-    :param delta_t: An array of the timestep values, units of ps
+    :param delta_t: An array of the time interval values, units of ps
     :param disp_3d: A list of arrays, where each array has the axes
         :code:`[atom, displacement observation, dimension]`. There is one array in the list for each
         delta_t value. Note: it is necessary to use a list of arrays as the number of observations is
         not necessary the same at each data point.
-    :param n_o: Number of statistically independent observations of the MSD at each timestep.
+    :param n_o: Number of statistically independent observations of the MSD at each time interval.
     :param sub_sample_dt: The frequency in observations to be sampled. Default is :py:attr:`1` (every observation)
     :param bootstrap: Should bootstrap resampling be used to estimate the observed MSD distribution.
         Optional, default is :py:attr:`False`.
@@ -607,12 +607,12 @@ class MSTDBootstrap(Bootstrap):
     Perform a bootstrap resampling to obtain accurate estimates for the mean and uncertainty for the total
     mean squared displacements.
 
-    :param delta_t: An array of the timestep values.
+    :param delta_t: An array of the time interval values.
     :param disp_3d: A list of arrays, where each array has the axes
         :code:`[atom, displacement observation, dimension]`. There is one array in the list for each
         delta_t value. Note: it is necessary to use a list of arrays as the number of observations is
         not necessary the same at each data point.
-    :param n_o: Number of statistically independent observations of the MSD at each timestep.
+    :param n_o: Number of statistically independent observations of the MSD at each time interval.
     :param sub_sample_dt: The frequency in observations to be sampled. Optional, default
         is :py:attr:`1` (every observation).
     :param bootstrap: Should bootstrap resampling be used to estimate the observed MSD distribution.
@@ -693,14 +693,14 @@ class MSCDBootstrap(Bootstrap):
     Perform a bootstrap resampling to obtain accurate estimates for the mean and uncertainty for the mean
     squared charge displacements.
 
-    :param delta_t: An array of the timestep values.
+    :param delta_t: An array of the time interval values.
     :param disp_3d: A list of arrays, where each array has the axes
         :code:`[atom, displacement observation, dimension]`. There is one array in the list for each
         delta_t value. Note: it is necessary to use a list of arrays as the number of observations is
         not necessary the same at each data point.
     :param ionic_charge: The charge on the mobile ions, either an array with a value for each ion or a scalar
         if all values are the same.
-    :param n_o: Number of statistically independent observations of the MSD at each timestep.
+    :param n_o: Number of statistically independent observations of the MSD at each time interval.
     :param bootstrap: Should bootstrap resampling be used to estimate the observed MSD distribution.
         Optional, default is :py:attr:`False`.
     :param block: Should the blocking method be used to estimate the variance, if :py:attr:`False` an 
@@ -839,8 +839,8 @@ def _populate_covariance_matrix(variances: np.ndarray, n_samples: np.ndarray) ->
     """
     Populate the covariance matrix for the generalised least squares methodology.
 
-    :param variances: The variances for each timestep
-    :param n_samples: Number of independent trajectories for each timestep
+    :param variances: The variances for each time interval
+    :param n_samples: Number of independent trajectories for each time interval
 
     :return: An estimated covariance matrix for the system
     """

@@ -22,7 +22,7 @@ class JumpDiffusionAnalyzer(Analyzer):
     The time-dependence of the MSTD is then modelled in a generalised least squares fashion to obtain the jump
     diffusion coefficient and offset using Markov chain Monte Carlo maximum likelihood sampling.
 
-    :param delta_t: An array of the timestep values.
+    :param delta_t: An array of the time interval values.
     :param disp_3d: A list of arrays, where each array has the axes [atom, displacement observation, dimension].
         There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as
         the number of observations is not necessary the same at each data point.

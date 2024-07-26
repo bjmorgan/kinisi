@@ -17,7 +17,7 @@ class Analyzer:
     :py:class:`kinisi.analyze.JumpDiffusionAnalyzer` and :py:class:`kinisi.analyze.ConductivityAnalyzer` classes.
     Therefore all of the properties here are available to these other classes.
 
-    :param delta_t: An array of the timestep values.
+    :param delta_t: An array of the time interval values.
     :param disp_3d: A list of arrays, where each array has the axes :code:`[atom, displacement observation,
         dimension]`. There is one array in the list for each delta_t value. Note: it is necessary to use a
         list of arrays as the number of observations is not necessary the same at each data point.
