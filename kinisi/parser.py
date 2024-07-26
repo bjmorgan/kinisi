@@ -31,13 +31,13 @@ class Parser:
     :param time_step: Time step, in picoseconds, between steps in trajectory.
     :param step_skip: Sampling freqency of the trajectory (time_step is multiplied by this number to get the real
         time between output from the simulation file).
-    :param min_dt: Minimum timestep to be evaluated, in the simulation units. Optional, defaults to the
+    :param min_dt: Minimum time interval to be evaluated, in the simulation units. Optional, defaults to the
         produce of :py:attr:`time_step` and :py:attr:`step_skip`.
-    :param max_dt: Maximum timestep to be evaluated, in the simulation units. Optional, defaults to the
+    :param max_dt: Maximum time interval to be evaluated, in the simulation units. Optional, defaults to the
         length of the simulation.
-    :param n_steps: Number of steps to be used in the timestep function. Optional, defaults to :py:attr:`100`
+    :param n_steps: Number of steps to be used in the time interval function. Optional, defaults to :py:attr:`100`
         unless this is fewer than the total number of steps in the trajectory when it defaults to this number.
-    :param spacing: The spacing of the steps that define the timestep, can be either :py:attr:`'linear'` or
+    :param spacing: The spacing of the steps that define the time interval, can be either :py:attr:`'linear'` or
         :py:attr:`'logarithmic'`. If :py:attr:`'logarithmic'` the number of steps will be less than or equal
         to that in the :py:attr:`n_steps` argument, such that all values are unique. Optional, defaults to
         :py:attr:`linear`.
@@ -87,9 +87,9 @@ class Parser:
         if n_steps > (drift_corrected.shape[1] - min_dt_int) + 1:
             n_steps = int(drift_corrected.shape[1] - min_dt_int) + 1
 
-        self.timesteps = self.get_timesteps(n_steps, spacing)
+        self.time_intervals = self.get_time_intervals(n_steps, spacing)
 
-        self.delta_t, self.disp_3d, self._n_o = self.get_disps(self.timesteps, drift_corrected, progress)
+        self.delta_t, self.disp_3d, self._n_o = self.get_disps(self.time_intervals, drift_corrected, progress)
 
     @property
     def volume(self) -> float:
@@ -147,14 +147,14 @@ class Parser:
             drift_corrected = disp
         return drift_corrected
 
-    def get_timesteps(self, n_steps: int, spacing: str) -> np.ndarray:
+    def get_time_intervals(self, n_steps: int, spacing: str) -> np.ndarray:
         """
-        Calculate the smoothed timesteps to be used.
+        Calculate the smoothed time intervals to be used.
 
         :param n_steps: Number of time steps.
         :param step_spacing:
 
-        :return: Smoothed timesteps.
+        :return: Smoothed time intervals.
         """
         min_dt = int(self.min_dt / (self.step_skip * self.time_step))
         max_dt = int(self.max_dt / (self.step_skip * self.time_step))
@@ -168,29 +168,29 @@ class Parser:
             raise ValueError("Only linear or logarithmic spacing is allowed.")
 
     def get_disps(self,
-                  timesteps: np.ndarray,
+                  time_intervals: np.ndarray,
                   drift_corrected: np.ndarray,
                   progress: bool = True) -> Tuple[np.ndarray, List[np.ndarray], np.ndarray]:
         """
-        Calculate the displacement at each timestep.
+        Calculate the displacement at each time interval.
 
-        :param timesteps: Smoothed timesteps.
+        :param time_intervals: Smoothed time intervals.
         :param drift_corrected: Drift of framework corrected disp.
         :param progress: Print progress bars to screen. Defaults to :py:attr:`True`.
 
         :return: Tuple containing: time step intervals and raw displacement.
         """
-        delta_t = timesteps * self.time_step * self.step_skip
+        delta_t = time_intervals * self.time_step * self.step_skip
         disp_3d = []
         n_samples = np.array([])
         if progress:
-            iterator = tqdm(timesteps, desc='Getting Displacements')
+            iterator = tqdm(time_intervals, desc='Getting Displacements')
         else:
-            iterator = timesteps
+            iterator = time_intervals
         disp_mem = 0
         itemsize = drift_corrected.itemsize
-        for i, timestep in enumerate(iterator):
-            disp_mem += np.product(drift_corrected[self.indices, timestep::].shape) * itemsize
+        for i, time_interval in enumerate(iterator):
+            disp_mem += np.product(drift_corrected[self.indices, time_interval::].shape) * itemsize
             disp_mem += (len(self.indices) * drift_corrected.shape[-1]) * itemsize
         disp_mem *= 1e-9
         if disp_mem > self.memory_limit:
@@ -198,26 +198,26 @@ class Parser:
                               f"displacement values will use {disp_mem:.1e} GB. Please either increase "
                               "the memory_limit parameter or descrease the sampling rate (see "
                               "https://kinisi.readthedocs.io/en/latest/memory_limit.html).")
-        for i, timestep in enumerate(iterator):
+        for i, time_interval in enumerate(iterator):
             if self.sampling == 'single-origin':
                 disp = drift_corrected[self.indices, i:i + 1]
-                if np.multiply(*disp[:, ::timestep].shape[:2]) <= 1:
+                if np.multiply(*disp[:, ::time_interval].shape[:2]) <= 1:
                     continue
                 disp_3d.append(disp)
             elif self.sampling == 'multi-origin':
                 disp = np.concatenate([
-                    drift_corrected[self.indices, np.newaxis, timestep - 1],
-                    np.subtract(drift_corrected[self.indices, timestep:], drift_corrected[self.indices, :-timestep])
+                    drift_corrected[self.indices, np.newaxis, time_interval - 1],
+                    np.subtract(drift_corrected[self.indices, time_interval:], drift_corrected[self.indices, :-time_interval])
                 ],
                                       axis=1)
-                if np.multiply(*disp[:, ::timestep].shape[:2]) <= 1:
+                if np.multiply(*disp[:, ::time_interval].shape[:2]) <= 1:
                     continue
                 disp_3d.append(disp)
             else:
                 raise ValueError(f"The sampling option of {self.sampling} is unrecognized, "
                                  "please use 'multi-origin' or 'single-origin'.")
-            # n_samples = np.append(n_samples, np.multiply(*disp[:, ::timestep].shape[:2]))
-            n_samples = np.append(n_samples, disp.shape[0] * timesteps[-1] / timestep)
+            # n_samples = np.append(n_samples, np.multiply(*disp[:, ::time_interval].shape[:2]))
+            n_samples = np.append(n_samples, disp.shape[0] * time_intervals[-1] / time_interval)
         return delta_t, disp_3d, n_samples
 
 
@@ -232,13 +232,13 @@ class ASEParser(Parser):
         time between output from the simulation file).
     :param sub_sample_traj: Multiple of the :py:attr:`time_step` to sub sample at. Optional, defaults
         to :py:attr:`1` where all timesteps are used.
-    :param min_dt: Minimum timestep to be evaluated, in the simulation units. Optional, defaults to the
+    :param min_dt: Minimum time interval to be evaluated, in the simulation units. Optional, defaults to the
         produce of :py:attr:`time_step` and :py:attr:`step_skip`.
-    :param max_dt: Maximum timestep to be evaluated, in the simulation units. Optional, defaults to the
+    :param max_dt: Maximum time interval to be evaluated, in the simulation units. Optional, defaults to the
         length of the simulation.
-    :param n_steps: Number of steps to be used in the timestep function. Optional, defaults to :py:attr:`100`
+    :param n_steps: Number of steps to be used in the time interval function. Optional, defaults to :py:attr:`100`
         unless this is fewer than the total number of steps in the trajectory when it defaults to this number.
-    :param spacing: The spacing of the steps that define the timestep, can be either :py:attr:`'linear'` or
+    :param spacing: The spacing of the steps that define the time interval, can be either :py:attr:`'linear'` or
         :py:attr:`'logarithmic'`. If :py:attr:`'logarithmic'` the number of steps will be less than or equal
         to that in the :py:attr:`n_steps` argument, such that all values are unique. Optional, defaults to
         :py:attr:`linear`.
@@ -366,13 +366,13 @@ class PymatgenParser(Parser):
         time between output from the simulation file).
     :param sub_sample_traj: Multiple of the :py:attr:`time_step` to sub sample at. Optional, defaults
         to :py:attr:`1` where all timesteps are used.
-    :param min_dt: Minimum timestep to be evaluated, in the simulation units. Optional, defaults to the
+    :param min_dt: Minimum time interval to be evaluated, in the simulation units. Optional, defaults to the
         produce of :py:attr:`time_step` and :py:attr:`step_skip`.
-    :param max_dt: Maximum timestep to be evaluated, in the simulation units. Optional, defaults to the
+    :param max_dt: Maximum time interval to be evaluated, in the simulation units. Optional, defaults to the
         length of the simulation.
-    :param n_steps: Number of steps to be used in the timestep function. Optional, defaults to :py:attr:`100`
+    :param n_steps: Number of steps to be used in the time interval function. Optional, defaults to :py:attr:`100`
         unless this is fewer than the total number of steps in the trajectory when it defaults to this number.
-    :param spacing: The spacing of the steps that define the timestep, can be either :py:attr:`'linear'` or
+    :param spacing: The spacing of the steps that define the time interval, can be either :py:attr:`'linear'` or
         :py:attr:`'logarithmic'`. If :py:attr:`'logarithmic'` the number of steps will be less than or equal
         to that in the :py:attr:`n_steps` argument, such that all values are unique. Optional, defaults to
         :py:attr:`linear`.
@@ -519,13 +519,13 @@ class MDAnalysisParser(Parser):
         to :py:attr:`1` where all atoms are used.
     :param sub_sample_traj: Multiple of the :py:attr:`time_step` to sub sample at. Optional,
         defaults to :py:attr:`1` where all timesteps are used.
-    :param min_dt: Minimum timestep to be evaluated, in the simulation units. Optional, defaults to the
+    :param min_dt: Minimum time interval to be evaluated, in the simulation units. Optional, defaults to the
         produce of :py:attr:`time_step` and :py:attr:`step_skip`.
-    :param max_dt: Maximum timestep to be evaluated, in the simulation units. Optional, defaults to the
+    :param max_dt: Maximum time interval to be evaluated, in the simulation units. Optional, defaults to the
         length of the simulation.
-    :param n_steps: Number of steps to be used in the timestep function. Optional, defaults to :py:attr:`100`
+    :param n_steps: Number of steps to be used in the time interval function. Optional, defaults to :py:attr:`100`
         unless this is fewer than the total number of steps in the trajectory when it defaults to this number.
-    :param spacing: The spacing of the steps that define the timestep, can be either :py:attr:`'linear'` or
+    :param spacing: The spacing of the steps that define the time interval, can be either :py:attr:`'linear'` or
         :py:attr:`'logarithmic'`. If :py:attr:`'logarithmic'` the number of steps will be less than or equal
         to that in the :py:attr:`n_steps` argument, such that all values are unique. Optional, defaults to
         :py:attr:`linear`.
@@ -535,7 +535,6 @@ class MDAnalysisParser(Parser):
         trajectories. Optional, defaults to :py:attr:`'multi-origin'`.
     :param memory_limit: Upper limit in the amount of computer memory that the displacements can occupy in
         gigabytes (GB). Optional, defaults to :py:attr:`8.`.
-    :param n_steps: Number of steps to be used in the timestep function. Optional, defaults to all of them.
     :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
     :param specie_indices: Optional, list of indices to calculate diffusivity for as a list of indices. Specie 
         must be set to None for this to function. Molecules can be specificed as a list of lists of indices.
