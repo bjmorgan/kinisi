@@ -119,10 +119,10 @@ class Parser:
 
         coords = np.concatenate(coords, axis=1)  #change array shape and removes extra dim
         latt_inv = np.linalg.inv(latt)  #invert lattice vectors
-        wrapped = np.einsum('ijk,jkl->ijk', coords, latt)  #apply lattice vectors to get cartisian coords
+        wrapped = np.einsum('ijk,jkl->ijl', coords, latt)  #apply lattice vectors to get cartisian coords
         wrapped_diff = np.diff(wrapped, axis=1)  #calculate difference in cart
 
-        diff_diff = np.einsum('ijk,jkl->ijk', np.floor(np.einsum('ijk,jkl->ijk', wrapped_diff, latt_inv[1:]) + (1 / 2)),
+        diff_diff = np.einsum('ijk,jkl->ijl', np.floor(np.einsum('ijk,jkl->ijl', wrapped_diff, latt_inv[1:]) + (1 / 2)),
                               latt[1:])  # calculated the correction needed for the change in cell dimensions
         unwrapped_disp = wrapped_diff - diff_diff
 
