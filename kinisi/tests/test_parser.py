@@ -28,7 +28,7 @@ class TestParser(unittest.TestCase):
     Unit tests for parser module
     """
 
-    def test_parser_init_timestep(self):
+    def test_parser_init_time_interval(self):
         p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=20)
         assert_equal(p.time_step, time_step)
 
@@ -56,15 +56,15 @@ class TestParser(unittest.TestCase):
         assert_equal(p.disp_3d[0].shape[1], 81)
         assert_equal(p.disp_3d[0].shape[2], 3)
 
-    def test_get_timesteps(self):
+    def test_get_time_intervals(self):
         p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=20)
-        timesteps = p.get_timesteps(80, 'linear')
-        assert_equal(timesteps, np.linspace(20, 100, 80, dtype=int))
+        time_intervals = p.get_time_intervals(80, 'linear')
+        assert_equal(time_intervals, np.linspace(20, 100, 80, dtype=int))
 
-    def test_get_timesteps_min_dt_zero(self):
+    def test_get_time_intervals_min_dt_zero(self):
         p = parser.Parser(dc, indices, [], time_step, step_skip, min_dt=0)
-        timesteps = p.get_timesteps(100, 'logarithmic')
-        assert_equal(timesteps, np.unique(np.geomspace(1, 100, 100, dtype=int)))
+        time_intervals = p.get_time_intervals(100, 'logarithmic')
+        assert_equal(time_intervals, np.unique(np.geomspace(1, 100, 100, dtype=int)))
 
     def test_correct_drift_no_framework(self):
         corrected = parser.Parser.correct_drift([], dc)
@@ -116,7 +116,7 @@ class TestParser(unittest.TestCase):
         assert_almost_equal(data.step_skip, 50)
         assert_equal(data.indices, list(range(len(molecules))))
 
-    def test_pymatgen_big_timestep(self):
+    def test_pymatgen_big_time_interval(self):
         xd = Xdatcar(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_XDATCAR.gz'))
         da_params = {'specie': 'Li', 'time_step': 20.0, 'step_skip': 100}
         data = parser.PymatgenParser(xd.structures, **da_params)
