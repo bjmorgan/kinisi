@@ -11,7 +11,7 @@ $ pip install kinisi
 Or using `conda`/`mamba`: 
 
 ```console
-$ conda install kinisi
+$ conda install -c conda-forge kinisi
 ```
 
 ## Bleeding-edge
