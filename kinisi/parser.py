@@ -190,7 +190,7 @@ class Parser:
         disp_mem = 0
         itemsize = drift_corrected.itemsize
         for i, time_interval in enumerate(iterator):
-            disp_mem += np.product(drift_corrected[self.indices, time_interval::].shape) * itemsize
+            disp_mem += np.prod(drift_corrected[self.indices, time_interval::].shape) * itemsize
             disp_mem += (len(self.indices) * drift_corrected.shape[-1]) * itemsize
         disp_mem *= 1e-9
         if disp_mem > self.memory_limit:
