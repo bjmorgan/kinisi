@@ -16,7 +16,7 @@ $ conda install -c conda-forge kinisi
 
 ## Bleeding-edge
 
-Alternatively, the latest development build can be installed  [Github](https://github.com/bjmorgan/kinisi), which can be installed directly from Github with `pip`:
+Alternatively, the latest development build can be installed  [GitHub](https://github.com/bjmorgan/kinisi), which can be installed directly from GitHub with `pip`:
 
 ```console
 $ pip install git+https://github.com/bjmorgan/kinisi.git
