@@ -2,7 +2,7 @@
 Calculate the diffusion coefficient.
 """
 
-# Copyright (c) kinisi developers. 
+# Copyright (c) kinisi developers.
 # Distributed under the terms of the MIT License.
 # author: Andrew R. McCluskey (arm61)
 
@@ -17,13 +17,27 @@ from emcee import EnsembleSampler
 
 class Diffusion:
     """
-    Class to calculate the diffusion coefficient.
+    The class for the calcualtion of the self-diffusion coefficient. 
+
+    :param msd: A :py:class:`scipp.DataArray` object containing the relevant mean-squared displacement
+        data and number of independent samples. 
     """
+
     def __init__(self, msd: sc.DataArray):
         self.msd = msd
-    
+        self.gradient = None
+        self.intercept = None
+        self._diffusion_coefficient = None
+        self._start_dt = None
+        self._cond_max = None
+        self._covariance_matrix = None
+
     @property
     def covariance_matrix(self) -> sc.Variable:
+        """
+        :return: The covariance matrix as a :py:mod:`scipp` object, with dimensions of `time_interval1` and
+            `time_interval2`.
+        """
         return self._covariance_matrix
 
     def bayesian_regression(self,
@@ -36,18 +50,31 @@ class Diffusion:
                             n_thin: int = 10,
                             progress: bool = True,
                             random_state: np.random.mtrand.RandomState = None):
-        if random_state is not None: 
+        """
+        Perform the Bayesian regression with a linear model against the observed data. 
+        
+        :param start_dt: The time at which the diffusion regime begins.
+        :param cond_max: The maximum condition number of the covariance matrix. Optional, default is :py:attr:`1e16`.
+        :param fit_intercept: Whether to fit an intercept. Optional, default is :py:attr:`True`.
+        :param n_samples: The number of MCMC samples to take. Optional, default is :py:attr:`1000`.
+        :param n_walkers: The number of walkers to use in the MCMC. Optional, default is :py:attr:`32`.
+        :param n_burn: The number of burn-in samples to discard. Optional, default is :py:attr:`500`.
+        :param n_thin: The thinning factor for the MCMC samples. Optional, default is :py:attr:`10`.
+        :param progress: Whether to show the progress bar. Optional, default is :py:attr:`True`.
+        :param random_state: The random state to use for the MCMC. Optional, default is :py:attr:`None`.
+        """
+        if random_state is not None:
             np.random.seed(random_state.get_state()[1][1])
-            
+
         self._start_dt = start_dt
         self._cond_max = cond_max
-    
+
         diff_regime = np.argwhere(self.msd.coords['timestep'] >= self._start_dt)[0][0]
         self._covariance_matrix = self.compute_covariance_matrix()
-    
+
         x_values = self.msd.coords['timestep'][diff_regime:].values
         y_values = self.msd['timestep', diff_regime:].values
-        
+
         _, logdet = np.linalg.slogdet(self._covariance_matrix.values[diff_regime:, diff_regime:])
         logdet += np.log(2 * np.pi) * y_values.size
         inv = pinvh(self._covariance_matrix.values[diff_regime:, diff_regime:])
@@ -64,7 +91,7 @@ class Diffusion:
             diff = (model - y_values)
             logl = -0.5 * (logdet + np.matmul(diff.T, np.matmul(inv, diff)))
             return logl
-    
+
         ols = linregress(x_values, y_values)
         slope = ols.slope
         intercept = 1e-20
@@ -91,38 +118,67 @@ class Diffusion:
         #     sampler._random = random_state
         sampler.run_mcmc(pos, n_samples + n_burn, progress=progress, progress_kwargs={'desc': "Likelihood Sampling"})
         flatchain = sampler.get_chain(flat=True, thin=n_thin, discard=n_burn)
-    
-        self.gradient = sc.array(dims=['samples'], values=flatchain[:, 0], unit=(self.msd.unit / self.msd.coords['timestep'].unit))
-        self.intercept = None
+
+        self.gradient = sc.array(dims=['samples'],
+                                 values=flatchain[:, 0],
+                                 unit=(self.msd.unit / self.msd.coords['timestep'].unit))
         if fit_intercept:
             self.intercept = sc.array(dims=['samples'], values=flatchain[:, 1], unit=self.msd.unit)
 
     def diffusion(self, start_dt: sc.Variable, **kwargs):
+        """
+        Calculation of the diffusion coefficient. 
+        
+        :param start_dt: The time at which the diffusion regime begins.
+        :param kwargs: Additional keyword arguments to pass to :py:func:`bayesian_regression`.
+        """
         self.bayesian_regression(start_dt=start_dt, **kwargs)
         self._diffusion_coefficient = sc.to_unit(self.gradient / (2 * self.msd.coords['dimensionality'].value), 'cm2/s')
 
     @property
     def D(self) -> sc.Variable:
+        """
+        :return: The diffusion coefficient as a :py:mod:`scipp` object.
+        """
         return self._diffusion_coefficient
 
     def compute_covariance_matrix(self) -> sc.Variable:
+        """
+        Compute the covariance matrix for the diffusion coefficient calculation.
+        
+        :returns: A :py:mod:`scipp` object containing the covariance matrix.
+        """
         cov = np.zeros((self.msd.data.variances.size, self.msd.data.variances.size))
         for i in range(0, self.msd.data.variances.size):
-                for j in range(i, self.msd.data.variances.size):
-                    ratio = self.msd.coords['n_samples'].values[i] / self.msd.coords['n_samples'].values[j]
-                    value = ratio * self.msd.data.variances[i]
-                    cov[i, j] = value
-                    cov[j, i] = np.copy(cov[i, j])
-        return sc.array(dims=['timestep1', 'timestep2'], values=minimum_eigenvalue_method(cov), unit=self.msd.unit**2)
+            for j in range(i, self.msd.data.variances.size):
+                ratio = self.msd.coords['n_samples'].values[i] / self.msd.coords['n_samples'].values[j]
+                value = ratio * self.msd.data.variances[i]
+                cov[i, j] = value
+                cov[j, i] = np.copy(cov[i, j])
+        return sc.array(dims=['time_interval1', 'time_interval2'],
+                        values=minimum_eigenvalue_method(cov),
+                        unit=self.msd.unit**2)
 
 
-def minimum_eigenvalue_method(cov: np.ndarray) -> sc.Variable:
-    ee = np.linalg.eig(cov)
-    ev = ee.eigenvalues
-    new_ev = np.copy(ev)
-    T = ev[0] / 1e16
-    new_ev[np.where(new_ev < T)] = T
-    new_cov = np.real(ee.eigenvectors @ np.diag(ev) @ ee.eigenvectors.T)
+def minimum_eigenvalue_method(cov: np.ndarray, cond_max=1e16) -> np.ndarray:
+    """
+    Implementation of the matrix reconditioning method known as the minimum
+    eigenvalue method, as outlined in doi:10.1080/16000870.2019.1696646. This
+    should produce a matrix with a condition number of :py:attr:`cond_max` based
+    on the eigenvalues and eigenvectors of the input matrix. 
+
+    :param matrix: Matrix to recondition.
+    :param cond_max: Expected condition number of output matrix. Optional,
+        default is :py:attr:`1e16`.
+
+    :return: Reconditioned matrix.
+    """
+    eigenthings = np.linalg.eig(cov)
+    eigenvalues = eigenthings.eigenvalues
+    new_eigenvalues = np.copy(eigenvalues)
+    T = eigenvalues[0] / cond_max
+    new_eigenvalues[np.where(new_eigenvalues < T)] = T
+    new_cov = np.real(eigenthings.eigenvectors @ np.diag(new_eigenvalues) @ eigenthings.eigenvectors.T)
     return cov_nearest(new_cov)
 
 
