@@ -28,6 +28,7 @@ class Diffusion:
         self.gradient = None
         self.intercept = None
         self._diffusion_coefficient = None
+        self.jump_diffusion_coefficient = None
         self._start_dt = None
         self._cond_max = None
         self._covariance_matrix = None
@@ -93,6 +94,7 @@ class Diffusion:
             return logl
 
         ols = linregress(x_values, y_values)
+        print(ols)
         slope = ols.slope
         intercept = 1e-20
         if slope < 0:
@@ -135,12 +137,33 @@ class Diffusion:
         self.bayesian_regression(start_dt=start_dt, **kwargs)
         self._diffusion_coefficient = sc.to_unit(self.gradient / (2 * self.msd.coords['dimensionality'].value), 'cm2/s')
 
+
+    def jump_diffusion(self, start_dt: sc.Variable, **kwargs):
+        """
+        Calculation of the diffusion coefficient. 
+
+        :param start_dt: The time at which the diffusion regime begins.
+        :param kwargs: Additional keyword arguments to pass to :py:func:`bayesian_regression`.
+        """
+
+        self.bayesian_regression(start_dt=start_dt, **kwargs)
+        # * self.msd.coords['n_samples'][0].value
+        self._jump_diffusion_coefficient = sc.to_unit(self.gradient / (2 * self.msd.coords['dimensionality'].value * 192), 'cm2/s')
+
     @property
     def D(self) -> sc.Variable:
         """
         :return: The diffusion coefficient as a :py:mod:`scipp` object.
         """
         return self._diffusion_coefficient
+    
+
+    @property
+    def D_J(self) -> sc.Variable:
+        """
+        :return: The jump diffusion coefficient as a :py:mod:`scipp` object.
+        """
+        return self._jump_diffusion_coefficient
 
     def compute_covariance_matrix(self) -> sc.Variable:
         """
