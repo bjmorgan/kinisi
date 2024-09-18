@@ -23,8 +23,9 @@ class Diffusion:
         data and number of independent samples. 
     """
 
-    def __init__(self, msd: sc.DataArray):
+    def __init__(self, msd: sc.DataArray, n_atoms=None):
         self.msd = msd
+        self.n_atoms = n_atoms
         self.gradient = None
         self.intercept = None
         self._diffusion_coefficient = None
@@ -148,7 +149,7 @@ class Diffusion:
 
         self.bayesian_regression(start_dt=start_dt, **kwargs)
         # * self.msd.coords['n_samples'][0].value
-        self._jump_diffusion_coefficient = sc.to_unit(self.gradient / (2 * self.msd.coords['dimensionality'].value * 192), 'cm2/s')
+        self._jump_diffusion_coefficient = sc.to_unit(self.gradient / (2 * self.msd.coords['dimensionality'].value * self.n_atoms), 'cm2/s')
 
     @property
     def D(self) -> sc.Variable:

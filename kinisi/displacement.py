@@ -76,8 +76,16 @@ def calculate_mstd(p: parser.Parser, progress: bool = True) -> sc.Variable:
                         coords={
                             'timestep': p.dt['timestep', :len(mstd)],
                             'n_samples': sc.array(dims=['timestep'], values=n_samples),
-                            'dimensionality': p.dimensionality
+                            'dimensionality': p.dimensionality,
                         })
+
+def n_atoms(p: parser.Parser, progress: bool = True) -> sc.Variable:
+    """
+    Calculate the number of atoms
+    """
+
+    return sc.scalar(p.displacements.sizes['atom'])
+
 
 
 def calculate_mscd(p: parser.Parser, ionic_charge: sc.Variable, progress: bool = True) -> sc.Variable:

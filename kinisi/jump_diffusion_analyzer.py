@@ -10,7 +10,7 @@ and the collective motion of particles.
 from typing import Union, List
 import numpy as np
 import scipp as sc
-from kinisi.displacement import calculate_mstd
+from kinisi.displacement import calculate_mstd, n_atoms
 from kinisi.diffusion import Diffusion
 from kinisi.parser import Parser, PymatgenParser
 from kinisi.analyzer import Analyzer
@@ -80,9 +80,8 @@ class JumpDiffusionAnalyzer(Analyzer):
         """
         p = super()._from_Xdatcar(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit, progress)
         p.mstd = calculate_mstd(p.trajectory, progress)
+        p.n_atoms = n_atoms(p.trajectory)
         return p
-
-
 
 
     def jump_diffusion(self, start_dt: sc.Variable, diffusion_params: Union[dict, None] = None) -> None:
@@ -95,7 +94,7 @@ class JumpDiffusionAnalyzer(Analyzer):
         """
         if diffusion_params is None:
             diffusion_params = {}
-        self.diff = Diffusion(msd = self.mstd)
+        self.diff = Diffusion(msd = self.mstd, n_atoms = self.n_atoms)
         self.diff.jump_diffusion(start_dt, **diffusion_params)
 
     @property
