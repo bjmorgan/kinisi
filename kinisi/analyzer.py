@@ -73,6 +73,17 @@ class Analyzer:
             p = PymatgenParser(structures, specie, time_step, step_skip, dt, dimension, distance_unit, progress)
             return cls(p)
         
+    @property
+    def distributions(self) -> np.array:
+        """
+        :return: A distribution of samples for the linear relationship that can be used for easy
+        plotting of credible intervals.
+        """
+        if self.diff.intercept is not None:
+            return self.diff.gradient.values * self.mstd.coords['timestep'].values[:, np.newaxis] + self.diff.intercept.values
+        else:
+            return self.diff.gradient.values * self.mstd.coords['timestep'].values[:, np.newaxis]
+        
 
 def _flatten_list(this_list: list) -> list:
     """

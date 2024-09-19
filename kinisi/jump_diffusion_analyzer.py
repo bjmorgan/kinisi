@@ -96,11 +96,3 @@ class JumpDiffusionAnalyzer(Analyzer):
             diffusion_params = {}
         self.diff = Diffusion(msd = self.mstd, n_atoms = self.n_atoms)
         self.diff.jump_diffusion(start_dt, **diffusion_params)
-
-    @property
-    def distributions(self) -> np.array:
-        """
-        :return: A distribution of samples for the linear relationship that can be used for easy
-        plotting of credible intervals.
-        """
-        return self.diff.gradient.values * self.mstd.coords['timestep'].values[:, np.newaxis] + self.diff.intercept.values

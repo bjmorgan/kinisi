@@ -95,7 +95,6 @@ class Diffusion:
             return logl
 
         ols = linregress(x_values, y_values)
-        print(ols)
         slope = ols.slope
         intercept = 1e-20
         if slope < 0:
@@ -120,13 +119,13 @@ class Diffusion:
         #     pos = max_likelihood + max_likelihood * 1e-3 * random_state.randn(n_walkers, max_likelihood.size)
         #     sampler._random = random_state
         sampler.run_mcmc(pos, n_samples + n_burn, progress=progress, progress_kwargs={'desc': "Likelihood Sampling"})
-        flatchain = sampler.get_chain(flat=True, thin=n_thin, discard=n_burn)
+        self._flatchain = sampler.get_chain(flat=True, thin=n_thin, discard=n_burn)
 
         self.gradient = sc.array(dims=['samples'],
-                                 values=flatchain[:, 0],
+                                 values=self._flatchain[:, 0],
                                  unit=(self.msd.unit / self.msd.coords['timestep'].unit))
         if fit_intercept:
-            self.intercept = sc.array(dims=['samples'], values=flatchain[:, 1], unit=self.msd.unit)
+            self.intercept = sc.array(dims=['samples'], values=self._flatchain[:, 1], unit=self.msd.unit)
 
     def diffusion(self, start_dt: sc.Variable, **kwargs):
         """
@@ -148,7 +147,6 @@ class Diffusion:
         """
 
         self.bayesian_regression(start_dt=start_dt, **kwargs)
-        # * self.msd.coords['n_samples'][0].value
         self._jump_diffusion_coefficient = sc.to_unit(self.gradient / (2 * self.msd.coords['dimensionality'].value * self.n_atoms), 'cm2/s')
 
     @property
@@ -158,7 +156,6 @@ class Diffusion:
         """
         return self._diffusion_coefficient
     
-
     @property
     def D_J(self) -> sc.Variable:
         """
@@ -180,7 +177,7 @@ class Diffusion:
                 cov[i, j] = value
                 cov[j, i] = np.copy(cov[i, j])
         return sc.array(dims=['time_interval1', 'time_interval2'],
-                        values=minimum_eigenvalue_method(cov),
+                        values=minimum_eigenvalue_method(cov, self._cond_max),
                         unit=self.msd.unit**2)
 
 
