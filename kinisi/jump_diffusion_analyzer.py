@@ -80,8 +80,12 @@ class JumpDiffusionAnalyzer(Analyzer):
         """
         p = super()._from_Xdatcar(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit, progress)
         p.mstd = calculate_mstd(p.trajectory, progress)
-        p.n_atoms = n_atoms(p.trajectory)
         return p
+    
+    @property
+    def n_atoms(self):
+        """Property to access the n_atoms."""
+        return n_atoms(self.trajectory)
 
 
     def jump_diffusion(self, start_dt: sc.Variable, diffusion_params: Union[dict, None] = None) -> None:

@@ -81,9 +81,8 @@ def calculate_mstd(p: parser.Parser, progress: bool = True) -> sc.Variable:
 
 def n_atoms(p: parser.Parser, progress: bool = True) -> sc.Variable:
     """
-    Calculate the number of atoms
+    Return the number of atoms
     """
-
     return sc.scalar(p.displacements.sizes['atom'])
 
 
