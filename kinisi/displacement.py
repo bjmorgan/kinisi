@@ -63,7 +63,7 @@ def calculate_mstd(p: parser.Parser, progress: bool = True) -> sc.Variable:
     for di in iterator:
         disp = sc.concat([p.displacements['obs', di - 1], p.displacements['obs', di:] - p.displacements['obs', :-di]],
                          'obs')
-        n = (p.displacements.sizes['atom'] * p.dt_int['timestep', -1] / di).value / disp.sizes['atom']
+        n = (p.displacements.sizes['atom'] * p.dt_int['timestep', -1] / di).value / p.displacements.sizes['atom']
         s = sc.sum(sc.sum(disp, 'atom')**2, 'dimension')
         if s.size <= 1:
             continue

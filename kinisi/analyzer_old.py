@@ -8,7 +8,7 @@ This module contains the base class for the different :py:class:`Analyzer` objec
 
 from typing import Union, List
 import numpy as np
-from kinisi.parser import MDAnalysisParser, PymatgenParser, ASEParser
+from kinisi.parser_old import MDAnalysisParser, PymatgenParser, ASEParser
 
 
 class Analyzer:

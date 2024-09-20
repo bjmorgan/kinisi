@@ -647,7 +647,7 @@ class MSTDBootstrap(Bootstrap):
                  random_state: np.random.mtrand.RandomState = None,
                  progress: bool = True):
         super().__init__(delta_t, disp_3d, n_o, sub_sample_dt, dimension)
-        self._iterator = self.iterator(progress, range(int(len(self._displacements) / 2)))
+        self._iterator = self.iterator(progress, range(int(len(self._displacements))))
         if block:
             import pyblock
             print('You are using the blocking method to estimate variances, please cite '
@@ -876,7 +876,7 @@ def minimum_eigenvalue_method(matrix: np.ndarray, cond_max=1e16) -> np.ndarray:
 
     :param matrix: Matrix to recondition.
     :param cond_max: Expected condition number of output matrix. Optional,
-        default is :py:attr:`1e10`.
+        default is :py:attr:`1e16`.
 
     :return: Reconditioned matrix.
     """

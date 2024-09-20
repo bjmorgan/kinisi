@@ -9,8 +9,8 @@ and the collective motion of particles.
 
 from typing import Union, List
 import numpy as np
-from kinisi import diffusion
-from .analyzer import Analyzer
+from kinisi import diffusion_old as diffusion
+from .analyzer_old import Analyzer
 
 
 class JumpDiffusionAnalyzer(Analyzer):

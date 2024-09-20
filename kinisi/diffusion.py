@@ -71,15 +71,15 @@ class Diffusion:
         self._start_dt = start_dt
         self._cond_max = cond_max
 
-        diff_regime = np.argwhere(self.msd.coords['timestep'] >= self._start_dt)[0][0]
+        self.diff_regime = np.argwhere(self.msd.coords['timestep'] >= self._start_dt)[0][0]
         self._covariance_matrix = self.compute_covariance_matrix()
 
-        x_values = self.msd.coords['timestep'][diff_regime:].values
-        y_values = self.msd['timestep', diff_regime:].values
+        x_values = self.msd.coords['timestep'][self.diff_regime:].values
+        y_values = self.msd['timestep', self.diff_regime:].values
 
-        _, logdet = np.linalg.slogdet(self._covariance_matrix.values[diff_regime:, diff_regime:])
+        _, logdet = np.linalg.slogdet(self._covariance_matrix.values)
         logdet += np.log(2 * np.pi) * y_values.size
-        inv = pinvh(self._covariance_matrix.values[diff_regime:, diff_regime:])
+        inv = pinvh(self._covariance_matrix.values)
 
         def log_likelihood(theta: np.ndarray) -> float:
             """
@@ -177,7 +177,7 @@ class Diffusion:
                 cov[i, j] = value
                 cov[j, i] = np.copy(cov[i, j])
         return sc.array(dims=['time_interval1', 'time_interval2'],
-                        values=minimum_eigenvalue_method(cov, self._cond_max),
+                        values=cov_nearest(minimum_eigenvalue_method(cov[self.diff_regime:, self.diff_regime:], self._cond_max)),
                         unit=self.msd.unit**2)
 
 
@@ -200,7 +200,7 @@ def minimum_eigenvalue_method(cov: np.ndarray, cond_max=1e16) -> np.ndarray:
     T = eigenvalues[0] / cond_max
     new_eigenvalues[np.where(new_eigenvalues < T)] = T
     new_cov = np.real(eigenthings.eigenvectors @ np.diag(new_eigenvalues) @ eigenthings.eigenvectors.T)
-    return cov_nearest(new_cov)
+    return new_cov
 
 
 def _straight_line(abscissa: np.ndarray, gradient: float, intercept: float = 0.0) -> np.ndarray:
