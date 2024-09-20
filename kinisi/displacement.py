@@ -79,12 +79,12 @@ def calculate_mstd(p: parser.Parser, progress: bool = True) -> sc.Variable:
                             'dimensionality': p.dimensionality,
                         })
 
-def n_atoms(p: parser.Parser, progress: bool = True) -> sc.Variable:
-    """
-    Return the number of atoms
-    """
-    return sc.scalar(p.displacements.sizes['atom'])
 
+# def n_atoms(p: parser.Parser, progress: bool = True) -> sc.Variable:
+#     """
+#     Return the number of atoms
+#     """
+#     return sc.scalar(p.displacements.sizes['atom'])
 
 
 def calculate_mscd(p: parser.Parser, ionic_charge: sc.Variable, progress: bool = True) -> sc.Variable:

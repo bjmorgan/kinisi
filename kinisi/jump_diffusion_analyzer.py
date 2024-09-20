@@ -10,7 +10,7 @@ and the collective motion of particles.
 from typing import Union, List
 import numpy as np
 import scipp as sc
-from kinisi.displacement import calculate_mstd, n_atoms
+from kinisi.displacement import calculate_mstd
 from kinisi.diffusion import Diffusion
 from kinisi.parser import Parser, PymatgenParser
 from kinisi.analyzer import Analyzer
@@ -40,8 +40,7 @@ class JumpDiffusionAnalyzer(Analyzer):
 
     @classmethod
     def from_Xdatcar(cls,
-                     trajectory: Union['pymatgen.io.vasp.outputs.Xdatcar',
-                                       List['pymatgen.io.vasp.outputs.Xdatcar']],
+                     trajectory: Union['pymatgen.io.vasp.outputs.Xdatcar', List['pymatgen.io.vasp.outputs.Xdatcar']],
                      specie: Union['pymatgen.core.periodic_table.Element', 'pymatgen.core.periodic_table.Specie'],
                      time_step: sc.Variable,
                      step_skip: sc.Variable,
@@ -78,15 +77,15 @@ class JumpDiffusionAnalyzer(Analyzer):
         
         :returns: The :py:class:`DiffusionAnalyzer` object with the mean-squared displacement calculated.
         """
-        p = super()._from_Xdatcar(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit, progress)
+        p = super()._from_Xdatcar(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit,
+                                  progress)
         p.mstd = calculate_mstd(p.trajectory, progress)
         return p
-    
+
     @property
     def n_atoms(self):
         """Property to access the n_atoms."""
-        return n_atoms(self.trajectory)
-
+        return self.trajectory.displacements.sizes['atom']
 
     def jump_diffusion(self, start_dt: sc.Variable, diffusion_params: Union[dict, None] = None) -> None:
         """
@@ -98,5 +97,5 @@ class JumpDiffusionAnalyzer(Analyzer):
         """
         if diffusion_params is None:
             diffusion_params = {}
-        self.diff = Diffusion(msd = self.mstd, n_atoms = self.n_atoms)
+        self.diff = Diffusion(msd=self.mstd, n_atoms=self.n_atoms)
         self.diff.jump_diffusion(start_dt, **diffusion_params)
