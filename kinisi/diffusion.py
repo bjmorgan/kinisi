@@ -29,7 +29,7 @@ class Diffusion:
         self.gradient = None
         self.intercept = None
         self._diffusion_coefficient = None
-        self.jump_diffusion_coefficient = None
+        self._jump_diffusion_coefficient = None
         self._start_dt = None
         self._cond_max = None
         self._covariance_matrix = None
