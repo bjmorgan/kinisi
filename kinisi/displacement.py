@@ -80,13 +80,6 @@ def calculate_mstd(p: parser.Parser, progress: bool = True) -> sc.Variable:
                         })
 
 
-# def n_atoms(p: parser.Parser, progress: bool = True) -> sc.Variable:
-#     """
-#     Return the number of atoms
-#     """
-#     return sc.scalar(p.displacements.sizes['atom'])
-
-
 def calculate_mscd(p: parser.Parser, ionic_charge: sc.Variable, progress: bool = True) -> sc.Variable:
     """
     Calculate the mean-squared charge displacement, i.e., the displacement of the centre-of-mass of all particles
