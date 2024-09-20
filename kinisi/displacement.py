@@ -76,7 +76,7 @@ def calculate_mstd(p: parser.Parser, progress: bool = True) -> sc.Variable:
                         coords={
                             'timestep': p.dt['timestep', :len(mstd)],
                             'n_samples': sc.array(dims=['timestep'], values=n_samples),
-                            'dimensionality': p.dimensionality
+                            'dimensionality': p.dimensionality,
                         })
 
 

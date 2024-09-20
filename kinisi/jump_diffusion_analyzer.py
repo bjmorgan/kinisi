@@ -9,8 +9,11 @@ and the collective motion of particles.
 
 from typing import Union, List
 import numpy as np
-from kinisi import diffusion
-from .analyzer import Analyzer
+import scipp as sc
+from kinisi.displacement import calculate_mstd
+from kinisi.diffusion import Diffusion
+from kinisi.parser import Parser, PymatgenParser
+from kinisi.analyzer import Analyzer
 
 
 class JumpDiffusionAnalyzer(Analyzer):
@@ -31,218 +34,68 @@ class JumpDiffusionAnalyzer(Analyzer):
         the appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
     """
 
-    def __init__(self, delta_t: np.ndarray, disp_3d: List[np.ndarray], n_o: np.ndarray, volume: float):
-        super().__init__(delta_t, disp_3d, n_o, volume)
-        self._diff = None
-
-    def to_dict(self) -> dict:
-        """
-        :return: Dictionary description of :py:class:`JumpDiffusionAnalyzer`.
-        """
-        my_dict = super().to_dict()
-        my_dict['diff'] = self._diff.to_dict()
-        return my_dict
-
-    @classmethod
-    def from_dict(cls, my_dict) -> 'JumpDiffusionAnalyzer':
-        """
-        Generate a :py:class:`DiffusionAnalyzer` object from a dictionary.
-
-        :param my_dict: The input dictionary.
-
-        :return: New :py:class:`DiffusionAnalyzer` object.
-        """
-        jdiff_anal = cls(my_dict['delta_t'], my_dict['disp_3d'], my_dict['n_o'], my_dict['volume'])
-        jdiff_anal._diff = diffusion.Bootstrap.from_dict(my_dict['diff'])
-        return jdiff_anal
-
-    @classmethod
-    def from_pymatgen(cls,
-                      trajectory: List[Union['pymatgen.core.structure.Structure',
-                                             List['pymatgen.core.structure.Structure']]],
-                      parser_params: dict,
-                      dtype: str = None,
-                      uncertainty_params: dict = None):
-        """
-        Create a :py:class:`JumpDiffusionAnalyzer` object from a list or nested list of
-        :py:class:`pymatgen.core.structure.Structure` objects.
-
-        :param trajectory: The list or nested list of structures to be analysed.
-        :param parser_params: The parameters for the :py:class:`kinisi.parser.PymatgenParser` object. See the
-            appropriate documentation for more guidance on this dictionary.
-        :param dtype: If :py:attr:`trajectory` is a list of :py:class:`pymatgen.core.structure.Structure` objects,
-            this should be :py:attr:`None`. However, if a list of lists is passed, then it is necessary to identify if
-            these constitute a series of :py:attr:`consecutive` trajectories or a series of :py:attr:`identical`
-            starting points with different random seeds, in which case the `dtype` should be either
-            :py:attr:`consecutive` or :py:attr:`identical`.
-        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
-            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
-
-        :return: Relevant :py:class:`JumpDiffusionAnalyzer` object.
-        """
-        if uncertainty_params is None:
-            uncertainty_params = {}
-        jdiff_anal = super()._from_pymatgen(trajectory, parser_params, dtype=dtype)
-        jdiff_anal._diff = diffusion.MSTDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
-                                                   **uncertainty_params)
-        return jdiff_anal
-
-    @classmethod
-    def from_ase(cls,
-                 trajectory: List[Union['ase.atoms.Atoms', List['ase.atoms.Atoms']]],
-                 parser_params: dict,
-                 dtype: str = None,
-                 uncertainty_params: dict = None):
-        """
-        Create a :py:class:`JumpDiffusionAnalyzer` object from a list or nested list of
-        :py:class:`ase.atoms.Atoms` objects.
-
-        :param trajectory: The list or nested list of structures to be analysed.
-        :param parser_params: The parameters for the :py:class:`kinisi.parser.AseParser` object. See the
-            appropriate documentation for more guidance on this dictionary.
-        :param dtype: If :py:attr:`trajectory` is a list of :py:class:`ase.atoms.Atoms` objects,
-            this should be :py:attr:`None`. However, if a list of lists is passed, then it is necessary to identify if
-            these constitute a series of :py:attr:`consecutive` trajectories or a series of :py:attr:`identical`
-            starting points with different random seeds, in which case the `dtype` should be either
-            :py:attr:`consecutive` or :py:attr:`identical`.
-        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
-            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
-        
-        :return: Relevant :py:class:`JumpDiffusionAnalyzer` object.
-        """
-        if uncertainty_params is None:
-            uncertainty_params = {}
-        jdiff_anal = super()._from_ase(trajectory, parser_params, dtype=dtype)
-        jdiff_anal._diff = diffusion.MSTDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
-                                                   **uncertainty_params)
-        return jdiff_anal
+    def __init__(self, trajectory: Parser) -> None:
+        super().__init__(trajectory)
+        self.mstd = None
 
     @classmethod
     def from_Xdatcar(cls,
                      trajectory: Union['pymatgen.io.vasp.outputs.Xdatcar', List['pymatgen.io.vasp.outputs.Xdatcar']],
-                     parser_params: dict,
-                     dtype: str = None,
-                     uncertainty_params: dict = None):
+                     specie: Union['pymatgen.core.periodic_table.Element', 'pymatgen.core.periodic_table.Specie'],
+                     time_step: sc.Variable,
+                     step_skip: sc.Variable,
+                     dtype: Union[str, None] = None,
+                     dt: sc.Variable = None,
+                     dimension: str = 'xyz',
+                     distance_unit: sc.Unit = sc.units.angstrom,
+                     progress: bool = True) -> 'DiffusionAnalyzer':
         """
-        Create a :py:class:`JumpDiffusionAnalyzer` object from a single or a list of
+        Constructs the necessary :py:mod:`kinisi` objects for analysis from a single or a list of
         :py:class:`pymatgen.io.vasp.outputs.Xdatcar` objects.
 
-        :param trajectory: The Xdatcar or list of Xdatcar objects to be analysed.
-        :param parser_params: The parameters for the :py:class:`kinisi.parser.PymatgenParser` object. See the
-            appropriate documentation for more guidance on this dictionary.
+        :param trajectory: The :py:class:`pymatgen.io.vasp.outputs.Xdatcar` or list of these that should be parsed. 
+        :param specie: Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
+        :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator. Note, 
+            that this must be given as a :py:mod:`scipp`-type scalar. The unit used for the time_step, will be the unit 
+            that is use for the time interval values.
+        :param step_skip: Sampling freqency of the simulation trajectory, i.e., how many time steps exist between the
+            output of the positions in the trajectory. Similar to the :py:attr:`time_step`, this parameter must be
+            a :py:mod:`scipp` scalar. The units for this scalar should be dimensionless.
         :param dtype: If :py:attr:`trajectory` is a :py:class:`pymatgen.io.vasp.outputs.Xdatcar` object, this should
             be :py:attr:`None`. However, if a list of :py:class:`pymatgen.io.vasp.outputs.Xdatcar` objects is passed,
-            then it is necessary to identify if these constitute a series of :py:attr:`consecutive` trajectories or a
-            series of :py:attr:`identical` starting points with different random seeds, in which case the `dtype`
-            should be either :py:attr:`consecutive` or :py:attr:`identical`.
-        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
-            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
-
-        :return: Relevant :py:class:`JumpDiffusionAnalyzer` object.
+            then it is necessary to identify if these constitute a series of :py:attr:`consecutive` trajectories or
+            a series of :py:attr:`identical` starting points with different random seeds, in which case the `dtype`
+            should be either :py:attr:`consecutive` or :py:attr:`identical`.:
+        :param dt: Time intervals to calculate the displacements over. Optional, defaults to a :py:mod:`scipp` array
+            ranging from the smallest interval (i.e., time_step * step_skip) to the full simulation length, with 
+            a step size the same as the smallest interval.
+        :param dimension: Dimension/s to find the displacement along, this should be some subset of `'xyz'` indicating
+            the axes of interest. Optional, defaults to `'xyz'`.
+        :param distance_unit: The unit of distance in the simulation input. This should be a :py:mod:`scipp` unit and
+            defaults to :py:attr:`sc.units.angstrom`.
+        :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
+        
+        :returns: The :py:class:`DiffusionAnalyzer` object with the mean-squared displacement calculated.
         """
-        if uncertainty_params is None:
-            uncertainty_params = {}
-        jdiff_anal = super()._from_Xdatcar(trajectory, parser_params, dtype=dtype)
-        jdiff_anal._diff = diffusion.MSTDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
-                                                   **uncertainty_params)
-        return jdiff_anal
-
-    @classmethod
-    def from_file(cls,
-                  trajectory: Union[str, List[str]],
-                  parser_params: dict,
-                  dtype: str = None,
-                  uncertainty_params: dict = None):
-        """
-        Create a :py:class:`JumpDiffusionAnalyzer` object from a single or a list of Xdatcar file(s).
-
-        :param trajectory: The file or list of Xdatcar files to be analysed.
-        :param parser_params: The parameters for the :py:class:`kinisi.parser.PymatgenParser` object. See the
-            appropriate documentation for more guidance on this dictionary.
-        :param dtype: If :py:attr:`trajectory` is a single file, this should be :py:attr:`None`. However, if a
-            list of files is passed, then it is necessary to identify if these constitute a series of
-            :py:attr:`consecutive` trajectories or a series of :py:attr:`identical` starting points with different
-            random seeds, in which case the `dtype` should be either :py:attr:`consecutive` or :py:attr:`identical`.
-        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
-            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
-
-        :return: Relevant :py:class:`JumpDiffusionAnalyzer` object.
-        """
-        if uncertainty_params is None:
-            uncertainty_params = {}
-        jdiff_anal = super()._from_file(trajectory, parser_params, dtype=dtype)
-        jdiff_anal._diff = diffusion.MSTDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
-                                                   **uncertainty_params)
-        return jdiff_anal
-
-    @classmethod
-    def from_universe(cls,
-                      trajectory: 'MDAnalysis.core.universe.Universe',
-                      parser_params: dict,
-                      dtype: str = None,
-                      uncertainty_params: dict = None):
-        """
-        Create an :py:class:`JumpDiffusionAnalyzer` object from an :py:class:`MDAnalysis.core.universe.Universe` object.
-
-        :param trajectory: The universe to be analysed.
-        :param parser_params: The parameters for the :py:class:`kinisi.parser.MDAnalysisParser` object.
-            See the appropriate documention for more guidance on this dictionary.
-        :param dtype: If :py:attr:`trajectory` is a single file, this should be :py:attr:`None`. However, if a
-            list of files is passed, then it is necessary to identify that these constitute a series of
-            :py:attr:`identical` starting points with different random seeds, in which case the `dtype` should
-            be :py:attr:`identical`. For a series of consecutive trajectories, please construct the relevant
-            object using :py:mod:`MDAnalysis`.
-        :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.MSDBootstrap` object. See the
-            appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
-
-        :return: Relevant :py:class:`JumpDiffusionAnalyzer` object.
-        """
-        if uncertainty_params is None:
-            uncertainty_params = {}
-        jdiff_anal = super()._from_universe(trajectory, parser_params, dtype=dtype)
-        jdiff_anal._diff = diffusion.MSTDBootstrap(jdiff_anal._delta_t, jdiff_anal._disp_3d, jdiff_anal._n_o,
-                                                   **uncertainty_params)
-        return jdiff_anal
-
-    def jump_diffusion(self, start_dt: float, jump_diffusion_params: Union[dict, None] = None):
-        """
-        Calculate the jump diffusion coefficicent using the bootstrap-GLS methodology.
-
-        :param start_dt: The starting time for the analysis to find the diffusion coefficient.
-            This should be the start of the diffusive regime in the simulation.
-        :param ump_diffusion_params: The parameters for the :py:class:`kinisi.diffusion.MSTDBootstrap`
-            object. See the appropriate documentation for more guidance on this. Optional, default is the
-            default bootstrap parameters.
-        """
-        if jump_diffusion_params is None:
-            jump_diffusion_params = {}
-        self._diff.jump_diffusion(start_dt, **jump_diffusion_params)
+        p = super()._from_Xdatcar(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit,
+                                  progress)
+        p.mstd = calculate_mstd(p.trajectory, progress)
+        return p
 
     @property
-    def mstd(self) -> np.ndarray:
-        """
-        :return: MSTD for the input trajectories. Note that this is the bootstrap sampled MSD, not the numerical
-            average from the data.
-        """
-        return self._diff.n
+    def n_atoms(self):
+        """Property to access the n_atoms."""
+        return self.trajectory.displacements.sizes['atom']
 
-    @property
-    def mstd_std(self) -> np.ndarray:
+    def jump_diffusion(self, start_dt: sc.Variable, diffusion_params: Union[dict, None] = None) -> None:
         """
-        :return: MSD standard deviation values for the input trajectories (a single standard deviation).
+        Calculate the jump diffusion coefficient using the mean-squared total displacement data.
+        
+        :param start_dt: The time at which the diffusion regime begins.
+        :param diffusion_params: The keyword arguements for the diffusion calculation
+            (see :py:func:`diffusion.bayesian_regression`). Optional, defaults to :py:attr:`None`.
         """
-        return self._diff.s
-
-    @property
-    def D_J(self) -> 'uravu.distribution.Distribution':
-        """
-        :return: Jump diffusion coefficient
-        """
-        return self._diff.D_J
-
-    @property
-    def flatchain(self) -> np.ndarray:
-        """
-        :return: sampling flatchain
-        """
-        return np.array([self.D_J.samples, self.intercept.samples]).T
+        if diffusion_params is None:
+            diffusion_params = {}
+        self.diff = Diffusion(msd=self.mstd, n_atoms=self.n_atoms)
+        self.diff.jump_diffusion(start_dt, **diffusion_params)

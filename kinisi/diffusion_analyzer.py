@@ -83,11 +83,3 @@ class DiffusionAnalyzer(Analyzer):
             diffusion_params = {}
         self.diff = Diffusion(self.msd)
         self.diff.diffusion(start_dt, **diffusion_params)
-
-    @property
-    def distributions(self) -> np.array:
-        """
-        :return: A distribution of samples for the linear relationship that can be used for easy
-        plotting of credible intervals.
-        """
-        return self.diff.gradient.values * self.msd.coords['timestep'].values[:, np.newaxis] + self.diff.intercept.values
