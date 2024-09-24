@@ -72,7 +72,7 @@ class Parser:
         self._volume = None
         self.dt = dt
         if self.dt is None:
-            self.dt_int = sc.arange(start=1, stop=coords.sizes['time'], step=1, dim='timestep')
+            self.dt_int = sc.arange(start=1, stop=coords.sizes['time'], step=1, dim='time interval')
             self.dt = self.dt_int * time_step * step_skip
         self.dt_int = (self.dt / (time_step * step_skip)).astype(int)
 
