@@ -71,11 +71,11 @@ class Diffusion:
         self._start_dt = start_dt
         self._cond_max = cond_max
 
-        self.diff_regime = np.argwhere(self.msd.coords['timestep'] >= self._start_dt)[0][0]
+        self.diff_regime = np.argwhere(self.msd.coords['time interval'] >= self._start_dt)[0][0]
         self._covariance_matrix = self.compute_covariance_matrix()
 
-        x_values = self.msd.coords['timestep'][self.diff_regime:].values
-        y_values = self.msd['timestep', self.diff_regime:].values
+        x_values = self.msd.coords['time interval'][self.diff_regime:].values
+        y_values = self.msd['time interval', self.diff_regime:].values
 
         _, logdet = np.linalg.slogdet(self._covariance_matrix.values)
         logdet += np.log(2 * np.pi) * y_values.size
@@ -123,7 +123,7 @@ class Diffusion:
 
         self.gradient = sc.array(dims=['samples'],
                                  values=self._flatchain[:, 0],
-                                 unit=(self.msd.unit / self.msd.coords['timestep'].unit))
+                                 unit=(self.msd.unit / self.msd.coords['time interval'].unit))
         if fit_intercept:
             self.intercept = sc.array(dims=['samples'], values=self._flatchain[:, 1], unit=self.msd.unit)
 
