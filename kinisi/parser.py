@@ -251,37 +251,34 @@ class MDAnalysisParser(Parser):
     :param sub_sample_traj: Subsample the trajectory. Optional, defaults to 1.
     :param progress: Whether to show a progress bar when reading in the structures. Optional, defaults to `True`.
     """
+
     def __init__(self,
-                universe: 'MDAnalysis.core.universe.Universe',
-                specie: str,
-                time_step: sc.Variable,
-                step_skip: sc.Variable,
-                dt: sc.Variable = None,
-                dimension: str = 'xyz',
-                distance_unit: sc.Unit = sc.units.angstrom,
-                sub_sample_atoms: int = 1,
-                sub_sample_traj: int = 1,
-                progress: bool = True
-                 ):
-        
+                 universe: 'MDAnalysis.core.universe.Universe',
+                 specie: str,
+                 time_step: sc.Variable,
+                 step_skip: sc.Variable,
+                 dt: sc.Variable = None,
+                 dimension: str = 'xyz',
+                 distance_unit: sc.Unit = sc.units.angstrom,
+                 sub_sample_atoms: int = 1,
+                 sub_sample_traj: int = 1,
+                 progress: bool = True):
+
         self.distance_unit = distance_unit
 
-        structure, coords, latt = self.get_structure_coords_latt(universe, progress,sub_sample_atoms, sub_sample_traj)
+        structure, coords, latt = self.get_structure_coords_latt(universe, progress, sub_sample_atoms, sub_sample_traj)
 
         indices, drift_indices = self.get_indices(structure, specie)
 
         super().__init__(coords, latt, indices, drift_indices, time_step, step_skip, dt, dimension)
 
-       
-
-
-
     def get_structure_coords_latt(
-            self,
-            universe: 'MDAnalysis.core.universe.Universe',
-            progress: bool = True,
-            sub_sample_atoms: int = 1,
-            sub_sample_traj: int = 1,) -> Tuple["MDAnalysis.core.universe.Universe", sc.Variable, sc.Variable]:
+        self,
+        universe: 'MDAnalysis.core.universe.Universe',
+        progress: bool = True,
+        sub_sample_atoms: int = 1,
+        sub_sample_traj: int = 1,
+    ) -> Tuple["MDAnalysis.core.universe.Universe", sc.Variable, sc.Variable]:
         """
         Obtain the initial structure, coordinates, and lattice parameters from an MDAnalysis.Universe object.
 
@@ -313,20 +310,19 @@ class MDAnalysisParser(Parser):
             coords_l.append(np.dot(universe.atoms[::sub_sample_atoms].positions, inv_matrix))
             latt_l.append(np.array(matrix))
 
-
         coords_l = np.array(coords_l)
         latt_l = np.array(latt_l)
 
-        coords = sc.array(dims=['time','atom', 'dimension'], values = coords_l, unit=sc.units.dimensionless)
-        latt = sc.array(dims=['time','dimension1', 'dimension2'], values = latt_l, unit=self.distance_unit)
+        coords = sc.array(dims=['time', 'atom', 'dimension'], values=coords_l, unit=sc.units.dimensionless)
+        latt = sc.array(dims=['time', 'dimension1', 'dimension2'], values=latt_l, unit=self.distance_unit)
 
         return structure, coords, latt
-    
 
-    def get_indices(self,
-                    structure: "MDAnalysis.universe.Universe", 
-                    specie: str,
-                    ) -> Tuple[sc.Variable,sc.Variable]:
+    def get_indices(
+        self,
+        structure: "MDAnalysis.universe.Universe",
+        specie: str,
+    ) -> Tuple[sc.Variable, sc.Variable]:
         """
         Determine framework and non-framework indices for an :py:mod:`MDAnalysis` compatible file.
 
@@ -338,7 +334,7 @@ class MDAnalysisParser(Parser):
         """
         indices = []
         drift_indices = []
-    
+
         if not isinstance(specie, list):
             specie = [specie]
 
@@ -355,6 +351,3 @@ class MDAnalysisParser(Parser):
         drift_indices = sc.Variable(dims=['atom'], values=drift_indices)
 
         return indices, drift_indices
-        
-            
-

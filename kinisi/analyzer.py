@@ -10,7 +10,8 @@ are intended for internal use.
 from typing import Union, List
 import numpy as np
 import scipp as sc
-from kinisi.parser import PymatgenParser,MDAnalysisParser, Parser
+from kinisi.parser import PymatgenParser, MDAnalysisParser, Parser
+
 
 class Analyzer:
     """
@@ -20,6 +21,7 @@ class Analyzer:
     :param trajectory: The parsed trajectory from some input file. This will be of type :py:class:`Parser`, but
         the specifics depend on the parser that is used. 
     """
+
     def __init__(self, trajectory: Parser) -> None:
         self.trajectory = trajectory
 
@@ -33,7 +35,7 @@ class Analyzer:
                       dt: sc.Variable = None,
                       dimension: str = 'xyz',
                       distance_unit: sc.Unit = sc.units.angstrom,
-                      progress: bool = True) -> 'Analyzer': 
+                      progress: bool = True) -> 'Analyzer':
         """
         Constructs the necessary :py:mod:`kinisi` objects for analysis from a single or a list of
         :py:class:`pymatgen.io.vasp.outputs.Xdatcar` objects.
@@ -61,10 +63,14 @@ class Analyzer:
         :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
         """
         if dtype is None:
-            p = PymatgenParser(trajectory.structures, specie, time_step, step_skip, dt, dimension, distance_unit, progress)
+            p = PymatgenParser(trajectory.structures, specie, time_step, step_skip, dt, dimension, distance_unit,
+                               progress)
             return cls(p)
         elif dtype == 'identical':
-            u = [PymatgenParser(f.structures, specie, time_step, step_skip, dt, dimension, distance_unit, progress) for f in trajectory]
+            u = [
+                PymatgenParser(f.structures, specie, time_step, step_skip, dt, dimension, distance_unit, progress)
+                for f in trajectory
+            ]
             p = u[0]
             p.displacements = sc.concat([i.displacements for i in u], 'atom')
             return cls(p)
@@ -72,26 +78,33 @@ class Analyzer:
             structures = _flatten_list([x.structures for x in trajectory])
             p = PymatgenParser(structures, specie, time_step, step_skip, dt, dimension, distance_unit, progress)
             return cls(p)
-        
+
     @classmethod
     def _from_Universe(cls,
-                      trajectory: 'MDAnalysis.core.universe.Universe',
-                      specie: str,
-                      time_step: sc.Variable,
-                      step_skip: sc.Variable,
-                      dtype: Union[str, None] = None,
-                      dt: sc.Variable = None,
-                      dimension: str = 'xyz',
-                      distance_unit: sc.Unit = sc.units.angstrom,
-                      progress: bool = True) -> 'Analyzer':
+                       trajectory: 'MDAnalysis.core.universe.Universe',
+                       specie: str,
+                       time_step: sc.Variable,
+                       step_skip: sc.Variable,
+                       dtype: Union[str, None] = None,
+                       dt: sc.Variable = None,
+                       dimension: str = 'xyz',
+                       distance_unit: sc.Unit = sc.units.angstrom,
+                       progress: bool = True) -> 'Analyzer':
         """
         Constructs the necessary :py:mod:`kinisi` objects for analysis from a 
         :py:class:`MDAnalysis.core.universe.Universe` object.
         """
         if dtype is None:
-            p = MDAnalysisParser(universe= trajectory, specie=specie, time_step=time_step, step_skip=step_skip, dt = dt, dimension=dimension, distance_unit=distance_unit, progress=progress)
+            p = MDAnalysisParser(universe=trajectory,
+                                 specie=specie,
+                                 time_step=time_step,
+                                 step_skip=step_skip,
+                                 dt=dt,
+                                 dimension=dimension,
+                                 distance_unit=distance_unit,
+                                 progress=progress)
             return cls(p)
-        
+
     @property
     def distributions(self) -> np.array:
         """
@@ -99,10 +112,11 @@ class Analyzer:
         plotting of credible intervals.
         """
         if self.diff.intercept is not None:
-            return self.diff.gradient.values * self.mstd.coords['timestep'].values[:, np.newaxis] + self.diff.intercept.values
+            return self.diff.gradient.values * self.mstd.coords['timestep'].values[:, np.
+                                                                                   newaxis] + self.diff.intercept.values
         else:
             return self.diff.gradient.values * self.mstd.coords['timestep'].values[:, np.newaxis]
-        
+
 
 def _flatten_list(this_list: list) -> list:
     """

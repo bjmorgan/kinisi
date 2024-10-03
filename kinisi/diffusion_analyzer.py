@@ -3,7 +3,7 @@ The :py:class:`kinisi.analyze.DiffusionAnalyser` class enable the evaluation of 
 displacment and the self-diffusion coefficient.
 """
 
-# Copyright (c) kinisi developers. 
+# Copyright (c) kinisi developers.
 # Distributed under the terms of the MIT License.
 # author: Andrew R. McCluskey (arm61)
 
@@ -23,14 +23,14 @@ class DiffusionAnalyzer(Analyzer):
     :param trajectory: The parsed trajectory from some input file. This will be of type :py:class:`Parser`, but
         the specifics depend on the parser that is used.
     """
+
     def __init__(self, trajectory: Parser) -> None:
         super().__init__(trajectory)
         self.msd = None
 
     @classmethod
     def from_Xdatcar(cls,
-                     trajectory: Union['pymatgen.io.vasp.outputs.Xdatcar',
-                                       List['pymatgen.io.vasp.outputs.Xdatcar']],
+                     trajectory: Union['pymatgen.io.vasp.outputs.Xdatcar', List['pymatgen.io.vasp.outputs.Xdatcar']],
                      specie: Union['pymatgen.core.periodic_table.Element', 'pymatgen.core.periodic_table.Specie'],
                      time_step: sc.Variable,
                      step_skip: sc.Variable,
@@ -67,10 +67,11 @@ class DiffusionAnalyzer(Analyzer):
         
         :returns: The :py:class:`DiffusionAnalyzer` object with the mean-squared displacement calculated.
         """
-        p = super()._from_Xdatcar(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit, progress)
+        p = super()._from_Xdatcar(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit,
+                                  progress)
         p.msd = calculate_msd(p.trajectory, progress)
         return p
-    
+
     @classmethod
     def from_Universe(cls,
                       trajectory: 'MDAnalysis.core.universe.Universe',
@@ -87,11 +88,17 @@ class DiffusionAnalyzer(Analyzer):
 
         :param trajectory: The :py:class:`MDAnalysis
         """
-        p = super()._from_Universe(trajectory = trajectory, specie = specie, time_step=time_step, step_skip=step_skip, dt=dt, dimension=dimension, distance_unit=distance_unit, progress=progress)
+        p = super()._from_Universe(trajectory=trajectory,
+                                   specie=specie,
+                                   time_step=time_step,
+                                   step_skip=step_skip,
+                                   dt=dt,
+                                   dimension=dimension,
+                                   distance_unit=distance_unit,
+                                   progress=progress)
         p.msd = calculate_msd(p.trajectory, progress)
         return p
-    
-    
+
     def diffusion(self, start_dt: sc.Variable, diffusion_params: Union[dict, None] = None) -> None:
         """
         Calculate the diffusion coefficient using the mean-squared displacement data.

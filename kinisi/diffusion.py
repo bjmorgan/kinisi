@@ -137,7 +137,6 @@ class Diffusion:
         self.bayesian_regression(start_dt=start_dt, **kwargs)
         self._diffusion_coefficient = sc.to_unit(self.gradient / (2 * self.msd.coords['dimensionality'].value), 'cm2/s')
 
-
     def jump_diffusion(self, start_dt: sc.Variable, **kwargs):
         """
         Calculation of the diffusion coefficient. 
@@ -147,7 +146,8 @@ class Diffusion:
         """
 
         self.bayesian_regression(start_dt=start_dt, **kwargs)
-        self._jump_diffusion_coefficient = sc.to_unit(self.gradient / (2 * self.msd.coords['dimensionality'].value * self.n_atoms), 'cm2/s')
+        self._jump_diffusion_coefficient = sc.to_unit(
+            self.gradient / (2 * self.msd.coords['dimensionality'].value * self.n_atoms), 'cm2/s')
 
     @property
     def D(self) -> sc.Variable:
@@ -155,7 +155,7 @@ class Diffusion:
         :return: The diffusion coefficient as a :py:mod:`scipp` object.
         """
         return self._diffusion_coefficient
-    
+
     @property
     def D_J(self) -> sc.Variable:
         """
@@ -177,7 +177,8 @@ class Diffusion:
                 cov[i, j] = value
                 cov[j, i] = np.copy(cov[i, j])
         return sc.array(dims=['time_interval1', 'time_interval2'],
-                        values=cov_nearest(minimum_eigenvalue_method(cov[self.diff_regime:, self.diff_regime:], self._cond_max)),
+                        values=cov_nearest(
+                            minimum_eigenvalue_method(cov[self.diff_regime:, self.diff_regime:], self._cond_max)),
                         unit=self.msd.unit**2)
 
 
