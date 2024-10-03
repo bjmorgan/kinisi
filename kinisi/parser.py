@@ -253,7 +253,7 @@ class MDAnalysisParser(Parser):
     """
     def __init__(self,
                 universe: 'MDAnalysis.core.universe.Universe',
-                species: str,
+                specie: str,
                 time_step: sc.Variable,
                 step_skip: sc.Variable,
                 dt: sc.Variable = None,
@@ -261,24 +261,18 @@ class MDAnalysisParser(Parser):
                 distance_unit: sc.Unit = sc.units.angstrom,
                 sub_sample_atoms: int = 1,
                 sub_sample_traj: int = 1,
-                progress: bool = True,
-                framework_indices: List[int] = None
+                progress: bool = True
                  ):
         
         self.distance_unit = distance_unit
-    
+
         structure, coords, latt = self.get_structure_coords_latt(universe, progress,sub_sample_atoms, sub_sample_traj)
 
-        indices, drift_indices = self.get_indices(structure, species, framework_indices)
-
-        print(coords)
-        print(dt)
-        print(time_step)
-        print(step_skip)
+        indices, drift_indices = self.get_indices(structure, specie)
 
         super().__init__(coords, latt, indices, drift_indices, time_step, step_skip, dt, dimension)
 
-        self._volume = structure.volume * self.distance_unit**3
+       
 
 
 
@@ -296,7 +290,7 @@ class MDAnalysisParser(Parser):
         :param sub_sample_atoms: Subsample the atoms in the trajectory. Optional, defaults to 1.
         :param sub_sample_traj: Subsample the trajectory. Optional, defaults to 1.
 
-        :returns: A tuple of the initial structure (as
+        :returns: A tuple of:  the initial structure (as
             a :py:class:`MDAnalysis.core.universe.Universe`), coordinates (as
             a :py:mod:`scipp` array with dimensions of `time`, `atom`, and `dimension`),
             and lattice parameters (as a :py:mod:`scipp` array with dimensions `time`,
@@ -323,32 +317,28 @@ class MDAnalysisParser(Parser):
         coords_l = np.array(coords_l)
         latt_l = np.array(latt_l)
 
-
-
         coords = sc.array(dims=['time','atom', 'dimension'], values = coords_l, unit=sc.units.dimensionless)
-        latt = sc.array(dims=['time','dimension1', 'dimension2'], values = latt_l, unit=sc.units.angstrom)
+        latt = sc.array(dims=['time','dimension1', 'dimension2'], values = latt_l, unit=self.distance_unit)
 
         return structure, coords, latt
     
 
-    @staticmethod
-    def get_indices(structure: "MDAnalysis.universe.Universe", 
+    def get_indices(self,
+                    structure: "MDAnalysis.universe.Universe", 
                     specie: str,
-                    framework_indices: List[int]) -> Tuple[sc.Variable,sc.Variable]:
+                    ) -> Tuple[sc.Variable,sc.Variable]:
         """
         Determine framework and non-framework indices for an :py:mod:`MDAnalysis` compatible file.
 
         :param structure: Initial structure.
         :param specie: Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
-        :param framework_indices: Indices of framework to be used in drift correction. If set to None will return all indices that are not specie.
 
         :return: Tuple containing: indices for the atoms in the trajectory used in the calculation of the
             diffusion and indices of framework atoms.
         """
         indices = []
         drift_indices = []
-
-
+    
         if not isinstance(specie, list):
             specie = [specie]
 
@@ -360,9 +350,6 @@ class MDAnalysisParser(Parser):
 
         if len(indices) == 0:
             raise ValueError("There are no species selected to calculate the mean-squared displacement of.")
-
-        if isinstance(framework_indices, (list, tuple)):
-            drift_indices = framework_indices
 
         indices = sc.Variable(dims=['atom'], values=indices)
         drift_indices = sc.Variable(dims=['atom'], values=drift_indices)

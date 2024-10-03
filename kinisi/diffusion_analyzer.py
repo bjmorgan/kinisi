@@ -12,7 +12,7 @@ import numpy as np
 import scipp as sc
 from kinisi.displacement import calculate_msd
 from kinisi.diffusion import Diffusion
-from kinisi.parser import Parser, PymatgenParser
+from kinisi.parser import Parser, PymatgenParser, MDAnalysisParser
 from kinisi.analyzer import Analyzer
 
 
@@ -70,6 +70,27 @@ class DiffusionAnalyzer(Analyzer):
         p = super()._from_Xdatcar(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit, progress)
         p.msd = calculate_msd(p.trajectory, progress)
         return p
+    
+    @classmethod
+    def from_Universe(cls,
+                      trajectory: 'MDAnalysis.core.universe.Universe',
+                      specie: str = None,
+                      time_step: sc.Variable = None,
+                      step_skip: sc.Variable = None,
+                      dt: sc.Variable = None,
+                      dimension: str = 'xyz',
+                      distance_unit: sc.Unit = sc.units.angstrom,
+                      progress: bool = True) -> 'DiffusionAnalyzer':
+        """
+        Constructs the necessary :py:mod:`kinisi` objects for analysis from a
+        :py:class:`MDAnalysis.Universe` object.
+
+        :param trajectory: The :py:class:`MDAnalysis
+        """
+        p = super()._from_Universe(trajectory = trajectory, specie = specie, time_step=time_step, step_skip=step_skip, dt=dt, dimension=dimension, distance_unit=distance_unit, progress=progress)
+        p.msd = calculate_msd(p.trajectory, progress)
+        return p
+    
     
     def diffusion(self, start_dt: sc.Variable, diffusion_params: Union[dict, None] = None) -> None:
         """

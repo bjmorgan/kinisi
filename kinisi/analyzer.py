@@ -10,7 +10,7 @@ are intended for internal use.
 from typing import Union, List
 import numpy as np
 import scipp as sc
-from kinisi.parser import PymatgenParser, Parser
+from kinisi.parser import PymatgenParser,MDAnalysisParser, Parser
 
 class Analyzer:
     """
@@ -71,6 +71,25 @@ class Analyzer:
         elif dtype == 'consecutive':
             structures = _flatten_list([x.structures for x in trajectory])
             p = PymatgenParser(structures, specie, time_step, step_skip, dt, dimension, distance_unit, progress)
+            return cls(p)
+        
+    @classmethod
+    def _from_Universe(cls,
+                      trajectory: 'MDAnalysis.core.universe.Universe',
+                      specie: str,
+                      time_step: sc.Variable,
+                      step_skip: sc.Variable,
+                      dtype: Union[str, None] = None,
+                      dt: sc.Variable = None,
+                      dimension: str = 'xyz',
+                      distance_unit: sc.Unit = sc.units.angstrom,
+                      progress: bool = True) -> 'Analyzer':
+        """
+        Constructs the necessary :py:mod:`kinisi` objects for analysis from a 
+        :py:class:`MDAnalysis.core.universe.Universe` object.
+        """
+        if dtype is None:
+            p = MDAnalysisParser(universe= trajectory, specie=specie, time_step=time_step, step_skip=step_skip, dt = dt, dimension=dimension, distance_unit=distance_unit, progress=progress)
             return cls(p)
         
     @property
