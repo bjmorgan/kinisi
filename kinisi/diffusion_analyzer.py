@@ -3,7 +3,7 @@ The :py:class:`kinisi.analyze.DiffusionAnalyser` class enable the evaluation of 
 displacment and the self-diffusion coefficient.
 """
 
-# Copyright (c) kinisi developers. 
+# Copyright (c) kinisi developers.
 # Distributed under the terms of the MIT License.
 # author: Andrew R. McCluskey (arm61)
 
@@ -12,7 +12,7 @@ import numpy as np
 import scipp as sc
 from kinisi.displacement import calculate_msd
 from kinisi.diffusion import Diffusion
-from kinisi.parser import Parser, PymatgenParser
+from kinisi.parser import Parser, PymatgenParser, MDAnalysisParser
 from kinisi.analyzer import Analyzer
 
 
@@ -23,14 +23,14 @@ class DiffusionAnalyzer(Analyzer):
     :param trajectory: The parsed trajectory from some input file. This will be of type :py:class:`Parser`, but
         the specifics depend on the parser that is used.
     """
+
     def __init__(self, trajectory: Parser) -> None:
         super().__init__(trajectory)
         self.msd = None
 
     @classmethod
     def from_Xdatcar(cls,
-                     trajectory: Union['pymatgen.io.vasp.outputs.Xdatcar',
-                                       List['pymatgen.io.vasp.outputs.Xdatcar']],
+                     trajectory: Union['pymatgen.io.vasp.outputs.Xdatcar', List['pymatgen.io.vasp.outputs.Xdatcar']],
                      specie: Union['pymatgen.core.periodic_table.Element', 'pymatgen.core.periodic_table.Specie'],
                      time_step: sc.Variable,
                      step_skip: sc.Variable,
@@ -67,10 +67,32 @@ class DiffusionAnalyzer(Analyzer):
         
         :returns: The :py:class:`DiffusionAnalyzer` object with the mean-squared displacement calculated.
         """
-        p = super()._from_Xdatcar(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit, progress)
+        p = super()._from_xdatcar(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit,
+                                  progress)
         p.msd = calculate_msd(p.trajectory, progress)
         return p
-    
+
+    @classmethod
+    def from_Universe(cls,
+                      trajectory: 'MDAnalysis.core.universe.Universe',
+                      specie: str = None,
+                      time_step: sc.Variable = None,
+                      step_skip: sc.Variable = None,
+                      dtype: Union[str, None] = None,
+                      dt: sc.Variable = None,
+                      dimension: str = 'xyz',
+                      distance_unit: sc.Unit = sc.units.angstrom,
+                      progress: bool = True) -> 'DiffusionAnalyzer':
+        """
+        Constructs the necessary :py:mod:`kinisi` objects for analysis from a
+        :py:class:`MDAnalysis.Universe` object.
+
+        :param trajectory: The :py:class:`MDAnalysis
+        """
+        p = super()._from_universe(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit, progress)
+        p.msd = calculate_msd(p.trajectory, progress)
+        return p
+
     def diffusion(self, start_dt: sc.Variable, diffusion_params: Union[dict, None] = None) -> None:
         """
         Calculate the diffusion coefficient using the mean-squared displacement data.
