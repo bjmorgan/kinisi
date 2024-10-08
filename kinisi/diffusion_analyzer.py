@@ -67,7 +67,7 @@ class DiffusionAnalyzer(Analyzer):
         
         :returns: The :py:class:`DiffusionAnalyzer` object with the mean-squared displacement calculated.
         """
-        p = super()._from_Xdatcar(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit,
+        p = super()._from_xdatcar(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit,
                                   progress)
         p.msd = calculate_msd(p.trajectory, progress)
         return p
@@ -78,6 +78,7 @@ class DiffusionAnalyzer(Analyzer):
                       specie: str = None,
                       time_step: sc.Variable = None,
                       step_skip: sc.Variable = None,
+                      dtype: Union[str, None] = None,
                       dt: sc.Variable = None,
                       dimension: str = 'xyz',
                       distance_unit: sc.Unit = sc.units.angstrom,
@@ -88,14 +89,7 @@ class DiffusionAnalyzer(Analyzer):
 
         :param trajectory: The :py:class:`MDAnalysis
         """
-        p = super()._from_Universe(trajectory=trajectory,
-                                   specie=specie,
-                                   time_step=time_step,
-                                   step_skip=step_skip,
-                                   dt=dt,
-                                   dimension=dimension,
-                                   distance_unit=distance_unit,
-                                   progress=progress)
+        p = super()._from_universe(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit, progress)
         p.msd = calculate_msd(p.trajectory, progress)
         return p
 

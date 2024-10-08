@@ -26,7 +26,7 @@ class Analyzer:
         self.trajectory = trajectory
 
     @classmethod
-    def _from_Xdatcar(cls,
+    def _from_xdatcar(cls,
                       trajectory: Union['pymatgen.io.vasp.outputs.Xdatcar', List['pymatgen.io.vasp.outputs.Xdatcar']],
                       specie: Union['pymatgen.core.periodic_table.Element', 'pymatgen.core.periodic_table.Specie'],
                       time_step: sc.Variable,
@@ -80,7 +80,7 @@ class Analyzer:
             return cls(p)
 
     @classmethod
-    def _from_Universe(cls,
+    def _from_universe(cls,
                        trajectory: 'MDAnalysis.core.universe.Universe',
                        specie: str,
                        time_step: sc.Variable,

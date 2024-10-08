@@ -260,13 +260,11 @@ class MDAnalysisParser(Parser):
                  dt: sc.Variable = None,
                  dimension: str = 'xyz',
                  distance_unit: sc.Unit = sc.units.angstrom,
-                 sub_sample_atoms: int = 1,
-                 sub_sample_traj: int = 1,
                  progress: bool = True):
 
         self.distance_unit = distance_unit
 
-        structure, coords, latt = self.get_structure_coords_latt(universe, progress, sub_sample_atoms, sub_sample_traj)
+        structure, coords, latt = self.get_structure_coords_latt(universe, progress)
 
         indices, drift_indices = self.get_indices(structure, specie)
 
@@ -276,8 +274,6 @@ class MDAnalysisParser(Parser):
         self,
         universe: 'MDAnalysis.core.universe.Universe',
         progress: bool = True,
-        sub_sample_atoms: int = 1,
-        sub_sample_traj: int = 1,
     ) -> Tuple["MDAnalysis.core.universe.Universe", sc.Variable, sc.Variable]:
         """
         Obtain the initial structure, coordinates, and lattice parameters from an MDAnalysis.Universe object.
@@ -297,17 +293,17 @@ class MDAnalysisParser(Parser):
         coords_l = []
         latt_l = []
         if progress:
-            iterator = tqdm(universe.trajectory[::sub_sample_traj], desc='Reading Trajectory')
+            iterator = tqdm(universe.trajectory, desc='Reading Trajectory')
         else:
-            iterator = universe.trajectory[::sub_sample_traj]
+            iterator = universe.trajectory
 
         for struct in iterator:
             if first:
-                structure = universe.atoms[::sub_sample_atoms]
+                structure = universe.atoms
                 first = False
             matrix = np.array(struct.triclinic_dimensions)
             inv_matrix = np.linalg.inv(matrix)
-            coords_l.append(np.dot(universe.atoms[::sub_sample_atoms].positions, inv_matrix))
+            coords_l.append(np.dot(universe.atoms.positions, inv_matrix))
             latt_l.append(np.array(matrix))
 
         coords_l = np.array(coords_l)
@@ -329,7 +325,7 @@ class MDAnalysisParser(Parser):
         :param structure: Initial structure.
         :param specie: Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
 
-        :return: Tuple containing: indices for the atoms in the trajectory used in the calculation of the
+        :return: Tuple containing indices for the atoms in the trajectory used in the calculation of the
             diffusion and indices of framework atoms.
         """
         indices = []
