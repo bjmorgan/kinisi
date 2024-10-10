@@ -11,7 +11,6 @@ Here we will try and list publications that have used `kinisi` (if you would lik
 7. Dunn, J., Crossley-Lewis, J. M., McCluskey, A. R., Jackson, F., Buda, C., Sunley, G., Mulholland, A. J., Allan, N, L., *Catal. Sci. Technolo.*, **14**, 3674-3681, 2024. doi:[10.1039/D4CY00506F](https://doi.org/10.1039/D4CY00506F).
 8. Hu, J., Squires, A. G., Kondek, J., Johnson, M. J., Youd, A. B., Vadhva, P. Paul, P., Withers, P. J., Di Michiel, M., Keeble, D. S., Hansen, M. R., Scanlon, D. O., Rettie, A. J. E. [*ChemRxiv*-2024-3s0kh](https://doi.org/10.26434/chemrxiv-2024-3s0kh).
 9. McCluskey, A. R., Coles, S. W., Morgan, B. J. [*arXiv*:2305.18244](https://arxiv.org/abs/2305.18244).
-10. Coles, S. W., Morgan, B. J., Rotenberg, B. [*arXiv*:2310.06149](https://arxiv.org/abs/2310.06149).
-11. Klarbring, J., Walsh, A., *Chem. Mater*, **36**, 9406–9413, 2024. doi:[10.1021/acs.chemmater.4c00936](https://doi.org/10.1021/acs.chemmater.4c00936).
-12. Nam, J., Liu, S., Winter, G., Jun, K., Yang, S., Gómez-Bombarelli, R. [*arXiv*:2410.01464](https://arxiv.org/abs/2410.01464).
-13. Ravindra, R., Advincula, X. R., Shi, B. X., Coles, S. W., Michaelides, A., Kapil, V. [*arXiv*:2410.03272](https://arxiv.org/abs/2410.03272).
+10. Klarbring, J., Walsh, A., *Chem. Mater*, **36**, 9406–9413, 2024. doi:[10.1021/acs.chemmater.4c00936](https://doi.org/10.1021/acs.chemmater.4c00936).
+11. Nam, J., Liu, S., Winter, G., Jun, K., Yang, S., Gómez-Bombarelli, R. [*arXiv*:2410.01464](https://arxiv.org/abs/2410.01464).
+12. Ravindra, R., Advincula, X. R., Shi, B. X., Coles, S. W., Michaelides, A., Kapil, V. [*arXiv*:2410.03272](https://arxiv.org/abs/2410.03272).
