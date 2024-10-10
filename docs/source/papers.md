@@ -16,5 +16,4 @@ Here we will try and list publications that have used or cited `kinisi` (if you 
 12. Coles, S. W., Morgan, B. J., Rotenberg, B. [*arXiv*:2310.06149](https://arxiv.org/abs/2310.06149).
 13. Klarbring, J., Walsh, A., *Chem. Mater*, 2024. doi:[10.1021/acs.chemmater.4c00936](https://doi.org/10.1021/acs.chemmater.4c00936).
 14. Nam, J., Liu, S., Winter, G., Jun, K., Yang, S., Gómez-Bombarelli, R. [*arXiv*:2410.01464](https://arxiv.org/abs/2410.01464).
-
-
+15. Ravindra, R., Advincula, X. R., Shi, B. X., Coles, S. W., Michaelides, A., Kapil, V. [*arXiv*:2410.03272](https://arxiv.org/abs/2410.03272).
