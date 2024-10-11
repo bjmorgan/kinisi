@@ -5,7 +5,7 @@ and the collective motion of particles.
 
 # Copyright (c) kinisi developers.
 # Distributed under the terms of the MIT License
-# author: Harry Richardson (Harry-Rich)
+# author: Harry Richardson (Harry-Rich) and Andrew R. McCluskey (arm61)
 
 from typing import Union, List
 import numpy as np
@@ -24,14 +24,9 @@ class JumpDiffusionAnalyzer(Analyzer):
     accurate values for total mean squared displacement uncertainty and covariance.
     The time-dependence of the MSTD is then modelled in a generalised least squares fashion to obtain the jump
     diffusion coefficient and offset using Markov chain Monte Carlo maximum likelihood sampling.
-
-    :param delta_t: An array of the time interval values.
-    :param disp_3d: A list of arrays, where each array has the axes [atom, displacement observation, dimension].
-        There is one array in the list for each delta_t value. Note: it is necessary to use a list of arrays as
-        the number of observations is not necessary the same at each data point.
-    :param volume: The volume of the simulation cell.
-    :param uncertainty_params: The parameters for the :py:class:`kinisi.diffusion.DiffBootstrap` object. See
-        the appropriate documentation for more guidance on this. Optional, default is the default bootstrap parameters.
+    
+    :param trajectory: The parsed trajectory from some input file. This will be of type :py:class:`Parser`, but
+        the specifics depend on the parser that is used.
     """
 
     def __init__(self, trajectory: Parser) -> None:
@@ -39,7 +34,7 @@ class JumpDiffusionAnalyzer(Analyzer):
         self.mstd = None
 
     @classmethod
-    def from_Xdatcar(cls,
+    def from_xdatcar(cls,
                      trajectory: Union['pymatgen.io.vasp.outputs.Xdatcar', List['pymatgen.io.vasp.outputs.Xdatcar']],
                      specie: Union['pymatgen.core.periodic_table.Element', 'pymatgen.core.periodic_table.Specie'],
                      time_step: sc.Variable,
@@ -48,7 +43,7 @@ class JumpDiffusionAnalyzer(Analyzer):
                      dt: sc.Variable = None,
                      dimension: str = 'xyz',
                      distance_unit: sc.Unit = sc.units.angstrom,
-                     progress: bool = True) -> 'DiffusionAnalyzer':
+                     progress: bool = True) -> 'JumpDiffusionAnalyzer':
         """
         Constructs the necessary :py:mod:`kinisi` objects for analysis from a single or a list of
         :py:class:`pymatgen.io.vasp.outputs.Xdatcar` objects.
@@ -75,17 +70,12 @@ class JumpDiffusionAnalyzer(Analyzer):
             defaults to :py:attr:`sc.units.angstrom`.
         :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
         
-        :returns: The :py:class:`DiffusionAnalyzer` object with the mean-squared displacement calculated.
+        :returns: The :py:class:`JumpDiffusionAnalyzer` object with the mean-squared total displacement calculated.
         """
-        p = super()._from_Xdatcar(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit,
+        p = super()._from_xdatcar(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit,
                                   progress)
         p.mstd = calculate_mstd(p.trajectory, progress)
         return p
-
-    @property
-    def n_atoms(self):
-        """Property to access the n_atoms."""
-        return self.trajectory.displacements.sizes['atom']
 
     def jump_diffusion(self, start_dt: sc.Variable, diffusion_params: Union[dict, None] = None) -> None:
         """
@@ -98,4 +88,16 @@ class JumpDiffusionAnalyzer(Analyzer):
         if diffusion_params is None:
             diffusion_params = {}
         self.diff = Diffusion(msd=self.mstd, n_atoms=self.n_atoms)
-        self.diff.jump_diffusion(start_dt, **diffusion_params)
+        self.diff._jump_diffusion(start_dt, **diffusion_params)
+
+
+    @property
+    def distributions(self) -> np.array:
+        """
+        :return: A distribution of samples for the linear relationship that can be used for easy
+        plotting of credible intervals.
+        """
+        if self.diff.intercept is not None:
+            return self.diff.gradient.values * self.mstd.coords['time interval'].values[:, np.newaxis] + self.diff.intercept.values
+        else:
+            return self.diff.gradient.values * self.mstd.coords['time interval'].values[:, np.newaxis]

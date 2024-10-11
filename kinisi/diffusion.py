@@ -127,9 +127,10 @@ class Diffusion:
         if fit_intercept:
             self.intercept = sc.array(dims=['samples'], values=self._flatchain[:, 1], unit=self.msd.unit)
 
-    def diffusion(self, start_dt: sc.Variable, **kwargs):
+    def _diffusion(self, start_dt: sc.Variable, **kwargs):
         """
         Calculation of the diffusion coefficient. 
+        Keyword arguments will be passed of the :py:func:`bayesian_regression` method. 
         
         :param start_dt: The time at which the diffusion regime begins.
         :param kwargs: Additional keyword arguments to pass to :py:func:`bayesian_regression`.
@@ -137,9 +138,10 @@ class Diffusion:
         self.bayesian_regression(start_dt=start_dt, **kwargs)
         self._diffusion_coefficient = sc.to_unit(self.gradient / (2 * self.msd.coords['dimensionality'].value), 'cm2/s')
 
-    def jump_diffusion(self, start_dt: sc.Variable, **kwargs):
+    def _jump_diffusion(self, start_dt: sc.Variable, **kwargs):
         """
-        Calculation of the diffusion coefficient. 
+        Calculation of the jump diffusion coefficient. 
+        Keyword arguments will be passed of the :py:func:`bayesian_regression` method. 
 
         :param start_dt: The time at which the diffusion regime begins.
         :param kwargs: Additional keyword arguments to pass to :py:func:`bayesian_regression`.
@@ -148,6 +150,23 @@ class Diffusion:
         self.bayesian_regression(start_dt=start_dt, **kwargs)
         self._jump_diffusion_coefficient = sc.to_unit(
             self.gradient / (2 * self.msd.coords['dimensionality'].value * self.n_atoms), 'cm2/s')
+
+    def _conductivity(self, start_dt: sc.Variable, temperature: sc.Variable, volume: sc.Variable, **kwargs):
+        """
+        Calculation of the conductivity.
+        Keyword arguments will be passed of the :py:func:`bayesian_regression` method. 
+
+        :param start_dt: The time at which the diffusion regime begins.
+        :param temperature: The temperature of the system.
+        :param volume: The volume of the system.
+        :param kwargs: Additional keyword arguments to pass to :py:func:`bayesian_regression`.
+        """
+        self.bayesian_regression(start_dt=start_dt, **kwargs)
+        self._jump_diffusion_coefficient = self.gradient / (2 * self.msd.coords['dimensionality'].value * self.n_atoms)
+        conversion = 1 / (volume * sc.constants.k * temperature)
+        print(self.D_J)
+        print(conversion.unit)
+        self._sigma = sc.to_unit(self.D_J * conversion, 'mS/cm')
 
     @property
     def D(self) -> sc.Variable:
@@ -162,6 +181,13 @@ class Diffusion:
         :return: The jump diffusion coefficient as a :py:mod:`scipp` object.
         """
         return self._jump_diffusion_coefficient
+    
+    @property
+    def sigma(self) -> sc.Variable:
+        """
+        :return: The conductivity as a :py:mod:`scipp` object.
+        """
+        return self._sigma
 
     def compute_covariance_matrix(self) -> sc.Variable:
         """
