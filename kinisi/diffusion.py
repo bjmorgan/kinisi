@@ -164,7 +164,6 @@ class Diffusion:
         self.bayesian_regression(start_dt=start_dt, **kwargs)
         self._jump_diffusion_coefficient = self.gradient / (2 * self.msd.coords['dimensionality'].value * self.n_atoms)
         conversion = 1 / (volume * sc.constants.k * temperature)
-        print(conversion.unit)
         self._sigma = sc.to_unit(self.D_J * conversion, 'mS/cm')
 
     @property
