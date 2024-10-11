@@ -4,7 +4,7 @@ and the collective motion of particles.
 """
 
 # Copyright (c) kinisi developers.
-# # Distributed under the terms of the MIT License
+# Distributed under the terms of the MIT License
 # author: Harry Richardson (Harry-Rich)
 
 from typing import Union, List
