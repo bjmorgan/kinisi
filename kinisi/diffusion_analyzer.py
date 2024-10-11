@@ -29,7 +29,7 @@ class DiffusionAnalyzer(Analyzer):
         self.msd = None
 
     @classmethod
-    def from_Xdatcar(cls,
+    def from_xdatcar(cls,
                      trajectory: Union['pymatgen.io.vasp.outputs.Xdatcar', List['pymatgen.io.vasp.outputs.Xdatcar']],
                      specie: Union['pymatgen.core.periodic_table.Element', 'pymatgen.core.periodic_table.Specie'],
                      time_step: sc.Variable,
@@ -73,7 +73,7 @@ class DiffusionAnalyzer(Analyzer):
         return p
 
     @classmethod
-    def from_Universe(cls,
+    def from_universe(cls,
                       trajectory: 'MDAnalysis.core.universe.Universe',
                       specie: str = None,
                       time_step: sc.Variable = None,
@@ -104,4 +104,15 @@ class DiffusionAnalyzer(Analyzer):
         if diffusion_params is None:
             diffusion_params = {}
         self.diff = Diffusion(self.msd)
-        self.diff.diffusion(start_dt, **diffusion_params)
+        self.diff._diffusion(start_dt, **diffusion_params)
+
+    @property
+    def distributions(self) -> np.array:
+        """
+        :return: A distribution of samples for the linear relationship that can be used for easy
+        plotting of credible intervals.
+        """
+        if self.diff.intercept is not None:
+            return self.diff.gradient.values * self.msd.coords['time interval'].values[:, np.newaxis] + self.diff.intercept.values
+        else:
+            return self.diff.gradient.values * self.msd.coords['time interval'].values[:, np.newaxis]

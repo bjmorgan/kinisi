@@ -91,6 +91,8 @@ def calculate_mscd(p: parser.Parser, ionic_charge: sc.Variable, progress: bool =
     multiplied by the ionic charge.
     
     :param p: The parser object containing the the relevant simulation trajectory data.
+    :param ionic_charge: The ionic charge of the species of interest. This should be either a :py:mod:`scipp`
+        scalar if all of the ions have the same charge or an array of the charge for each indiviudal ion.
     :param progress: Whether to show the progress bar. Optional, default is :py:attr:`True`.
 
     :return: A :py:class:`scipp.DataArray` object containing the relevant mean-squared charge displacement

@@ -108,18 +108,13 @@ class Analyzer:
                                  distance_unit=distance_unit,
                                  progress=progress)
             return cls(p)
-
+        
     @property
-    def distributions(self) -> np.array:
+    def n_atoms(self) -> int:
         """
-        :return: A distribution of samples for the linear relationship that can be used for easy
-        plotting of credible intervals.
+        :returns: The number of atoms in the trajectory.
         """
-        if self.diff.intercept is not None:
-            return self.diff.gradient.values * self.mstd.coords['timestep'].values[:, np.
-                                                                                   newaxis] + self.diff.intercept.values
-        else:
-            return self.diff.gradient.values * self.mstd.coords['timestep'].values[:, np.newaxis]
+        return self.trajectory.displacements.sizes['atom']
 
 
 def _flatten_list(this_list: list) -> list:
