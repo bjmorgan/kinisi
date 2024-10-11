@@ -3,9 +3,9 @@ The :py:class:`kinisi.analyze.JumpDiffusionAnalyzer` class allows the study of j
 and the collective motion of particles.
 """
 
-# Copyright (c) Andrew R. McCluskey and Benjamin J. Morgan
-# Distributed under the terms of the MIT License
-# author: Andrew R. McCluskey (arm61)
+# Copyright (c) kinisi developers.
+# # Distributed under the terms of the MIT License
+# author: Harry Richardson (Harry-Rich)
 
 from typing import Union, List
 import numpy as np

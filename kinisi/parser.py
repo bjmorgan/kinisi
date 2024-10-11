@@ -5,7 +5,7 @@ Parsers for kinisi. This module is responsible for reading in input files from :
 
 # Copyright (c) kinisi developers.
 # Distributed under the terms of the MIT License.
-# author: Andrew R. McCluskey (arm61)
+# author: Andrew R. McCluskey (arm61) and Harry Richardson (Harry-Rich).
 
 from typing import List, Tuple, Union
 import numpy as np

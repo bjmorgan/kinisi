@@ -7,6 +7,10 @@ Note, that all of the :py:attr:`classmethod` functions for the :py:class:`Analyz
 are intended for internal use. 
 """
 
+# Copyright (c) kinisi developers.
+# Distributed under the terms of the MIT License.
+# author: Andrew R. McCluskey (arm61) and Harry Richardson (Harry-Rich).
+
 from typing import Union, List
 import numpy as np
 import scipp as sc
