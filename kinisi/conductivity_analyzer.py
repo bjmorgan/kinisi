@@ -76,7 +76,7 @@ class ConductivityAnalyzer(Analyzer):
         p.mscd = calculate_mscd(p.trajectory, ionic_charge, progress)
         return p
 
-    def conductivity(self, start_dt: sc.Variable, temperature: sc.Variable, volume: sc.Variable, diffusion_params: Union[dict, None] = None, **kwargs) -> None: 
+    def conductivity(self, start_dt: sc.Variable, temperature: sc.Variable, volume: sc.Variable, diffusion_params: Union[dict, None] = None) -> None: 
         """
         Calculation of the conductivity.
         Keyword arguments will be passed of the :py:func:`bayesian_regression` method. 
@@ -89,7 +89,7 @@ class ConductivityAnalyzer(Analyzer):
         if diffusion_params is None:
             diffusion_params = {}
         self.diff = Diffusion(msd=self.mscd, n_atoms=self.n_atoms)
-        self.diff._conductivity(start_dt=start_dt, temperature=temperature, volume=volume, **kwargs)
+        self.diff._conductivity(start_dt=start_dt, temperature=temperature, volume=volume, **diffusion_params)
 
     @property
     def distributions(self) -> np.array:
