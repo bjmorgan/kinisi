@@ -2,16 +2,17 @@
 
 - What are the units being used in `kinisi`?
 
-    > After `kinisi` reads in a file, the units are modified such that distances are in **angstrom** and time 
-    > in **picoseconds** (these are the standard units for length and time in 
-    > [MDAnalysis objects](https://docs.mdanalysis.org/1.1.1/documentation_pages/units.html), while for VASP 
-    > we internally convert from femtoseconds to picoseconds on parsing), this means that time objects in 
-    > the `parser_params` should use in the input unit (i.e. femtoseconds VASP objects or picoseconds for MDAnalysis objects). 
-    > The `msd` attribute are in units of **squared-angstrom** and the `dt` attribute are in units of **picoseconds**. 
-    > The diffusion or jump-diffusion coefficient has units of **squared-centimetre per second** and the conductivity is 
+    > The output units for MSD-type object in `kinisi` always have distances in **angstrom** and time in **picoseconds** 
+    > (these are the standard units for length and time in 
+    > [`MDAnalysis`](https://docs.mdanalysis.org/1.1.1/documentation_pages/units.html)). The diffusion or 
+    > jump-diffusion coefficient has units of **squared-centimetre per second** and the conductivity is 
     > **millisiemens per centimetre** (these were chosen as they are common units for these
     > parameters, see [this issue](https://github.com/bjmorgan/kinisi/issues/65#issuecomment-2138777775) for
-    > more discussion).
+    > more discussion). However, the input units (i.e., the `time_step` argument that is given) depend on the parser 
+    > that is being used, for `Universe` and `ASE` objects, the input unit of time is **picoseconds** but for 
+    > `Pymatgen` objects (i.e., `from_file`, `from_Xdatcar` and `from_pymatgen`) the input time unit is 
+    > **femtoseconds**. It is planned that this (confusing) inconsistancy will be addressed in a future point 
+    > release of `kinisi`. 
 
 - I have been using `kinisi` in my research and would like to cite the package, how should I do this?
 
