@@ -361,7 +361,7 @@ class PymatgenParser(Parser):
 
     :param structures: Structures ordered in sequence of run.
     :param specie: Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
-    :param time_step: Time step, in picoseconds, between steps in trajectory.
+    :param time_step: Time step, in femtoseconds, between steps in trajectory.
     :param step_skip: Sampling freqency of the trajectory (time_step is multiplied by this number to get the real
         time between output from the simulation file).
     :param sub_sample_traj: Multiple of the :py:attr:`time_step` to sub sample at. Optional, defaults
@@ -434,6 +434,7 @@ class PymatgenParser(Parser):
                          memory_limit=memory_limit,
                          progress=progress)
         self._volume = structure.volume
+        warnings.warn("UserWarning: Be aware that the expected input unit for 'time_step' is femtoseconds, not picoseconds.")
         self.delta_t *= 1e-3
 
     @staticmethod
