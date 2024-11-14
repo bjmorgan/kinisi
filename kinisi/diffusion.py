@@ -179,7 +179,7 @@ class Diffusion:
         :return: The jump diffusion coefficient as a :py:mod:`scipp` object.
         """
         return self._jump_diffusion_coefficient
-    
+
     @property
     def sigma(self) -> sc.Variable:
         """

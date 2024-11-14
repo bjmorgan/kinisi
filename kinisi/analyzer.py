@@ -39,7 +39,9 @@ class Analyzer:
                       dt: sc.Variable = None,
                       dimension: str = 'xyz',
                       distance_unit: sc.Unit = sc.units.angstrom,
-                      progress: bool = True) -> 'Analyzer':
+                      progress: bool = True,
+                      specie_indices: sc.Variable = None,
+                      masses: sc.Variable = None) -> 'Analyzer':
         """
         Constructs the necessary :py:mod:`kinisi` objects for analysis from a single or a list of
         :py:class:`pymatgen.io.vasp.outputs.Xdatcar` objects.
@@ -68,19 +70,20 @@ class Analyzer:
         """
         if dtype is None:
             p = PymatgenParser(trajectory.structures, specie, time_step, step_skip, dt, dimension, distance_unit,
-                               progress)
+                               progress, specie_indices, masses)
             return cls(p)
         elif dtype == 'identical':
             u = [
-                PymatgenParser(f.structures, specie, time_step, step_skip, dt, dimension, distance_unit, progress)
-                for f in trajectory
+                PymatgenParser(f.structures, specie, time_step, step_skip, dt, dimension, distance_unit, progress,
+                               specie_indices, masses) for f in trajectory
             ]
             p = u[0]
             p.displacements = sc.concat([i.displacements for i in u], 'atom')
             return cls(p)
         elif dtype == 'consecutive':
             structures = _flatten_list([x.structures for x in trajectory])
-            p = PymatgenParser(structures, specie, time_step, step_skip, dt, dimension, distance_unit, progress)
+            p = PymatgenParser(structures, specie, time_step, step_skip, dt, dimension, distance_unit, progress,
+                               specie_indices, masses)
             return cls(p)
 
     @classmethod
@@ -108,7 +111,7 @@ class Analyzer:
                                  distance_unit=distance_unit,
                                  progress=progress)
             return cls(p)
-        
+
     @property
     def n_atoms(self) -> int:
         """
