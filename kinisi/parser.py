@@ -398,7 +398,7 @@ def _get_molecules(structure: Union["ase.atoms.Atoms",
             drift_indices.append(i)
 
     if masses == None:
-        weights = None
+        weights = sc.ones_like(indices)
     elif len(masses.values) != indices.values.shape[1]:
         raise ValueError('Masses must be the same length as a molecule')
     else:
@@ -432,12 +432,8 @@ def _calculate_centers_of_mass(coords: VariableLikeType, weights: VariableLikeTy
     theta = s_coords * (2 * np.pi * (sc.units.rad / sc.units.angstrom))
     xi = sc.cos(theta)
     zeta = sc.sin(theta)
-    xi_bar = np.average(xi.values, axis=-2, weights=weights)
-    xi_bar = sc.array(values=xi_bar, 
-                      dims=[xi.dims[0], xi.dims[1], xi.dims[-1]])
-    zeta_bar = np.average(zeta.values, axis=-2, weights=weights)
-    zeta_bar = sc.array(values=zeta_bar, 
-                        dims=[zeta.dims[0], zeta.dims[1], zeta.dims[-1]])
+    xi_bar = (weights * xi).sum(dim='atoms') / weights.sum(dim='atoms')
+    zeta_bar = (weights * zeta).sum(dim='atoms') / weights.sum(dim='atoms')
     theta_bar = sc.atan2(y=zeta_bar, x=xi_bar)
     new_s_coords = theta_bar / (2 * np.pi * sc.units.rad)
     return new_s_coords
