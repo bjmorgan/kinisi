@@ -10,6 +10,7 @@ Parsers for kinisi. This module is responsible for reading in input files from :
 from typing import List, Tuple, Union
 import numpy as np
 import scipp as sc
+from scipp.typing import VariableLikeType
 from tqdm import tqdm
 
 DIMENSIONALITY = {
@@ -56,13 +57,13 @@ class Parser:
     """
 
     def __init__(self,
-                 coords: sc.Variable,
-                 lattice: sc.Variable,
-                 indices: sc.Variable,
-                 drift_indices: sc.Variable,
-                 time_step: sc.Variable,
-                 step_skip: sc.Variable,
-                 dt: sc.Variable = None,
+                 coords: VariableLikeType,
+                 lattice: VariableLikeType,
+                 indices: VariableLikeType,
+                 drift_indices: VariableLikeType,
+                 time_step: VariableLikeType,
+                 step_skip: VariableLikeType,
+                 dt: VariableLikeType = None,
                  dimension: str = 'xyz'):
         self.time_step = time_step
         self.step_skip = step_skip
@@ -85,7 +86,7 @@ class Parser:
 
         self.displacements = drift_corrected['atom', indices]
 
-    def calculate_displacements(self, coords: sc.Variable, lattice: sc.Variable) -> sc.Variable:
+    def calculate_displacements(self, coords: VariableLikeType, lattice: VariableLikeType) -> VariableLikeType:
         """
         Calculate the absolute displacements of the atoms in the trajectory.
         
@@ -112,7 +113,7 @@ class Parser:
         unwrapped_diff = wrapped_diff - diff_diff
         return sc.cumsum(unwrapped_diff, 'obs')
 
-    def correct_drift(self, disp: sc.Variable) -> sc.Variable:
+    def correct_drift(self, disp: VariableLikeType) -> VariableLikeType:
         """
         Perform drift correction, such that the displacement is calculated normalised to any framework drift.
 
@@ -151,14 +152,14 @@ class PymatgenParser(Parser):
         self,
         structures: List['pymatgen.core.structure.Structure'],
         specie: Union['pymatgen.core.periodic_table.Element', 'pymatgen.core.periodic_table.Specie'],
-        time_step: sc.Variable,
-        step_skip: sc.Variable,
-        dt: sc.Variable = None,
+        time_step: VariableLikeType,
+        step_skip: VariableLikeType,
+        dt: VariableLikeType = None,
         dimension: str = 'xyz',
         distance_unit: sc.Unit = sc.units.angstrom,
         progress: bool = True,
-        specie_indices: sc.Variable = None,
-        masses: sc.Variable = None,
+        specie_indices: VariableLikeType = None,
+        masses: VariableLikeType = None,
     ):
         self.distance_unit = distance_unit
 
@@ -181,7 +182,7 @@ class PymatgenParser(Parser):
     def get_structure_coords_latt(
             self,
             structures: List['pymatgen.core.structure.Structure'],
-            progress: bool = True) -> Tuple["pymatgen.core.structure.Structure", sc.Variable, sc.Variable]:
+            progress: bool = True) -> Tuple["pymatgen.core.structure.Structure", VariableLikeType, VariableLikeType]:
         """
         Obtain the initial structure, coordinates, and lattice parameters from a list of pymatgen structures.
 
@@ -219,7 +220,7 @@ class PymatgenParser(Parser):
     def get_indices(
         self, structure: 'pymatgen.core.structure.Structure', specie: Union['pymatgen.core.periodic_table.Element',
                                                                             'pymatgen.core.periodic_table.Specie']
-    ) -> Tuple[sc.Variable, sc.Variable]:
+    ) -> Tuple[VariableLikeType, VariableLikeType]:
         """
         Determine the framework and mobile indices from a :py:mod:`pymatgen` structure.
         
@@ -269,9 +270,9 @@ class MDAnalysisParser(Parser):
     def __init__(self,
                  universe: 'MDAnalysis.core.universe.Universe',
                  specie: str,
-                 time_step: sc.Variable,
-                 step_skip: sc.Variable,
-                 dt: sc.Variable = None,
+                 time_step: VariableLikeType,
+                 step_skip: VariableLikeType,
+                 dt: VariableLikeType = None,
                  dimension: str = 'xyz',
                  distance_unit: sc.Unit = sc.units.angstrom,
                  progress: bool = True):
@@ -288,7 +289,7 @@ class MDAnalysisParser(Parser):
         self,
         universe: 'MDAnalysis.core.universe.Universe',
         progress: bool = True,
-    ) -> Tuple["MDAnalysis.core.universe.Universe", sc.Variable, sc.Variable]:
+    ) -> Tuple["MDAnalysis.core.universe.Universe", VariableLikeType, VariableLikeType]:
         """
         Obtain the initial structure, coordinates, and lattice parameters from an MDAnalysis.Universe object.
 
@@ -332,7 +333,7 @@ class MDAnalysisParser(Parser):
         self,
         structure: "MDAnalysis.universe.Universe",
         specie: str,
-    ) -> Tuple[sc.Variable, sc.Variable]:
+    ) -> Tuple[VariableLikeType, VariableLikeType]:
         """
         Determine framework and non-framework indices for an :py:mod:`MDAnalysis` compatible file.
 
@@ -363,9 +364,11 @@ class MDAnalysisParser(Parser):
         return indices, drift_indices
 
 
-def _get_molecules(structure: "ase.atoms.Atoms" or "pymatgen.core.structure.Structure"
-                   or "MDAnalysis.universe.Universe", coords: sc.Variable, indices: sc.Variable,
-                   masses: sc.Variable) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+def _get_molecules(structure: Union["ase.atoms.Atoms",
+                                    "pymatgen.core.structure.Structure", 
+                                    "MDAnalysis.universe.Universe"], 
+                   coords: VariableLikeType, indices: VariableLikeType, 
+                   masses: VariableLikeType) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """
     Determine framework and non-framework indices for an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when specie_indices are provided and contain multiple molecules. Warning: This function changes the structure without changing the object.
 
@@ -383,11 +386,11 @@ def _get_molecules(structure: "ase.atoms.Atoms" or "pymatgen.core.structure.Stru
     """
     drift_indices = []
     try:
-        indices.values = indices.values - 1
+        indices = indices - 1
     except:
         raise ValueError('Molecules must be of same length')
 
-    n_molecules = len(indices.dims)
+    n_molecules = indices.shape[0]
 
     # Removed method for framework_indices
     for i, site in enumerate(structure):
@@ -401,19 +404,17 @@ def _get_molecules(structure: "ase.atoms.Atoms" or "pymatgen.core.structure.Stru
     else:
         weights = masses.copy()
 
-    coord_array = coords.values
-    new_s_coords = _calculate_centers_of_mass(coord_array, weights.values, indices.values)
+    new_s_coords = _calculate_centers_of_mass(coords, weights, indices)
 
-    new_coords = sc.array(dims=['time', 'atom', 'dimension'],
-                          values=np.concatenate((new_s_coords, coord_array[:, drift_indices]), axis=1),
-                          unit=sc.units.dimensionless)
-    new_indices = sc.Variable(dims=['atom'], values=list(range(n_molecules)))
-    new_drift_indices = sc.Variable(dims=['atom'], values=list(range(n_molecules, n_molecules + len(drift_indices))))
+    coords.unit = sc.units.dimensionless
+    new_coords = sc.concat([new_s_coords, coords['atom', drift_indices]], 'atom')
+    new_indices = sc.Variable(dims=['molecule'], values=list(range(n_molecules)))
+    new_drift_indices = sc.Variable(dims=['molecule'], values=list(range(n_molecules, n_molecules + len(drift_indices))))
 
     return new_coords, new_indices, new_drift_indices
 
 
-def _calculate_centers_of_mass(coords: np.ndarray, weights: np.ndarray, indices: np.ndarray) -> np.ndarray:
+def _calculate_centers_of_mass(coords: VariableLikeType, weights: VariableLikeType, indices: VariableLikeType) -> VariableLikeType:
     """
     Calculates the weighted molecular centre of mass based on chosen weights and indices as per https://doi.org/10.1080/2151237X.2008.10129266
     The method involves projection of the each coordinate onto a circle to allow for efficient COM calculation
@@ -424,14 +425,19 @@ def _calculate_centers_of_mass(coords: np.ndarray, weights: np.ndarray, indices:
 
      :return: Array containing coordinates of centres of mass of molecules
     """
-
-    s_coords = coords[:, indices]
-    theta = s_coords * (2 * np.pi)
-    xi = np.cos(theta)
-    zeta = np.sin(theta)
-    xi_bar = np.average(xi, axis=-2, weights=weights)
-    zeta_bar = np.average(zeta, axis=-2, weights=weights)
-    theta_bar = np.arctan2(zeta_bar, xi_bar)
-    new_s_coords = theta_bar / (2 * np.pi)
-
+    s_coords = sc.fold(coords['atom', indices.values.flatten()], 
+                       'atom', 
+                       dims=indices.dims, 
+                       shape=indices.shape)
+    theta = s_coords * (2 * np.pi * (sc.units.rad / sc.units.angstrom))
+    xi = sc.cos(theta)
+    zeta = sc.sin(theta)
+    xi_bar = np.average(xi.values, axis=-2, weights=weights)
+    xi_bar = sc.array(values=xi_bar, 
+                      dims=[xi.dims[0], xi.dims[1], xi.dims[-1]])
+    zeta_bar = np.average(zeta.values, axis=-2, weights=weights)
+    zeta_bar = sc.array(values=zeta_bar, 
+                        dims=[zeta.dims[0], zeta.dims[1], zeta.dims[-1]])
+    theta_bar = sc.atan2(y=zeta_bar, x=xi_bar)
+    new_s_coords = theta_bar / (2 * np.pi * sc.units.rad)
     return new_s_coords
