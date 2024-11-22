@@ -430,8 +430,9 @@ def _calculate_centers_of_mass(coords: VariableLikeType, weights: VariableLikeTy
     theta = s_coords * (2 * np.pi * (sc.units.rad / sc.units.angstrom))
     xi = sc.cos(theta)
     zeta = sc.sin(theta)
-    xi_bar = (weights * xi).sum(dim='atoms') / weights.sum(dim='atoms')
-    zeta_bar = (weights * zeta).sum(dim='atoms') / weights.sum(dim='atoms')
+    dims_id = [i for i in indices.dims if i != 'atom'][0]
+    xi_bar = (weights * xi).sum(dim=dims_id) / weights.sum(dim=dims_id)
+    zeta_bar = (weights * zeta).sum(dim=dims_id) / weights.sum(dim=dims_id)
     theta_bar = sc.atan2(y=zeta_bar, x=xi_bar)
     new_s_coords = theta_bar / (2 * np.pi * sc.units.rad)
     return new_s_coords
