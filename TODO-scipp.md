@@ -8,4 +8,5 @@ This is the TODO list for the scippification work:
 - [ ] `from_*`: currently there is only `from_xdatcar` and `from_universe`, need to add all of the variants in current release version. 
 - [ ] `posterior_predictive`: add posterior predictive functionality
 - [ ] `arrhenius`: the `arrhenius` module is not functional at all (this requires thought about implementation, i.e., do we still want to used `uravu`?).
+- [ ] Currently no support for `dimension` argument.
 - [ ] tests!
