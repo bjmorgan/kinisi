@@ -364,10 +364,9 @@ class MDAnalysisParser(Parser):
         return indices, drift_indices
 
 
-def _get_molecules(structure: Union["ase.atoms.Atoms",
-                                    "pymatgen.core.structure.Structure", 
-                                    "MDAnalysis.universe.Universe"], 
-                   coords: VariableLikeType, indices: VariableLikeType, 
+def _get_molecules(structure: Union["ase.atoms.Atoms", "pymatgen.core.structure.Structure",
+                                    "MDAnalysis.universe.Universe"], coords: VariableLikeType,
+                   indices: VariableLikeType,
                    masses: VariableLikeType) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """
     Determine framework and non-framework indices for an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when specie_indices are provided and contain multiple molecules. Warning: This function changes the structure without changing the object.
@@ -409,12 +408,14 @@ def _get_molecules(structure: Union["ase.atoms.Atoms",
     coords.unit = sc.units.dimensionless
     new_coords = sc.concat([new_s_coords, coords['atom', drift_indices]], 'atom')
     new_indices = sc.Variable(dims=['molecule'], values=list(range(n_molecules)))
-    new_drift_indices = sc.Variable(dims=['molecule'], values=list(range(n_molecules, n_molecules + len(drift_indices))))
+    new_drift_indices = sc.Variable(dims=['molecule'],
+                                    values=list(range(n_molecules, n_molecules + len(drift_indices))))
 
     return new_coords, new_indices, new_drift_indices
 
 
-def _calculate_centers_of_mass(coords: VariableLikeType, weights: VariableLikeType, indices: VariableLikeType) -> VariableLikeType:
+def _calculate_centers_of_mass(coords: VariableLikeType, weights: VariableLikeType,
+                               indices: VariableLikeType) -> VariableLikeType:
     """
     Calculates the weighted molecular centre of mass based on chosen weights and indices as per https://doi.org/10.1080/2151237X.2008.10129266
     The method involves projection of the each coordinate onto a circle to allow for efficient COM calculation
@@ -425,10 +426,7 @@ def _calculate_centers_of_mass(coords: VariableLikeType, weights: VariableLikeTy
 
      :return: Array containing coordinates of centres of mass of molecules
     """
-    s_coords = sc.fold(coords['atom', indices.values.flatten()], 
-                       'atom', 
-                       dims=indices.dims, 
-                       shape=indices.shape)
+    s_coords = sc.fold(coords['atom', indices.values.flatten()], 'atom', dims=indices.dims, shape=indices.shape)
     theta = s_coords * (2 * np.pi * (sc.units.rad / sc.units.angstrom))
     xi = sc.cos(theta)
     zeta = sc.sin(theta)
