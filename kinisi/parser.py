@@ -405,7 +405,6 @@ def _get_molecules(structure: Union["ase.atoms.Atoms", "pymatgen.core.structure.
 
     new_s_coords = _calculate_centers_of_mass(coords, weights, indices)
 
-    # coords.unit = sc.units.dimensionless
     new_coords = sc.concat([new_s_coords, coords['atom', drift_indices]], 'atom')
     new_indices = sc.Variable(dims=['molecule'], values=list(range(n_molecules)))
     new_drift_indices = sc.Variable(dims=['molecule'],
