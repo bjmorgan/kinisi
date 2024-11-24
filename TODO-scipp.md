@@ -9,4 +9,5 @@ This is the TODO list for the scippification work:
 - [ ] `posterior_predictive`: add posterior predictive functionality
 - [ ] `arrhenius`: the `arrhenius` module is not functional at all (this requires thought about implementation, i.e., do we still want to used `uravu`?).
 - [ ] Currently no support for `dimension` argument.
+- [ ] Documentation updates (to happen gradually).
 - [ ] tests!
