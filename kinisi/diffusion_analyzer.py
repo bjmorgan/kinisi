@@ -86,6 +86,8 @@ class DiffusionAnalyzer(Analyzer):
                       dt: sc.Variable = None,
                       dimension: str = 'xyz',
                       distance_unit: sc.Unit = sc.units.angstrom,
+                      specie_indices: sc.Variable = None,
+                      masses: sc.Variable = None,
                       progress: bool = True) -> 'DiffusionAnalyzer':
         """
         Constructs the necessary :py:mod:`kinisi` objects for analysis from a
@@ -94,7 +96,7 @@ class DiffusionAnalyzer(Analyzer):
         :param trajectory: The :py:class:`MDAnalysis
         """
         p = super()._from_universe(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit,
-                                   progress)
+                                   specie_indices, masses, progress)
         p.msd = calculate_msd(p.trajectory, progress)
         return p
 

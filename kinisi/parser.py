@@ -274,13 +274,23 @@ class MDAnalysisParser(Parser):
                  dt: VariableLikeType = None,
                  dimension: str = 'xyz',
                  distance_unit: sc.Unit = sc.units.angstrom,
+                 specie_indices: VariableLikeType = None,
+                 masses: VariableLikeType = None,
                  progress: bool = True):
 
         self.distance_unit = distance_unit
 
         structure, coords, latt = self.get_structure_coords_latt(universe, progress)
 
-        indices, drift_indices = self.get_indices(structure, specie)
+        if specie is not None:
+            indices, drift_indices = self.get_indices(structure, specie)
+        elif isinstance(specie_indices, sc.Variable):
+            if len(specie_indices.dims) > 1:
+                coords, indices, drift_indices = _get_molecules(structure, coords, specie_indices, masses)
+            else:
+                indices, drift_indices = _get_framework(structure, specie_indices)
+        else:
+            raise TypeError('Unrecognized type for specie or specie_indices, specie_indices must be a sc.array')
 
         super().__init__(coords, latt, indices, drift_indices, time_step, step_skip, dt, dimension)
 
@@ -323,7 +333,7 @@ class MDAnalysisParser(Parser):
         coords_l = np.array(coords_l)
         latt_l = np.array(latt_l)
 
-        coords = sc.array(dims=['time', 'atom', 'dimension'], values=coords_l, unit=sc.units.dimensionless)
+        coords = sc.array(dims=['time', 'atom', 'dimension'], values=coords_l, unit=self.distance_unit)
         latt = sc.array(dims=['time', 'dimension1', 'dimension2'], values=latt_l, unit=self.distance_unit)
 
         return structure, coords, latt
@@ -403,6 +413,10 @@ def _get_molecules(structure: Union["ase.atoms.Atoms", "pymatgen.core.structure.
         weights = masses.copy()
 
     new_s_coords = _calculate_centers_of_mass(coords, weights, indices)
+
+    if coords.dtype == np.float32:
+        # MDAnalysis uses float32, so we need to convert to float32 to avoid concat error
+        new_s_coords = new_s_coords.astype(np.float32)
 
     new_coords = sc.concat([new_s_coords, coords['atom', drift_indices]], 'atom')
     new_indices = sc.Variable(dims=['molecule'], values=list(range(n_molecules)))

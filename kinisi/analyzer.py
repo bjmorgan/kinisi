@@ -84,8 +84,8 @@ class Analyzer:
             return cls(p)
         elif dtype == 'consecutive':
             structures = _flatten_list([x.structures for x in trajectory])
-            p = PymatgenParser(structures, specie, time_step, step_skip, dt, dimension, distance_unit, progress,
-                               specie_indices, masses)
+            p = PymatgenParser(structures, specie, time_step, step_skip, dt, dimension, distance_unit, specie_indices,
+                               masses, progress)
             return cls(p)
 
     @classmethod
@@ -98,6 +98,8 @@ class Analyzer:
                        dt: sc.Variable = None,
                        dimension: str = 'xyz',
                        distance_unit: sc.Unit = sc.units.angstrom,
+                       specie_indices: sc.Variable = None,
+                       masses: sc.Variable = None,
                        progress: bool = True) -> 'Analyzer':
         """
         Constructs the necessary :py:mod:`kinisi` objects for analysis from a 
@@ -111,6 +113,8 @@ class Analyzer:
                                  dt=dt,
                                  dimension=dimension,
                                  distance_unit=distance_unit,
+                                 specie_indices=specie_indices,
+                                 masses=masses,
                                  progress=progress)
             return cls(p)
 
