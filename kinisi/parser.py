@@ -432,13 +432,13 @@ def _calculate_centers_of_mass(coords: VariableLikeType, weights: VariableLikeTy
     dims_id = [i for i in indices.dims if i != 'atom'][0]
     xi_bar = (weights * xi).sum(dim=dims_id) / weights.sum(dim=dims_id)
     zeta_bar = (weights * zeta).sum(dim=dims_id) / weights.sum(dim=dims_id)
-    theta_bar = sc.atan2(y=zeta_bar, x=xi_bar)
+    theta_bar = sc.atan2(y=-zeta_bar, x=-xi_bar) + np.pi*sc.units.rad
     new_s_coords = theta_bar / (2 * np.pi * (sc.units.rad / sc.units.angstrom))
     return new_s_coords
 
 
-def _get_framework(structure: "ase.atoms.Atoms" or "pymatgen.core.structure.Structure" or "MDAnalysis.universe.Universe",
-                   indices: List[int]) -> Tuple[np.ndarray, np.ndarray]:
+def _get_framework(structure: "ase.atoms.Atoms" or "pymatgen.core.structure.Structure"
+                   or "MDAnalysis.universe.Universe", indices: List[int]) -> Tuple[np.ndarray, np.ndarray]:
     """
     Determine the framework indices from an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when indices are provided
     
@@ -457,6 +457,6 @@ def _get_framework(structure: "ase.atoms.Atoms" or "pymatgen.core.structure.Stru
         if i not in indices:
             drift_indices.append(i)
 
-    drift_indices = sc.Variable(dims=['atom'],values=drift_indices)
+    drift_indices = sc.Variable(dims=['atom'], values=drift_indices)
 
     return indices, drift_indices
