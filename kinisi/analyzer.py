@@ -30,18 +30,20 @@ class Analyzer:
         self.trajectory = trajectory
 
     @classmethod
-    def _from_xdatcar(cls,
-                      trajectory: Union['pymatgen.io.vasp.outputs.Xdatcar', List['pymatgen.io.vasp.outputs.Xdatcar']],
-                      specie: Union['pymatgen.core.periodic_table.Element', 'pymatgen.core.periodic_table.Specie'],
-                      time_step: sc.Variable,
-                      step_skip: sc.Variable,
-                      dtype: Union[str, None] = None,
-                      dt: sc.Variable = None,
-                      dimension: str = 'xyz',
-                      distance_unit: sc.Unit = sc.units.angstrom,
-                      progress: bool = True,
-                      specie_indices: sc.Variable = None,
-                      masses: sc.Variable = None) -> 'Analyzer':
+    def _from_xdatcar(
+        cls,
+        trajectory: Union['pymatgen.io.vasp.outputs.Xdatcar', List['pymatgen.io.vasp.outputs.Xdatcar']],
+        specie: Union['pymatgen.core.periodic_table.Element', 'pymatgen.core.periodic_table.Specie'],
+        time_step: sc.Variable,
+        step_skip: sc.Variable,
+        dtype: Union[str, None] = None,
+        dt: sc.Variable = None,
+        dimension: str = 'xyz',
+        distance_unit: sc.Unit = sc.units.angstrom,
+        specie_indices: sc.Variable = None,
+        masses: sc.Variable = None,
+        progress: bool = True,
+    ) -> 'Analyzer':
         """
         Constructs the necessary :py:mod:`kinisi` objects for analysis from a single or a list of
         :py:class:`pymatgen.io.vasp.outputs.Xdatcar` objects.
@@ -70,7 +72,7 @@ class Analyzer:
         """
         if dtype is None:
             p = PymatgenParser(trajectory.structures, specie, time_step, step_skip, dt, dimension, distance_unit,
-                               progress, specie_indices, masses)
+                               specie_indices, masses, progress)
             return cls(p)
         elif dtype == 'identical':
             u = [

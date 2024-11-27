@@ -157,9 +157,9 @@ class PymatgenParser(Parser):
         dt: VariableLikeType = None,
         dimension: str = 'xyz',
         distance_unit: sc.Unit = sc.units.angstrom,
-        progress: bool = True,
         specie_indices: VariableLikeType = None,
         masses: VariableLikeType = None,
+        progress: bool = True,
     ):
         self.distance_unit = distance_unit
 
@@ -432,7 +432,7 @@ def _calculate_centers_of_mass(coords: VariableLikeType, weights: VariableLikeTy
     dims_id = [i for i in indices.dims if i != 'atom'][0]
     xi_bar = (weights * xi).sum(dim=dims_id) / weights.sum(dim=dims_id)
     zeta_bar = (weights * zeta).sum(dim=dims_id) / weights.sum(dim=dims_id)
-    theta_bar = sc.atan2(y=-zeta_bar, x=-xi_bar) + np.pi*sc.units.rad
+    theta_bar = sc.atan2(y=-zeta_bar, x=-xi_bar) + np.pi * sc.units.rad
     new_s_coords = theta_bar / (2 * np.pi * (sc.units.rad / sc.units.angstrom))
     return new_s_coords
 
