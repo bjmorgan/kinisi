@@ -171,8 +171,7 @@ class PymatgenParser(Parser):
             if len(specie_indices.dims) > 1:
                 coords, indices, drift_indices = _get_molecules(structure, coords, specie_indices, masses)
             else:
-                raise TypeError('to implement')
-                #indices = _get_framework(structure, specie_indices)
+                indices, drift_indices = _get_framework(structure, specie_indices)
         else:
             raise TypeError('Unrecognized type for specie or specie_indices, specie_indices must be a sc.array')
 
@@ -436,3 +435,28 @@ def _calculate_centers_of_mass(coords: VariableLikeType, weights: VariableLikeTy
     theta_bar = sc.atan2(y=zeta_bar, x=xi_bar)
     new_s_coords = theta_bar / (2 * np.pi * (sc.units.rad / sc.units.angstrom))
     return new_s_coords
+
+
+def _get_framework(structure: "ase.atoms.Atoms" or "pymatgen.core.structure.Structure" or "MDAnalysis.universe.Universe",
+                   indices: List[int]) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Determine the framework indices from an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when indices are provided
+    
+    :param structure: Initial structure.
+    :param indices: Indices for the atoms in the trajectory used in the calculation of the 
+        diffusion.
+    :param framework_indices: Indices of framework to be used in drift correction. If set to None will return all indices that are not in indices.
+    
+    :return: Tuple containing: indices for the atoms in the trajectory used in the calculation of the
+        diffusion and indices of framework atoms. 
+    """
+
+    drift_indices = []
+
+    for i, site in enumerate(structure):
+        if i not in indices:
+            drift_indices.append(i)
+
+    drift_indices = sc.Variable(dims=['atom'],values=drift_indices)
+
+    return indices, drift_indices
