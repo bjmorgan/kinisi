@@ -118,7 +118,7 @@ class JumpDiffusionAnalyzer(Analyzer):
         return self.msd_da.data
 
     @property
-    def flatchain(self) -> np.DataGroup:
+    def flatchain(self) -> sc.DataGroup:
         """
         :return: The flatchain of the MCMC samples.
         """
