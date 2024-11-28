@@ -108,13 +108,27 @@ class Analyzer:
                                  distance_unit=distance_unit,
                                  progress=progress)
             return cls(p)
-        
+
     @property
     def n_atoms(self) -> int:
         """
         :returns: The number of atoms in the trajectory.
         """
         return self.trajectory.displacements.sizes['atom']
+
+    @property
+    def intercept(self) -> sc.Variable:
+        """
+        :return: The intercept of the linear relationship.
+        """
+        return self.diff.intercept
+
+    @property
+    def dt(self) -> sc.Variable:
+        """
+        :return: The time intervals used for the mean-squared displacement.
+        """
+        return self.msd_da.coords['time interval']
 
 
 def _flatten_list(this_list: list) -> list:
