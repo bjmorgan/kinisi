@@ -10,6 +10,7 @@ and the collective motion of particles.
 from typing import Union, List
 import numpy as np
 import scipp as sc
+from scipp.typing import VariableLikeType
 from kinisi.displacement import calculate_mstd
 from kinisi.diffusion import Diffusion
 from kinisi.parser import Parser, PymatgenParser
@@ -31,16 +32,16 @@ class JumpDiffusionAnalyzer(Analyzer):
 
     def __init__(self, trajectory: Parser) -> None:
         super().__init__(trajectory)
-        self.mstd = None
+        self.msd_da = None
 
     @classmethod
     def from_xdatcar(cls,
                      trajectory: Union['pymatgen.io.vasp.outputs.Xdatcar', List['pymatgen.io.vasp.outputs.Xdatcar']],
                      specie: Union['pymatgen.core.periodic_table.Element', 'pymatgen.core.periodic_table.Specie'],
-                     time_step: sc.Variable,
-                     step_skip: sc.Variable,
+                     time_step: VariableLikeType,
+                     step_skip: VariableLikeType,
                      dtype: Union[str, None] = None,
-                     dt: sc.Variable = None,
+                     dt: VariableLikeType = None,
                      dimension: str = 'xyz',
                      distance_unit: sc.Unit = sc.units.angstrom,
                      progress: bool = True) -> 'JumpDiffusionAnalyzer':
@@ -74,10 +75,10 @@ class JumpDiffusionAnalyzer(Analyzer):
         """
         p = super()._from_xdatcar(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit,
                                   progress)
-        p.mstd = calculate_mstd(p.trajectory, progress)
+        p.msd_da = calculate_mstd(p.trajectory, progress)
         return p
 
-    def jump_diffusion(self, start_dt: sc.Variable, diffusion_params: Union[dict, None] = None) -> None:
+    def jump_diffusion(self, start_dt: VariableLikeType, diffusion_params: Union[dict, None] = None) -> None:
         """
         Calculate the jump diffusion coefficient using the mean-squared total displacement data.
         
@@ -87,9 +88,8 @@ class JumpDiffusionAnalyzer(Analyzer):
         """
         if diffusion_params is None:
             diffusion_params = {}
-        self.diff = Diffusion(msd=self.mstd, n_atoms=self.n_atoms)
+        self.diff = Diffusion(msd=self.msd_da, n_atoms=self.n_atoms)
         self.diff._jump_diffusion(start_dt, **diffusion_params)
-
 
     @property
     def distributions(self) -> np.array:
@@ -98,6 +98,31 @@ class JumpDiffusionAnalyzer(Analyzer):
         plotting of credible intervals.
         """
         if self.diff.intercept is not None:
-            return self.diff.gradient.values * self.mstd.coords['time interval'].values[:, np.newaxis] + self.diff.intercept.values
+            return self.diff.gradient.values * self.msd_da.coords[
+                'time interval'].values[:, np.newaxis] + self.diff.intercept.values
         else:
-            return self.diff.gradient.values * self.mstd.coords['time interval'].values[:, np.newaxis]
+            return self.diff.gradient.values * self.msd_da.coords['time interval'].values[:, np.newaxis]
+
+    @property
+    def D_J(self) -> VariableLikeType:
+        """
+        :return: The jump diffusion coefficient.
+        """
+        return self.diff.D_J
+
+    @property
+    def mstd(self) -> VariableLikeType:
+        """
+        :return: The mean-squared total displacement.
+        """
+        return self.msd_da.data
+
+    @property
+    def flatchain(self) -> np.DataGroup:
+        """
+        :return: The flatchain of the MCMC samples.
+        """
+        flatchain = {'D_J': self.D_J}
+        if self.intercept is not None:
+            flatchain['intercept'] = self.intercept
+        return sc.DataGroup(**flatchain)
