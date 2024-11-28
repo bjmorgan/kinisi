@@ -169,7 +169,7 @@ class PymatgenParser(Parser):
             indices, drift_indices = self.get_indices(structure, specie)
         elif isinstance(specie_indices, sc.Variable):
             if len(specie_indices.dims) > 1:
-                coords, indices, drift_indices = _get_molecules(structure, coords, specie_indices, masses)
+                coords, indices, drift_indices = _get_molecules(structure, coords, specie_indices, masses, distance_unit)
             else:
                 indices, drift_indices = _get_framework(structure, specie_indices)
         else:
@@ -286,7 +286,7 @@ class MDAnalysisParser(Parser):
             indices, drift_indices = self.get_indices(structure, specie)
         elif isinstance(specie_indices, sc.Variable):
             if len(specie_indices.dims) > 1:
-                coords, indices, drift_indices = _get_molecules(structure, coords, specie_indices, masses)
+                coords, indices, drift_indices = _get_molecules(structure, coords, specie_indices, masses,distance_unit)
             else:
                 indices, drift_indices = _get_framework(structure, specie_indices)
         else:
@@ -376,7 +376,8 @@ class MDAnalysisParser(Parser):
 def _get_molecules(structure: Union["ase.atoms.Atoms", "pymatgen.core.structure.Structure",
                                     "MDAnalysis.universe.Universe"], coords: VariableLikeType,
                    indices: VariableLikeType,
-                   masses: VariableLikeType) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+                   masses: VariableLikeType,
+                   distance_unit:VariableLikeType) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """
     Determine framework and non-framework indices for an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when specie_indices are provided and contain multiple molecules. Warning: This function changes the structure without changing the object.
 
@@ -412,7 +413,7 @@ def _get_molecules(structure: Union["ase.atoms.Atoms", "pymatgen.core.structure.
     else:
         weights = masses.copy()
 
-    new_s_coords = _calculate_centers_of_mass(coords, weights, indices)
+    new_s_coords = _calculate_centers_of_mass(coords, weights, indices,distance_unit)
 
     if coords.dtype == np.float32:
         # MDAnalysis uses float32, so we need to convert to float32 to avoid concat error
@@ -427,7 +428,7 @@ def _get_molecules(structure: Union["ase.atoms.Atoms", "pymatgen.core.structure.
 
 
 def _calculate_centers_of_mass(coords: VariableLikeType, weights: VariableLikeType,
-                               indices: VariableLikeType) -> VariableLikeType:
+                               indices: VariableLikeType, distance_unit:VariableLikeType) -> VariableLikeType:
     """
     Calculates the weighted molecular centre of mass based on chosen weights and indices as per https://doi.org/10.1080/2151237X.2008.10129266
     The method involves projection of the each coordinate onto a circle to allow for efficient COM calculation
@@ -439,7 +440,7 @@ def _calculate_centers_of_mass(coords: VariableLikeType, weights: VariableLikeTy
      :return: Array containing coordinates of centres of mass of molecules
     """
     s_coords = sc.fold(coords['atom', indices.values.flatten()], 'atom', dims=indices.dims, shape=indices.shape)
-    theta = s_coords * (2 * np.pi * (sc.units.rad / sc.units.angstrom))
+    theta = s_coords * (2 * np.pi * (sc.units.rad / distance_unit))
     xi = sc.cos(theta)
     zeta = sc.sin(theta)
     # This allows the dimensions of the indices to be any word, paired with 'atom'.
@@ -447,12 +448,12 @@ def _calculate_centers_of_mass(coords: VariableLikeType, weights: VariableLikeTy
     xi_bar = (weights * xi).sum(dim=dims_id) / weights.sum(dim=dims_id)
     zeta_bar = (weights * zeta).sum(dim=dims_id) / weights.sum(dim=dims_id)
     theta_bar = sc.atan2(y=-zeta_bar, x=-xi_bar) + np.pi * sc.units.rad
-    new_s_coords = theta_bar / (2 * np.pi * (sc.units.rad / sc.units.angstrom))
+    new_s_coords = theta_bar / (2 * np.pi * (sc.units.rad / distance_unit))
     return new_s_coords
 
 
-def _get_framework(structure: "ase.atoms.Atoms" or "pymatgen.core.structure.Structure"
-                   or "MDAnalysis.universe.Universe", indices: List[int]) -> Tuple[np.ndarray, np.ndarray]:
+def _get_framework(structure:  Union["ase.atoms.Atoms", "pymatgen.core.structure.Structure",
+                                     "MDAnalysis.universe.Universe"], indices: VariableLikeType) -> Tuple[np.ndarray, np.ndarray]:
     """
     Determine the framework indices from an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when indices are provided
     
