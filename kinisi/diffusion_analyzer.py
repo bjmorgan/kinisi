@@ -29,16 +29,20 @@ class DiffusionAnalyzer(Analyzer):
         self.msd = None
 
     @classmethod
-    def from_xdatcar(cls,
-                     trajectory: Union['pymatgen.io.vasp.outputs.Xdatcar', List['pymatgen.io.vasp.outputs.Xdatcar']],
-                     specie: Union['pymatgen.core.periodic_table.Element', 'pymatgen.core.periodic_table.Specie'],
-                     time_step: sc.Variable,
-                     step_skip: sc.Variable,
-                     dtype: Union[str, None] = None,
-                     dt: sc.Variable = None,
-                     dimension: str = 'xyz',
-                     distance_unit: sc.Unit = sc.units.angstrom,
-                     progress: bool = True) -> 'DiffusionAnalyzer':
+    def from_xdatcar(
+        cls,
+        trajectory: Union['pymatgen.io.vasp.outputs.Xdatcar', List['pymatgen.io.vasp.outputs.Xdatcar']],
+        specie: Union['pymatgen.core.periodic_table.Element', 'pymatgen.core.periodic_table.Specie'],
+        time_step: sc.Variable,
+        step_skip: sc.Variable,
+        dtype: Union[str, None] = None,
+        dt: sc.Variable = None,
+        dimension: str = 'xyz',
+        distance_unit: sc.Unit = sc.units.angstrom,
+        specie_indices: sc.Variable = None,
+        masses: sc.Variable = None,
+        progress: bool = True,
+    ) -> 'DiffusionAnalyzer':
         """
         Constructs the necessary :py:mod:`kinisi` objects for analysis from a single or a list of
         :py:class:`pymatgen.io.vasp.outputs.Xdatcar` objects.
@@ -68,7 +72,7 @@ class DiffusionAnalyzer(Analyzer):
         :returns: The :py:class:`DiffusionAnalyzer` object with the mean-squared displacement calculated.
         """
         p = super()._from_xdatcar(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit,
-                                  progress)
+                                  specie_indices, masses, progress)
         p.msd = calculate_msd(p.trajectory, progress)
         return p
 
@@ -82,6 +86,8 @@ class DiffusionAnalyzer(Analyzer):
                       dt: sc.Variable = None,
                       dimension: str = 'xyz',
                       distance_unit: sc.Unit = sc.units.angstrom,
+                      specie_indices: sc.Variable = None,
+                      masses: sc.Variable = None,
                       progress: bool = True) -> 'DiffusionAnalyzer':
         """
         Constructs the necessary :py:mod:`kinisi` objects for analysis from a
@@ -89,7 +95,8 @@ class DiffusionAnalyzer(Analyzer):
 
         :param trajectory: The :py:class:`MDAnalysis
         """
-        p = super()._from_universe(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit, progress)
+        p = super()._from_universe(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit,
+                                   specie_indices, masses, progress)
         p.msd = calculate_msd(p.trajectory, progress)
         return p
 
@@ -113,6 +120,7 @@ class DiffusionAnalyzer(Analyzer):
         plotting of credible intervals.
         """
         if self.diff.intercept is not None:
-            return self.diff.gradient.values * self.msd.coords['time interval'].values[:, np.newaxis] + self.diff.intercept.values
+            return self.diff.gradient.values * self.msd.coords[
+                'time interval'].values[:, np.newaxis] + self.diff.intercept.values
         else:
             return self.diff.gradient.values * self.msd.coords['time interval'].values[:, np.newaxis]
