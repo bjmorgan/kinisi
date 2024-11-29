@@ -377,7 +377,7 @@ def _get_molecules(structure: Union["ase.atoms.Atoms", "pymatgen.core.structure.
                                     "MDAnalysis.universe.Universe"], coords: VariableLikeType,
                    indices: VariableLikeType,
                    masses: VariableLikeType,
-                   distance_unit:VariableLikeType) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+                   distance_unit:sc.Unit) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """
     Determine framework and non-framework indices for an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when specie_indices are provided and contain multiple molecules. Warning: This function changes the structure without changing the object.
 
@@ -428,7 +428,7 @@ def _get_molecules(structure: Union["ase.atoms.Atoms", "pymatgen.core.structure.
 
 
 def _calculate_centers_of_mass(coords: VariableLikeType, weights: VariableLikeType,
-                               indices: VariableLikeType, distance_unit:VariableLikeType) -> VariableLikeType:
+                               indices: VariableLikeType, distance_unit:sc.Unit) -> VariableLikeType:
     """
     Calculates the weighted molecular centre of mass based on chosen weights and indices as per https://doi.org/10.1080/2151237X.2008.10129266
     The method involves projection of the each coordinate onto a circle to allow for efficient COM calculation
