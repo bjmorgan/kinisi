@@ -43,7 +43,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     'pymatgen',
-    'MDAnalysis',
+    'MDAnalysis>=2.8.0',
     'coverage',
     'codeclimate-test-reporter',
     'yapf',
@@ -55,7 +55,7 @@ dev = [
 ]
 docs = [
     'pymatgen',
-    'MDAnalysis',
+    'MDAnalysis>=2.8.0',
     'ase',
     'ipykernel',
     'nbsphinx',
