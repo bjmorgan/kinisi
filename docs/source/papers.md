@@ -14,3 +14,4 @@ Here we will try and list publications that have used `kinisi` (if you would lik
 10. Klarbring, J., Walsh, A., *Chem. Mater*, **36**, 9406–9413, 2024. doi:[10.1021/acs.chemmater.4c00936](https://doi.org/10.1021/acs.chemmater.4c00936).
 11. Nam, J., Liu, S., Winter, G., Jun, K., Yang, S., Gómez-Bombarelli, R. [*arXiv*:2410.01464](https://arxiv.org/abs/2410.01464).
 12. Ravindra, R., Advincula, X. R., Shi, B. X., Coles, S. W., Michaelides, A., Kapil, V. [*arXiv*:2410.03272](https://arxiv.org/abs/2410.03272).
+13. Song, J.-I., Choi, Y.-S., *J. Power Sources*, **626**, 235765, 2025. doi:[https://doi.org/10.1016/j.jpowsour.2024.235765](10.1016/j.jpowsour.2024.235765).
