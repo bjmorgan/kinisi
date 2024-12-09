@@ -117,6 +117,20 @@ class Analyzer:
                                  masses=masses,
                                  progress=progress)
             return cls(p)
+        
+    def posterior_predictive(self, posterior_predictive_params: Union[dict, None] = None):
+        """
+        Sample  the posterior predictive distribution. The shape of the resulting array will be
+        `(n_posterior_samples * n_predictive_samples, start_dt)`.
+        
+        :params posterior_predictive_params: Parameters for the :py:func:`diffusion.posterior_predictive` method. 
+            See the appropriate documentation for more guidence on this dictionary.
+
+        :return: Samples from the posterior predictive distribution. 
+        """
+        if posterior_predictive_params is None:
+            posterior_predictive_params = {}
+        return self.diff.posterior_predictive(**posterior_predictive_params)
 
     @property
     def n_atoms(self) -> int:
