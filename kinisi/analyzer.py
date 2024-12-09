@@ -117,7 +117,7 @@ class Analyzer:
                                  masses=masses,
                                  progress=progress)
             return cls(p)
-        
+
     def posterior_predictive(self, posterior_predictive_params: Union[dict, None] = None):
         """
         Sample  the posterior predictive distribution. The shape of the resulting array will be

@@ -205,12 +205,11 @@ class Diffusion:
                         values=cov_nearest(
                             minimum_eigenvalue_method(cov[self.diff_regime:, self.diff_regime:], self._cond_max)),
                         unit=self.msd.unit**2)
-    
 
     def posterior_predictive(self,
-                            n_posterior_samples: int = None,
-                            n_predictive_samples: int = 256,
-                            progress: bool = True) -> sc.Variable:
+                             n_posterior_samples: int = None,
+                             n_predictive_samples: int = 256,
+                             progress: bool = True) -> sc.Variable:
         """
         Sample the posterior predictive distribution. The shape of the resulting array will be
         `(n_posterior_samples * n_predictive_samples, start_dt)`.
@@ -225,13 +224,14 @@ class Diffusion:
         """
         if n_posterior_samples is None:
             n_posterior_samples = self.gradient.size
-       
-        ppd_unit  = self.gradient.unit * self.msd.coords['time interval'].unit + self.intercept.unit
-   
-        diff_regime = np.argwhere(self.msd.coords['time interval']  >= self._start_dt)[0][0]
-        ppd = sc.zeros(dims = ['posterior samples', 'predictive samples','time interval'], 
-                       shape = [n_posterior_samples, n_predictive_samples, self.msd.coords['time interval'][diff_regime:].size],
-                       unit = ppd_unit)
+
+        ppd_unit = self.gradient.unit * self.msd.coords['time interval'].unit + self.intercept.unit
+
+        diff_regime = np.argwhere(self.msd.coords['time interval'] >= self._start_dt)[0][0]
+        ppd = sc.zeros(
+            dims=['posterior samples', 'predictive samples', 'time interval'],
+            shape=[n_posterior_samples, n_predictive_samples, self.msd.coords['time interval'][diff_regime:].size],
+            unit=ppd_unit)
         samples_to_draw = list(enumerate(np.random.randint(0, self.gradient.size, size=n_posterior_samples)))
 
         if progress:
@@ -249,13 +249,9 @@ class Diffusion:
             mu = self.gradient[n] * self.msd.coords['time interval'][diff_regime:] + self.intercept[n]
             mv = multivariate_normal(mean=mu.values, cov=self._covariance_matrix.values, allow_singular=True)
             ppd.values[i] = mv.rvs(n_predictive_samples)
-        
 
-        ppd = sc.flatten(ppd, dims = ['posterior samples','predictive samples'], to = 'samples')
+        ppd = sc.flatten(ppd, dims=['posterior samples', 'predictive samples'], to='samples')
         return ppd
-            
-
-
 
 
 def minimum_eigenvalue_method(cov: np.ndarray, cond_max=1e16) -> np.ndarray:
