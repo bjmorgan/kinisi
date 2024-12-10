@@ -118,7 +118,9 @@ class Analyzer:
                                  progress=progress)
             return cls(p)
 
-    def posterior_predictive(self, posterior_predictive_params: Union[dict, None] = None):
+    def posterior_predictive(self, n_posterior_samples: int = None,
+                             n_predictive_samples: int = 256,
+                             progress: bool = True):
         """
         Sample  the posterior predictive distribution. The shape of the resulting array will be
         `(n_posterior_samples * n_predictive_samples, start_dt)`.
@@ -128,9 +130,7 @@ class Analyzer:
 
         :return: Samples from the posterior predictive distribution. 
         """
-        if posterior_predictive_params is None:
-            posterior_predictive_params = {}
-        return self.diff.posterior_predictive(**posterior_predictive_params)
+        return self.diff.posterior_predictive(n_posterior_samples,n_predictive_samples,progress)
 
     @property
     def n_atoms(self) -> int:
