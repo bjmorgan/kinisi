@@ -239,7 +239,7 @@ class Diffusion:
         else:
             iterator = samples_to_draw
 
-        # Testing unit consistency for mu and covariance before producing mv
+        # Checking unit consistency for mu and covariance
         try:
             ppd_unit**2 == self._covariance_matrix.unit
         except:
