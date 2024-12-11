@@ -195,7 +195,7 @@ class Diffusion:
         :returns: A :py:mod:`scipp` object containing the covariance matrix.
         """
         cov = np.zeros((self.msd.data.variances.size, self.msd.data.variances.size))
-        for i in tqdm(range(0, self.msd.data.variances.size)):
+        for i in range(0, self.msd.data.variances.size):
             for j in range(i, self.msd.data.variances.size):
                 ratio = self.msd.coords['n_samples'].values[i] / self.msd.coords['n_samples'].values[j]
                 value = ratio * self.msd.data.variances[i]
