@@ -2,9 +2,10 @@
 
 - I have been using `kinisi` in my research and would like to cite the package, how should I do this?
 
-    > Thanks for using `kinisi`. Please cite both the [JOSS publication](https://doi.org/10.21105/joss.05984), 
-    > the methodological [J. Chem. Theory Comput. paper](https://doi.org/10.1021/acs.jctc.4c01249), and 
-    > specifically refer to the version of `kinisi` that has been used. 
+    > Thanks for using `kinisi`. Please cite the methodological 
+    > [Journal of Chemical Theory and Computation paper](https://doi.org/10.1021/acs.jctc.4c01249), the 
+    > [JOSS software paper](https://doi.org/10.21105/joss.05984), and specifically refer to the version of 
+    > `kinisi` that has been used. 
 
 - What are the units being used in `kinisi`?
 
