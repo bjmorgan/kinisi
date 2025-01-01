@@ -1,5 +1,11 @@
 # FAQ
 
+- I have been using `kinisi` in my research and would like to cite the package, how should I do this?
+
+    > Thanks for using `kinisi`. Please cite both the [JOSS publication](https://doi.org/10.21105/joss.05984), 
+    > the methodological [J. Chem. Theory Comput. paper](https://doi.org/10.1021/acs.jctc.4c01249), and 
+    > specifically refer to the version of `kinisi` that has been used. 
+
 - What are the units being used in `kinisi`?
 
     > The output units for MSD-type object in `kinisi` always have distances in **angstrom** and time in **picoseconds** 
@@ -13,12 +19,6 @@
     > `Pymatgen` objects (i.e., `from_file`, `from_Xdatcar` and `from_pymatgen`) the input time unit is 
     > **femtoseconds**. It is planned that this (confusing) inconsistancy will be addressed in a future point 
     > release of `kinisi`. 
-
-- I have been using `kinisi` in my research and would like to cite the package, how should I do this?
-
-    > Thanks for using `kinisi`. Please cite the [JOSS publication](https://doi.org/10.21105/joss.05984), the
-    > methodological [arXiv preprint](https://arxiv.org/abs/2305.18244), and specifically refer to the
-    > version of `kinisi` that has been used. 
     
 - How does `kinisi` work?
 
