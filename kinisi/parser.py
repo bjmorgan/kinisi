@@ -207,7 +207,8 @@ class Parser:
             elif self.sampling == 'multi-origin':
                 disp = np.concatenate([
                     drift_corrected[self.indices, np.newaxis, time_interval - 1],
-                    np.subtract(drift_corrected[self.indices, time_interval:], drift_corrected[self.indices, :-time_interval])
+                    np.subtract(drift_corrected[self.indices, time_interval:],
+                                drift_corrected[self.indices, :-time_interval])
                 ],
                                       axis=1)
                 if np.multiply(*disp[:, ::time_interval].shape[:2]) <= 1:
@@ -567,6 +568,7 @@ class MDAnalysisParser(Parser):
 
         structure, coords, latt, volume = self.get_structure_coords_latt(universe, sub_sample_atoms, sub_sample_traj,
                                                                          progress)
+
         if specie is not None:
             indices = self.get_indices(structure, specie, framework_indices)
         elif isinstance(specie_indices, (list, tuple)):
@@ -673,7 +675,8 @@ def _get_molecules(structure: "ase.atoms.Atoms" or "pymatgen.core.structure.Stru
                    framework_indices) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """
     Determine framework and non-framework indices for an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when specie_indices are provided and contain multiple molecules. Warning: This function changes the structure without changing the object.
-        
+    Calculates Centre of mass of provided particles groups as per the method described within: Link paper
+
     :param structure: Initial structure.
     :param coords: fractional coordinates for all atoms.
     :param indices: indices for the atoms in the molecules in the trajectory used in the calculation 
@@ -716,10 +719,15 @@ def _get_molecules(structure: "ase.atoms.Atoms" or "pymatgen.core.structure.Stru
     zeta = np.sin(theta)
     xi_bar = np.average(xi, axis=-2, weights=weights)
     zeta_bar = np.average(zeta, axis=-2, weights=weights)
-    theta_bar = np.arctan2(zeta_bar, xi_bar)
+    theta_bar = np.arctan2(-zeta_bar, -xi_bar) + np.pi
     new_s_coords = theta_bar / (2 * np.pi)
 
-    new_coords = np.concatenate((new_s_coords, sq_coords[:, drift_indices]), axis=1)
+    # Implementation of improved method for center of mass calculation as described with: XXXX
+    pseudo_com_recentering = ((s_coords - (new_s_coords + 0.5)[:, :, np.newaxis]) % 1)
+    com_pseudo_space = np.average(pseudo_com_recentering, weights=masses, axis=2)
+    corrected_com = (com_pseudo_space + (new_s_coords + 0.5)) % 1
+
+    new_coords = np.concatenate((corrected_com, sq_coords[:, drift_indices]), axis=1)
     new_indices = list(range(n_molecules))
     new_drift_indices = list(range(n_molecules, n_molecules + len(drift_indices)))
 
