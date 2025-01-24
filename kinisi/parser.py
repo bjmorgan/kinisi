@@ -722,7 +722,7 @@ def _get_molecules(structure: "ase.atoms.Atoms" or "pymatgen.core.structure.Stru
     theta_bar = np.arctan2(-zeta_bar, -xi_bar) + np.pi
     new_s_coords = theta_bar / (2 * np.pi)
 
-    # Implementation of improved method for center of mass calculation as described with: XXXX
+    # Implementation of pseudo-centre of mass approach to centre of mass calculation (paper to come).
     pseudo_com_recentering = ((s_coords - (new_s_coords + 0.5)[:, :, np.newaxis]) % 1)
     com_pseudo_space = np.average(pseudo_com_recentering, weights=masses, axis=2)
     corrected_com = (com_pseudo_space + (new_s_coords + 0.5)) % 1
