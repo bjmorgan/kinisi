@@ -675,7 +675,7 @@ def _get_molecules(structure: "ase.atoms.Atoms" or "pymatgen.core.structure.Stru
                    framework_indices) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """
     Determine framework and non-framework indices for an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when specie_indices are provided and contain multiple molecules. Warning: This function changes the structure without changing the object.
-    Calculates Centre of mass of provided particles groups as per the method described within: Link paper
+    Calculates the centre of mass of provided particle groups using the pseudo-centre of mass approach (paper to come).
 
     :param structure: Initial structure.
     :param coords: fractional coordinates for all atoms.
