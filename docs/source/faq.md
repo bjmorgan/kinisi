@@ -5,7 +5,8 @@
     > Thanks for using `kinisi`. Please cite the methodological 
     > [Journal of Chemical Theory and Computation paper](https://doi.org/10.1021/acs.jctc.4c01249), the 
     > [JOSS software paper](https://doi.org/10.21105/joss.05984), and specifically refer to the version of 
-    > `kinisi` that has been used. 
+    > `kinisi` that has been used. If you have used the centre of mass functionality, please also cite our
+    > publication on that, which is currently available as a preprint on [arXiv](https://arxiv.org/abs/2501.14578).
 
 - What are the units being used in `kinisi`?
 
