@@ -676,7 +676,7 @@ def _get_molecules(structure: "ase.atoms.Atoms" or "pymatgen.core.structure.Stru
                    framework_indices) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """
     Determine framework and non-framework indices for an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when specie_indices are provided and contain multiple molecules. Warning: This function changes the structure without changing the object.
-    Calculates the centre of mass of provided particle groups using the pseudo-centre of mass approach (paper to come).
+    Calculates the centre of mass of provided particle groups using the pseudo-centre of mass approach (see arXiv:2501.14578).
 
     :param structure: Initial structure.
     :param coords: fractional coordinates for all atoms.
@@ -723,7 +723,7 @@ def _get_molecules(structure: "ase.atoms.Atoms" or "pymatgen.core.structure.Stru
     theta_bar = np.arctan2(-zeta_bar, -xi_bar) + np.pi
     new_s_coords = theta_bar / (2 * np.pi)
 
-    # Implementation of pseudo-centre of mass approach to centre of mass calculation (paper to come).
+    # Implementation of pseudo-centre of mass approach to centre of mass calculation (see arXiv:2501.14578).
     pseudo_com_recentering = ((s_coords - (new_s_coords + 0.5)[:, :, np.newaxis]) % 1)
     com_pseudo_space = np.average(pseudo_com_recentering, weights=masses, axis=2)
     corrected_com = (com_pseudo_space + (new_s_coords + 0.5)) % 1
