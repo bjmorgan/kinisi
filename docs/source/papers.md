@@ -9,7 +9,7 @@ Here we will try and list publications that have used `kinisi` (if you would lik
 5. McColl, K., Coles, S.W., Zarabadi-Poor, P., Morgan, B. J., Islam, M. S., *Nat. Mater.*, **23**, 826–833, 2024. doi: [10.1038/s41563-024-01873-5](https://doi.org/10.1038/s41563-024-01873-5).
 6. Choi, Y.-S., Lee, Y., Ahn, H., Jeong, J., Chung, K. Y., Scanlon, D. O., Lee, J.-C., *Carbon Energy*, **6**, e564, 2024. doi: [10.1002/cey2.564](https://doi.org/10.1002/cey2.564).
 7. Dunn, J., Crossley-Lewis, J. M., McCluskey, A. R., Jackson, F., Buda, C., Sunley, G., Mulholland, A. J., Allan, N, L., *Catal. Sci. Technolo.*, **14**, 3674-3681, 2024. doi:[10.1039/D4CY00506F](https://doi.org/10.1039/D4CY00506F).
-8. Hu, J., Squires, A. G., Kondek, J., Johnson, M. J., Youd, A. B., Vadhva, P. Paul, P., Withers, P. J., Di Michiel, M., Keeble, D. S., Hansen, M. R., Scanlon, D. O., Rettie, A. J. E., *J. Mater. Chem. A.*, Advance Article, 2025. doi:[10.1039/D4TA04347B](https://doi.org/10.1039/D4TA04347B).
+8. Hu, J., Squires, A. G., Kondek, J., Johnson, M. J., Youd, A. B., Vadhva, P. Paul, P., Withers, P. J., Di Michiel, M., Keeble, D. S., Hansen, M. R., Scanlon, D. O., Rettie, A. J. E., *J. Mater. Chem. A.*, **13**, 6427, 2025. doi:[10.1039/D4TA04347B](https://doi.org/10.1039/D4TA04347B).
 9. McCluskey, A. R., Coles, S. W., Morgan, B. J. , *J. Chem. Theory Comput.*, **21**, 79-87, 2025. doi:[10.1021/acs.jctc.4c01249](https://doi.org/10.1021/acs.jctc.4c01249).
 10. Klarbring, J., Walsh, A., *Chem. Mater*, **36**, 9406–9413, 2024. doi:[10.1021/acs.chemmater.4c00936](https://doi.org/10.1021/acs.chemmater.4c00936).
 11. Nam, J., Liu, S., Winter, G., Jun, K., Yang, S., Gómez-Bombarelli, R., 2024. [*arXiv*:2410.01464](https://arxiv.org/abs/2410.01464).
@@ -18,3 +18,4 @@ Here we will try and list publications that have used `kinisi` (if you would lik
 14. Quek, A, Ouyang, N., Lin, H.-M., Delaire, O., Guilleminot, J., *Mech. Mat.*, **202**, 105237, 2025. doi:[10.1016/j.mechmat.2024.105237](https://doi.org/10.1016/j.mechmat.2024.105237).
 15. Richardson, H., Dunn, J., McCluskey, A. R., 2025. [*arXiv*:2501.14578](https://arxiv.org/abs/2501.14578).
 16. Sasaki, R., Tateyama, Y., Searles, D. J., *PRX Energy*, **4**, 013005, 2025. doi:[10.1103/PRXEnergy.4.013005](https://doi.org/10.1103/PRXEnergy.4.013005).
+17. Li, Z., Gong, J., Zhu, Z., Liu, D., Hu, Q., Wang, Y., Liu X., Zhou, S., Luo, H., Wang, D., Liu, X., Yang, Z., Tang, M., Kong, Q., Adama, N.-D., Zhang, K., Yan, S., Zhang, L., Zeng, X., Yu, Z., Xia, W., Yuan, J., Li, M., Li, N., Dong, H., Zhang, Z., Shu, H., Ding, Y., Wang, D., Guo, Y., Xu, T., Kong, L., Yang, W., Mao, H. & Liu, G., *Nat. Comm.*, **16**, 2246, 2025. doi:[10.1038/s41467-025-57523-0](https://doi.org/10.1038/s41467-025-57523-0)
