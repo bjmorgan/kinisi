@@ -30,16 +30,20 @@ class Analyzer:
         self.trajectory = trajectory
 
     @classmethod
-    def _from_xdatcar(cls,
-                      trajectory: Union['pymatgen.io.vasp.outputs.Xdatcar', List['pymatgen.io.vasp.outputs.Xdatcar']],
-                      specie: Union['pymatgen.core.periodic_table.Element', 'pymatgen.core.periodic_table.Specie'],
-                      time_step: sc.Variable,
-                      step_skip: sc.Variable,
-                      dtype: Union[str, None] = None,
-                      dt: sc.Variable = None,
-                      dimension: str = 'xyz',
-                      distance_unit: sc.Unit = sc.units.angstrom,
-                      progress: bool = True) -> 'Analyzer':
+    def _from_xdatcar(
+        cls,
+        trajectory: Union['pymatgen.io.vasp.outputs.Xdatcar', List['pymatgen.io.vasp.outputs.Xdatcar']],
+        specie: Union['pymatgen.core.periodic_table.Element', 'pymatgen.core.periodic_table.Specie'],
+        time_step: sc.Variable,
+        step_skip: sc.Variable,
+        dtype: Union[str, None] = None,
+        dt: sc.Variable = None,
+        dimension: str = 'xyz',
+        distance_unit: sc.Unit = sc.units.angstrom,
+        specie_indices: sc.Variable = None,
+        masses: sc.Variable = None,
+        progress: bool = True,
+    ) -> 'Analyzer':
         """
         Constructs the necessary :py:mod:`kinisi` objects for analysis from a single or a list of
         :py:class:`pymatgen.io.vasp.outputs.Xdatcar` objects.
@@ -68,19 +72,20 @@ class Analyzer:
         """
         if dtype is None:
             p = PymatgenParser(trajectory.structures, specie, time_step, step_skip, dt, dimension, distance_unit,
-                               progress)
+                               specie_indices, masses, progress)
             return cls(p)
         elif dtype == 'identical':
             u = [
-                PymatgenParser(f.structures, specie, time_step, step_skip, dt, dimension, distance_unit, progress)
-                for f in trajectory
+                PymatgenParser(f.structures, specie, time_step, step_skip, dt, dimension, distance_unit, progress,
+                               specie_indices, masses) for f in trajectory
             ]
             p = u[0]
             p.displacements = sc.concat([i.displacements for i in u], 'atom')
             return cls(p)
         elif dtype == 'consecutive':
             structures = _flatten_list([x.structures for x in trajectory])
-            p = PymatgenParser(structures, specie, time_step, step_skip, dt, dimension, distance_unit, progress)
+            p = PymatgenParser(structures, specie, time_step, step_skip, dt, dimension, distance_unit, specie_indices,
+                               masses, progress)
             return cls(p)
 
     @classmethod
@@ -93,6 +98,8 @@ class Analyzer:
                        dt: sc.Variable = None,
                        dimension: str = 'xyz',
                        distance_unit: sc.Unit = sc.units.angstrom,
+                       specie_indices: sc.Variable = None,
+                       masses: sc.Variable = None,
                        progress: bool = True) -> 'Analyzer':
         """
         Constructs the necessary :py:mod:`kinisi` objects for analysis from a 
@@ -106,8 +113,24 @@ class Analyzer:
                                  dt=dt,
                                  dimension=dimension,
                                  distance_unit=distance_unit,
+                                 specie_indices=specie_indices,
+                                 masses=masses,
                                  progress=progress)
             return cls(p)
+
+    def posterior_predictive(self, n_posterior_samples: int = None,
+                             n_predictive_samples: int = 256,
+                             progress: bool = True):
+        """
+        Sample  the posterior predictive distribution. The shape of the resulting array will be
+        `(n_posterior_samples * n_predictive_samples, start_dt)`.
+        
+        :params posterior_predictive_params: Parameters for the :py:func:`diffusion.posterior_predictive` method. 
+            See the appropriate documentation for more guidence on this dictionary.
+
+        :return: Samples from the posterior predictive distribution. 
+        """
+        return self.diff.posterior_predictive(n_posterior_samples,n_predictive_samples,progress)
 
     @property
     def n_atoms(self) -> int:
