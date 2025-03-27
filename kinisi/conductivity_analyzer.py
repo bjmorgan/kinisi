@@ -10,10 +10,12 @@ and conductivity analysis.
 from typing import Union, List
 import numpy as np
 import scipp as sc
+from scipp.typing import VariableLikeType
 from kinisi.diffusion import Diffusion
 from kinisi.displacement import calculate_mscd
 from kinisi.parser import Parser
 from kinisi.analyzer import Analyzer
+
 
 class ConductivityAnalyzer(Analyzer):
     """
@@ -28,17 +30,17 @@ class ConductivityAnalyzer(Analyzer):
 
     def __init__(self, trajectory: Parser) -> None:
         super().__init__(trajectory)
-        self.mscd = None
+        self.msd_da = None
 
     @classmethod
-    def from_xdatcar(cls, 
+    def from_xdatcar(cls,
                      trajectory: Union['pymatgen.io.vasp.outputs.Xdatcar', List['pymatgen.io.vasp.outputs.Xdatcar']],
                      specie: Union['pymatgen.core.periodic_table.Element', 'pymatgen.core.periodic_table.Specie'],
-                     time_step: sc.Variable,
-                     step_skip: sc.Variable,
-                     ionic_charge: sc.Variable,
+                     time_step: VariableLikeType,
+                     step_skip: VariableLikeType,
+                     ionic_charge: VariableLikeType,
                      dtype: Union[str, None] = None,
-                     dt: sc.Variable = None,
+                     dt: VariableLikeType = None,
                      dimension: str = 'xyz',
                      distance_unit: sc.Unit = sc.units.angstrom,
                      progress: bool = True) -> 'ConductivityAnalyzer':
@@ -72,11 +74,16 @@ class ConductivityAnalyzer(Analyzer):
         
         :returns: The :py:class:`ConductivityAnalyzer` object with the mean-squared charge displacement calculated.
         """
-        p = super()._from_xdatcar(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit, progress)
-        p.mscd = calculate_mscd(p.trajectory, ionic_charge, progress)
+        p = super()._from_xdatcar(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit,
+                                  progress)
+        p.msd_da = calculate_mscd(p.trajectory, ionic_charge, progress)
         return p
 
-    def conductivity(self, start_dt: sc.Variable, temperature: sc.Variable, volume: sc.Variable, diffusion_params: Union[dict, None] = None) -> None: 
+    def conductivity(self,
+                     start_dt: VariableLikeType,
+                     temperature: VariableLikeType,
+                     volume: VariableLikeType,
+                     diffusion_params: Union[dict, None] = None) -> None:
         """
         Calculation of the conductivity.
         Keyword arguments will be passed of the :py:func:`bayesian_regression` method. 
@@ -88,7 +95,7 @@ class ConductivityAnalyzer(Analyzer):
         """
         if diffusion_params is None:
             diffusion_params = {}
-        self.diff = Diffusion(msd=self.mscd, n_atoms=self.n_atoms)
+        self.diff = Diffusion(msd=self.msd_da, n_atoms=self.n_atoms)
         self.diff._conductivity(start_dt=start_dt, temperature=temperature, volume=volume, **diffusion_params)
 
     @property
@@ -98,6 +105,31 @@ class ConductivityAnalyzer(Analyzer):
         plotting of credible intervals.
         """
         if self.diff.intercept is not None:
-            return self.diff.gradient.values * self.mscd.coords['time interval'].values[:, np.newaxis] + self.diff.intercept.values
+            return self.diff.gradient.values * self.msd_da.coords[
+                'time interval'].values[:, np.newaxis] + self.diff.intercept.values
         else:
-            return self.diff.gradient.values * self.mscd.coords['time interval'].values[:, np.newaxis]
+            return self.diff.gradient.values * self.msd_da.coords['time interval'].values[:, np.newaxis]
+
+    @property
+    def sigma(self) -> VariableLikeType:
+        """
+        :return: The conductivity.
+        """
+        return self.diff.sigma
+
+    @property
+    def mscd(self) -> VariableLikeType:
+        """
+        :return: The mean-squared charge displacement.
+        """
+        return self.msd_da.data
+
+    @property
+    def flatchain(self) -> sc.DataGroup:
+        """
+        :returns: The flatchain of the MCMC samples.
+        """
+        flatchain = {'sigma': self.sigma}
+        if self.intercept is not None:
+            flatchain['intercept'] = self.intercept
+        return sc.DataGroup(**flatchain)

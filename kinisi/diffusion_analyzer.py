@@ -10,6 +10,7 @@ displacment and the self-diffusion coefficient.
 from typing import Union, List
 import numpy as np
 import scipp as sc
+from scipp.typing import VariableLikeType
 from kinisi.displacement import calculate_msd
 from kinisi.diffusion import Diffusion
 from kinisi.parser import Parser, PymatgenParser, MDAnalysisParser
@@ -26,7 +27,7 @@ class DiffusionAnalyzer(Analyzer):
 
     def __init__(self, trajectory: Parser) -> None:
         super().__init__(trajectory)
-        self.msd = None
+        self.msd_da = None
 
     @classmethod
     def from_xdatcar(
@@ -80,10 +81,10 @@ class DiffusionAnalyzer(Analyzer):
     def from_universe(cls,
                       trajectory: 'MDAnalysis.core.universe.Universe',
                       specie: str = None,
-                      time_step: sc.Variable = None,
-                      step_skip: sc.Variable = None,
+                      time_step: VariableLikeType = None,
+                      step_skip: VariableLikeType = None,
                       dtype: Union[str, None] = None,
-                      dt: sc.Variable = None,
+                      dt: VariableLikeType = None,
                       dimension: str = 'xyz',
                       distance_unit: sc.Unit = sc.units.angstrom,
                       specie_indices: sc.Variable = None,
@@ -100,18 +101,39 @@ class DiffusionAnalyzer(Analyzer):
         p.msd = calculate_msd(p.trajectory, progress)
         return p
 
-    def diffusion(self, start_dt: sc.Variable, diffusion_params: Union[dict, None] = None) -> None:
+    def diffusion(self,
+                  start_dt: VariableLikeType,
+                  cond_max: float = 1e16,
+                  fit_intercept: bool = True,
+                  n_samples: int = 1000,
+                  n_walkers: int = 32,
+                  n_burn: int = 500,
+                  n_thin: int = 10,
+                  progress: bool = True,
+                  random_state: np.random.mtrand.RandomState = None) -> None:
         """
         Calculate the diffusion coefficient using the mean-squared displacement data.
         
         :param start_dt: The time at which the diffusion regime begins.
-        :param diffusion_params: The keyword arguements for the diffusion calculation
-            (see :py:func:`diffusion.bayesian_regression`). Optional, defaults to :py:attr:`None`.
+        :param cond_max: The maximum condition number of the covariance matrix. Optional, default is :py:attr:`1e16`.
+        :param fit_intercept: Whether to fit an intercept. Optional, default is :py:attr:`True`.
+        :param n_samples: The number of MCMC samples to take. Optional, default is :py:attr:`1000`.
+        :param n_walkers: The number of walkers to use in the MCMC. Optional, default is :py:attr:`32`.
+        :param n_burn: The number of burn-in samples to discard. Optional, default is :py:attr:`500`.
+        :param n_thin: The thinning factor for the MCMC samples. Optional, default is :py:attr:`10`.
+        :param progress: Whether to show the progress bar. Optional, default is :py:attr:`True`.
+        :param random_state: The random state to use for the MCMC. Optional, default is :py:attr:`None`.
         """
-        if diffusion_params is None:
-            diffusion_params = {}
-        self.diff = Diffusion(self.msd)
-        self.diff._diffusion(start_dt, **diffusion_params)
+        self.diff = Diffusion(self.msd_da)
+        self.diff._diffusion(start_dt,
+                             cond_max=cond_max,
+                             fit_intercept=fit_intercept,
+                             n_samples=n_samples,
+                             n_walkers=n_walkers,
+                             n_burn=n_burn,
+                             n_thin=n_thin,
+                             progress=progress,
+                             random_state=random_state)
 
     @property
     def distributions(self) -> np.array:
@@ -120,7 +142,24 @@ class DiffusionAnalyzer(Analyzer):
         plotting of credible intervals.
         """
         if self.diff.intercept is not None:
-            return self.diff.gradient.values * self.msd.coords[
+            return self.diff.gradient.values * self.msd_da.coords[
                 'time interval'].values[:, np.newaxis] + self.diff.intercept.values
         else:
-            return self.diff.gradient.values * self.msd.coords['time interval'].values[:, np.newaxis]
+            return self.diff.gradient.values * self.msd_da.coords['time interval'].values[:, np.newaxis]
+
+    @property
+    def D(self) -> VariableLikeType:
+        """
+        :return: The self-diffusion coefficient.
+        """
+        return self.diff.D
+
+    @property
+    def flatchain(self) -> sc.DataGroup:
+        """
+        :returns: The flatchain of the MCMC samples.
+        """
+        flatchain = {'D*': self.D}
+        if self.intercept is not None:
+            flatchain['intercept'] = self.intercept
+        return sc.DataGroup(**flatchain)
