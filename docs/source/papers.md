@@ -16,7 +16,7 @@ Here we will try and list publications that have used `kinisi` (if you would lik
 12. Ravindra, R., Advincula, X. R., Shi, B. X., Coles, S. W., Michaelides, A., Kapil, V., 2024. [*arXiv*:2410.03272](https://arxiv.org/abs/2410.03272).
 13. Song, J.-I., Choi, Y.-S., *J. Power Sources*, **626**, 235765, 2025. doi:[10.1016/j.jpowsour.2024.235765](https://doi.org/10.1016/j.jpowsour.2024.235765).
 14. Quek, A, Ouyang, N., Lin, H.-M., Delaire, O., Guilleminot, J., *Mech. Mat.*, **202**, 105237, 2025. doi:[10.1016/j.mechmat.2024.105237](https://doi.org/10.1016/j.mechmat.2024.105237).
-15. Richardson, H., Dunn, J., McCluskey, A. R., 2025. [*arXiv*:2501.14578](https://arxiv.org/abs/2501.14578).
+15. Richardson, H., Dunn, J., McCluskey, A. R., *J. Chem. Phys.*, Accepted, 2025. [*arXiv*:2501.14578](https://arxiv.org/abs/2501.14578).
 16. Sasaki, R., Tateyama, Y., Searles, D. J., *PRX Energy*, **4**, 013005, 2025. doi:[10.1103/PRXEnergy.4.013005](https://doi.org/10.1103/PRXEnergy.4.013005).
 17. Li, Z., Gong, J., Zhu, Z., Liu, D., Hu, Q., Wang, Y., Liu X., Zhou, S., Luo, H., Wang, D., Liu, X., Yang, Z., Tang, M., Kong, Q., Adama, N.-D., Zhang, K., Yan, S., Zhang, L., Zeng, X., Yu, Z., Xia, W., Yuan, J., Li, M., Li, N., Dong, H., Zhang, Z., Shu, H., Ding, Y., Wang, D., Guo, Y., Xu, T., Kong, L., Yang, W., Mao, H. & Liu, G., *Nat. Comm.*, **16**, 2246, 2025. doi:[10.1038/s41467-025-57523-0](https://doi.org/10.1038/s41467-025-57523-0).
 18. Ko, H. J., Cho, M. H., Kim, H.-K., Scanlon, D. O., Park, H. J., & Choi, Y.-S., *J. Alloys Compd.*, **1027**, 180614, 2025. doi:[10.1016/j.jallcom.2025.180614](https://doi.org/10.1016/j.jallcom.2025.180614).
