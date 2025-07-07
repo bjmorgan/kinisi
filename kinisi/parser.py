@@ -122,7 +122,7 @@ class Parser:
 
         :return: Displacements corrected to account for drift of a framework.
         """
-        if self.drift_indices.size != 0: 
+        if self.drift_indices.size > 0: 
             return disp - sc.mean(disp['atom', self.drift_indices.values], 'atom')
         else: 
             return disp
