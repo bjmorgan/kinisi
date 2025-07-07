@@ -45,7 +45,7 @@ class ConductivityAnalyzer(Analyzer):
                      distance_unit: sc.Unit = sc.units.angstrom,
                      species_indices: VariableLikeType = None,
                      masses: VariableLikeType = None,
-                     number_of_coms: int = 1,
+                     system_particles: int = 1,
                      progress: bool = True) -> 'ConductivityAnalyzer':
         """
         Constructs the necessary :py:mod:`kinisi` objects for analysis from a single or a list of
@@ -77,16 +77,16 @@ class ConductivityAnalyzer(Analyzer):
             :py:attr:`None`, which means that all species are considered.
         :param masses: The masses of the species to calculate the diffusion for. Optional, defaults
             to :py:attr:`None`, which means that the masses are not considered.
-        :param number_of_coms: The number of centre-of-mass to average over. Note that the centres of mass are defined
-            in index order, i.e., two centres of mass will split the atoms down the middle. Optional, 
-            defaults to :py:attr:`1`.
+        :param system_particles: The number of system particles to average over. Note that the constitution of the 
+            system particles are defined in index order, i.e., two system particles will involve splitting the
+            particles down the middle into each. Optional, defaults to :py:attr:`1`.
         :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
         
         :returns: The :py:class:`ConductivityAnalyzer` object with the mean-squared charge displacement calculated.
         """
         p = super()._from_xdatcar(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit,
                                   species_indices, masses, progress)
-        p.msd_da = calculate_mstd(p.trajectory, number_of_coms, ionic_charge, progress)
+        p.msd_da = calculate_mstd(p.trajectory, system_particles, ionic_charge, progress)
         return p
 
     def conductivity(self,

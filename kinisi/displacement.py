@@ -51,16 +51,16 @@ def calculate_msd(p: parser.Parser, progress: bool = True) -> sc.Variable:
 
 
 def calculate_mstd(p: parser.Parser,
-                   number_of_coms: int = 1,
+                   system_particles: int = 1,
                    ionic_charge: sc.Variable = None,
                    progress: bool = True) -> sc.Variable:
     """
     Calculate the mean-squared total displacement, i.e., the displacement of the centre-of-mass of all particles.
     
     :param p: The parser object containing the the relevant simulation trajectory data.
-    :param number_of_coms: The number of centres of mass to average over. Note that the centres of mass are defined
-        in index order, i.e., two centres of mass will split the atoms down the middle. Optional, defaults
-        to :py:attr:`1`.
+    :param system_particles: The number of system particles to average over. Note that the constitution of the 
+        system particles are defined in index order, i.e., two system particles will involve splitting the
+        particles down the middle into each. Optional, defaults to :py:attr:`1`.
     :param ionic_charge: The ionic charge of the species of interest. This should be either a :py:mod:`scipp`
         scalar if all of the ions have the same charge or an array of the charge for each indiviudal ion. 
         Optional, defaults to :py:attr:`None`, which means that the mean-squared total displacement is
@@ -79,7 +79,7 @@ def calculate_mstd(p: parser.Parser,
     for di in iterator:
         disp = sc.concat([p.displacements['obs', di - 1], p.displacements['obs', di:] - p.displacements['obs', :-di]],
                          'obs')
-        disp = _consolidate_to_coms(disp, number_of_coms)
+        disp = _consolidate_system_particles(disp, system_particles)
         n = (disp.sizes['atom'] * p.dt_int['time interval', -1] / di).value
         if ionic_charge is not None:
             disp = disp * ionic_charge
@@ -99,18 +99,19 @@ def calculate_mstd(p: parser.Parser,
                         })
 
 
-def _consolidate_to_coms(disp: sc.DataArray, number_of_coms: int = 1) -> sc.DataArray:
+def _consolidate_system_particles(disp: sc.DataArray, system_particles: int = 1) -> sc.DataArray:
     """
-    Consolidate the displacement data to the specified number of centres of mass.
+    Consolidate the displacement data to the specified number of system particles.
     
     :param disp: The displacement data to consolidate.
-    :param number_of_coms: The number of centres of mass to average over. Note that the centres of mass are defined
-        in index order, i.e., two centres of mass will split the atoms down the middle. Optional, defaults to :py:attr:`1`.
+    :param system_particles: The number of system particles to average over. Note that the constitution of the 
+        system particles are defined in index order, i.e., two system particles will involve splitting the
+        particles down the middle into each. Optional, defaults to :py:attr:`1`.
 
     :return: A :py:class:`scipp.DataArray` object containing the consolidated displacement data.
     """
     centres_of_mass = []
-    average_over = disp.sizes['atom'] // number_of_coms
+    average_over = disp.sizes['atom'] // system_particles
     for i in range(0, disp.sizes['atom'], average_over):
         centres_of_mass.append(sc.sum(disp['atom', i:i + average_over], 'atom'))
     return sc.concat(centres_of_mass, 'atom')
