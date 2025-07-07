@@ -17,6 +17,7 @@ import scipp as sc
 from kinisi.parser import Parser
 from kinisi.pymatgen import PymatgenParser
 from kinisi.mdanalysis import MDAnalysisParser
+import importlib
 
 
 class Analyzer:
@@ -30,6 +31,35 @@ class Analyzer:
 
     def __init__(self, trajectory: Parser) -> None:
         self.trajectory = trajectory
+
+    def _to_hdf5(self, filename: str) -> None:
+        """
+        Save the :py:class:`Analyzer` object to an HDF5 file.
+
+        :param filename: The name of the file to save the object to.
+        """
+        group = {'trajectory':self.trajectory._to_datagroup()}
+        group['__class__'] = f"{self.__class__.__module__}.{self.__class__.__name__}"
+        sc.DataGroup(group).save_hdf5(filename)
+    
+    @classmethod
+    def _from_hdf5(cls, filename: str) -> 'Analyzer':
+        """
+        Load the :py:class:`Analyzer` object from an HDF5 file.
+
+        :param filename: The name of the file to load the object from.
+        """
+        datagroup = sc.io.load_hdf5(filename)
+
+        class_path = str(datagroup['__class__'])
+        module_name, class_name = class_path.rsplit('.', 1)
+        module = importlib.import_module(module_name)
+        klass = getattr(module, class_name)
+        
+        trajectory = Parser._from_datagroup(datagroup['trajectory'])
+        obj = klass(trajectory)
+
+        return obj
 
     @classmethod
     def _from_xdatcar(
