@@ -112,6 +112,12 @@ def _consolidate_system_particles(disp: sc.DataArray, system_particles: int = 1)
     """
     centres_of_mass = []
     average_over = disp.sizes['atom'] // system_particles
+    if average_over * system_particles != disp.sizes['atom']:
+        raise ValueError(
+            "Your number of system particles does not evenly divide the number of atoms in the system. " \
+            "This will lead to less efficient sampling of the simulation. " \
+            "Consider using a different number of system particles."
+        )
     for i in range(0, disp.sizes['atom'], average_over):
         centres_of_mass.append(sc.sum(disp['atom', i:i + average_over], 'atom'))
     return sc.concat(centres_of_mass, 'atom')
