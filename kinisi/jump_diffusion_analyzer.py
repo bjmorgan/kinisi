@@ -11,7 +11,7 @@ from typing import Union, List
 import numpy as np
 import scipp as sc
 from scipp.typing import VariableLikeType
-from kinisi.displacement import calculate_mstd
+from kinisi.displacement import calculate_mstd, calculate_msd
 from kinisi.diffusion import Diffusion
 from kinisi.parser import Parser, PymatgenParser
 from kinisi.analyzer import Analyzer
@@ -78,6 +78,30 @@ class JumpDiffusionAnalyzer(Analyzer):
         p.msd_da = calculate_mstd(p.trajectory, progress)
         return p
 
+    @classmethod
+    def from_universe(cls, 
+                      trajectory: 'MDAnalysis.core.universe.Universe',
+                      specie: str=None,
+                      time_step: VariableLikeType = None,
+                      step_skip: VariableLikeType = None,
+                      dtype: Union[str, None] = None,
+                      dt: VariableLikeType = None,
+                      dimension: str = 'xyz',
+                      distance_unit: sc.Unit = sc.units.angstrom,
+                      specie_indices: VariableLikeType = None,
+                      masses: VariableLikeType = None,
+                      number_of_coms: int = 1,
+                      progress: bool = True) -> 'JumpDiffusionAnalyzer':
+        """
+        Constructs the necessary :py:mod:`kinisi` objects for analysis from a
+        :py:class:`MDAnalysis.core.universe.Universe` object.
+
+        """
+        p = super()._from_universe(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit,
+                                   specie_indices, masses, progress)
+        p.msd_da = calculate_mstd(p.trajectory, number_of_coms, progress)
+        return p
+    
     def jump_diffusion(self, start_dt: VariableLikeType, diffusion_params: Union[dict, None] = None) -> None:
         """
         Calculate the jump diffusion coefficient using the mean-squared total displacement data.

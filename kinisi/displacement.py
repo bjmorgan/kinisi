@@ -50,7 +50,7 @@ def calculate_msd(p: parser.Parser, progress: bool = True) -> sc.Variable:
                         })
 
 
-def calculate_mstd(p: parser.Parser, progress: bool = True) -> sc.Variable:
+def calculate_mstd(p: parser.Parser, number_of_coms: int = 1, progress: bool = True) -> sc.Variable:
     """
     Calculate the mean-squared total displacement, i.e., the displacement of the centre-of-mass of all particles.
     
@@ -68,14 +68,19 @@ def calculate_mstd(p: parser.Parser, progress: bool = True) -> sc.Variable:
     for di in iterator:
         disp = sc.concat([p.displacements['obs', di - 1], p.displacements['obs', di:] - p.displacements['obs', :-di]],
                          'obs')
-        n = (p.displacements.sizes['atom'] * p.dt_int['time interval', -1] / di).value / p.displacements.sizes['atom']
-        s = sc.sum(sc.sum(disp, 'atom')**2, 'dimension')
+        centres_of_mass = []
+        average_over = disp.sizes['atom'] // number_of_coms
+        for i in range(0, disp.sizes['atom'], average_over):
+            centres_of_mass.append(sc.sum(disp['atom', i:i+average_over], 'atom'))
+        disp = sc.concat(centres_of_mass, 'atom')
+        n = (disp.sizes['atom'] * p.dt_int['time interval', -1] / di).value
+        s = sc.sum(disp**2, 'dimension')
         if s.size <= 1:
             continue
         m = sc.mean(s).value
         v = (sc.var(s, ddof=1) / n).value
-        mstd.append(m)
-        mstd_var.append(v)
+        mstd.append(np.float64(m))
+        mstd_var.append(np.float64(v))
         n_samples.append(n)
     return sc.DataArray(data=sc.Variable(dims=['time interval'], values=mstd, variances=mstd_var, unit=s.unit),
                         coords={

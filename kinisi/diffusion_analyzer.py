@@ -74,7 +74,7 @@ class DiffusionAnalyzer(Analyzer):
         """
         p = super()._from_xdatcar(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit,
                                   specie_indices, masses, progress)
-        p.msd = calculate_msd(p.trajectory, progress)
+        p.msd_da = calculate_msd(p.trajectory, progress)
         return p
 
     @classmethod
@@ -94,11 +94,11 @@ class DiffusionAnalyzer(Analyzer):
         Constructs the necessary :py:mod:`kinisi` objects for analysis from a
         :py:class:`MDAnalysis.Universe` object.
 
-        :param trajectory: The :py:class:`MDAnalysis
+        :param trajectory: 
         """
         p = super()._from_universe(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit,
                                    specie_indices, masses, progress)
-        p.msd = calculate_msd(p.trajectory, progress)
+        p.msd_da = calculate_msd(p.trajectory, progress)
         return p
 
     def diffusion(self,
