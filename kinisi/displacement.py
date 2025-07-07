@@ -6,6 +6,7 @@ Functions for the calculation of different types of displacement.
 # Distributed under the terms of the MIT License.
 # author: Andrew R. McCluskey (arm61)
 
+from warnings import warn
 import scipp as sc
 from tqdm import tqdm
 from kinisi import parser
@@ -101,23 +102,23 @@ def calculate_mstd(p: parser.Parser,
 
 def _consolidate_system_particles(disp: sc.DataArray, system_particles: int = 1) -> sc.DataArray:
     """
-    Consolidate the displacement data to the specified number of system particles.
+    Consolidate the displacement data to the specified number of centres of mass.
     
     :param disp: The displacement data to consolidate.
-    :param system_particles: The number of system particles to average over. Note that the constitution of the 
-        system particles are defined in index order, i.e., two system particles will involve splitting the
-        particles down the middle into each. Optional, defaults to :py:attr:`1`.
+    :param system_particles: The number of centres of mass to average over. Note that the centres of mass are defined
+        in index order, i.e., two centres of mass will split the atoms down the middle. Optional, defaults to :py:attr:`1`.
 
     :return: A :py:class:`scipp.DataArray` object containing the consolidated displacement data.
     """
-    centres_of_mass = []
-    average_over = disp.sizes['atom'] // system_particles
-    if average_over * system_particles != disp.sizes['atom']:
-        raise ValueError(
-            "Your number of system particles does not evenly divide the number of atoms in the system. " \
-            "This will lead to less efficient sampling of the simulation. " \
-            "Consider using a different number of system particles."
-        )
-    for i in range(0, disp.sizes['atom'], average_over):
-        centres_of_mass.append(sc.sum(disp['atom', i:i + average_over], 'atom'))
-    return sc.concat(centres_of_mass, 'atom')
+    atoms_per_com = disp.sizes['atom'] // system_particles
+    max_atoms = atoms_per_com * system_particles
+
+    if max_atoms < disp.sizes['atom']:
+        warn(
+            f"Truncating {disp.sizes['atom'] - max_atoms} atoms to split evenly into {number_of_coms} centres of mass.")
+
+    trimmed = disp['atom', :max_atoms]
+    reshaped = trimmed.fold(dim='atom', sizes={'atom': system_particles, 'local': atoms_per_com})
+    centres_of_mass = sc.sum(reshaped, dim='local')
+
+    return centres_of_mass.transpose(['atom', 'obs', 'dimension'])
