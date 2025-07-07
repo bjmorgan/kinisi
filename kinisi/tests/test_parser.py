@@ -131,7 +131,7 @@ class TestParser(unittest.TestCase):
         assert_almost_equal(data.time_step, 1)
         assert_almost_equal(data.step_skip, 1)
         assert_equal(data.indices, [0])
-        assert_almost_equal(data.coords_check, [[[0.269634905, 0.262183827, 0.2]]])
+        assert_almost_equal(data.coords_check, [[[0.2733333, 0.2666667, 0.2      ]]])
 
     def test_pymatgen_init_with_COM(self):
         xd = Xdatcar(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_center.XDATCAR'))
@@ -146,7 +146,7 @@ class TestParser(unittest.TestCase):
         assert_almost_equal(data.time_step, 1)
         assert_almost_equal(data.step_skip, 1)
         assert_equal(data.indices, [0])
-        assert_almost_equal(data.coords_check, [[[0.382421597, 0.2087361, 0.2]]])
+        assert_almost_equal(data.coords_check, [[[0.3788889, 0.2111111, 0.2      ]]])
 
     def test_pymatgen_init_with_framwork_indices(self):
         xd = Xdatcar(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_drift.XDATCAR'))
@@ -200,7 +200,7 @@ class TestParser(unittest.TestCase):
         assert_almost_equal(data.time_step, 1)
         assert_almost_equal(data.step_skip, 1)
         assert_equal(data.indices, [0])
-        assert_almost_equal(data.coords_check, [[[0.269634905, 0.262183827, 0.2]]])
+        assert_almost_equal(data.coords_check, [[[0.2733333, 0.2666667, 0.2]]])
 
     def test_ase_init_with_COM(self):
         traj = Trajectory(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_ase_center.traj'))
@@ -215,7 +215,7 @@ class TestParser(unittest.TestCase):
         assert_almost_equal(data.time_step, 1)
         assert_almost_equal(data.step_skip, 1)
         assert_equal(data.indices, [0])
-        assert_almost_equal(data.coords_check, [[[0.382421597, 0.2087361, 0.2]]])
+        assert_almost_equal(data.coords_check, [[[0.3788889, 0.2111111, 0.2]]])
 
     def test_ase_init_with_framwork_indices(self):
         traj = Trajectory(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_ase_drift.traj'))
@@ -266,7 +266,7 @@ class TestParser(unittest.TestCase):
         data = parser.MDAnalysisParser(xd, **da_params)
         assert_almost_equal(data.time_step, 0.005)
         assert_almost_equal(data.step_skip, 250)
-        assert_almost_equal(data.coords_check[0, 0], [0.46465184, 0.03090944, 0.4023758])
+        assert_almost_equal(data.coords_check[0, 0], [0.5169497, 0.1174514, 0.3637794])
         assert_equal(data.indices, list(range(len(molecules))))
 
     def test_mda_init_with_COG(self):
@@ -279,7 +279,7 @@ class TestParser(unittest.TestCase):
         assert_almost_equal(data.time_step, 1)
         assert_almost_equal(data.step_skip, 1)
         assert_equal(data.indices, [0])
-        assert_almost_equal(data.coords_check, [[[0.269634905, 0.262183827, 0.2]]])
+        assert_almost_equal(data.coords_check, [[[0.2733333, 0.2666667, 0.1999999]]])
 
     def test_mda_init_with_COM(self):
         xd = mda.Universe(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS_center.data'),
@@ -297,7 +297,7 @@ class TestParser(unittest.TestCase):
         assert_almost_equal(data.time_step, 1)
         assert_almost_equal(data.step_skip, 1)
         assert_equal(data.indices, [0])
-        assert_almost_equal(data.coords_check, [[[0.382421597, 0.2087361, 0.2]]])
+        assert_almost_equal(data.coords_check, [[[0.3788889, 0.2111111, 0.2]]])
 
     def test_mda_init_with_framwork_indices(self):
         xd = mda.Universe(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS_drift.data'),

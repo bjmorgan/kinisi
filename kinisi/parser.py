@@ -335,7 +335,7 @@ class MDAnalysisParser(Parser):
 
         coords = sc.array(dims=['time', 'atom', 'dimension'], values=coords_l, unit=self.distance_unit)
         latt = sc.array(dims=['time', 'dimension1', 'dimension2'], values=latt_l, unit=self.distance_unit)
-
+        
         return structure, coords, latt
 
     def get_indices(
