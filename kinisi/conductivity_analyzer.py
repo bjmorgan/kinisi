@@ -12,7 +12,7 @@ import numpy as np
 import scipp as sc
 from scipp.typing import VariableLikeType
 from kinisi.diffusion import Diffusion
-from kinisi.displacement import calculate_mscd
+from kinisi.displacement import calculate_mstd
 from kinisi.parser import Parser
 from kinisi.analyzer import Analyzer
 
@@ -43,6 +43,9 @@ class ConductivityAnalyzer(Analyzer):
                      dt: VariableLikeType = None,
                      dimension: str = 'xyz',
                      distance_unit: sc.Unit = sc.units.angstrom,
+                     species_indices: VariableLikeType = None,
+                     masses: VariableLikeType = None,
+                     system_particles: int = 1,
                      progress: bool = True) -> 'ConductivityAnalyzer':
         """
         Constructs the necessary :py:mod:`kinisi` objects for analysis from a single or a list of
@@ -70,33 +73,60 @@ class ConductivityAnalyzer(Analyzer):
             the axes of interest. Optional, defaults to `'xyz'`.
         :param distance_unit: The unit of distance in the simulation input. This should be a :py:mod:`scipp` unit and
             defaults to :py:attr:`sc.units.angstrom`.
+        :param specie_indices: The indices of the species to compute the centre of mass of. Optional, defaults to
+            :py:attr:`None`, which means that all species are considered.
+        :param masses: The masses of the species to calculate the diffusion for. Optional, defaults
+            to :py:attr:`None`, which means that the masses are not considered.
+        :param system_particles: The number of system particles to average over. Note that the constitution of the 
+            system particles are defined in index order, i.e., two system particles will involve splitting the
+            particles down the middle into each. Optional, defaults to :py:attr:`1`.
         :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
         
         :returns: The :py:class:`ConductivityAnalyzer` object with the mean-squared charge displacement calculated.
         """
         p = super()._from_xdatcar(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit,
-                                  progress)
-        p.msd_da = calculate_mscd(p.trajectory, ionic_charge, progress)
+                                  species_indices, masses, progress)
+        p.msd_da = calculate_mstd(p.trajectory, system_particles, ionic_charge, progress)
         return p
 
     def conductivity(self,
                      start_dt: VariableLikeType,
                      temperature: VariableLikeType,
-                     volume: VariableLikeType,
-                     diffusion_params: Union[dict, None] = None) -> None:
+                     cond_max: float = 1e16,
+                     fit_intercept: bool = True,
+                     n_samples: int = 1000,
+                     n_walkers: int = 32,
+                     n_burn: int = 500,
+                     n_thin: int = 10,
+                     progress: bool = True,
+                     random_state: np.random.mtrand.RandomState = None) -> None:
         """
         Calculation of the conductivity.
         Keyword arguments will be passed of the :py:func:`bayesian_regression` method. 
 
         :param start_dt: The time at which the diffusion regime begins.
         :param temperature: The temperature of the system.
-        :param volume: The volume of the system.
-        :param kwargs: Additional keyword arguments to pass to :py:func:`bayesian_regression`.
+        :param cond_max: The maximum condition number of the covariance matrix. Optional, default is :py:attr:`1e16`.
+        :param fit_intercept: Whether to fit an intercept. Optional, default is :py:attr:`True`.
+        :param n_samples: The number of MCMC samples to take. Optional, default is :py:attr:`1000`.
+        :param n_walkers: The number of walkers to use in the MCMC. Optional, default is :py:attr:`32`.
+        :param n_burn: The number of burn-in samples to discard. Optional, default is :py:attr:`500`.
+        :param n_thin: The thinning factor for the MCMC samples. Optional, default is :py:attr:`10`.
+        :param progress: Whether to show the progress bar. Optional, default is :py:attr:`True`.
+        :param random_state: The random state to use for the MCMC. Optional, default is :py:attr:`None`.
         """
-        if diffusion_params is None:
-            diffusion_params = {}
-        self.diff = Diffusion(msd=self.msd_da, n_atoms=self.n_atoms)
-        self.diff._conductivity(start_dt=start_dt, temperature=temperature, volume=volume, **diffusion_params)
+        self.diff = Diffusion(msd=self.msd_da)
+        self.diff._conductivity(start_dt,
+                                temperature,
+                                self.trajectory._volume,
+                                cond_max=cond_max,
+                                fit_intercept=fit_intercept,
+                                n_samples=n_samples,
+                                n_walkers=n_walkers,
+                                n_burn=n_burn,
+                                n_thin=n_thin,
+                                progress=progress,
+                                random_state=random_state)
 
     @property
     def distributions(self) -> np.array:

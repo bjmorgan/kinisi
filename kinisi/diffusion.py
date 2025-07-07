@@ -8,6 +8,7 @@ Calculate the diffusion coefficient.
 
 import numpy as np
 import scipp as sc
+from scipp.constants import k
 from statsmodels.stats.correlation_tools import cov_nearest
 from scipy.linalg import pinvh
 from scipy.stats import linregress, multivariate_normal
@@ -24,9 +25,8 @@ class Diffusion:
         data and number of independent samples. 
     """
 
-    def __init__(self, msd: sc.DataArray, n_atoms=None):
+    def __init__(self, msd: sc.DataArray):
         self.msd = msd
-        self.n_atoms = n_atoms
         self.gradient = None
         self.intercept = None
         self._diffusion_coefficient = None
@@ -149,8 +149,8 @@ class Diffusion:
         """
 
         self.bayesian_regression(start_dt=start_dt, **kwargs)
-        self._jump_diffusion_coefficient = sc.to_unit(
-            self.gradient / (2 * self.msd.coords['dimensionality'].value * self.n_atoms), 'cm2/s')
+        self._jump_diffusion_coefficient = sc.to_unit(self.gradient / (2 * self.msd.coords['dimensionality'].value),
+                                                      'cm2/s')
 
     def _conductivity(self, start_dt: sc.Variable, temperature: sc.Variable, volume: sc.Variable, **kwargs):
         """
@@ -163,8 +163,8 @@ class Diffusion:
         :param kwargs: Additional keyword arguments to pass to :py:func:`bayesian_regression`.
         """
         self.bayesian_regression(start_dt=start_dt, **kwargs)
-        self._jump_diffusion_coefficient = self.gradient / (2 * self.msd.coords['dimensionality'].value * self.n_atoms)
-        conversion = 1 / (volume * sc.constants.k * temperature)
+        self._jump_diffusion_coefficient = self.gradient / (2 * self.msd.coords['dimensionality'].value)
+        conversion = 1 / (volume * k * temperature)
         self._sigma = sc.to_unit(self.D_J * conversion, 'mS/cm')
 
     @property

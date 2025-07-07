@@ -117,6 +117,22 @@ class Analyzer:
                                  masses=masses,
                                  progress=progress)
             return cls(p)
+        elif dtype == 'identical':
+            u = [
+                MDAnalysisParser(universe=f,
+                                 specie=specie,
+                                 time_step=time_step,
+                                 step_skip=step_skip,
+                                 dt=dt,
+                                 dimension=dimension,
+                                 distance_unit=distance_unit,
+                                 specie_indices=specie_indices,
+                                 masses=masses,
+                                 progress=progress) for f in trajectory
+            ]
+            p = u[0]
+            p.displacements = sc.concat([i.displacements for i in u], 'atom')
+            return cls(p)
 
     def posterior_predictive(self, n_posterior_samples: int = None,
                              n_predictive_samples: int = 256,
