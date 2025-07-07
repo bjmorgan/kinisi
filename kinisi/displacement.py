@@ -50,11 +50,18 @@ def calculate_msd(p: parser.Parser, progress: bool = True) -> sc.Variable:
                         })
 
 
-def calculate_mstd(p: parser.Parser, number_of_coms: int = 1, progress: bool = True) -> sc.Variable:
+def calculate_mstd(p: parser.Parser, number_of_coms: int = 1, ionic_charge: sc.Variable = None, progress: bool = True) -> sc.Variable:
     """
     Calculate the mean-squared total displacement, i.e., the displacement of the centre-of-mass of all particles.
     
     :param p: The parser object containing the the relevant simulation trajectory data.
+    :param number_of_coms: The number of centres of mass to average over. Note that the centres of mass are defined
+        in index order, i.e., two centres of mass will split the atoms down the middle. Optional, defaults
+        to :py:attr:`1`.
+    :param ionic_charge: The ionic charge of the species of interest. This should be either a :py:mod:`scipp`
+        scalar if all of the ions have the same charge or an array of the charge for each indiviudal ion. 
+        Optional, defaults to :py:attr:`None`, which means that the mean-squared total displacement is
+        computed.
     :param progress: Whether to show the progress bar. Optional, default is :py:attr:`True`.
 
     :return: A :py:class:`scipp.DataArray` object containing the relevant mean-squared total displacement
@@ -63,17 +70,16 @@ def calculate_mstd(p: parser.Parser, number_of_coms: int = 1, progress: bool = T
     mstd = []
     mstd_var = []
     n_samples = []
+    iterator = p.dt_int.values
     if progress:
         iterator = tqdm(p.dt_int.values, desc='Finding Means and Variances')
     for di in iterator:
         disp = sc.concat([p.displacements['obs', di - 1], p.displacements['obs', di:] - p.displacements['obs', :-di]],
                          'obs')
-        centres_of_mass = []
-        average_over = disp.sizes['atom'] // number_of_coms
-        for i in range(0, disp.sizes['atom'], average_over):
-            centres_of_mass.append(sc.sum(disp['atom', i:i+average_over], 'atom'))
-        disp = sc.concat(centres_of_mass, 'atom')
+        disp = _consolidate_to_coms(disp, number_of_coms)
         n = (disp.sizes['atom'] * p.dt_int['time interval', -1] / di).value
+        if ionic_charge is not None:
+            disp = disp * ionic_charge
         s = sc.sum(disp**2, 'dimension')
         if s.size <= 1:
             continue
@@ -90,39 +96,18 @@ def calculate_mstd(p: parser.Parser, number_of_coms: int = 1, progress: bool = T
                         })
 
 
-def calculate_mscd(p: parser.Parser, ionic_charge: sc.Variable, progress: bool = True) -> sc.Variable:
+def _consolidate_to_coms(disp: sc.DataArray, number_of_coms: int = 1) -> sc.DataArray:
     """
-    Calculate the mean-squared charge displacement, i.e., the displacement of the centre-of-mass of all particles
-    multiplied by the ionic charge.
+    Consolidate the displacement data to the specified number of centres of mass.
     
-    :param p: The parser object containing the the relevant simulation trajectory data.
-    :param ionic_charge: The ionic charge of the species of interest. This should be either a :py:mod:`scipp`
-        scalar if all of the ions have the same charge or an array of the charge for each indiviudal ion.
-    :param progress: Whether to show the progress bar. Optional, default is :py:attr:`True`.
+    :param disp: The displacement data to consolidate.
+    :param number_of_coms: The number of centres of mass to average over. Note that the centres of mass are defined
+        in index order, i.e., two centres of mass will split the atoms down the middle. Optional, defaults to :py:attr:`1`.
 
-    :return: A :py:class:`scipp.DataArray` object containing the relevant mean-squared charge displacement
-        data and number of independent samples. 
+    :return: A :py:class:`scipp.DataArray` object containing the consolidated displacement data.
     """
-    mscd = []
-    mscd_var = []
-    n_samples = []
-    if progress:
-        iterator = tqdm(p.dt_int.values, desc='Finding Means and Variances')
-    for di in iterator:
-        disp = sc.concat([p.displacements['obs', di - 1], p.displacements['obs', di:] - p.displacements['obs', :-di]],
-                         'obs')
-        n = (p.displacements.sizes['atom'] * p.dt_int['time interval', -1] / di).value / disp.sizes['atom']
-        s = sc.sum(sc.sum(ionic_charge * disp, 'atom')**2, 'dimension')
-        if s.size <= 1:
-            continue
-        m = sc.mean(s).value
-        v = (sc.var(s, ddof=1) / n).value
-        mscd.append(m)
-        mscd_var.append(v)
-        n_samples.append(n)
-    return sc.DataArray(data=sc.Variable(dims=['time interval'], values=mscd, variances=mscd_var, unit=s.unit),
-                        coords={
-                            'time interval': p.dt['time interval', :len(mscd)],
-                            'n_samples': sc.array(dims=['time interval'], values=n_samples),
-                            'dimensionality': p.dimensionality
-                        })
+    centres_of_mass = []
+    average_over = disp.sizes['atom'] // number_of_coms
+    for i in range(0, disp.sizes['atom'], average_over):
+        centres_of_mass.append(sc.sum(disp['atom', i:i+average_over], 'atom'))
+    return sc.concat(centres_of_mass, 'atom') 
