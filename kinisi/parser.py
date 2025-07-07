@@ -143,7 +143,7 @@ class Parser:
         Convert the :py:class:`Parser` object to a :py:mod: 'scipp' DataGroup.
         :return: A :py:mod:`scipp` DataGroup representing the :py:class:`Parser` object.
         """
-        group = {key: value for key, value in self.__dict__.items()}
+        group = dict(self.__dict__.items())
         group['__class__'] = f"{self.__class__.__module__}.{self.__class__.__name__}"
         return sc.DataGroup(group)
     
