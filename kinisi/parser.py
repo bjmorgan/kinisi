@@ -151,7 +151,7 @@ class Parser:
     def _from_datagroup(cls, datagroup) -> 'Parser':
         """
         Convert a :py:mod: 'scipp' DataGroup back to a :py:class:`Parser` object.
-        : return: A :py:class:`Parser` object.
+        :return: A :py:class:`Parser` object.
         """
         class_path = str(datagroup['__class__'])
         module_name, class_name = class_path.rsplit('.', 1)
