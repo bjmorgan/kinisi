@@ -122,9 +122,10 @@ class Parser:
 
         :return: Displacements corrected to account for drift of a framework.
         """
-
-        nan_replacer = sc.scalar(0.0, unit=self.distance_unit)
-        return disp - sc.nan_to_num(sc.mean(disp['atom', self.drift_indices.values], 'atom'), nan=nan_replacer)
+        if self.drift_indices.size != 0: 
+            return disp - sc.mean(disp['atom', self.drift_indices.values], 'atom')
+        else: 
+            return disp
 
 
 class PymatgenParser(Parser):
