@@ -12,6 +12,7 @@ from typing import Union
 import numpy as np
 import scipp as sc
 from scipp.typing import VariableLikeType
+import importlib
 
 DIMENSIONALITY = {
     'x': np.s_[0],
@@ -136,45 +137,34 @@ class Parser:
 
         dt_index = (self.dt / (time_step * step_skip)).astype(int)
         return dt_index
-
-    def generate_indices(
-        self,
-        structure: tuple[
-            Union['pymatgen.core.structure.Structure', 'MDAnalysis.core.universe.Universe'],
-            VariableLikeType,
-            VariableLikeType,
-        ],
-        specie_indices: VariableLikeType,
-        coords: VariableLikeType,
-        specie: Union[
-            'pymatgen.core.periodic_table.Element',
-            'pymatgen.core.periodic_table.Specie',
-            'str',
-        ],
-        masses: VariableLikeType,
-    ) -> tuple[VariableLikeType, VariableLikeType]:
+    
+    def _to_datagroup(self) -> sc.DataGroup:
         """
-        Handle the specie indices and determine the indices for the framework and drift correction.
-
-        :param structure: The initial structure to determine the indices from.
-        :param specie_indices: Indices for the atoms in the trajectory used in the diffusion calculation
-        :param coords: The fractional coordinates of the atoms in the trajectory.
-        :param specie: The specie to calculate the diffusivity for.
-        :param masses: Masses associated with indices in indices. 1D scipp array of dim 'group_of_atoms'
-
-        :return: A tuple containing the indices for the atoms in the trajectory used in the diffusion calculation
-            and indices of framework atoms.
+        Convert the :py:class:`Parser` object to a :py:mod: 'scipp' DataGroup.
+        :return: A :py:mod:`scipp` DataGroup representing the :py:class:`Parser` object.
         """
-        if specie is not None:
-            indices, drift_indices = self.get_indices(structure, specie)
-        elif isinstance(specie_indices, sc.Variable):
-            if len(specie_indices.dims) > 1:
-                coords, indices, drift_indices = get_molecules(structure, coords, specie_indices, masses)
-            else:
-                indices, drift_indices = get_framework(structure, specie_indices)
-        else:
-            raise TypeError('Unrecognized type for specie or specie_indices, specie_indices must be a sc.array')
-        return coords, indices, drift_indices
+        group = {key: value for key, value in self.__dict__.items()}
+        group['__class__'] = f"{self.__class__.__module__}.{self.__class__.__name__}"
+        return sc.DataGroup(group)
+    
+    @classmethod
+    def _from_datagroup(cls, datagroup) -> 'Parser':
+        """
+        Convert a :py:mod: 'scipp' DataGroup back to a :py:class:`Parser` object.
+        : return: A :py:class:`Parser` object.
+        """
+        class_path = str(datagroup['__class__'])
+        module_name, class_name = class_path.rsplit('.', 1)
+        module = importlib.import_module(module_name)
+        klass = getattr(module, class_name)
+
+        obj = klass.__new__(klass)
+
+        for key, value in datagroup.items():
+            if key != '__class__':
+                setattr(obj, key, value)
+
+        return obj
 
     def calculate_displacements(self, coords: VariableLikeType, lattice: VariableLikeType) -> VariableLikeType:
         """
