@@ -92,6 +92,7 @@ def calculate_mstd(p: parser.Parser,
         mstd.append(np.float64(m))
         mstd_var.append(np.float64(v))
         n_samples.append(n)
+        
     return sc.DataArray(data=sc.Variable(dims=['time interval'], values=mstd, variances=mstd_var, unit=s.unit),
                         coords={
                             'time interval': p.dt['time interval', :len(mstd)],
