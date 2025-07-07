@@ -7,7 +7,7 @@ Tests for the displacement module.
 # author: Andrew R. McCluskey (arm61)
 # pylint: disable=R0201
 
-import unittest
+import unittest, pytest
 import numpy as np
 import scipp as sc
 from scipp import testing
@@ -44,8 +44,13 @@ class TestSystemParticleConsoldiation(unittest.TestCase):
         Test the consolidation of system particles where the number of system particles does not divide nicely
         by the number of atoms.
         """
-        disp = sc.Variable(values=np.arange(0, 28, 1).reshape((4, 7, 1)), dims=['obs', 'atom', 'dimension'])
-        expected = sc.Variable(values=np.array([3, 12, 24, 33, 45, 54, 66, 75]).reshape((4, 2, 1)),
-                               dims=['obs', 'atom', 'dimension'])
-        actual = displacement._consolidate_system_particles(disp, system_particles=2)
-        testing.assert_identical(actual, expected)
+        with pytest.warns(UserWarning) as record:
+            disp = sc.Variable(values=np.arange(0, 28, 1).reshape((4, 7, 1)), dims=['obs', 'atom', 'dimension'])
+            expected = sc.Variable(values=np.array([3, 12, 24, 33, 45, 54, 66, 75]).reshape((4, 2, 1)),
+                                   dims=['obs', 'atom', 'dimension'])
+            actual = displacement._consolidate_system_particles(disp, system_particles=2)
+            testing.assert_identical(actual, expected)
+        assert len(record) == 1
+        assert str(record[0].message) == ("Truncating 7 atoms to split evenly into 2 centres of mass.This approach " + 
+                                          "is inefficient, you should consider using the number of system particles " + 
+                                          "to split this evenly.")

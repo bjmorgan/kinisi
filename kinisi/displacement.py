@@ -115,7 +115,8 @@ def _consolidate_system_particles(disp: sc.DataArray, system_particles: int = 1)
 
     if max_atoms < disp.sizes['atom']:
         warn(
-            f"Truncating {disp.sizes['atom']} atoms to split evenly into {system_particles} centres of mass.")
+            f"Truncating {disp.sizes['atom']} atoms to split evenly into {system_particles} centres of mass." + 
+             "This approach is inefficient, you should consider using the number of system particles to split this evenly.")
 
     trimmed = disp['atom', :max_atoms]
     reshaped = trimmed.fold(dim='atom', sizes={'atom': system_particles, 'local': atoms_per_com})
