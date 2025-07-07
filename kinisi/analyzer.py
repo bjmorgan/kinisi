@@ -12,6 +12,7 @@ are intended for internal use.
 # author: Andrew R. McCluskey (arm61), Harry Richardson (Harry-Rich) and Oskar G. Soulas (osoulas).
 
 from typing import Union
+import importlib
 
 import numpy as np
 import scipp as sc
