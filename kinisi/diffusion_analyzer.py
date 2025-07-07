@@ -185,7 +185,7 @@ class DiffusionAnalyzer(Analyzer):
         :return: The self-diffusion coefficient.
         """
         return self.diff.D
-    
+
     @property
     def msd(self) -> VariableLikeType:
         """

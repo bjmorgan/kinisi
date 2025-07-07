@@ -50,7 +50,10 @@ def calculate_msd(p: parser.Parser, progress: bool = True) -> sc.Variable:
                         })
 
 
-def calculate_mstd(p: parser.Parser, number_of_coms: int = 1, ionic_charge: sc.Variable = None, progress: bool = True) -> sc.Variable:
+def calculate_mstd(p: parser.Parser,
+                   number_of_coms: int = 1,
+                   ionic_charge: sc.Variable = None,
+                   progress: bool = True) -> sc.Variable:
     """
     Calculate the mean-squared total displacement, i.e., the displacement of the centre-of-mass of all particles.
     
@@ -109,5 +112,5 @@ def _consolidate_to_coms(disp: sc.DataArray, number_of_coms: int = 1) -> sc.Data
     centres_of_mass = []
     average_over = disp.sizes['atom'] // number_of_coms
     for i in range(0, disp.sizes['atom'], average_over):
-        centres_of_mass.append(sc.sum(disp['atom', i:i+average_over], 'atom'))
-    return sc.concat(centres_of_mass, 'atom') 
+        centres_of_mass.append(sc.sum(disp['atom', i:i + average_over], 'atom'))
+    return sc.concat(centres_of_mass, 'atom')

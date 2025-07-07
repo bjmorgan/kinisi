@@ -95,7 +95,7 @@ class ConductivityAnalyzer(Analyzer):
                      cond_max: float = 1e16,
                      fit_intercept: bool = True,
                      n_samples: int = 1000,
-                     n_walkers: int = 32, 
+                     n_walkers: int = 32,
                      n_burn: int = 500,
                      n_thin: int = 10,
                      progress: bool = True,
@@ -116,9 +116,9 @@ class ConductivityAnalyzer(Analyzer):
         :param random_state: The random state to use for the MCMC. Optional, default is :py:attr:`None`.
         """
         self.diff = Diffusion(msd=self.msd_da)
-        self.diff._conductivity(start_dt, 
-                                temperature, 
-                                self.trajectory._volume, 
+        self.diff._conductivity(start_dt,
+                                temperature,
+                                self.trajectory._volume,
                                 cond_max=cond_max,
                                 fit_intercept=fit_intercept,
                                 n_samples=n_samples,

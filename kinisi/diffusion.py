@@ -149,8 +149,8 @@ class Diffusion:
         """
 
         self.bayesian_regression(start_dt=start_dt, **kwargs)
-        self._jump_diffusion_coefficient = sc.to_unit(
-            self.gradient / (2 * self.msd.coords['dimensionality'].value), 'cm2/s')
+        self._jump_diffusion_coefficient = sc.to_unit(self.gradient / (2 * self.msd.coords['dimensionality'].value),
+                                                      'cm2/s')
 
     def _conductivity(self, start_dt: sc.Variable, temperature: sc.Variable, volume: sc.Variable, **kwargs):
         """

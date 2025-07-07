@@ -91,9 +91,9 @@ class JumpDiffusionAnalyzer(Analyzer):
         return p
 
     @classmethod
-    def from_universe(cls, 
+    def from_universe(cls,
                       trajectory: 'MDAnalysis.core.universe.Universe',
-                      specie: str=None,
+                      specie: str = None,
                       time_step: VariableLikeType = None,
                       step_skip: VariableLikeType = None,
                       dtype: Union[str, None] = None,
@@ -143,13 +143,13 @@ class JumpDiffusionAnalyzer(Analyzer):
                                    specie_indices, masses, progress)
         p.msd_da = calculate_mstd(p.trajectory, number_of_coms, progress)
         return p
-    
-    def jump_diffusion(self, 
-                       start_dt: VariableLikeType, 
+
+    def jump_diffusion(self,
+                       start_dt: VariableLikeType,
                        cond_max: float = 1e16,
                        fit_intercept: bool = True,
                        n_samples: int = 1000,
-                       n_walkers: int = 32, 
+                       n_walkers: int = 32,
                        n_burn: int = 500,
                        n_thin: int = 10,
                        progress: bool = True,
@@ -168,7 +168,7 @@ class JumpDiffusionAnalyzer(Analyzer):
         :param random_state: The random state to use for the MCMC. Optional, default is :py:attr:`None`.
         """
         self.diff = Diffusion(msd=self.msd_da)
-        self.diff._jump_diffusion(start_dt, 
+        self.diff._jump_diffusion(start_dt,
                                   cond_max=cond_max,
                                   fit_intercept=fit_intercept,
                                   n_samples=n_samples,
