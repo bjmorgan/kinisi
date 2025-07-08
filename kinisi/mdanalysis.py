@@ -50,9 +50,14 @@ class MDAnalysisParser(Parser):
                  specie_indices: VariableLikeType = None,
                  masses: VariableLikeType = None,
                  progress: bool = True):
+<<<<<<< HEAD
 
         super().__init__(universe, specie, time_step, step_skip, dt, distance_unit, specie_indices, masses, dimension,
                          progress)
+=======
+         
+        super().__init__(universe, specie, time_step, step_skip, dt, distance_unit, specie_indices, masses, dimension, progress)
+>>>>>>> 3a6fcb9 (Reduce some duplicate code)
 
     def get_structure_coords_latt(
         self,
