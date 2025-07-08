@@ -77,6 +77,12 @@ class Parser:
         self.dt = dt
         self.distance_unit = distance_unit
 
+        if specie_indices is not None:
+            try:
+                np.array(specie_indices)
+            except Exception as err:
+                raise ValueError('Molecules must be of same length') from err
+
         structure, coords, latt = self.get_structure_coords_latt(snapshots, progress)
 
         self.create_integer_dt(coords, time_step, step_skip)
@@ -237,10 +243,7 @@ def get_molecules(
     of the diffusion and indices of framework atoms.
     """
     drift_indices = []
-    try:
-        indices = indices - 1
-    except:
-        raise ValueError('Molecules must be of same length')
+    indices = indices - 1
 
     n_molecules = indices.shape[0]
 
