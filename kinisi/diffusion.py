@@ -36,6 +36,34 @@ class Diffusion:
         self._cond_max = None
         self._covariance_matrix = None
 
+    def _to_datagroup(self, hdf5=False) -> sc.DataGroup:
+        """
+        Convert the :py:class:`Diffusion` object to a :py:mod: 'scipp' DataGroup.
+        :param hdf5: If `True`, incompatible classes will be converted for saving to HDF5.
+        :return: A :py:mod:`scipp` DataGroup representing the :py:class:`Diffusion` object.
+        """
+        group = self.__dict__.copy()
+        for key, value in group.items():
+            if value is None:
+                group[key] = sc.scalar(value=np.nan, dtype='float64')
+        return sc.DataGroup(group)
+    
+    @classmethod
+    def _from_datagroup(cls, datagroup) -> 'Diffusion':
+        """
+        Convert a :py:mod: 'scipp' DataGroup back to a :py:class:`Diffusion` object.
+        :return: A :py:class:`Diffusion` object.
+        """
+        obj = cls.__new__(cls)
+
+        for key, value in datagroup.items():
+            if type(value) == sc.Variable and value.ndim == 0 and np.isnan(value.value):
+                setattr(obj, key, None)
+            else:
+                setattr(obj, key, value)
+
+        return obj
+
     @property
     def covariance_matrix(self) -> sc.Variable:
         """

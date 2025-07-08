@@ -17,6 +17,7 @@ import scipp as sc
 from kinisi.parser import Parser
 from kinisi.pymatgen import PymatgenParser
 from kinisi.mdanalysis import MDAnalysisParser
+from kinisi.diffusion import Diffusion
 import importlib
 
 
@@ -39,9 +40,13 @@ class Analyzer:
         :param filename: The name of the file to save the object to.
         """
         group = self.__dict__.copy()
-        group['trajectory'] = self.trajectory._to_datagroup(hdf5=True)
+        
         for key, value in group.items():
-            if value is None:
+            if key == 'trajectory':
+                group[key] = self.trajectory._to_datagroup(hdf5=True)
+            elif key == 'diff':
+                group[key] = self.diff._to_datagroup(hdf5=True)
+            elif value is None:
                 group[key] = sc.scalar(value=np.nan, dtype='float64')
         group['__class__'] = f"{self.__class__.__module__}.{self.__class__.__name__}"
         sc.DataGroup(group).save_hdf5(filename)
@@ -65,6 +70,8 @@ class Analyzer:
         for key, value in datagroup.items():
             if key == 'trajectory':
                 setattr(obj, key, Parser._from_datagroup(value))
+            elif key == 'diff':
+                setattr(obj, key, Diffusion._from_datagroup(value))
             elif key != '__class__':
                 if type(value) == sc.Variable and value.ndim == 0 and np.isnan(value.value):
                     setattr(obj, key, None)
