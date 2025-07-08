@@ -53,6 +53,7 @@ dev = [
     'ase',
     'h5py',
     'pyblock'
+    'ruff'
 ]
 docs = [
     'pymatgen',

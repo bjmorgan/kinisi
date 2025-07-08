@@ -23,7 +23,6 @@ jobs:
         pip install '.[dev]'
         pip install pytest
         pip install pytest-cov
-        pip install ruff
     - name: Lint code with ruff
       run: | 
         ruff check .
