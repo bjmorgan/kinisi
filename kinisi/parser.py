@@ -113,9 +113,9 @@ class Parser:
             a :py:mod:`scipp` scalar. The units for this scalar should be dimensionless.
         """
         if self.dt is None:
-            self.dt_int = sc.arange(start=1, stop=coords.sizes['time'], step=1, dim='time interval')
-            self.dt = self.dt_int * time_step * step_skip
-        self.dt_int = (self.dt / (time_step * step_skip)).astype(int)
+            self.dt_index = sc.arange(start=1, stop=coords.sizes['time'], step=1, dim='time interval')
+            self.dt = self.dt_index * time_step * step_skip
+        self.dt_index = (self.dt / (time_step * step_skip)).astype(int)
 
     def generate_indices(self, structure: Tuple[Union["pymatgen.core.structure.Structure",
                                                       "MDAnalysis.core.universe.Universe"], VariableLikeType,

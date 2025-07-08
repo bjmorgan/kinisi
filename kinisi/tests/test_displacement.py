@@ -61,7 +61,7 @@ class LimitedParser:
     def __init__(self, displacements, dt, time_step, step_skip):
         self.displacements = displacements
         self.dt = dt
-        self.dt_int = (dt / (time_step * step_skip)).astype(int)
+        self.dt_index = (dt / (time_step * step_skip)).astype(int)
         self.dimensionality = displacements.sizes['dimension'] * sc.units.dimensionless
 
 
