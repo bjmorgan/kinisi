@@ -38,7 +38,8 @@ class Analyzer:
 
         :param filename: The name of the file to save the object to.
         """
-        group = {'trajectory':self.trajectory._to_datagroup()}
+        group = self.__dict__
+        group['trajectory'] = self.trajectory._to_datagroup()
         group['__class__'] = f"{self.__class__.__module__}.{self.__class__.__name__}"
         sc.DataGroup(group).save_hdf5(filename)
     
@@ -56,8 +57,13 @@ class Analyzer:
         module = importlib.import_module(module_name)
         klass = getattr(module, class_name)
         
-        trajectory = Parser._from_datagroup(datagroup['trajectory'])
-        obj = klass(trajectory)
+        obj = klass.__new__(klass)
+
+        for key, value in datagroup.items():
+            if key == 'trajectory':
+                obj.trajectory = Parser._from_datagroup(value)
+            elif key != '__class__':
+                setattr(obj, key, value)
 
         return obj
 
