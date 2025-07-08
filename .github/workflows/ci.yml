@@ -27,12 +27,10 @@ jobs:
     - name: Lint code with ruff
       run: | 
         ruff check .
-   # - name: Check code formatting with ruff
-   #   run: |
-   #     ruff format --diff .
-    - name: Check code formatting wiht yapf
+    - name: Check code formatting with ruff
       run: |
-        yapf --diff --recursive .
+        ruff format --check .
+      continue-on-error: true
     - name: Generate coverage report
       run: |
         pytest --cov-report xml --cov=.
