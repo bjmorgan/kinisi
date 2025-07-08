@@ -57,27 +57,33 @@ class Parser:
     """
 
     def __init__(self,
-                 coords: VariableLikeType,
-                 lattice: VariableLikeType,
-                 indices: VariableLikeType,
-                 drift_indices: VariableLikeType,
+                 snapshots: Union['pymatgen.core.structure.Structure',
+                                  'MDAnalysis.core.universe.Universe'],
+                 specie: Union['pymatgen.core.periodic_table.Element', 'pymatgen.core.periodic_table.Specie', 'str'],
                  time_step: VariableLikeType,
                  step_skip: VariableLikeType,
                  dt: VariableLikeType = None,
-                 dimension: str = 'xyz'):
+                 distance_unit: sc.Unit = sc.units.angstrom,
+                 specie_indices: VariableLikeType = None,
+                 masses: VariableLikeType = None,
+                 dimension: str = 'xyz',
+                 progress: bool = True):
         self.time_step = time_step
         self.step_skip = step_skip
+        self._dimension = dimension
+        self.dt = dt
+        self.distance_unit = distance_unit
+        
+        structure, coords, latt = self.get_structure_coords_latt(snapshots, progress)
+        
+        self.create_integer_dt(coords, time_step, step_skip)
+
+        indices, drift_indices = self.generate_indices(structure, specie_indices, coords, specie, masses)
+        
         self.indices = indices
         self.drift_indices = drift_indices
-        self._dimension = dimension
-        self._volume = None
-        self.dt = dt
-        if self.dt is None:
-            self.dt_int = sc.arange(start=1, stop=coords.sizes['time'], step=1, dim='time interval')
-            self.dt = self.dt_int * time_step * step_skip
-        self.dt_int = (self.dt / (time_step * step_skip)).astype(int)
 
-        disp = self.calculate_displacements(coords, lattice)
+        disp = self.calculate_displacements(coords, latt)
         drift_corrected = self.correct_drift(disp)
 
         self._slice = DIMENSIONALITY[dimension.lower()]
@@ -85,6 +91,53 @@ class Parser:
         self.dimensionality = drift_corrected.sizes['dimension'] * sc.units.dimensionless
 
         self.displacements = drift_corrected['atom', indices]
+        self._volume = np.prod(latt.values[0].diagonal()) * self.distance_unit ** 3
+    
+    def create_integer_dt(self, coords: VariableLikeType, time_step: VariableLikeType, step_skip: VariableLikeType) -> None:
+        """
+        Create an integer time interval from the given time intervals (and if necessary the time interval object).
+        
+        :param coords: The fractional coordiates of the atoms in the trajectory. This should be a :py:mod:`scipp`
+            array type object with dimensions of 'atom', 'time', and 'dimension'.
+        :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator. Note, 
+            that this must be given as a :py:mod:`scipp`-type scalar. The unit used for the time_step, will be the unit 
+            that is use for the time interval values.
+        :param step_skip: Sampling freqency of the simulation trajectory, i.e., how many time steps exist between the
+            output of the positions in the trajectory. Similar to the :py:attr:`time_step`, this parameter must be
+            a :py:mod:`scipp` scalar. The units for this scalar should be dimensionless.
+        """
+        if self.dt is None:
+            self.dt_int = sc.arange(start=1, stop=coords.sizes['time'], step=1, dim='time interval')
+            self.dt = self.dt_int * time_step * step_skip
+        self.dt_int = (self.dt / (time_step * step_skip)).astype(int)
+
+    def generate_indices(self, structure: Tuple[Union["pymatgen.core.structure.Structure", "MDAnalysis.core.universe.Universe"], 
+                                                     VariableLikeType, VariableLikeType],
+                         specie_indices: VariableLikeType, coords: VariableLikeType, 
+                         specie: Union['pymatgen.core.periodic_table.Element', 'pymatgen.core.periodic_table.Specie', 'str'],
+                         masses: VariableLikeType) -> Tuple[VariableLikeType, VariableLikeType]:
+        """
+        Handle the specie indices and determine the indices for the framework and drift correction.
+        
+        :param structure: The initial structure to determine the indices from.
+        :param specie_indices: Indices for the atoms in the trajectory used in the diffusion calculation
+        :param coords: The fractional coordinates of the atoms in the trajectory.
+        :param specie: The specie to calculate the diffusivity for.
+        :param masses: Masses associated with indices in indices.
+        
+        :return: A tuple containing the indices for the atoms in the trajectory used in the diffusion calculation
+            and indices of framework atoms.
+        """
+        if specie is not None:
+            indices, drift_indices = self.get_indices(structure, specie)
+        elif isinstance(specie_indices, sc.Variable):
+            if len(specie_indices.dims) > 1:
+                coords, indices, drift_indices = get_molecules(structure, coords, specie_indices, masses, self.distance_unit)
+            else:
+                indices, drift_indices = get_framework(structure, specie_indices)
+        else:
+            raise TypeError('Unrecognized type for specie or specie_indices, specie_indices must be a sc.array')
+        return indices, drift_indices
 
     def calculate_displacements(self, coords: VariableLikeType, lattice: VariableLikeType) -> VariableLikeType:
         """
