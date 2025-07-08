@@ -94,7 +94,7 @@ class MDAnalysisParser(Parser):
         coords_l = np.array(coords_l)
         latt_l = np.array(latt_l)
 
-        coords = sc.array(dims=['time', 'atom', 'dimension'], values=coords_l, unit=self.distance_unit)
+        coords = sc.array(dims=['time', 'atom', 'dimension'], values=coords_l, unit=sc.units.dimensionless)
         latt = sc.array(dims=['time', 'dimension1', 'dimension2'], values=latt_l, unit=self.distance_unit)
 
         return structure, coords, latt

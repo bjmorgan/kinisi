@@ -7,37 +7,38 @@ Parsers for kinisi. This module is responsible for reading in input files from :
 # Distributed under the terms of the MIT License.
 # author: Andrew R. McCluskey (arm61) and Harry Richardson (Harry-Rich).
 
-from typing import Tuple, Union
+from typing import Union
+
 import numpy as np
 import scipp as sc
 from scipp.typing import VariableLikeType
 
 DIMENSIONALITY = {
-    "x": np.s_[0],
-    "y": np.s_[1],
-    "z": np.s_[2],
-    "xy": np.s_[:2],
-    "xz": np.s_[::2],
-    "yz": np.s_[1:],
-    "xyz": np.s_[:],
-    b"x": np.s_[0],
-    b"y": np.s_[1],
-    b"z": np.s_[2],
-    b"xy": np.s_[:2],
-    b"xz": np.s_[::2],
-    b"yz": np.s_[1:],
-    b"xyz": np.s_[:],
+    'x': np.s_[0],
+    'y': np.s_[1],
+    'z': np.s_[2],
+    'xy': np.s_[:2],
+    'xz': np.s_[::2],
+    'yz': np.s_[1:],
+    'xyz': np.s_[:],
+    b'x': np.s_[0],
+    b'y': np.s_[1],
+    b'z': np.s_[2],
+    b'xy': np.s_[:2],
+    b'xz': np.s_[::2],
+    b'yz': np.s_[1:],
+    b'xyz': np.s_[:],
 }
 
 
 class Parser:
     """
-    The base class for object parsing. 
-    
+    The base class for object parsing.
+
     :param snapshots: The snapshots from the trajectory given the positions of atoms.
     :param specie: Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
-    :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator. Note, 
-        that this must be given as a :py:mod:`scipp`-type scalar. The unit used for the time_step, will be the unit 
+    :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator. Note,
+        that this must be given as a :py:mod:`scipp`-type scalar. The unit used for the time_step, will be the unit
         that is use for the time interval values.
     :param step_skip: Sampling freqency of the simulation trajectory, i.e., how many time steps exist between the
         output of the positions in the trajectory. Similar to the :py:attr:`time_step`, this parameter must be
@@ -55,13 +56,11 @@ class Parser:
 
     def __init__(
         self,
-        snapshots: Union[
-            "pymatgen.core.structure.Structure", "MDAnalysis.core.universe.Universe"
-        ],
+        snapshots: Union['pymatgen.core.structure.Structure', 'MDAnalysis.core.universe.Universe'],
         specie: Union[
-            "pymatgen.core.periodic_table.Element",
-            "pymatgen.core.periodic_table.Specie",
-            "str",
+            'pymatgen.core.periodic_table.Element',
+            'pymatgen.core.periodic_table.Specie',
+            'str',
         ],
         time_step: VariableLikeType,
         step_skip: VariableLikeType,
@@ -69,7 +68,7 @@ class Parser:
         distance_unit: sc.Unit = sc.units.angstrom,
         specie_indices: VariableLikeType = None,
         masses: VariableLikeType = None,
-        dimension: str = "xyz",
+        dimension: str = 'xyz',
         progress: bool = True,
     ):
         self.time_step = time_step
@@ -77,14 +76,6 @@ class Parser:
         self._dimension = dimension
         self.dt = dt
         self.distance_unit = distance_unit
-
-        structure, coords, latt = self.get_structure_coords_latt(snapshots, progress)
-
-        self.create_integer_dt(coords, time_step, step_skip)
-
-        indices, drift_indices = self.generate_indices(
-            structure, specie_indices, coords, specie, masses
-        )
 
         structure, coords, latt = self.get_structure_coords_latt(snapshots, progress)
 
@@ -99,12 +90,10 @@ class Parser:
         drift_corrected = self.correct_drift(disp)
 
         self._slice = DIMENSIONALITY[dimension.lower()]
-        drift_corrected = drift_corrected["dimension", self._slice]
-        self.dimensionality = (
-            drift_corrected.sizes["dimension"] * sc.units.dimensionless
-        )
+        drift_corrected = drift_corrected['dimension', self._slice]
+        self.dimensionality = drift_corrected.sizes['dimension'] * sc.units.dimensionless
 
-        self.displacements = drift_corrected["atom", indices]
+        self.displacements = drift_corrected['atom', indices]
         self._volume = np.prod(latt.values[0].diagonal()) * self.distance_unit**3
 
     def create_integer_dt(
@@ -126,30 +115,26 @@ class Parser:
             a :py:mod:`scipp` scalar. The units for this scalar should be dimensionless.
         """
         if self.dt is None:
-            self.dt_index = sc.arange(
-                start=1, stop=coords.sizes["time"], step=1, dim="time interval"
-            )
+            self.dt_index = sc.arange(start=1, stop=coords.sizes['time'], step=1, dim='time interval')
             self.dt = self.dt_index * time_step * step_skip
         self.dt_index = (self.dt / (time_step * step_skip)).astype(int)
 
     def generate_indices(
         self,
-        structure: Tuple[
-            Union[
-                "pymatgen.core.structure.Structure", "MDAnalysis.core.universe.Universe"
-            ],
+        structure: tuple[
+            Union['pymatgen.core.structure.Structure', 'MDAnalysis.core.universe.Universe'],
             VariableLikeType,
             VariableLikeType,
         ],
         specie_indices: VariableLikeType,
         coords: VariableLikeType,
         specie: Union[
-            "pymatgen.core.periodic_table.Element",
-            "pymatgen.core.periodic_table.Specie",
-            "str",
+            'pymatgen.core.periodic_table.Element',
+            'pymatgen.core.periodic_table.Specie',
+            'str',
         ],
         masses: VariableLikeType,
-    ) -> Tuple[VariableLikeType, VariableLikeType]:
+    ) -> tuple[VariableLikeType, VariableLikeType]:
         """
         Handle the specie indices and determine the indices for the framework and drift correction.
 
@@ -172,14 +157,10 @@ class Parser:
             else:
                 indices, drift_indices = get_framework(structure, specie_indices)
         else:
-            raise TypeError(
-                "Unrecognized type for specie or specie_indices, specie_indices must be a sc.array"
-            )
+            raise TypeError('Unrecognized type for specie or specie_indices, specie_indices must be a sc.array')
         return indices, drift_indices
 
-    def calculate_displacements(
-        self, coords: VariableLikeType, lattice: VariableLikeType
-    ) -> VariableLikeType:
+    def calculate_displacements(self, coords: VariableLikeType, lattice: VariableLikeType) -> VariableLikeType:
         """
         Calculate the absolute displacements of the atoms in the trajectory.
 
@@ -193,28 +174,25 @@ class Parser:
         lattice_inv = np.linalg.inv(lattice.values)
         wrapped = sc.array(
             dims=coords.dims,
-            values=np.einsum("jik,jkl->jil", coords.values, lattice.values),
-            unit=coords.unit,
+            values=np.einsum('jik,jkl->jil', coords.values, lattice.values),
+            unit=lattice.unit,
         )
         wrapped_diff = sc.array(
-            dims=["obs"] + list(coords.dims[1:]),
-            values=(wrapped["time", 1:] - wrapped["time", :-1]).values,
-            unit=coords.unit,
+            dims=['obs'] + list(coords.dims[1:]),
+            values=(wrapped['time', 1:] - wrapped['time', :-1]).values,
+            unit=lattice.unit,
         )
         diff_diff = sc.array(
             dims=wrapped_diff.dims,
             values=np.einsum(
-                "jik,jkl->jil",
-                np.floor(
-                    np.einsum("jik,jkl->jil", wrapped_diff.values, lattice_inv[1:])
-                    + 0.5
-                ),
+                'jik,jkl->jil',
+                np.floor(np.einsum('jik,jkl->jil', wrapped_diff.values, lattice_inv[1:]) + 0.5),
                 lattice.values[1:],
             ),
-            unit=coords.unit,
+            unit=lattice.unit,
         )
         unwrapped_diff = wrapped_diff - diff_diff
-        return sc.cumsum(unwrapped_diff, "obs")
+        return sc.cumsum(unwrapped_diff, 'obs')
 
     def correct_drift(self, disp: VariableLikeType) -> VariableLikeType:
         """
@@ -226,22 +204,22 @@ class Parser:
         :return: Displacements corrected to account for drift of a framework.
         """
         if self.drift_indices.size > 0:
-            return disp - sc.mean(disp["atom", self.drift_indices.values], "atom")
+            return disp - sc.mean(disp['atom', self.drift_indices.values], 'atom')
         else:
             return disp
 
 
 def get_molecules(
     structure: Union[
-        "ase.atoms.Atoms",
-        "pymatgen.core.structure.Structure",
-        "MDAnalysis.universe.Universe",
+        'ase.atoms.Atoms',
+        'pymatgen.core.structure.Structure',
+        'MDAnalysis.universe.Universe',
     ],
     coords: VariableLikeType,
     indices: VariableLikeType,
     masses: VariableLikeType,
     distance_unit: sc.Unit,
-) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+) -> tuple[np.ndarray, np.ndarray, tuple[np.ndarray, np.ndarray]]:
     """
     Determine framework and non-framework indices for an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when
     specie_indices are provided and contain multiple molecules. Warning: This function changes the structure without changing the object.
@@ -262,19 +240,19 @@ def get_molecules(
     try:
         indices = indices - 1
     except:
-        raise ValueError("Molecules must be of same length")
+        raise ValueError('Molecules must be of same length')
 
     n_molecules = indices.shape[0]
 
     # Removed method for framework_indices
-    for i, site in enumerate(structure):
+    for i, _site in enumerate(structure):
         if i not in indices.values:
             drift_indices.append(i)
 
     if masses is None:
         weights = sc.ones_like(indices)
     elif len(masses.values) != indices.values.shape[1]:
-        raise ValueError("Masses must be the same length as a molecule")
+        raise ValueError('Masses must be the same length as a molecule')
     else:
         weights = masses.copy()
 
@@ -284,10 +262,10 @@ def get_molecules(
         # MDAnalysis uses float32, so we need to convert to float32 to avoid concat error
         new_s_coords = new_s_coords.astype(np.float32)
 
-    new_coords = sc.concat([new_s_coords, coords["atom", drift_indices]], "atom")
-    new_indices = sc.Variable(dims=["molecule"], values=list(range(n_molecules)))
+    new_coords = sc.concat([new_s_coords, coords['atom', drift_indices]], 'atom')
+    new_indices = sc.Variable(dims=['molecule'], values=list(range(n_molecules)))
     new_drift_indices = sc.Variable(
-        dims=["molecule"],
+        dims=['molecule'],
         values=list(range(n_molecules, n_molecules + len(drift_indices))),
     )
 
@@ -296,12 +274,12 @@ def get_molecules(
 
 def get_framework(
     structure: Union[
-        "ase.atoms.Atoms",
-        "pymatgen.core.structure.Structure",
-        "MDAnalysis.universe.Universe",
+        'ase.atoms.Atoms',
+        'pymatgen.core.structure.Structure',
+        'MDAnalysis.universe.Universe',
     ],
     indices: VariableLikeType,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Determine the framework indices from an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when indices are provided
 
@@ -316,11 +294,11 @@ def get_framework(
 
     drift_indices = []
 
-    for i, site in enumerate(structure):
+    for i, _site in enumerate(structure):
         if i not in indices:
             drift_indices.append(i)
 
-    drift_indices = sc.Variable(dims=["atom"], values=drift_indices)
+    drift_indices = sc.Variable(dims=['atom'], values=drift_indices)
 
     return indices, drift_indices
 
@@ -342,8 +320,8 @@ def _calculate_centers_of_mass(
      :return: Array containing coordinates of centres of mass of molecules
     """
     s_coords = sc.fold(
-        coords["atom", indices.values.flatten()],
-        "atom",
+        coords['atom', indices.values.flatten()],
+        'atom',
         dims=indices.dims,
         shape=indices.shape,
     )
@@ -351,7 +329,7 @@ def _calculate_centers_of_mass(
     xi = sc.cos(theta)
     zeta = sc.sin(theta)
     # This allows the dimensions of the indices to be any word, paired with 'atom'.
-    dims_id = [i for i in indices.dims if i != "atom"][0]
+    dims_id = [i for i in indices.dims if i != 'atom'][0]
     xi_bar = (weights * xi).sum(dim=dims_id) / weights.sum(dim=dims_id)
     zeta_bar = (weights * zeta).sum(dim=dims_id) / weights.sum(dim=dims_id)
     theta_bar = sc.atan2(y=-zeta_bar, x=-xi_bar) + np.pi * sc.units.rad
