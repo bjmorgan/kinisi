@@ -45,7 +45,7 @@ class Analyzer:
             if key == 'trajectory':
                 group[key] = self.trajectory._to_datagroup(hdf5=True)
             elif key == 'diff':
-                group[key] = self.diff._to_datagroup(hdf5=True)
+                group[key] = self.diff._to_datagroup()
             elif value is None:
                 group[key] = sc.scalar(value=np.nan, dtype='float64')
         group['__class__'] = f"{self.__class__.__module__}.{self.__class__.__name__}"

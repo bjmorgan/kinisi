@@ -36,10 +36,9 @@ class Diffusion:
         self._cond_max = None
         self._covariance_matrix = None
 
-    def _to_datagroup(self, hdf5=False) -> sc.DataGroup:
+    def _to_datagroup(self) -> sc.DataGroup:
         """
         Convert the :py:class:`Diffusion` object to a :py:mod: 'scipp' DataGroup.
-        :param hdf5: If `True`, incompatible classes will be converted for saving to HDF5.
         :return: A :py:mod:`scipp` DataGroup representing the :py:class:`Diffusion` object.
         """
         group = self.__dict__.copy()
