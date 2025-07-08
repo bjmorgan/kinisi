@@ -1,5 +1,5 @@
 """
-The :py:class:`MDAnalysisParser` class is a parser for MDAnalysis universe object. 
+The :py:class:`MDAnalysisParser` class is a parser for MDAnalysis universe object.
 It is used to extract the necessary data for diffusion analysis from an MDAnalysis universe.
 """
 
@@ -7,30 +7,30 @@ It is used to extract the necessary data for diffusion analysis from an MDAnalys
 # Distributed under the terms of the MIT License.
 # author: Andrew R. McCluskey (arm61) and Harry Richardson (Harry-Rich).
 
-from typing import Tuple, Union
 import numpy as np
 import scipp as sc
 from scipp.typing import VariableLikeType
 from tqdm import tqdm
-from kinisi.parser import Parser, get_framework, get_molecules
+
+from kinisi.parser import Parser
 
 
 class MDAnalysisParser(Parser):
     """
     Parser for MDAnalysis structures.
 
-    Takes an MDAnalysis.Universe object as an input. 
+    Takes an MDAnalysis.Universe object as an input.
 
     :param universe: MDanalysis universe object to be parsed
     :param specie: Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
-    :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator. Note, 
-        that this must be given as a :py:mod:`scipp`-type scalar. The unit used for the time_step, will be the unit 
+    :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator. Note,
+        that this must be given as a :py:mod:`scipp`-type scalar. The unit used for the time_step, will be the unit
         that is use for the time interval values.
     :param step_skip: Sampling freqency of the simulation trajectory, i.e., how many time steps exist between the
         output of the positions in the trajectory. Similar to the :py:attr:`time_step`, this parameter must be
         a :py:mod:`scipp` scalar. The units for this scalar should be dimensionless.
     :param dt: Time intervals to calculate the displacements over. Optional, defaults to a :py:mod:`scipp` array
-        ranging from the smallest interval (i.e., time_step * step_skip) to the full simulation length, with 
+        ranging from the smallest interval (i.e., time_step * step_skip) to the full simulation length, with
         a step size the same as the smallest interval.
     :param dimension: Dimension/s to find the displacement along, this should be some subset of `'xyz'` indicating
         the axes of interest. Optional, defaults to `'xyz'`.
@@ -40,26 +40,28 @@ class MDAnalysisParser(Parser):
     :param progress: Whether to show a progress bar when reading in the structures. Optional, defaults to `True`.
     """
 
-    def __init__(self,
-                 universe: 'MDAnalysis.core.universe.Universe',
-                 specie: str,
-                 time_step: VariableLikeType,
-                 step_skip: VariableLikeType,
-                 dt: VariableLikeType = None,
-                 dimension: str = 'xyz',
-                 distance_unit: sc.Unit = sc.units.angstrom,
-                 specie_indices: VariableLikeType = None,
-                 masses: VariableLikeType = None,
-                 progress: bool = True):
-
-        super().__init__(universe, specie, time_step, step_skip, dt, distance_unit, specie_indices, masses, dimension,
-                         progress)
+    def __init__(
+        self,
+        universe: 'MDAnalysis.core.universe.Universe',
+        specie: str,
+        time_step: VariableLikeType,
+        step_skip: VariableLikeType,
+        dt: VariableLikeType = None,
+        dimension: str = 'xyz',
+        distance_unit: sc.Unit = sc.units.angstrom,
+        specie_indices: VariableLikeType = None,
+        masses: VariableLikeType = None,
+        progress: bool = True,
+    ):
+        super().__init__(
+            universe, specie, time_step, step_skip, dt, distance_unit, specie_indices, masses, dimension, progress
+        )
 
     def get_structure_coords_latt(
         self,
         universe: 'MDAnalysis.core.universe.Universe',
         progress: bool = True,
-    ) -> Tuple["MDAnalysis.core.universe.Universe", VariableLikeType, VariableLikeType]:
+    ) -> tuple['MDAnalysis.core.universe.Universe', VariableLikeType, VariableLikeType]:
         """
         Obtain the initial structure, coordinates, and lattice parameters from an MDAnalysis.Universe object.
 
@@ -101,9 +103,9 @@ class MDAnalysisParser(Parser):
 
     def get_indices(
         self,
-        structure: "MDAnalysis.universe.Universe",
+        structure: 'MDAnalysis.universe.Universe',
         specie: str,
-    ) -> Tuple[VariableLikeType, VariableLikeType]:
+    ) -> tuple[VariableLikeType, VariableLikeType]:
         """
         Determine framework and non-framework indices for an :py:mod:`MDAnalysis` compatible file.
 
@@ -126,7 +128,7 @@ class MDAnalysisParser(Parser):
                 drift_indices.append(i)
 
         if len(indices) == 0:
-            raise ValueError("There are no species selected to calculate the mean-squared displacement of.")
+            raise ValueError('There are no species selected to calculate the mean-squared displacement of.')
 
         indices = sc.Variable(dims=['atom'], values=indices)
         drift_indices = sc.Variable(dims=['atom'], values=drift_indices)

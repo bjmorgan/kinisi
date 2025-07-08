@@ -7,12 +7,14 @@ It is used to extract the necessary data for diffusion analysis from a list of p
 # Distributed under the terms of the MIT License.
 # author: Andrew R. McCluskey (arm61) and Harry Richardson (Harry-Rich).
 
-from typing import List, Tuple, Union
+from typing import Union
+
 import numpy as np
 import scipp as sc
 from scipp.typing import VariableLikeType
 from tqdm import tqdm
-from kinisi.parser import Parser, get_framework, get_molecules
+
+from kinisi.parser import Parser
 
 
 class PymatgenParser(Parser):
@@ -42,7 +44,7 @@ class PymatgenParser(Parser):
 
     def __init__(
         self,
-        structures: List['pymatgen.core.structure.Structure'],
+        structures: list['pymatgen.core.structure.Structure'],
         specie: Union['pymatgen.core.periodic_table.Element', 'pymatgen.core.periodic_table.Specie'],
         time_step: VariableLikeType,
         step_skip: VariableLikeType,
@@ -58,8 +60,8 @@ class PymatgenParser(Parser):
 
     def get_structure_coords_latt(
             self,
-            structures: List['pymatgen.core.structure.Structure'],
-            progress: bool = True) -> Tuple["pymatgen.core.structure.Structure", VariableLikeType, VariableLikeType]:
+            structures: list['pymatgen.core.structure.Structure'],
+            progress: bool = True) -> tuple["pymatgen.core.structure.Structure", VariableLikeType, VariableLikeType]:
         """
         Obtain the initial structure, coordinates, and lattice parameters from a list of pymatgen structures.
 
@@ -100,7 +102,7 @@ class PymatgenParser(Parser):
     def get_indices(
         self, structure: 'pymatgen.core.structure.Structure', specie: Union['pymatgen.core.periodic_table.Element',
                                                                             'pymatgen.core.periodic_table.Specie']
-    ) -> Tuple[VariableLikeType, VariableLikeType]:
+    ) -> tuple[VariableLikeType, VariableLikeType]:
         """
         Determine the framework and mobile indices from a :py:mod:`pymatgen` structure.
         
