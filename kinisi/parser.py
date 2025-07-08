@@ -34,15 +34,9 @@ DIMENSIONALITY = {
 class Parser:
     """
     The base class for object parsing. 
-
-    This class takes coordinates, lattice parameters, and indices to give the appropriate displacements back.
-
-    :param coords: The fractional coordiates of the atoms in the trajectory. This should be a :py:mod:`scipp`
-        array type object with dimensions of 'atom', 'time', and 'dimension'.
-    :param lattice: A series of matrices that describe the lattice in each step in the trajectory.
-        A :py:mod:`scipp` array with dimensions of 'time', 'dimension1', and 'dimension2'.
-    :param indices: Indices for the atoms in the trajectory used in the diffusion calculation.
-    :param drift_indices: Indices for the atoms in the trajectory that should not be used in the diffusion
+    
+    :param snapshots: The snapshots from the trajectory given the positions of atoms.
+    :param specie: Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
     :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator. Note, 
         that this must be given as a :py:mod:`scipp`-type scalar. The unit used for the time_step, will be the unit 
         that is use for the time interval values.
@@ -52,8 +46,12 @@ class Parser:
     :param dt: Time intervals to calculate the displacements over. Optional, defaults to a :py:mod:`scipp` array
         ranging from the smallest interval (i.e., time_step * step_skip) to the full simulation length, with 
         a step size the same as the smallest interval.
+    :param distance_unit: The unit of distance used in the input structures. Optional, defaults to angstroms.
+    :param specie_indices: Indices of the specie to calculate the diffusivity for. Optional, defaults to `None`.
+    :param masses: Masses of the atoms in the structure. Optional, defaults to `None`.
     :param dimension: Dimension/s to find the displacement along, this should be some subset of `'xyz'` indicating
         the axes of interest. Optional, defaults to `'xyz'`.
+    :param progress: Whether to show a progress bar when reading in the structures. Optional, defaults to `True`.
     """
 
     def __init__(self,
