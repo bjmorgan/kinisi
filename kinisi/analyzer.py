@@ -22,7 +22,6 @@ from kinisi.mdanalysis import MDAnalysisParser
 from kinisi.parser import Parser
 from kinisi.pymatgen import PymatgenParser
 from kinisi.diffusion import Diffusion
-import importlib
 
 
 class Analyzer:
