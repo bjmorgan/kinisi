@@ -50,23 +50,8 @@ class MDAnalysisParser(Parser):
                  specie_indices: VariableLikeType = None,
                  masses: VariableLikeType = None,
                  progress: bool = True):
-
-        self.distance_unit = distance_unit
-
-        structure, coords, latt = self.get_structure_coords_latt(universe, progress)
-
-        if specie is not None:
-            indices, drift_indices = self.get_indices(structure, specie)
-        elif isinstance(specie_indices, sc.Variable):
-            if len(specie_indices.dims) > 1:
-                coords, indices, drift_indices = get_molecules(structure, coords, specie_indices, masses,
-                                                                distance_unit)
-            else:
-                indices, drift_indices = get_framework(structure, specie_indices)
-        else:
-            raise TypeError('Unrecognized type for specie or specie_indices, specie_indices must be a sc.array')
-
-        super().__init__(coords, latt, indices, drift_indices, time_step, step_skip, dt, dimension)
+         
+        super().__init__(universe, specie, time_step, step_skip, dt, distance_unit, specie_indices, masses, dimension, progress)
 
     def get_structure_coords_latt(
         self,

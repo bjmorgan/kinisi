@@ -53,23 +53,7 @@ class PymatgenParser(Parser):
         masses: VariableLikeType = None,
         progress: bool = True,
     ):
-        self.distance_unit = distance_unit
-
-        structure, coords, latt = self.get_structure_coords_latt(structures, progress)
-
-        if specie is not None:
-            indices, drift_indices = self.get_indices(structure, specie)
-        elif isinstance(specie_indices, sc.Variable):
-            if len(specie_indices.dims) > 1:
-                coords, indices, drift_indices = get_molecules(structure, coords, specie_indices, masses,
-                                                                distance_unit)
-            else:
-                indices, drift_indices = get_framework(structure, specie_indices)
-        else:
-            raise TypeError('Unrecognized type for specie or specie_indices, specie_indices must be a sc.array')
-
-        super().__init__(coords, latt, indices, drift_indices, time_step, step_skip, dt, dimension)
-        self._volume = structure.volume * self.distance_unit**3
+        super().__init__(structures, specie, time_step, step_skip, dt, distance_unit, specie_indices, masses, dimension, progress)
 
     def get_structure_coords_latt(
             self,
@@ -94,6 +78,7 @@ class PymatgenParser(Parser):
             iterator = tqdm(structures, desc='Reading Trajectory')
         else:
             iterator = structures
+
         for struct in iterator:
             if first:
                 structure = struct
@@ -105,8 +90,10 @@ class PymatgenParser(Parser):
         latt_l.insert(0, latt_l[0])
         coords_l = np.array(coords_l)
         latt_l = np.array(latt_l)
+        
         coords = sc.array(dims=['time', 'atom', 'dimension'], values=coords_l, unit=self.distance_unit)
         latt = sc.array(dims=['time', 'dimension1', 'dimension2'], values=latt_l, unit=self.distance_unit)
+        
         return structure, coords, latt
 
     def get_indices(
