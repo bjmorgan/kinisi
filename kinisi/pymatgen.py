@@ -53,7 +53,8 @@ class PymatgenParser(Parser):
         masses: VariableLikeType = None,
         progress: bool = True,
     ):
-        super().__init__(structures, specie, time_step, step_skip, dt, distance_unit, specie_indices, masses, dimension, progress)
+        super().__init__(structures, specie, time_step, step_skip, dt, distance_unit, specie_indices, masses, dimension,
+                         progress)
 
     def get_structure_coords_latt(
             self,
@@ -90,10 +91,10 @@ class PymatgenParser(Parser):
         latt_l.insert(0, latt_l[0])
         coords_l = np.array(coords_l)
         latt_l = np.array(latt_l)
-        
+
         coords = sc.array(dims=['time', 'atom', 'dimension'], values=coords_l, unit=self.distance_unit)
         latt = sc.array(dims=['time', 'dimension1', 'dimension2'], values=latt_l, unit=self.distance_unit)
-        
+
         return structure, coords, latt
 
     def get_indices(
