@@ -23,6 +23,16 @@ jobs:
         pip install '.[dev]'
         pip install pytest
         pip install pytest-cov
+        pip install ruff
+    - name: Lint code with ruff
+      run: | 
+        ruff check .
+   # - name: Check code formatting with ruff
+   #   run: |
+   #     ruff format --diff .
+    - name: Check code formatting wiht yapf
+      run: |
+        yapf --diff --recursive .
     - name: Generate coverage report
       run: |
         pytest --cov-report xml --cov=.
