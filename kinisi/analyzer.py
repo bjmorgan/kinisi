@@ -14,7 +14,9 @@ are intended for internal use.
 from typing import Union, List
 import numpy as np
 import scipp as sc
-from kinisi.parser import PymatgenParser, MDAnalysisParser, Parser
+from kinisi.parser import Parser
+from kinisi.pymatgen import PymatgenParser
+from kinisi.mdanalysis import MDAnalysisParser
 
 
 class Analyzer:
