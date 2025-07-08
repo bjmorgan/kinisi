@@ -32,12 +32,12 @@ DIMENSIONALITY = {
 
 class Parser:
     """
-    The base class for object parsing.
-
+    The base class for object parsing. 
+    
     :param snapshots: The snapshots from the trajectory given the positions of atoms.
     :param specie: Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
-    :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator. Note,
-        that this must be given as a :py:mod:`scipp`-type scalar. The unit used for the time_step, will be the unit
+    :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator. Note, 
+        that this must be given as a :py:mod:`scipp`-type scalar. The unit used for the time_step, will be the unit 
         that is use for the time interval values.
     :param step_skip: Sampling freqency of the simulation trajectory, i.e., how many time steps exist between the
         output of the positions in the trajectory. Similar to the :py:attr:`time_step`, this parameter must be
