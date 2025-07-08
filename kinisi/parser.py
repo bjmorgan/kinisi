@@ -184,9 +184,15 @@ class Parser:
 
 
 def get_molecules(structure: Union["ase.atoms.Atoms", "pymatgen.core.structure.Structure",
+<<<<<<< HEAD
                                    "MDAnalysis.universe.Universe"], coords: VariableLikeType, indices: VariableLikeType,
                   masses: VariableLikeType,
                   distance_unit: sc.Unit) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+=======
+                                    "MDAnalysis.universe.Universe"], coords: VariableLikeType,
+                   indices: VariableLikeType, masses: VariableLikeType,
+                   distance_unit: sc.Unit) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+>>>>>>> 53f6f21 (Separate the parsers into individual files.)
     """
     Determine framework and non-framework indices for an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when 
     specie_indices are provided and contain multiple molecules. Warning: This function changes the structure without changing the object.
@@ -238,8 +244,13 @@ def get_molecules(structure: Union["ase.atoms.Atoms", "pymatgen.core.structure.S
 
 
 def get_framework(structure: Union["ase.atoms.Atoms", "pymatgen.core.structure.Structure",
+<<<<<<< HEAD
                                    "MDAnalysis.universe.Universe"],
                   indices: VariableLikeType) -> Tuple[np.ndarray, np.ndarray]:
+=======
+                                    "MDAnalysis.universe.Universe"],
+                   indices: VariableLikeType) -> Tuple[np.ndarray, np.ndarray]:
+>>>>>>> 53f6f21 (Separate the parsers into individual files.)
     """
     Determine the framework indices from an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when indices are provided
     
@@ -285,4 +296,8 @@ def _calculate_centers_of_mass(coords: VariableLikeType, weights: VariableLikeTy
     zeta_bar = (weights * zeta).sum(dim=dims_id) / weights.sum(dim=dims_id)
     theta_bar = sc.atan2(y=-zeta_bar, x=-xi_bar) + np.pi * sc.units.rad
     new_s_coords = theta_bar / (2 * np.pi * (sc.units.rad / distance_unit))
+<<<<<<< HEAD
     return new_s_coords
+=======
+    return new_s_coords
+>>>>>>> 53f6f21 (Separate the parsers into individual files.)
