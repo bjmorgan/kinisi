@@ -144,7 +144,7 @@ class Parser:
         :param hdf5: If `True`, incompatible classes will be converted for saving to HDF5.
         :return: A :py:mod:`scipp` DataGroup representing the :py:class:`Parser` object.
         """
-        group = dict(self.__dict__.items())
+        group = self.__dict__.copy()
         if hdf5:
             group['distance_unit'] = self.distance_unit.name
             group.pop('_slice')
