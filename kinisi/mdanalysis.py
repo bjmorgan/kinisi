@@ -14,6 +14,7 @@ from scipp.typing import VariableLikeType
 from tqdm import tqdm
 from kinisi.parser import Parser, get_framework, get_molecules
 
+
 class MDAnalysisParser(Parser):
     """
     Parser for MDAnalysis structures.
@@ -50,14 +51,9 @@ class MDAnalysisParser(Parser):
                  specie_indices: VariableLikeType = None,
                  masses: VariableLikeType = None,
                  progress: bool = True):
-<<<<<<< HEAD
 
         super().__init__(universe, specie, time_step, step_skip, dt, distance_unit, specie_indices, masses, dimension,
                          progress)
-=======
-         
-        super().__init__(universe, specie, time_step, step_skip, dt, distance_unit, specie_indices, masses, dimension, progress)
->>>>>>> 3a6fcb9 (Reduce some duplicate code)
 
     def get_structure_coords_latt(
         self,
@@ -100,6 +96,7 @@ class MDAnalysisParser(Parser):
 
         coords = sc.array(dims=['time', 'atom', 'dimension'], values=coords_l, unit=self.distance_unit)
         latt = sc.array(dims=['time', 'dimension1', 'dimension2'], values=latt_l, unit=self.distance_unit)
+
         return structure, coords, latt
 
     def get_indices(

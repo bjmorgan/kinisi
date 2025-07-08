@@ -57,12 +57,7 @@ class Parser:
     """
 
     def __init__(self,
-<<<<<<< HEAD
                  snapshots: Union['pymatgen.core.structure.Structure', 'MDAnalysis.core.universe.Universe'],
-=======
-                 snapshots: Union['pymatgen.core.structure.Structure',
-                                  'MDAnalysis.core.universe.Universe'],
->>>>>>> 3a6fcb9 (Reduce some duplicate code)
                  specie: Union['pymatgen.core.periodic_table.Element', 'pymatgen.core.periodic_table.Specie', 'str'],
                  time_step: VariableLikeType,
                  step_skip: VariableLikeType,
@@ -77,7 +72,6 @@ class Parser:
         self._dimension = dimension
         self.dt = dt
         self.distance_unit = distance_unit
-<<<<<<< HEAD
 
         structure, coords, latt = self.get_structure_coords_latt(snapshots, progress)
 
@@ -85,15 +79,12 @@ class Parser:
 
         indices, drift_indices = self.generate_indices(structure, specie_indices, coords, specie, masses)
 
-=======
-        
         structure, coords, latt = self.get_structure_coords_latt(snapshots, progress)
-        
+
         self.create_integer_dt(coords, time_step, step_skip)
 
         indices, drift_indices = self.generate_indices(structure, specie_indices, coords, specie, masses)
-        
->>>>>>> 3a6fcb9 (Reduce some duplicate code)
+
         self.indices = indices
         self.drift_indices = drift_indices
 
@@ -105,16 +96,10 @@ class Parser:
         self.dimensionality = drift_corrected.sizes['dimension'] * sc.units.dimensionless
 
         self.displacements = drift_corrected['atom', indices]
-<<<<<<< HEAD
-        self._volume = np.prod(latt.values[0].diagonal()) * self.distance_unit**3
 
-    def create_integer_dt(self, coords: VariableLikeType, time_step: VariableLikeType,
-                          step_skip: VariableLikeType) -> None:
-=======
         self._volume = np.prod(latt.values[0].diagonal()) * self.distance_unit ** 3
     
     def create_integer_dt(self, coords: VariableLikeType, time_step: VariableLikeType, step_skip: VariableLikeType) -> None:
->>>>>>> 3a6fcb9 (Reduce some duplicate code)
         """
         Create an integer time interval from the given time intervals (and if necessary the time interval object).
         
@@ -132,18 +117,11 @@ class Parser:
             self.dt = self.dt_int * time_step * step_skip
         self.dt_int = (self.dt / (time_step * step_skip)).astype(int)
 
-<<<<<<< HEAD
     def generate_indices(self, structure: Tuple[Union["pymatgen.core.structure.Structure",
                                                       "MDAnalysis.core.universe.Universe"], VariableLikeType,
                                                 VariableLikeType], specie_indices: VariableLikeType,
                          coords: VariableLikeType, specie: Union['pymatgen.core.periodic_table.Element',
                                                                  'pymatgen.core.periodic_table.Specie', 'str'],
-=======
-    def generate_indices(self, structure: Tuple[Union["pymatgen.core.structure.Structure", "MDAnalysis.core.universe.Universe"], 
-                                                     VariableLikeType, VariableLikeType],
-                         specie_indices: VariableLikeType, coords: VariableLikeType, 
-                         specie: Union['pymatgen.core.periodic_table.Element', 'pymatgen.core.periodic_table.Specie', 'str'],
->>>>>>> 3a6fcb9 (Reduce some duplicate code)
                          masses: VariableLikeType) -> Tuple[VariableLikeType, VariableLikeType]:
         """
         Handle the specie indices and determine the indices for the framework and drift correction.
@@ -161,12 +139,7 @@ class Parser:
             indices, drift_indices = self.get_indices(structure, specie)
         elif isinstance(specie_indices, sc.Variable):
             if len(specie_indices.dims) > 1:
-<<<<<<< HEAD
-                coords, indices, drift_indices = get_molecules(structure, coords, specie_indices, masses,
-                                                               self.distance_unit)
-=======
                 coords, indices, drift_indices = get_molecules(structure, coords, specie_indices, masses, self.distance_unit)
->>>>>>> 3a6fcb9 (Reduce some duplicate code)
             else:
                 indices, drift_indices = get_framework(structure, specie_indices)
         else:
@@ -216,15 +189,9 @@ class Parser:
 
 
 def get_molecules(structure: Union["ase.atoms.Atoms", "pymatgen.core.structure.Structure",
-<<<<<<< HEAD
                                    "MDAnalysis.universe.Universe"], coords: VariableLikeType, indices: VariableLikeType,
                   masses: VariableLikeType,
                   distance_unit: sc.Unit) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
-=======
-                                    "MDAnalysis.universe.Universe"], coords: VariableLikeType,
-                   indices: VariableLikeType, masses: VariableLikeType,
-                   distance_unit: sc.Unit) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
->>>>>>> 53f6f21 (Separate the parsers into individual files.)
     """
     Determine framework and non-framework indices for an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when 
     specie_indices are provided and contain multiple molecules. Warning: This function changes the structure without changing the object.
@@ -276,13 +243,8 @@ def get_molecules(structure: Union["ase.atoms.Atoms", "pymatgen.core.structure.S
 
 
 def get_framework(structure: Union["ase.atoms.Atoms", "pymatgen.core.structure.Structure",
-<<<<<<< HEAD
                                    "MDAnalysis.universe.Universe"],
                   indices: VariableLikeType) -> Tuple[np.ndarray, np.ndarray]:
-=======
-                                    "MDAnalysis.universe.Universe"],
-                   indices: VariableLikeType) -> Tuple[np.ndarray, np.ndarray]:
->>>>>>> 53f6f21 (Separate the parsers into individual files.)
     """
     Determine the framework indices from an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when indices are provided
     
@@ -328,8 +290,4 @@ def _calculate_centers_of_mass(coords: VariableLikeType, weights: VariableLikeTy
     zeta_bar = (weights * zeta).sum(dim=dims_id) / weights.sum(dim=dims_id)
     theta_bar = sc.atan2(y=-zeta_bar, x=-xi_bar) + np.pi * sc.units.rad
     new_s_coords = theta_bar / (2 * np.pi * (sc.units.rad / distance_unit))
-<<<<<<< HEAD
     return new_s_coords
-=======
-    return new_s_coords
->>>>>>> 53f6f21 (Separate the parsers into individual files.)
