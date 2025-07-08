@@ -169,7 +169,8 @@ class PymatgenParser(Parser):
             indices, drift_indices = self.get_indices(structure, specie)
         elif isinstance(specie_indices, sc.Variable):
             if len(specie_indices.dims) > 1:
-                coords, indices, drift_indices = _get_molecules(structure, coords, specie_indices, masses, distance_unit)
+                coords, indices, drift_indices = _get_molecules(structure, coords, specie_indices, masses,
+                                                                distance_unit)
             else:
                 indices, drift_indices = _get_framework(structure, specie_indices)
         else:
@@ -286,7 +287,11 @@ class MDAnalysisParser(Parser):
             indices, drift_indices = self.get_indices(structure, specie)
         elif isinstance(specie_indices, sc.Variable):
             if len(specie_indices.dims) > 1:
-                coords, indices, drift_indices = _get_molecules(structure, coords, specie_indices, masses,distance_unit)
+                print(
+                    'If using the centre of mass calculation functionality please reference the method. doi: 10.1063/5.0260928'
+                )
+                coords, indices, drift_indices = _get_molecules(structure, coords, specie_indices, masses,
+                                                                distance_unit)
             else:
                 indices, drift_indices = _get_framework(structure, specie_indices)
         else:
@@ -335,7 +340,7 @@ class MDAnalysisParser(Parser):
 
         coords = sc.array(dims=['time', 'atom', 'dimension'], values=coords_l, unit=self.distance_unit)
         latt = sc.array(dims=['time', 'dimension1', 'dimension2'], values=latt_l, unit=self.distance_unit)
-        
+
         return structure, coords, latt
 
     def get_indices(
@@ -375,45 +380,39 @@ class MDAnalysisParser(Parser):
 
 def _get_molecules(structure: Union["ase.atoms.Atoms", "pymatgen.core.structure.Structure",
                                     "MDAnalysis.universe.Universe"], coords: VariableLikeType,
-                   indices: VariableLikeType,
-                   masses: VariableLikeType,
-                   distance_unit:sc.Unit) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+                   indices: VariableLikeType, masses: VariableLikeType,
+                   distance_unit: sc.Unit) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """
     Determine framework and non-framework indices for an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when specie_indices are provided and contain multiple molecules. Warning: This function changes the structure without changing the object.
 
     :param structure: Initial structure.
-    :param coords: fractional coordinates for all atoms.
+    :param coords: fractional coordinates for all atoms
     :param indices: indices for the atoms in the molecules in the trajectory used in the calculation 
-    of the diffusion.
-    :param masses: Masses associated with indices in indices.
-    :param framework_indices: Indices of framework to be used in drift correction. If set to None will return all indices that are not in indices.
-
+    of the diffusion, this must include 2 dimensions 'atom' - The final number of desired atoms and 'atoms_per_group' - the number of atoms in each molecule
+    :param masses: Masses associated with indices in indices, dimension should be 'atoms_per_group'.
 
     :return: Tuple containing: Tuple containing: fractional coordinates for centers and framework atoms
     and Tuple containing: indices for centers used in the calculation 
     of the diffusion and indices of framework atoms.
     """
     drift_indices = []
-    try:
-        indices = indices - 1
-    except:
-        raise ValueError('Molecules must be of same length')
+    n_molecules = len(indices['atoms_per_group', 0])
 
-    n_molecules = indices.shape[0]
+    if set(indices.dims) != {'atom', 'atoms_per_group'}:
+        raise ValueError("Variable must contain only 'atom' and 'atoms_per_group' as dimensions.")
 
-    # Removed method for framework_indices
     for i, site in enumerate(structure):
         if i not in indices.values:
             drift_indices.append(i)
 
-    if masses == None:
+    if masses is None:
         weights = sc.ones_like(indices)
-    elif len(masses.values) != indices.values.shape[1]:
-        raise ValueError('Masses must be the same length as a molecule')
+    elif len(masses.values) != len(indices['atom', 0]):
+        raise ValueError('Masses must be the same length as a molecule or particle group')
     else:
         weights = masses.copy()
 
-    new_s_coords = _calculate_centers_of_mass(coords, weights, indices,distance_unit)
+    new_s_coords = _calculate_centers_of_mass(coords, weights, indices)
 
     if coords.dtype == np.float32:
         # MDAnalysis uses float32, so we need to convert to float32 to avoid concat error
@@ -427,33 +426,43 @@ def _get_molecules(structure: Union["ase.atoms.Atoms", "pymatgen.core.structure.
     return new_coords, new_indices, new_drift_indices
 
 
-def _calculate_centers_of_mass(coords: VariableLikeType, weights: VariableLikeType,
-                               indices: VariableLikeType, distance_unit:sc.Unit) -> VariableLikeType:
+def _calculate_centers_of_mass(
+    coords: VariableLikeType,
+    weights: VariableLikeType,
+    indices: VariableLikeType,
+) -> VariableLikeType:
     """
-    Calculates the weighted molecular centre of mass based on chosen weights and indices as per https://doi.org/10.1080/2151237X.2008.10129266
-    The method involves projection of the each coordinate onto a circle to allow for efficient COM calculation
+    Calculates the weighted molecular centre of mass based on chosen weights and indices as per  DOI: 10.1063/5.0260928. 
+    The method uses the pseudo centre of mass recentering method for efficient centre of mass calculation
     
-     :param coords: array of coordinates
+     :param coords: array of fractional coordinates these should be dimensionless
      :param weights: 1D array of weights of elements within molecule
-     :param indices: N by M dimensional array of indices of N molecules of M atoms
+     :param indices: Scipp array of indices for the atoms in the molecules in the trajectory used in the calculation 
+    of the diffusion, this must include 2 dimensions 'atom' - The final number of desired atoms and 'atoms_per_group' - the number of atoms in each molecule
 
      :return: Array containing coordinates of centres of mass of molecules
     """
     s_coords = sc.fold(coords['atom', indices.values.flatten()], 'atom', dims=indices.dims, shape=indices.shape)
-    theta = s_coords * (2 * np.pi * (sc.units.rad / distance_unit))
+    theta = s_coords * (2 * np.pi * (sc.units.rad))
     xi = sc.cos(theta)
     zeta = sc.sin(theta)
-    # This allows the dimensions of the indices to be any word, paired with 'atom'.
-    dims_id = [i for i in indices.dims if i != 'atom'][0]
+    dims_id = 'atoms_per_group'
     xi_bar = (weights * xi).sum(dim=dims_id) / weights.sum(dim=dims_id)
     zeta_bar = (weights * zeta).sum(dim=dims_id) / weights.sum(dim=dims_id)
     theta_bar = sc.atan2(y=-zeta_bar, x=-xi_bar) + np.pi * sc.units.rad
-    new_s_coords = theta_bar / (2 * np.pi * (sc.units.rad / distance_unit))
-    return new_s_coords
+    new_s_coords = theta_bar / (2 * np.pi * (sc.units.rad))
+
+    #Implementation of pseudo-centre of mass approach to centre of mass calculation (see DOI:10.1063/5.0260928 ).
+    pseudo_com_recentering = ((s_coords - (new_s_coords + 0.5)) % 1)
+    com_pseudo_space = (weights * pseudo_com_recentering).sum(dim=dims_id) / weights.sum(dim=dims_id)
+    corrected_com = ((com_pseudo_space + (new_s_coords + 0.5)) % 1)
+
+    return corrected_com
 
 
-def _get_framework(structure:  Union["ase.atoms.Atoms", "pymatgen.core.structure.Structure",
-                                     "MDAnalysis.universe.Universe"], indices: VariableLikeType) -> Tuple[np.ndarray, np.ndarray]:
+def _get_framework(structure: Union["ase.atoms.Atoms", "pymatgen.core.structure.Structure",
+                                    "MDAnalysis.universe.Universe"],
+                   indices: VariableLikeType) -> Tuple[np.ndarray, np.ndarray]:
     """
     Determine the framework indices from an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when indices are provided
     
