@@ -136,7 +136,8 @@ class Analyzer:
             p.displacements = sc.concat([i.displacements for i in u], 'atom')
             return cls(p)
 
-    def posterior_predictive(self, n_posterior_samples: int = None,
+    def posterior_predictive(self,
+                             n_posterior_samples: int = None,
                              n_predictive_samples: int = 256,
                              progress: bool = True):
         """
@@ -148,7 +149,7 @@ class Analyzer:
 
         :return: Samples from the posterior predictive distribution. 
         """
-        return self.diff.posterior_predictive(n_posterior_samples,n_predictive_samples,progress)
+        return self.diff.posterior_predictive(n_posterior_samples, n_predictive_samples, progress)
 
     @property
     def n_atoms(self) -> int:
