@@ -11,6 +11,7 @@ for handling samples, such as calculating the mean and standard deviation of the
 import scipp as sc
 from uncertainties import ufloat
 
+
 class Samples(sc.Variable):
     """
     A subclass of scipp.Variable that represents samples of a physical quantity.

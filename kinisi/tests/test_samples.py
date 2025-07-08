@@ -7,9 +7,12 @@ Tests for the samples module
 # author: Andrew R. McCluskey (arm61)
 
 import unittest
+
 import numpy as np
 import scipp as sc
+
 from kinisi.samples import Samples
+
 
 class TestSamples(unittest.TestCase):
     """
