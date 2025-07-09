@@ -14,7 +14,9 @@ are intended for internal use.
 from typing import Union, List
 import numpy as np
 import scipp as sc
-from kinisi.parser import PymatgenParser, MDAnalysisParser, Parser
+from kinisi.parser import Parser
+from kinisi.pymatgen import PymatgenParser
+from kinisi.mdanalysis import MDAnalysisParser
 
 
 class Analyzer:
@@ -134,7 +136,8 @@ class Analyzer:
             p.displacements = sc.concat([i.displacements for i in u], 'atom')
             return cls(p)
 
-    def posterior_predictive(self, n_posterior_samples: int = None,
+    def posterior_predictive(self,
+                             n_posterior_samples: int = None,
                              n_predictive_samples: int = 256,
                              progress: bool = True):
         """
@@ -146,7 +149,7 @@ class Analyzer:
 
         :return: Samples from the posterior predictive distribution. 
         """
-        return self.diff.posterior_predictive(n_posterior_samples,n_predictive_samples,progress)
+        return self.diff.posterior_predictive(n_posterior_samples, n_predictive_samples, progress)
 
     @property
     def n_atoms(self) -> int:

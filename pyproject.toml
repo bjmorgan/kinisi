@@ -38,7 +38,9 @@ dependencies = [
     'tqdm',
     'uravu>=1.3.0',
     'statsmodels>=0.14.0',
-    'scipp>=24.8.0'
+    'scipp>=24.8.0',
+    'uncertainties>=3.2.3',
+    'bs4==0.0.2'
 ]
 
 [project.optional-dependencies]
@@ -105,6 +107,9 @@ ignore = ["E501"] # ignore line length violations
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"] # unused-import
+"parser.py" = ["F821"] # unimported modules in type hints
+"mdanalysis.py" = ["F821"] # unimported modules in type hints
+"pymatgen.py" = ["F821"] # unimported modules in type hints
 
 [tool.ruff.format]
 quote-style = "single"

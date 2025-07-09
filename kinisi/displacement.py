@@ -28,9 +28,9 @@ def calculate_msd(p: parser.Parser, progress: bool = True) -> sc.Variable:
     msd = []
     msd_var = []
     n_samples = []
-    iterator = p.dt_int.values
+    iterator = p.dt_index.values
     if progress:
-        iterator = tqdm(p.dt_int.values, desc='Finding Means and Variances')
+        iterator = tqdm(p.dt_index.values, desc='Finding Means and Variances')
     for di in iterator:
         disp = sc.concat(
             [p.displacements['obs', di - 1], p.displacements['obs', di:] - p.displacements['obs', :-di]], 'obs'
@@ -75,15 +75,15 @@ def calculate_mstd(
     mstd = []
     mstd_var = []
     n_samples = []
-    iterator = p.dt_int.values
+    iterator = p.dt_index.values
     if progress:
-        iterator = tqdm(p.dt_int.values, desc='Finding Means and Variances')
+        iterator = tqdm(p.dt_index.values, desc='Finding Means and Variances')
     for di in iterator:
         disp = sc.concat(
             [p.displacements['obs', di - 1], p.displacements['obs', di:] - p.displacements['obs', :-di]], 'obs'
         )
         disp = _consolidate_system_particles(disp, system_particles)
-        n = (disp.sizes['atom'] * p.dt_int['time interval', -1] / di).value
+        n = (disp.sizes['atom'] * p.dt_index['time interval', -1] / di).value
         if ionic_charge is not None:
             disp = disp * ionic_charge
         s = sc.sum(disp**2, 'dimension')

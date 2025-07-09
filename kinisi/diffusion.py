@@ -15,6 +15,7 @@ from scipy.stats import linregress, multivariate_normal
 from scipy.optimize import minimize
 from emcee import EnsembleSampler
 from tqdm import tqdm
+from kinisi.samples import Samples
 
 
 class Diffusion:
@@ -122,11 +123,10 @@ class Diffusion:
         sampler.run_mcmc(pos, n_samples + n_burn, progress=progress, progress_kwargs={'desc': "Likelihood Sampling"})
         self._flatchain = sampler.get_chain(flat=True, thin=n_thin, discard=n_burn)
 
-        self.gradient = sc.array(dims=['samples'],
-                                 values=self._flatchain[:, 0],
-                                 unit=(self.msd.unit / self.msd.coords['time interval'].unit))
+        self.gradient = Samples(self._flatchain[:, 0], unit=(self.msd.unit / self.msd.coords['time interval'].unit))
+
         if fit_intercept:
-            self.intercept = sc.array(dims=['samples'], values=self._flatchain[:, 1], unit=self.msd.unit)
+            self.intercept = Samples(self._flatchain[:, 1], unit=self.msd.unit)
 
     def _diffusion(self, start_dt: sc.Variable, **kwargs):
         """
@@ -137,7 +137,8 @@ class Diffusion:
         :param kwargs: Additional keyword arguments to pass to :py:func:`bayesian_regression`.
         """
         self.bayesian_regression(start_dt=start_dt, **kwargs)
-        self._diffusion_coefficient = sc.to_unit(self.gradient / (2 * self.msd.coords['dimensionality'].value), 'cm2/s')
+        _diffusion_coefficient = sc.to_unit(self.gradient / (2 * self.msd.coords['dimensionality'].value), 'cm2/s')
+        self._diffusion_coefficient = Samples(_diffusion_coefficient.values, _diffusion_coefficient.unit)
 
     def _jump_diffusion(self, start_dt: sc.Variable, **kwargs):
         """
@@ -149,8 +150,8 @@ class Diffusion:
         """
 
         self.bayesian_regression(start_dt=start_dt, **kwargs)
-        self._jump_diffusion_coefficient = sc.to_unit(self.gradient / (2 * self.msd.coords['dimensionality'].value),
-                                                      'cm2/s')
+        _jump_diffusion_coefficient = sc.to_unit(self.gradient / (2 * self.msd.coords['dimensionality'].value), 'cm2/s')
+        self._jump_diffusion_coefficient = Samples(_jump_diffusion_coefficient.values, _jump_diffusion_coefficient.unit)
 
     def _conductivity(self, start_dt: sc.Variable, temperature: sc.Variable, volume: sc.Variable, **kwargs):
         """
@@ -165,7 +166,8 @@ class Diffusion:
         self.bayesian_regression(start_dt=start_dt, **kwargs)
         self._jump_diffusion_coefficient = self.gradient / (2 * self.msd.coords['dimensionality'].value)
         conversion = 1 / (volume * k * temperature)
-        self._sigma = sc.to_unit(self.D_J * conversion, 'mS/cm')
+        _sigma = sc.to_unit(self.D_J * conversion, 'mS/cm')
+        self._sigma = Samples(_sigma.values, _sigma.unit)
 
     @property
     def D(self) -> sc.Variable:
