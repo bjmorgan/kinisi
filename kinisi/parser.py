@@ -264,7 +264,7 @@ def get_molecules(
     of the diffusion and indices of framework atoms.
     """
     drift_indices = []
-    n_molecules = len(indices['group_of_atoms', 0])
+    n_molecules = indices.sizes['group_of_atoms']
 
     if set(indices.dims) != {'atom', 'group_of_atoms'}:
         raise ValueError("indices must contain only 'atom' and 'group_of_atoms' as dimensions.")
