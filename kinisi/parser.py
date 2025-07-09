@@ -49,6 +49,7 @@ class Parser:
     :param distance_unit: The unit of distance used in the input structures. Optional, defaults to angstroms.
     :param specie_indices: Indices of the specie to calculate the diffusivity for. Optional, defaults to `None`.
     :param masses: Masses of the atoms in the structure. Optional, defaults to `None`.
+        If used should be a 1D scipp array of dimension 'group_of_atoms'.
     :param dimension: Dimension/s to find the displacement along, this should be some subset of `'xyz'` indicating
         the axes of interest. Optional, defaults to `'xyz'`.
     :param progress: Whether to show a progress bar when reading in the structures. Optional, defaults to `True`.
@@ -71,12 +72,6 @@ class Parser:
         dimension: str = 'xyz',
         progress: bool = True,
     ):
-        if specie_indices is not None:
-            try:
-                np.array(specie_indices)
-            except Exception as err:
-                raise ValueError('Molecules must be of same length') from err
-
         self.time_step = time_step
         self.step_skip = step_skip
         self._dimension = dimension
@@ -87,10 +82,11 @@ class Parser:
 
         self.dt_index = self.create_integer_dt(coords, time_step, step_skip)
 
-        indices, drift_indices = self.generate_indices(structure, specie_indices, coords, specie, masses)
+        coords, indices, drift_indices = self.generate_indices(structure, specie_indices, coords, specie, masses)
 
         self.indices = indices
         self.drift_indices = drift_indices
+        self._coords = coords
 
         disp = self.calculate_displacements(coords, latt)
         drift_corrected = self.correct_drift(disp)
@@ -166,7 +162,7 @@ class Parser:
         :param specie_indices: Indices for the atoms in the trajectory used in the diffusion calculation
         :param coords: The fractional coordinates of the atoms in the trajectory.
         :param specie: The specie to calculate the diffusivity for.
-        :param masses: Masses associated with indices in indices.
+        :param masses: Masses associated with indices in indices. 1D scipp array of dim 'group_of_atoms'
 
         :return: A tuple containing the indices for the atoms in the trajectory used in the diffusion calculation
             and indices of framework atoms.
@@ -182,7 +178,7 @@ class Parser:
                 indices, drift_indices = get_framework(structure, specie_indices)
         else:
             raise TypeError('Unrecognized type for specie or specie_indices, specie_indices must be a sc.array')
-        return indices, drift_indices
+        return coords, indices, drift_indices
 
     def calculate_displacements(self, coords: VariableLikeType, lattice: VariableLikeType) -> VariableLikeType:
         """
@@ -232,6 +228,13 @@ class Parser:
         else:
             return disp
 
+    @property
+    def coords(self) -> VariableLikeType:
+        """
+        :return:  fractional coordinates of the chosen system. 
+        """
+        return self._coords
+
 
 def get_molecules(
     structure: Union[
@@ -261,32 +264,36 @@ def get_molecules(
     of the diffusion and indices of framework atoms.
     """
     drift_indices = []
-    indices = indices - 1
 
-    n_molecules = indices.shape[0]
+    if set(indices.dims) != {'atom', 'group_of_atoms'}:
+        raise ValueError("indices must contain only 'atom' and 'group_of_atoms' as dimensions.")
+    
+    n_molecules = indices.sizes['group_of_atoms']
 
-    # Removed method for framework_indices
-    for i, _site in enumerate(structure):
+    for i, site in enumerate(structure):
         if i not in indices.values:
             drift_indices.append(i)
 
     if masses is None:
         weights = sc.ones_like(indices)
-    elif len(masses.values) != indices.values.shape[1]:
-        raise ValueError('Masses must be the same length as a molecule')
+    elif len(masses.values) != len(indices['atom', 0]):
+        raise ValueError('Masses must be the same length as a molecule or particle group')
     else:
         weights = masses.copy()
 
-    new_s_coords = _calculate_centers_of_mass(coords, weights, indices, distance_unit)
+    if 'group_of_atoms' not in weights.dims:
+        raise ValueError("masses must contain 'group_of_atoms' as dimensions.")
+
+    new_s_coords = _calculate_centers_of_mass(coords, weights, indices)
 
     if coords.dtype == np.float32:
         # MDAnalysis uses float32, so we need to convert to float32 to avoid concat error
         new_s_coords = new_s_coords.astype(np.float32)
 
     new_coords = sc.concat([new_s_coords, coords['atom', drift_indices]], 'atom')
-    new_indices = sc.Variable(dims=['molecule'], values=list(range(n_molecules)))
+    new_indices = sc.Variable(dims=['atom'], values=list(range(n_molecules)))
     new_drift_indices = sc.Variable(
-        dims=['molecule'],
+        dims=['atom'],
         values=list(range(n_molecules, n_molecules + len(drift_indices))),
     )
 
@@ -328,34 +335,34 @@ def _calculate_centers_of_mass(
     coords: VariableLikeType,
     weights: VariableLikeType,
     indices: VariableLikeType,
-    distance_unit: sc.Unit,
 ) -> VariableLikeType:
     """
-    Calculates the weighted molecular centre of mass based on chosen weights and indices as per https://doi.org/10.1080/2151237X.2008.10129266
-    The method involves projection of the each coordinate onto a circle to allow for efficient COM calculation
+    Calculates the weighted molecular centre of mass based on chosen weights and indices as per  DOI: 10.1063/5.0260928.
+    The method uses the pseudo centre of mass recentering method for efficient centre of mass calculation
 
-     :param coords: array of coordinates
+     :param coords: array of fractional coordinates these should be dimensionless
      :param weights: 1D array of weights of elements within molecule
-     :param indices: N by M dimensional array of indices of N molecules of M atoms
+     :param indices: Scipp array of indices for the atoms in the molecules in the trajectory,
+     this must include 2 dimensions 'atom' - The final number of desired atoms and 'group_of_atoms' - the number of atoms in each molecule
 
      :return: Array containing coordinates of centres of mass of molecules
     """
-    s_coords = sc.fold(
-        coords['atom', indices.values.flatten()],
-        'atom',
-        dims=indices.dims,
-        shape=indices.shape,
-    )
-    theta = s_coords * (2 * np.pi * (sc.units.rad / distance_unit))
+    s_coords = sc.fold(coords['atom', indices.values.flatten()], 'atom', dims=indices.dims, shape=indices.shape)
+    theta = s_coords * (2 * np.pi * (sc.units.rad))
     xi = sc.cos(theta)
     zeta = sc.sin(theta)
-    # This allows the dimensions of the indices to be any word, paired with 'atom'.
-    dims_id = [i for i in indices.dims if i != 'atom'][0]
+    dims_id = 'group_of_atoms'
     xi_bar = (weights * xi).sum(dim=dims_id) / weights.sum(dim=dims_id)
     zeta_bar = (weights * zeta).sum(dim=dims_id) / weights.sum(dim=dims_id)
     theta_bar = sc.atan2(y=-zeta_bar, x=-xi_bar) + np.pi * sc.units.rad
-    new_s_coords = theta_bar / (2 * np.pi * (sc.units.rad / distance_unit))
-    return new_s_coords
+    new_s_coords = theta_bar / (2 * np.pi * (sc.units.rad))
+
+    pseudo_com_recentering = (s_coords - (new_s_coords + 0.5)) % 1
+    com_pseudo_space = (weights * pseudo_com_recentering).sum(dim=dims_id) / weights.sum(dim=dims_id)
+    corrected_com = (com_pseudo_space + (new_s_coords + 0.5)) % 1
+
+    print('If using the kinisi centre of mass feature, please reference: DOI: 10.1063/5.0260928')
+    return corrected_com
 
 
 def is_subset_approx(B: np.array, A: np.array, tol: float = 1e-9) -> bool:
