@@ -7,11 +7,11 @@ Parsers for kinisi. This module is responsible for reading in input files from :
 # Distributed under the terms of the MIT License.
 # author: Andrew R. McCluskey (arm61) and Harry Richardson (Harry-Rich).
 
-from typing import List, Tuple, Union
+from typing import Union
+
 import numpy as np
 import scipp as sc
 from scipp.typing import VariableLikeType
-from tqdm import tqdm
 
 DIMENSIONALITY = {
     'x': np.s_[0],
@@ -27,57 +27,72 @@ DIMENSIONALITY = {
     b'xy': np.s_[:2],
     b'xz': np.s_[::2],
     b'yz': np.s_[1:],
-    b'xyz': np.s_[:]
+    b'xyz': np.s_[:],
 }
 
 
 class Parser:
     """
-    The base class for object parsing. 
+    The base class for object parsing.
 
-    This class takes coordinates, lattice parameters, and indices to give the appropriate displacements back.
-
-    :param coords: The fractional coordiates of the atoms in the trajectory. This should be a :py:mod:`scipp`
-        array type object with dimensions of 'atom', 'time', and 'dimension'.
-    :param lattice: A series of matrices that describe the lattice in each step in the trajectory.
-        A :py:mod:`scipp` array with dimensions of 'time', 'dimension1', and 'dimension2'.
-    :param indices: Indices for the atoms in the trajectory used in the diffusion calculation.
-    :param drift_indices: Indices for the atoms in the trajectory that should not be used in the diffusion
-    :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator. Note, 
-        that this must be given as a :py:mod:`scipp`-type scalar. The unit used for the time_step, will be the unit 
+    :param snapshots: The snapshots from the trajectory given the positions of atoms.
+    :param specie: Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
+    :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator. Note,
+        that this must be given as a :py:mod:`scipp`-type scalar. The unit used for the time_step, will be the unit
         that is use for the time interval values.
     :param step_skip: Sampling freqency of the simulation trajectory, i.e., how many time steps exist between the
         output of the positions in the trajectory. Similar to the :py:attr:`time_step`, this parameter must be
         a :py:mod:`scipp` scalar. The units for this scalar should be dimensionless.
     :param dt: Time intervals to calculate the displacements over. Optional, defaults to a :py:mod:`scipp` array
-        ranging from the smallest interval (i.e., time_step * step_skip) to the full simulation length, with 
+        ranging from the smallest interval (i.e., time_step * step_skip) to the full simulation length, with
         a step size the same as the smallest interval.
+    :param distance_unit: The unit of distance used in the input structures. Optional, defaults to angstroms.
+    :param specie_indices: Indices of the specie to calculate the diffusivity for. Optional, defaults to `None`.
+    :param masses: Masses of the atoms in the structure. Optional, defaults to `None`.
     :param dimension: Dimension/s to find the displacement along, this should be some subset of `'xyz'` indicating
         the axes of interest. Optional, defaults to `'xyz'`.
+    :param progress: Whether to show a progress bar when reading in the structures. Optional, defaults to `True`.
     """
 
-    def __init__(self,
-                 coords: VariableLikeType,
-                 lattice: VariableLikeType,
-                 indices: VariableLikeType,
-                 drift_indices: VariableLikeType,
-                 time_step: VariableLikeType,
-                 step_skip: VariableLikeType,
-                 dt: VariableLikeType = None,
-                 dimension: str = 'xyz'):
+    def __init__(
+        self,
+        snapshots: Union['pymatgen.core.structure.Structure', 'MDAnalysis.core.universe.Universe'],
+        specie: Union[
+            'pymatgen.core.periodic_table.Element',
+            'pymatgen.core.periodic_table.Specie',
+            'str',
+        ],
+        time_step: VariableLikeType,
+        step_skip: VariableLikeType,
+        dt: VariableLikeType = None,
+        distance_unit: sc.Unit = sc.units.angstrom,
+        specie_indices: VariableLikeType = None,
+        masses: VariableLikeType = None,
+        dimension: str = 'xyz',
+        progress: bool = True,
+    ):
+        if specie_indices is not None:
+            try:
+                np.array(specie_indices)
+            except Exception as err:
+                raise ValueError('Molecules must be of same length') from err
+
         self.time_step = time_step
         self.step_skip = step_skip
+        self._dimension = dimension
+        self.dt = dt
+        self.distance_unit = distance_unit
+
+        structure, coords, latt = self.get_structure_coords_latt(snapshots, progress)
+
+        self.dt_index = self.create_integer_dt(coords, time_step, step_skip)
+
+        indices, drift_indices = self.generate_indices(structure, specie_indices, coords, specie, masses)
+
         self.indices = indices
         self.drift_indices = drift_indices
-        self._dimension = dimension
-        self._volume = None
-        self.dt = dt
-        if self.dt is None:
-            self.dt_int = sc.arange(start=1, stop=coords.sizes['time'], step=1, dim='time interval')
-            self.dt = self.dt_int * time_step * step_skip
-        self.dt_int = (self.dt / (time_step * step_skip)).astype(int)
 
-        disp = self.calculate_displacements(coords, lattice)
+        disp = self.calculate_displacements(coords, latt)
         drift_corrected = self.correct_drift(disp)
 
         self._slice = DIMENSIONALITY[dimension.lower()]
@@ -85,31 +100,121 @@ class Parser:
         self.dimensionality = drift_corrected.sizes['dimension'] * sc.units.dimensionless
 
         self.displacements = drift_corrected['atom', indices]
+        self._volume = np.prod(latt.values[0].diagonal()) * self.distance_unit**3
+
+    def create_integer_dt(
+        self,
+        coords: VariableLikeType,
+        time_step: VariableLikeType,
+        step_skip: VariableLikeType,
+    ) -> VariableLikeType:
+        """
+        Create an integer time interval from the given time intervals (and if necessary the time interval object).
+        Also checks that the time intervals provided in the dt parameter are a valid subset of the simulation time
+        intervals.
+
+        :param coords: The fractional coordiates of the atoms in the trajectory. This should be a :py:mod:`scipp`
+            array type object with dimensions of 'atom', 'time', and 'dimension'.
+        :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator. Note,
+            that this must be given as a :py:mod:`scipp`-type scalar. The unit used for the time_step, will be the unit
+            that is use for the time interval values.
+        :param step_skip: Sampling freqency of the simulation trajectory, i.e., how many time steps exist between the
+            output of the positions in the trajectory. Similar to the :py:attr:`time_step`, this parameter must be
+            a :py:mod:`scipp` scalar. The units for this scalar should be dimensionless.
+
+        :raises ValueError: If the time intervals provided in the dt parameter are not a subset of the time intervals
+            present in the simulation, based on the time_step and step_skip parameters and number of snapshots
+            in the trajectory.
+
+        :return: The integer time intervals as a :py:mod:`scipp` array with dimensions of 'time interval'.
+        """
+        dt_all = sc.arange(start=1, stop=coords.sizes['time'], step=1, dim='time interval') * time_step * step_skip
+        if self.dt is not None:
+            if not is_subset_approx(self.dt.values, dt_all.values):
+                raise ValueError(
+                    'The time intervals provided in the dt parameter are not a subset of the time intervals '
+                    'present in the simulation, based on the time_step and step_skip parameters and number of '
+                    'snapshots in the trajectory.'
+                )
+        else:
+            dt_index = sc.arange(start=1, stop=coords.sizes['time'], step=1, dim='time interval')
+            self.dt = self.dt_index * time_step * step_skip
+
+        dt_index = (self.dt / (time_step * step_skip)).astype(int)
+        return dt_index
+
+    def generate_indices(
+        self,
+        structure: tuple[
+            Union['pymatgen.core.structure.Structure', 'MDAnalysis.core.universe.Universe'],
+            VariableLikeType,
+            VariableLikeType,
+        ],
+        specie_indices: VariableLikeType,
+        coords: VariableLikeType,
+        specie: Union[
+            'pymatgen.core.periodic_table.Element',
+            'pymatgen.core.periodic_table.Specie',
+            'str',
+        ],
+        masses: VariableLikeType,
+    ) -> tuple[VariableLikeType, VariableLikeType]:
+        """
+        Handle the specie indices and determine the indices for the framework and drift correction.
+
+        :param structure: The initial structure to determine the indices from.
+        :param specie_indices: Indices for the atoms in the trajectory used in the diffusion calculation
+        :param coords: The fractional coordinates of the atoms in the trajectory.
+        :param specie: The specie to calculate the diffusivity for.
+        :param masses: Masses associated with indices in indices.
+
+        :return: A tuple containing the indices for the atoms in the trajectory used in the diffusion calculation
+            and indices of framework atoms.
+        """
+        if specie is not None:
+            indices, drift_indices = self.get_indices(structure, specie)
+        elif isinstance(specie_indices, sc.Variable):
+            if len(specie_indices.dims) > 1:
+                coords, indices, drift_indices = get_molecules(
+                    structure, coords, specie_indices, masses, self.distance_unit
+                )
+            else:
+                indices, drift_indices = get_framework(structure, specie_indices)
+        else:
+            raise TypeError('Unrecognized type for specie or specie_indices, specie_indices must be a sc.array')
+        return indices, drift_indices
 
     def calculate_displacements(self, coords: VariableLikeType, lattice: VariableLikeType) -> VariableLikeType:
         """
         Calculate the absolute displacements of the atoms in the trajectory.
-        
+
         :param coords: The fractional coordiates of the atoms in the trajectory. This should be a :py:mod:`scipp`
             array type object with dimensions of 'atom', 'time', and 'dimension'.
         :param lattice: A series of matrices that describe the lattice in each step in the trajectory.
             A :py:mod:`scipp` array with dimensions of 'time', 'dimension1', and 'dimension2'.
-            
+
         :return: The absolute displacements of the atoms in the trajectory.
         """
         lattice_inv = np.linalg.inv(lattice.values)
-        wrapped = sc.array(dims=coords.dims,
-                           values=np.einsum('jik,jkl->jil', coords.values, lattice.values),
-                           unit=coords.unit)
-        wrapped_diff = sc.array(dims=['obs'] + list(coords.dims[1:]),
-                                values=(wrapped['time', 1:] - wrapped['time', :-1]).values,
-                                unit=coords.unit)
-        diff_diff = sc.array(dims=wrapped_diff.dims,
-                             values=np.einsum(
-                                 'jik,jkl->jil',
-                                 np.floor(np.einsum('jik,jkl->jil', wrapped_diff.values, lattice_inv[1:]) + 0.5),
-                                 lattice.values[1:]),
-                             unit=coords.unit)
+        wrapped = sc.array(
+            dims=coords.dims,
+            values=np.einsum('jik,jkl->jil', coords.values, lattice.values),
+            unit=lattice.unit,
+        )
+        wrapped_diff = sc.array(
+            dims=['obs'] + list(coords.dims[1:]),
+            values=(wrapped['time', 1:] - wrapped['time', :-1]).values,
+            unit=lattice.unit,
+        )
+        diff_diff = sc.array(
+            dims=wrapped_diff.dims,
+            values=np.einsum(
+                'jik,jkl->jil',
+                np.floor(np.einsum('jik,jkl->jil', wrapped_diff.values, lattice_inv[1:]) + 0.5),
+                lattice.values[1:],
+            ),
+            unit=lattice.unit,
+        )
         unwrapped_diff = wrapped_diff - diff_diff
         return sc.cumsum(unwrapped_diff, 'obs')
 
@@ -118,299 +223,54 @@ class Parser:
         Perform drift correction, such that the displacement is calculated normalised to any framework drift.
 
         :param disp: Displacements for all atoms in the simulation. A :py:mod:`scipp` array with dimensions
-            of `obs`, `atom` and `dimension`. 
+            of `obs`, `atom` and `dimension`.
 
         :return: Displacements corrected to account for drift of a framework.
         """
-        if self.drift_indices.size > 0: 
+        if self.drift_indices.size > 0:
             return disp - sc.mean(disp['atom', self.drift_indices.values], 'atom')
-        else: 
+        else:
             return disp
 
 
-class PymatgenParser(Parser):
+def get_molecules(
+    structure: Union[
+        'ase.atoms.Atoms',
+        'pymatgen.core.structure.Structure',
+        'MDAnalysis.universe.Universe',
+    ],
+    coords: VariableLikeType,
+    indices: VariableLikeType,
+    masses: VariableLikeType,
+    distance_unit: sc.Unit,
+) -> tuple[np.ndarray, np.ndarray, tuple[np.ndarray, np.ndarray]]:
     """
-    Parser for pymatgen structures.
-
-    This takes a list of pymatgen structures as an input. 
-
-    :param structures: Structures ordered in sequence of run.
-    :param specie: Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
-    :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator. Note, 
-        that this must be given as a :py:mod:`scipp`-type scalar. The unit used for the time_step, will be the unit 
-        that is use for the time interval values.
-    :param step_skip: Sampling freqency of the simulation trajectory, i.e., how many time steps exist between the
-        output of the positions in the trajectory. Similar to the :py:attr:`time_step`, this parameter must be
-        a :py:mod:`scipp` scalar. The units for this scalar should be dimensionless.
-    :param dt: Time intervals to calculate the displacements over. Optional, defaults to a :py:mod:`scipp` array
-        ranging from the smallest interval (i.e., time_step * step_skip) to the full simulation length, with 
-        a step size the same as the smallest interval.
-    :param dimension: Dimension/s to find the displacement along, this should be some subset of `'xyz'` indicating
-        the axes of interest. Optional, defaults to `'xyz'`.
-    :param distance_unit: The unit of distance used in the input structures. Optional, defaults to angstroms.
-    :param progress: Whether to show a progress bar when reading in the structures. Optional, defaults to `True`.
-    """
-
-    def __init__(
-        self,
-        structures: List['pymatgen.core.structure.Structure'],
-        specie: Union['pymatgen.core.periodic_table.Element', 'pymatgen.core.periodic_table.Specie'],
-        time_step: VariableLikeType,
-        step_skip: VariableLikeType,
-        dt: VariableLikeType = None,
-        dimension: str = 'xyz',
-        distance_unit: sc.Unit = sc.units.angstrom,
-        specie_indices: VariableLikeType = None,
-        masses: VariableLikeType = None,
-        progress: bool = True,
-    ):
-        self.distance_unit = distance_unit
-
-        structure, coords, latt = self.get_structure_coords_latt(structures, progress)
-
-        if specie is not None:
-            indices, drift_indices = self.get_indices(structure, specie)
-        elif isinstance(specie_indices, sc.Variable):
-            if len(specie_indices.dims) > 1:
-                coords, indices, drift_indices = _get_molecules(structure, coords, specie_indices, masses,
-                                                                distance_unit)
-            else:
-                indices, drift_indices = _get_framework(structure, specie_indices)
-        else:
-            raise TypeError('Unrecognized type for specie or specie_indices, specie_indices must be a sc.array')
-
-        super().__init__(coords, latt, indices, drift_indices, time_step, step_skip, dt, dimension)
-        self._volume = structure.volume * self.distance_unit**3
-
-    def get_structure_coords_latt(
-            self,
-            structures: List['pymatgen.core.structure.Structure'],
-            progress: bool = True) -> Tuple["pymatgen.core.structure.Structure", VariableLikeType, VariableLikeType]:
-        """
-        Obtain the initial structure, coordinates, and lattice parameters from a list of pymatgen structures.
-
-        :param structures: Structures ordered in sequence of run.
-        :param progress: Whether to show a progress bar when reading in the structures.
-
-        :returns: A tuple of the initial structure (as
-            a :py:class:`pymatgen.core.structure.Structure`), coordinates (as
-            a :py:mod:`scipp` array with dimensions of `time`, `atom`, and `dimension`),
-            and lattice parameters (as a :py:mod:`scipp` array with dimensions `time`,
-            `dimension1`, and `dimension2`).
-        """
-        first = True
-        coords_l = []
-        latt_l = []
-        if progress:
-            iterator = tqdm(structures, desc='Reading Trajectory')
-        else:
-            iterator = structures
-        for struct in iterator:
-            if first:
-                structure = struct
-                first = False
-            coords_l.append(np.array(struct.frac_coords))
-            latt_l.append(np.array(struct.lattice.matrix))
-
-        coords_l.insert(0, coords_l[0])
-        latt_l.insert(0, latt_l[0])
-        coords_l = np.array(coords_l)
-        latt_l = np.array(latt_l)
-        coords = sc.array(dims=['time', 'atom', 'dimension'], values=coords_l, unit=self.distance_unit)
-        latt = sc.array(dims=['time', 'dimension1', 'dimension2'], values=latt_l, unit=self.distance_unit)
-        return structure, coords, latt
-
-    def get_indices(
-        self, structure: 'pymatgen.core.structure.Structure', specie: Union['pymatgen.core.periodic_table.Element',
-                                                                            'pymatgen.core.periodic_table.Specie']
-    ) -> Tuple[VariableLikeType, VariableLikeType]:
-        """
-        Determine the framework and mobile indices from a :py:mod:`pymatgen` structure.
-        
-        :param structure: The initial structure to determine the indices from.
-        :param specie: The specie to calculate the diffusivity for.
-
-        :returns: A tuple of the indices for the specie of interest (mobile) and the
-            drift (framework) indices.
-        """
-        indices = []
-        drift_indices = []
-        for i, site in enumerate(structure):
-            if site.specie.__str__() in specie:
-                indices.append(i)
-            else:
-                drift_indices.append(i)
-        indices = sc.Variable(dims=['atom'], values=indices)
-        drift_indices = sc.Variable(dims=['atom'], values=drift_indices)
-        return indices, drift_indices
-
-
-class MDAnalysisParser(Parser):
-    """
-    Parser for MDAnalysis structures.
-
-    Takes an MDAnalysis.Universe object as an input. 
-
-    :param universe: MDanalysis universe object to be parsed
-    :param specie: Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
-    :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator. Note, 
-        that this must be given as a :py:mod:`scipp`-type scalar. The unit used for the time_step, will be the unit 
-        that is use for the time interval values.
-    :param step_skip: Sampling freqency of the simulation trajectory, i.e., how many time steps exist between the
-        output of the positions in the trajectory. Similar to the :py:attr:`time_step`, this parameter must be
-        a :py:mod:`scipp` scalar. The units for this scalar should be dimensionless.
-    :param dt: Time intervals to calculate the displacements over. Optional, defaults to a :py:mod:`scipp` array
-        ranging from the smallest interval (i.e., time_step * step_skip) to the full simulation length, with 
-        a step size the same as the smallest interval.
-    :param dimension: Dimension/s to find the displacement along, this should be some subset of `'xyz'` indicating
-        the axes of interest. Optional, defaults to `'xyz'`.
-    :param distance_unit: The unit of distance used in the input structures. Optional, defaults to angstroms.
-    :param sub_sample_atoms: Subsample the atoms in the trajectory. Optional, defaults to 1.
-    :param sub_sample_traj: Subsample the trajectory. Optional, defaults to 1.
-    :param progress: Whether to show a progress bar when reading in the structures. Optional, defaults to `True`.
-    """
-
-    def __init__(self,
-                 universe: 'MDAnalysis.core.universe.Universe',
-                 specie: str,
-                 time_step: VariableLikeType,
-                 step_skip: VariableLikeType,
-                 dt: VariableLikeType = None,
-                 dimension: str = 'xyz',
-                 distance_unit: sc.Unit = sc.units.angstrom,
-                 specie_indices: VariableLikeType = None,
-                 masses: VariableLikeType = None,
-                 progress: bool = True):
-
-        self.distance_unit = distance_unit
-
-        structure, coords, latt = self.get_structure_coords_latt(universe, progress)
-
-        if specie is not None:
-            indices, drift_indices = self.get_indices(structure, specie)
-        elif isinstance(specie_indices, sc.Variable):
-            if len(specie_indices.dims) > 1:
-                coords, indices, drift_indices = _get_molecules(structure, coords, specie_indices, masses,
-                                                                distance_unit)
-            else:
-                indices, drift_indices = _get_framework(structure, specie_indices)
-        else:
-            raise TypeError('Unrecognized type for specie or specie_indices, specie_indices must be a sc.array')
-
-        super().__init__(coords, latt, indices, drift_indices, time_step, step_skip, dt, dimension)
-
-    def get_structure_coords_latt(
-        self,
-        universe: 'MDAnalysis.core.universe.Universe',
-        progress: bool = True,
-    ) -> Tuple["MDAnalysis.core.universe.Universe", VariableLikeType, VariableLikeType]:
-        """
-        Obtain the initial structure, coordinates, and lattice parameters from an MDAnalysis.Universe object.
-
-        :param universe: MDanalysis universe object.
-        :param progress: Whether to show a progress bar when reading in the structures.
-        :param sub_sample_atoms: Subsample the atoms in the trajectory. Optional, defaults to 1.
-        :param sub_sample_traj: Subsample the trajectory. Optional, defaults to 1.
-
-        :returns: A tuple of:  the initial structure (as
-            a :py:class:`MDAnalysis.core.universe.Universe`), coordinates (as
-            a :py:mod:`scipp` array with dimensions of `time`, `atom`, and `dimension`),
-            and lattice parameters (as a :py:mod:`scipp` array with dimensions `time`,
-            `dimension1`, and `dimension2`).
-        """
-        first = True
-        coords_l = []
-        latt_l = []
-        if progress:
-            iterator = tqdm(universe.trajectory, desc='Reading Trajectory')
-        else:
-            iterator = universe.trajectory
-
-        for struct in iterator:
-            if first:
-                structure = universe.atoms
-                first = False
-            matrix = np.array(struct.triclinic_dimensions)
-            inv_matrix = np.linalg.inv(matrix)
-            coords_l.append(np.dot(universe.atoms.positions, inv_matrix))
-            latt_l.append(np.array(matrix))
-
-        coords_l = np.array(coords_l)
-        latt_l = np.array(latt_l)
-
-        coords = sc.array(dims=['time', 'atom', 'dimension'], values=coords_l, unit=self.distance_unit)
-        latt = sc.array(dims=['time', 'dimension1', 'dimension2'], values=latt_l, unit=self.distance_unit)
-        
-        return structure, coords, latt
-
-    def get_indices(
-        self,
-        structure: "MDAnalysis.universe.Universe",
-        specie: str,
-    ) -> Tuple[VariableLikeType, VariableLikeType]:
-        """
-        Determine framework and non-framework indices for an :py:mod:`MDAnalysis` compatible file.
-
-        :param structure: Initial structure.
-        :param specie: Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
-
-        :return: Tuple containing indices for the atoms in the trajectory used in the calculation of the
-            diffusion and indices of framework atoms.
-        """
-        indices = []
-        drift_indices = []
-
-        if not isinstance(specie, list):
-            specie = [specie]
-
-        for i, site in enumerate(structure):
-            if site.type in specie:
-                indices.append(i)
-            else:
-                drift_indices.append(i)
-
-        if len(indices) == 0:
-            raise ValueError("There are no species selected to calculate the mean-squared displacement of.")
-
-        indices = sc.Variable(dims=['atom'], values=indices)
-        drift_indices = sc.Variable(dims=['atom'], values=drift_indices)
-
-        return indices, drift_indices
-
-
-def _get_molecules(structure: Union["ase.atoms.Atoms", "pymatgen.core.structure.Structure",
-                                    "MDAnalysis.universe.Universe"], coords: VariableLikeType,
-                   indices: VariableLikeType, masses: VariableLikeType,
-                   distance_unit: sc.Unit) -> Tuple[np.ndarray, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
-    """
-    Determine framework and non-framework indices for an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when specie_indices are provided and contain multiple molecules. Warning: This function changes the structure without changing the object.
+    Determine framework and non-framework indices for an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when
+    specie_indices are provided and contain multiple molecules. Warning: This function changes the structure without changing the object.
 
     :param structure: Initial structure.
     :param coords: fractional coordinates for all atoms.
-    :param indices: indices for the atoms in the molecules in the trajectory used in the calculation 
+    :param indices: indices for the atoms in the molecules in the trajectory used in the calculation
     of the diffusion.
     :param masses: Masses associated with indices in indices.
     :param framework_indices: Indices of framework to be used in drift correction. If set to None will return all indices that are not in indices.
 
 
     :return: Tuple containing: Tuple containing: fractional coordinates for centers and framework atoms
-    and Tuple containing: indices for centers used in the calculation 
+    and Tuple containing: indices for centers used in the calculation
     of the diffusion and indices of framework atoms.
     """
     drift_indices = []
-    try:
-        indices = indices - 1
-    except:
-        raise ValueError('Molecules must be of same length')
+    indices = indices - 1
 
     n_molecules = indices.shape[0]
 
     # Removed method for framework_indices
-    for i, site in enumerate(structure):
+    for i, _site in enumerate(structure):
         if i not in indices.values:
             drift_indices.append(i)
 
-    if masses == None:
+    if masses is None:
         weights = sc.ones_like(indices)
     elif len(masses.values) != indices.values.shape[1]:
         raise ValueError('Masses must be the same length as a molecule')
@@ -425,25 +285,67 @@ def _get_molecules(structure: Union["ase.atoms.Atoms", "pymatgen.core.structure.
 
     new_coords = sc.concat([new_s_coords, coords['atom', drift_indices]], 'atom')
     new_indices = sc.Variable(dims=['molecule'], values=list(range(n_molecules)))
-    new_drift_indices = sc.Variable(dims=['molecule'],
-                                    values=list(range(n_molecules, n_molecules + len(drift_indices))))
+    new_drift_indices = sc.Variable(
+        dims=['molecule'],
+        values=list(range(n_molecules, n_molecules + len(drift_indices))),
+    )
 
     return new_coords, new_indices, new_drift_indices
 
 
-def _calculate_centers_of_mass(coords: VariableLikeType, weights: VariableLikeType, indices: VariableLikeType,
-                               distance_unit: sc.Unit) -> VariableLikeType:
+def get_framework(
+    structure: Union[
+        'ase.atoms.Atoms',
+        'pymatgen.core.structure.Structure',
+        'MDAnalysis.universe.Universe',
+    ],
+    indices: VariableLikeType,
+) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Determine the framework indices from an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when indices are provided
+
+    :param structure: Initial structure.
+    :param indices: Indices for the atoms in the trajectory used in the calculation of the
+        diffusion.
+    :param framework_indices: Indices of framework to be used in drift correction. If set to None will return all indices that are not in indices.
+
+    :return: Tuple containing: indices for the atoms in the trajectory used in the calculation of the
+        diffusion and indices of framework atoms.
+    """
+
+    drift_indices = []
+
+    for i, _site in enumerate(structure):
+        if i not in indices:
+            drift_indices.append(i)
+
+    drift_indices = sc.Variable(dims=['atom'], values=drift_indices)
+
+    return indices, drift_indices
+
+
+def _calculate_centers_of_mass(
+    coords: VariableLikeType,
+    weights: VariableLikeType,
+    indices: VariableLikeType,
+    distance_unit: sc.Unit,
+) -> VariableLikeType:
     """
     Calculates the weighted molecular centre of mass based on chosen weights and indices as per https://doi.org/10.1080/2151237X.2008.10129266
     The method involves projection of the each coordinate onto a circle to allow for efficient COM calculation
-    
+
      :param coords: array of coordinates
      :param weights: 1D array of weights of elements within molecule
      :param indices: N by M dimensional array of indices of N molecules of M atoms
 
      :return: Array containing coordinates of centres of mass of molecules
     """
-    s_coords = sc.fold(coords['atom', indices.values.flatten()], 'atom', dims=indices.dims, shape=indices.shape)
+    s_coords = sc.fold(
+        coords['atom', indices.values.flatten()],
+        'atom',
+        dims=indices.dims,
+        shape=indices.shape,
+    )
     theta = s_coords * (2 * np.pi * (sc.units.rad / distance_unit))
     xi = sc.cos(theta)
     zeta = sc.sin(theta)
@@ -456,27 +358,15 @@ def _calculate_centers_of_mass(coords: VariableLikeType, weights: VariableLikeTy
     return new_s_coords
 
 
-def _get_framework(structure: Union["ase.atoms.Atoms", "pymatgen.core.structure.Structure",
-                                    "MDAnalysis.universe.Universe"],
-                   indices: VariableLikeType) -> Tuple[np.ndarray, np.ndarray]:
+def is_subset_approx(B: np.array, A: np.array, tol: float = 1e-9) -> bool:
     """
-    Determine the framework indices from an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when indices are provided
-    
-    :param structure: Initial structure.
-    :param indices: Indices for the atoms in the trajectory used in the calculation of the 
-        diffusion.
-    :param framework_indices: Indices of framework to be used in drift correction. If set to None will return all indices that are not in indices.
-    
-    :return: Tuple containing: indices for the atoms in the trajectory used in the calculation of the
-        diffusion and indices of framework atoms. 
+    Check if all elements in B are approximately equal to any element in A within a tolerance.
+    This is useful for comparing floating-point numbers where exact equality is not feasible.
+
+    :param B: The array to check if it is a subset of A.
+    :param A: The array to check against.
+    :param tol: The tolerance for comparison. Default is 1e-9.
+
+    :return: True if all elements in B are approximately equal to any element in A, False otherwise.
     """
-
-    drift_indices = []
-
-    for i, site in enumerate(structure):
-        if i not in indices:
-            drift_indices.append(i)
-
-    drift_indices = sc.Variable(dims=['atom'], values=drift_indices)
-
-    return indices, drift_indices
+    return all(any(abs(a - b) < tol for a in A) for b in B)

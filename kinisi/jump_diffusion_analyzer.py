@@ -13,7 +13,7 @@ import scipp as sc
 from scipp.typing import VariableLikeType
 from kinisi.displacement import calculate_mstd, calculate_msd
 from kinisi.diffusion import Diffusion
-from kinisi.parser import Parser, PymatgenParser
+from kinisi.parser import Parser
 from kinisi.analyzer import Analyzer
 
 
