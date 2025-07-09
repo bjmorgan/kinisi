@@ -97,7 +97,7 @@ class Parser:
         self.displacements = drift_corrected['atom', indices]
         self._volume = np.prod(latt.values[0].diagonal()) * latt.unit**3
 
-    def _to_datagroup(self, hdf5=False) -> sc.DataGroup:
+    def _to_datagroup(self, hdf5=True) -> sc.DataGroup:
         """
         Convert the :py:class:`Parser` object to a :py:mod: 'scipp' DataGroup.
         :param hdf5: If `True`, incompatible classes will be converted for saving to HDF5.
