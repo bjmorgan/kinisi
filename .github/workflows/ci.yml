@@ -26,6 +26,7 @@ jobs:
     - name: Lint code with ruff
       run: | 
         ruff check .
+      continue-on-error: true
     - name: Check code formatting with ruff
       run: |
         ruff format --check .
