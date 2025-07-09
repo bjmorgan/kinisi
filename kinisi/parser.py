@@ -71,21 +71,21 @@ class Parser:
         dimension: str = 'xyz',
         progress: bool = True,
     ):
-        self.time_step = time_step
-        self.step_skip = step_skip
-        self._dimension = dimension
-        self.dt = dt
-        self.distance_unit = distance_unit
-
         if specie_indices is not None:
             try:
                 np.array(specie_indices)
             except Exception as err:
                 raise ValueError('Molecules must be of same length') from err
 
+        self.time_step = time_step
+        self.step_skip = step_skip
+        self._dimension = dimension
+        self.dt = dt
+        self.distance_unit = distance_unit
+
         structure, coords, latt = self.get_structure_coords_latt(snapshots, progress)
 
-        self.create_integer_dt(coords, time_step, step_skip)
+        self.dt_index = self.create_integer_dt(coords, time_step, step_skip)
 
         indices, drift_indices = self.generate_indices(structure, specie_indices, coords, specie, masses)
 
@@ -107,9 +107,11 @@ class Parser:
         coords: VariableLikeType,
         time_step: VariableLikeType,
         step_skip: VariableLikeType,
-    ) -> None:
+    ) -> VariableLikeType:
         """
         Create an integer time interval from the given time intervals (and if necessary the time interval object).
+        Also checks that the time intervals provided in the dt parameter are a valid subset of the simulation time
+        intervals.
 
         :param coords: The fractional coordiates of the atoms in the trajectory. This should be a :py:mod:`scipp`
             array type object with dimensions of 'atom', 'time', and 'dimension'.
@@ -119,11 +121,27 @@ class Parser:
         :param step_skip: Sampling freqency of the simulation trajectory, i.e., how many time steps exist between the
             output of the positions in the trajectory. Similar to the :py:attr:`time_step`, this parameter must be
             a :py:mod:`scipp` scalar. The units for this scalar should be dimensionless.
+
+        :raises ValueError: If the time intervals provided in the dt parameter are not a subset of the time intervals
+            present in the simulation, based on the time_step and step_skip parameters and number of snapshots
+            in the trajectory.
+
+        :return: The integer time intervals as a :py:mod:`scipp` array with dimensions of 'time interval'.
         """
-        if self.dt is None:
-            self.dt_index = sc.arange(start=1, stop=coords.sizes['time'], step=1, dim='time interval')
+        dt_all = sc.arange(start=1, stop=coords.sizes['time'], step=1, dim='time interval') * time_step * step_skip
+        if self.dt is not None:
+            if not is_subset_approx(self.dt.values, dt_all.values):
+                raise ValueError(
+                    'The time intervals provided in the dt parameter are not a subset of the time intervals '
+                    'present in the simulation, based on the time_step and step_skip parameters and number of '
+                    'snapshots in the trajectory.'
+                )
+        else:
+            dt_index = sc.arange(start=1, stop=coords.sizes['time'], step=1, dim='time interval')
             self.dt = self.dt_index * time_step * step_skip
-        self.dt_index = (self.dt / (time_step * step_skip)).astype(int)
+
+        dt_index = (self.dt / (time_step * step_skip)).astype(int)
+        return dt_index
 
     def generate_indices(
         self,
@@ -338,3 +356,17 @@ def _calculate_centers_of_mass(
     theta_bar = sc.atan2(y=-zeta_bar, x=-xi_bar) + np.pi * sc.units.rad
     new_s_coords = theta_bar / (2 * np.pi * (sc.units.rad / distance_unit))
     return new_s_coords
+
+
+def is_subset_approx(B: np.array, A: np.array, tol: float = 1e-9) -> bool:
+    """
+    Check if all elements in B are approximately equal to any element in A within a tolerance.
+    This is useful for comparing floating-point numbers where exact equality is not feasible.
+
+    :param B: The array to check if it is a subset of A.
+    :param A: The array to check against.
+    :param tol: The tolerance for comparison. Default is 1e-9.
+
+    :return: True if all elements in B are approximately equal to any element in A, False otherwise.
+    """
+    return all(any(abs(a - b) < tol for a in A) for b in B)
