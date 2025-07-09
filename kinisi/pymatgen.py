@@ -1,5 +1,5 @@
 """
-The `PymatgenParser` class is a parser for pymatgen structures for :py:mod:`kinisi`. 
+The `PymatgenParser` class is a parser for pymatgen structures for :py:mod:`kinisi`.
 It is used to extract the necessary data for diffusion analysis from a list of pymatgen structures.
 """
 
@@ -21,18 +21,18 @@ class PymatgenParser(Parser):
     """
     Parser for pymatgen structures.
 
-    This takes a list of pymatgen structures as an input. 
+    This takes a list of pymatgen structures as an input.
 
     :param structures: Structures ordered in sequence of run.
     :param specie: Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
-    :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator. Note, 
-        that this must be given as a :py:mod:`scipp`-type scalar. The unit used for the time_step, will be the unit 
+    :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator. Note,
+        that this must be given as a :py:mod:`scipp`-type scalar. The unit used for the time_step, will be the unit
         that is use for the time interval values.
     :param step_skip: Sampling freqency of the simulation trajectory, i.e., how many time steps exist between the
         output of the positions in the trajectory. Similar to the :py:attr:`time_step`, this parameter must be
         a :py:mod:`scipp` scalar. The units for this scalar should be dimensionless.
     :param dt: Time intervals to calculate the displacements over. Optional, defaults to a :py:mod:`scipp` array
-        ranging from the smallest interval (i.e., time_step * step_skip) to the full simulation length, with 
+        ranging from the smallest interval (i.e., time_step * step_skip) to the full simulation length, with
         a step size the same as the smallest interval.
     :param dimension: Dimension/s to find the displacement along, this should be some subset of `'xyz'` indicating
         the axes of interest. Optional, defaults to `'xyz'`.
@@ -45,7 +45,7 @@ class PymatgenParser(Parser):
     def __init__(
         self,
         structures: list['pymatgen.core.structure.Structure'],
-        specie: Union['pymatgen.core.periodic_table.Element', 'pymatgen.core.periodic_table.Specie'],
+        specie: Union['pymatgen.core.periodic_table.Element', 'pymatgen.core.periodic_table.Specie', str],
         time_step: VariableLikeType,
         step_skip: VariableLikeType,
         dt: VariableLikeType = None,
@@ -56,13 +56,13 @@ class PymatgenParser(Parser):
         progress: bool = True,
         old_calc_disps: bool = False,
     ):
-        super().__init__(structures, specie, time_step, step_skip, dt, distance_unit, specie_indices, masses, dimension,
-                         progress)
+        super().__init__(
+            structures, specie, time_step, step_skip, dt, distance_unit, specie_indices, masses, dimension, progress
+        )
 
     def get_structure_coords_latt(
-            self,
-            structures: list['pymatgen.core.structure.Structure'],
-            progress: bool = True) -> tuple["pymatgen.core.structure.Structure", VariableLikeType, VariableLikeType]:
+        self, structures: list['pymatgen.core.structure.Structure'], progress: bool = True
+    ) -> tuple['pymatgen.core.structure.Structure', VariableLikeType, VariableLikeType]:
         """
         Obtain the initial structure, coordinates, and lattice parameters from a list of pymatgen structures.
 
@@ -101,12 +101,13 @@ class PymatgenParser(Parser):
         return structure, coords, latt
 
     def get_indices(
-        self, structure: 'pymatgen.core.structure.Structure', specie: Union['pymatgen.core.periodic_table.Element',
-                                                                            'pymatgen.core.periodic_table.Specie']
+        self,
+        structure: 'pymatgen.core.structure.Structure',
+        specie: Union['pymatgen.core.periodic_table.Element', 'pymatgen.core.periodic_table.Specie'],
     ) -> tuple[VariableLikeType, VariableLikeType]:
         """
         Determine the framework and mobile indices from a :py:mod:`pymatgen` structure.
-        
+
         :param structure: The initial structure to determine the indices from.
         :param specie: The specie to calculate the diffusivity for.
 

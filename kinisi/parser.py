@@ -35,8 +35,8 @@ EINSUM_DIMENSIONS = {
     'atom': 'a',
     'image': 'i',
     'row': 'r',
-    'column': 'c'
-} # Single letter labels to be used as subscripts for dimensions of scipp arrays in einsums.
+    'column': 'c',
+}  # Single letter labels to be used as subscripts for dimensions of scipp arrays in einsums.
 
 
 class Parser:
@@ -226,21 +226,24 @@ class Parser:
         )
         unwrapped_diff = wrapped_diff - diff_diff
         return sc.cumsum(unwrapped_diff, 'obs')
-    
+
     def calculate_displacements(self, coords: VariableLikeType, lattice: VariableLikeType) -> VariableLikeType:
         """
-        Calculate the absolute displacements of the atoms in the trajectory. This is done by finding the minimum cartesian 
+        Calculate the absolute displacements of the atoms in the trajectory. This is done by finding the minimum cartesian
             displacement vector, from its 8 periodic images. This ensures that triclinic cells are treated correctly.
-        
+
         :param coords: The fractional coordiates of the atoms in the trajectory. This should be a :py:mod:`scipp`
             array type object with dimensions of 'atom', 'time', and 'dimension'.
         :param lattice: A series of matrices that describe the lattice in each step in the trajectory.
             A :py:mod:`scipp` array with dimensions of 'time', 'row', and 'column'.
-            
+
         :return: The absolute displacements of the atoms in the trajectory.
         """
         diff = np.diff(coords.values, axis=0)
-        images = np.tile([[0,0,0],[-1,0,0],[-1,-1,0],[0,-1,0],[0,0,1],[-1,0,1],[-1,-1,1],[0,-1,1]], (diff.shape[0],diff.shape[1],1,1))
+        images = np.tile(
+            [[0, 0, 0], [-1, 0, 0], [-1, -1, 0], [0, -1, 0], [0, 0, 1], [-1, 0, 1], [-1, -1, 1], [0, -1, 1]],
+            (diff.shape[0], diff.shape[1], 1, 1),
+        )
 
         diff[diff < 0] += 1
         images = images + diff[..., np.newaxis, :]
@@ -250,9 +253,7 @@ class Parser:
         min_index = np.argmin(image_disps, axis=-1)
 
         min_vectors = cart_images[np.arange(images.shape[0])[:, None], np.arange(images.shape[1])[None, :], min_index]
-        min_vectors = sc.array(dims=['obs'] + list(coords.dims[1:]),
-                               values=min_vectors,
-                               unit=coords.unit)
+        min_vectors = sc.array(dims=['obs'] + list(coords.dims[1:]), values=min_vectors, unit=coords.unit)
         disps = sc.cumsum(min_vectors, 'obs')
 
         return disps
@@ -273,17 +274,22 @@ class Parser:
 
     @property
     def coords(self):
-        '''
+        """
         Coordinates of 'atoms', this may be the raw coordinates parsed or centres of mass/geometry.
-        '''
+
+        :return:  fractional coordinates of the chosen system.
+        """
         return self._coords
-    
+
     @property
     def disp(self):
-        '''
+        """
         Atom displacements, without drift correction.
-        '''
+
+        :return: cartesian displacements for chosen 'atoms'.
+        """
         return self._disp
+
 
 def get_molecules(
     structure: Union[
@@ -316,7 +322,7 @@ def get_molecules(
 
     if set(indices.dims) != {'atom', 'group_of_atoms'}:
         raise ValueError("indices must contain only 'atom' and 'group_of_atoms' as dimensions.")
-    
+
     n_molecules = indices.sizes['group_of_atoms']
 
     for i, site in enumerate(structure):
