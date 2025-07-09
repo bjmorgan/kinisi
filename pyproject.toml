@@ -40,7 +40,7 @@ dependencies = [
     'statsmodels>=0.14.0',
     'scipp>=24.8.0',
     'uncertainties>=3.2.3',
-    'bs4=0.0.2'
+    'bs4==0.0.2'
 ]
 
 [project.optional-dependencies]
