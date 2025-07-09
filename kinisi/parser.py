@@ -268,12 +268,18 @@ class Parser:
             return disp
 
     @property
-    def coords(self) -> VariableLikeType:
-        """
-        :return:  fractional coordinates of the chosen system.
-        """
+    def coords(self):
+        '''
+        Coordinates of 'atoms', this may be the raw coordinates parsed or centres of mass/geometry.
+        '''
         return self._coords
-
+    
+    @property
+    def disp(self):
+        '''
+        Atom displacements, without drift correction.
+        '''
+        return self._disp
 
 def get_molecules(
     structure: Union[
