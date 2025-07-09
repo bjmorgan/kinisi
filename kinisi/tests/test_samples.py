@@ -45,3 +45,13 @@ class TestSamples(unittest.TestCase):
         samples = Samples(values)
         html_repr = samples._repr_html_()
         self.assertIn('kinisi.Samples', html_repr)
+
+    def test_samples_to_unit(self):
+        """
+        Test the conversion of samples to a different unit.
+        """
+        values = np.array([1.0, 2.0, 3.0])
+        samples = Samples(values, sc.Unit('m'))
+        converted_samples = samples.to_unit(sc.Unit('cm'))
+        self.assertEqual(converted_samples.unit, sc.Unit('cm'))
+        np.testing.assert_array_equal(converted_samples.values, values * 100)

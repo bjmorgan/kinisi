@@ -30,6 +30,9 @@ class Samples(sc.Variable):
         """
         This function augments the default HTML representation of a scipp Variable
         to include the mean and standard deviation of the samples.
+
+        :return: A string containing the HTML representation of the Samples object,
+                 including the mean and standard deviation.
         """
         split_1 = sc.make_html(self).split('sc-value-preview sc-preview')
         split_2 = split_1[1].split('div')
@@ -42,3 +45,13 @@ class Samples(sc.Variable):
         split_4[0] = ' '.join(split_5)
         split_3[3] = 'div'.join(split_4)
         return 'sc-obj-type'.join(split_3)
+
+    def to_unit(self, unit: sc.Unit) -> 'Samples':
+        """
+        Convert the samples to a different unit.
+
+        :param unit: The unit to convert the samples to.
+
+        :return: A new Samples object with the converted values.
+        """
+        return Samples(sc.to_unit(self, unit).values, unit=unit)
