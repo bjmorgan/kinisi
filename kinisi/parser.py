@@ -65,7 +65,7 @@ class Parser:
 
     def __init__(
         self,
-        snapshots: Union['pymatgen.core.structure.Structure', 'MDAnalysis.core.universe.Universe'],
+        snapshots: Union['pymatgen.core.structure.Structure', 'MDAnalysis.core.universe.Universe', list['ase.atoms.Atoms']],
         specie: Union[
             'pymatgen.core.periodic_table.Element',
             'pymatgen.core.periodic_table.Specie',
