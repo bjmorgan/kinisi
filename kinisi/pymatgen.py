@@ -54,6 +54,7 @@ class PymatgenParser(Parser):
         specie_indices: VariableLikeType = None,
         masses: VariableLikeType = None,
         progress: bool = True,
+        old_calc_disps: bool = False,
     ):
         super().__init__(structures, specie, time_step, step_skip, dt, distance_unit, specie_indices, masses, dimension,
                          progress)
