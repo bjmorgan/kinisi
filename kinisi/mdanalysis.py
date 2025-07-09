@@ -52,6 +52,7 @@ class MDAnalysisParser(Parser):
         specie_indices: VariableLikeType = None,
         masses: VariableLikeType = None,
         progress: bool = True,
+        old_calc_disps: bool = False,
     ):
         structure, coords, latt = self.get_structure_coords_latt(universe, distance_unit, progress)
 
