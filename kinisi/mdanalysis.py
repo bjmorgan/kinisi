@@ -52,9 +52,10 @@ class MDAnalysisParser(Parser):
         specie_indices: VariableLikeType = None,
         masses: VariableLikeType = None,
         progress: bool = True,
+        old_calc_disps: bool = False,
     ):
         super().__init__(
-            universe, specie, time_step, step_skip, dt, distance_unit, specie_indices, masses, dimension, progress
+            universe, specie, time_step, step_skip, dt, distance_unit, specie_indices, masses, dimension, progress, old_calc_disps
         )
 
     def get_structure_coords_latt(

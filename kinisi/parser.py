@@ -30,6 +30,14 @@ DIMENSIONALITY = {
     b'xyz': np.s_[:],
 }
 
+EINSUM_DIMENSIONS = {
+    'time': 't',
+    'atom': 'a',
+    'image': 'i',
+    'row': 'r',
+    'column': 'c'
+} # Single letter labels to be used as subscripts for dimensions of scipp arrays in einsums.
+
 
 class Parser:
     """
@@ -71,6 +79,7 @@ class Parser:
         masses: VariableLikeType = None,
         dimension: str = 'xyz',
         progress: bool = True,
+        old_calc_disps: bool = False,
     ):
         self.time_step = time_step
         self.step_skip = step_skip
@@ -88,7 +97,11 @@ class Parser:
         self.drift_indices = drift_indices
         self._coords = coords
 
-        disp = self.calculate_displacements(coords, latt)
+        if old_calc_disps:
+            disp = self.old_calculate_displacements(coords, latt)
+        else:
+            disp = self.calculate_displacements(coords, latt)
+        self._disp = disp
         drift_corrected = self.correct_drift(disp)
 
         self._slice = DIMENSIONALITY[dimension.lower()]
@@ -180,7 +193,7 @@ class Parser:
             raise TypeError('Unrecognized type for specie or specie_indices, specie_indices must be a sc.array')
         return coords, indices, drift_indices
 
-    def calculate_displacements(self, coords: VariableLikeType, lattice: VariableLikeType) -> VariableLikeType:
+    def old_calculate_displacements(self, coords: VariableLikeType, lattice: VariableLikeType) -> VariableLikeType:
         """
         Calculate the absolute displacements of the atoms in the trajectory.
 
@@ -213,6 +226,36 @@ class Parser:
         )
         unwrapped_diff = wrapped_diff - diff_diff
         return sc.cumsum(unwrapped_diff, 'obs')
+    
+    def calculate_displacements(self, coords: VariableLikeType, lattice: VariableLikeType) -> VariableLikeType:
+        """
+        Calculate the absolute displacements of the atoms in the trajectory. This is done by finding the minimum cartesian 
+            displacement vector, from its 8 periodic images. This ensures that triclinic cells are treated correctly.
+        
+        :param coords: The fractional coordiates of the atoms in the trajectory. This should be a :py:mod:`scipp`
+            array type object with dimensions of 'atom', 'time', and 'dimension'.
+        :param lattice: A series of matrices that describe the lattice in each step in the trajectory.
+            A :py:mod:`scipp` array with dimensions of 'time', 'row', and 'column'.
+            
+        :return: The absolute displacements of the atoms in the trajectory.
+        """
+        diff = np.diff(coords.values, axis=0)
+        images = np.tile([[0,0,0],[-1,0,0],[-1,-1,0],[0,-1,0],[0,0,1],[-1,0,1],[-1,-1,1],[0,-1,1]], (diff.shape[0],diff.shape[1],1,1))
+
+        diff[diff < 0] += 1
+        images = images + diff[..., np.newaxis, :]
+
+        cart_images = np.einsum('taid,tdc->taid', images, lattice.values[1:])
+        image_disps = np.linalg.norm(cart_images, axis=-1)
+        min_index = np.argmin(image_disps, axis=-1)
+
+        min_vectors = cart_images[np.arange(images.shape[0])[:, None], np.arange(images.shape[1])[None, :], min_index]
+        min_vectors = sc.array(dims=['obs'] + list(coords.dims[1:]),
+                               values=min_vectors,
+                               unit=coords.unit)
+        disps = sc.cumsum(min_vectors, 'obs')
+
+        return disps
 
     def correct_drift(self, disp: VariableLikeType) -> VariableLikeType:
         """
@@ -229,12 +272,18 @@ class Parser:
             return disp
 
     @property
-    def coords(self) -> VariableLikeType:
-        """
-        :return:  fractional coordinates of the chosen system. 
-        """
+    def coords(self):
+        '''
+        
+        '''
         return self._coords
-
+    
+    @property
+    def disp(self):
+        '''
+        
+        '''
+        return self._disp
 
 def get_molecules(
     structure: Union[
