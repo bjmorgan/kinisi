@@ -231,7 +231,7 @@ class Parser:
     @property
     def coords(self) -> VariableLikeType:
         """
-        :return: The self-diffusion coefficient.
+        :return:  fractional coordinates of the chosen system. 
         """
         return self._coords
 
@@ -264,10 +264,11 @@ def get_molecules(
     of the diffusion and indices of framework atoms.
     """
     drift_indices = []
-    n_molecules = indices.sizes['group_of_atoms']
 
     if set(indices.dims) != {'atom', 'group_of_atoms'}:
         raise ValueError("indices must contain only 'atom' and 'group_of_atoms' as dimensions.")
+    
+    n_molecules = indices.sizes['group_of_atoms']
 
     for i, site in enumerate(structure):
         if i not in indices.values:
@@ -280,7 +281,7 @@ def get_molecules(
     else:
         weights = masses.copy()
 
-    if 'group_of_atoms' not in set(weights.dims):
+    if 'group_of_atoms' not in weights.dims:
         raise ValueError("masses must contain 'group_of_atoms' as dimensions.")
 
     new_s_coords = _calculate_centers_of_mass(coords, weights, indices)
@@ -290,9 +291,9 @@ def get_molecules(
         new_s_coords = new_s_coords.astype(np.float32)
 
     new_coords = sc.concat([new_s_coords, coords['atom', drift_indices]], 'atom')
-    new_indices = sc.Variable(dims=['molecule'], values=list(range(n_molecules)))
+    new_indices = sc.Variable(dims=['atom'], values=list(range(n_molecules)))
     new_drift_indices = sc.Variable(
-        dims=['molecule'],
+        dims=['atom'],
         values=list(range(n_molecules, n_molecules + len(drift_indices))),
     )
 
@@ -356,7 +357,6 @@ def _calculate_centers_of_mass(
     theta_bar = sc.atan2(y=-zeta_bar, x=-xi_bar) + np.pi * sc.units.rad
     new_s_coords = theta_bar / (2 * np.pi * (sc.units.rad))
 
-    # Implementation of pseudo-centre of mass approach to centre of mass calculation (see DOI:10.1063/5.0260928 ).
     pseudo_com_recentering = (s_coords - (new_s_coords + 0.5)) % 1
     com_pseudo_space = (weights * pseudo_com_recentering).sum(dim=dims_id) / weights.sum(dim=dims_id)
     corrected_com = (com_pseudo_space + (new_s_coords + 0.5)) % 1
