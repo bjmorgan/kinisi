@@ -10,6 +10,7 @@ for handling samples, such as calculating the mean and standard deviation of the
 
 import scipp as sc
 from uncertainties import ufloat
+from bs4 import BeautifulSoup
 
 
 class Samples(sc.Variable):
@@ -34,17 +35,24 @@ class Samples(sc.Variable):
         :return: A string containing the HTML representation of the Samples object,
                  including the mean and standard deviation.
         """
-        split_1 = sc.make_html(self).split('sc-value-preview sc-preview')
-        split_2 = split_1[1].split('div')
-        split_2[1] = '>' + ufloat(sc.mean(self).value, sc.std(self, ddof=1).value).__str__() + '</'
-        split_1[1] = 'div'.join(split_2)
-        split_3 = 'sc-value-preview sc-preview'.join(split_1).split('sc-obj-type')
-        split_4 = split_3[3].split('div')
-        split_5 = split_4[0].split()
-        split_5[0] = "'>kinisi.Samples"
-        split_4[0] = ' '.join(split_5)
-        split_3[3] = 'div'.join(split_4)
-        return 'sc-obj-type'.join(split_3)
+        html = sc.make_html(self)
+        soup = BeautifulSoup(html, 'html.parser')
+
+        # Update the preview value
+        preview_div = soup.find('div', class_='sc-value-preview sc-preview')
+        if preview_div:
+            preview_div.string = str(
+                ufloat(sc.mean(self).value, sc.std(self, ddof=1).value)
+            )
+
+        # Update the type label
+        obj_type_divs = soup.find_all('div', class_='sc-obj-type')
+        if len(obj_type_divs) > 0:
+            parts = obj_type_divs[-1].contents
+            if parts:
+                parts[0].replace_with("kinisi.Samples")
+
+        return str(soup)
 
     def to_unit(self, unit: sc.Unit) -> 'Samples':
         """
