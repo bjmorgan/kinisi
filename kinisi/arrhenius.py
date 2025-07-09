@@ -38,11 +38,13 @@ class StandardArrhenius(Relationship):
             found for the variables. Default is :py:attr:`[2.5, 97.5]` (a 95 % confidence interval).
     """
 
-    def __init__(self,
-                 temperature: np.ndarray,
-                 diffusion: Union[List['uravu.distribution.Distribution'], np.ndarray],
-                 bounds: Tuple[Tuple[float, float], Tuple[float, float]] = ((0, 1), (0, 1e20)),
-                 diffusion_error: np.ndarray = None):
+    def __init__(
+        self,
+        temperature: np.ndarray,
+        diffusion: Union[List['uravu.distribution.Distribution'], np.ndarray],
+        bounds: Tuple[Tuple[float, float], Tuple[float, float]] = ((0, 1), (0, 1e20)),
+        diffusion_error: np.ndarray = None,
+    ):
         super().__init__(arrhenius, temperature, diffusion, bounds, ordinate_error=diffusion_error)
 
     @property
@@ -109,12 +111,13 @@ class SuperArrhenius(Relationship):
             found for the variables. Default is :py:attr:`[2.5, 97.5]` (a 95 % confidence interval).
     """
 
-    def __init__(self,
-                 temperature: np.ndarray,
-                 diffusion: Union[List['uravu.distribution.Distribution'], np.ndarray],
-                 bounds: Tuple[Tuple[float, float], Tuple[float, float], Tuple[float, float]] = [(0, 1), (0, 1e20),
-                                                                                                 (0, None)],
-                 diffusion_error: np.ndarray = None):
+    def __init__(
+        self,
+        temperature: np.ndarray,
+        diffusion: Union[List['uravu.distribution.Distribution'], np.ndarray],
+        bounds: Tuple[Tuple[float, float], Tuple[float, float], Tuple[float, float]] = [(0, 1), (0, 1e20), (0, None)],
+        diffusion_error: np.ndarray = None,
+    ):
         if bounds[2][1] is None:
             bounds[2] = (0, temperature[0])
         super().__init__(super_arrhenius, temperature, diffusion, bounds, ordinate_error=diffusion_error)

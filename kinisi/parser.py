@@ -48,7 +48,7 @@ class Parser:
         a step size the same as the smallest interval.
     :param distance_unit: The unit of distance used in the input structures. Optional, defaults to angstroms.
     :param specie_indices: Indices of the specie to calculate the diffusivity for. Optional, defaults to `None`.
-    :param masses: Masses of the atoms in the structure. Optional, defaults to `None`. 
+    :param masses: Masses of the atoms in the structure. Optional, defaults to `None`.
         If used should be a 1D scipp array of dimension 'group_of_atoms'.
     :param dimension: Dimension/s to find the displacement along, this should be some subset of `'xyz'` indicating
         the axes of interest. Optional, defaults to `'xyz'`.
@@ -72,7 +72,6 @@ class Parser:
         dimension: str = 'xyz',
         progress: bool = True,
     ):
-
         self.time_step = time_step
         self.step_skip = step_skip
         self._dimension = dimension
@@ -228,7 +227,7 @@ class Parser:
             return disp - sc.mean(disp['atom', self.drift_indices.values], 'atom')
         else:
             return disp
-        
+
     @property
     def coords(self) -> VariableLikeType:
         """
@@ -292,7 +291,8 @@ def get_molecules(
 
     new_coords = sc.concat([new_s_coords, coords['atom', drift_indices]], 'atom')
     new_indices = sc.Variable(dims=['molecule'], values=list(range(n_molecules)))
-    new_drift_indices = sc.Variable(dims=['molecule'],
+    new_drift_indices = sc.Variable(
+        dims=['molecule'],
         values=list(range(n_molecules, n_molecules + len(drift_indices))),
     )
 
@@ -336,22 +336,17 @@ def _calculate_centers_of_mass(
     indices: VariableLikeType,
 ) -> VariableLikeType:
     """
-    Calculates the weighted molecular centre of mass based on chosen weights and indices as per  DOI: 10.1063/5.0260928. 
+    Calculates the weighted molecular centre of mass based on chosen weights and indices as per  DOI: 10.1063/5.0260928.
     The method uses the pseudo centre of mass recentering method for efficient centre of mass calculation
-    
+
      :param coords: array of fractional coordinates these should be dimensionless
      :param weights: 1D array of weights of elements within molecule
-     :param indices: Scipp array of indices for the atoms in the molecules in the trajectory, 
+     :param indices: Scipp array of indices for the atoms in the molecules in the trajectory,
      this must include 2 dimensions 'atom' - The final number of desired atoms and 'group_of_atoms' - the number of atoms in each molecule
 
      :return: Array containing coordinates of centres of mass of molecules
     """
-    s_coords = sc.fold(
-        coords['atom', indices.values.flatten()],
-          'atom', 
-          dims=indices.dims, 
-          shape=indices.shape
-          )
+    s_coords = sc.fold(coords['atom', indices.values.flatten()], 'atom', dims=indices.dims, shape=indices.shape)
     theta = s_coords * (2 * np.pi * (sc.units.rad))
     xi = sc.cos(theta)
     zeta = sc.sin(theta)
@@ -361,10 +356,10 @@ def _calculate_centers_of_mass(
     theta_bar = sc.atan2(y=-zeta_bar, x=-xi_bar) + np.pi * sc.units.rad
     new_s_coords = theta_bar / (2 * np.pi * (sc.units.rad))
 
-    #Implementation of pseudo-centre of mass approach to centre of mass calculation (see DOI:10.1063/5.0260928 ).
-    pseudo_com_recentering = ((s_coords - (new_s_coords + 0.5)) % 1)
+    # Implementation of pseudo-centre of mass approach to centre of mass calculation (see DOI:10.1063/5.0260928 ).
+    pseudo_com_recentering = (s_coords - (new_s_coords + 0.5)) % 1
     com_pseudo_space = (weights * pseudo_com_recentering).sum(dim=dims_id) / weights.sum(dim=dims_id)
-    corrected_com = ((com_pseudo_space + (new_s_coords + 0.5)) % 1)
+    corrected_com = (com_pseudo_space + (new_s_coords + 0.5)) % 1
 
     print('If using the kinisi centre of mass feature, please reference: DOI: 10.1063/5.0260928')
     return corrected_com
@@ -382,4 +377,3 @@ def is_subset_approx(B: np.array, A: np.array, tol: float = 1e-9) -> bool:
     :return: True if all elements in B are approximately equal to any element in A, False otherwise.
     """
     return all(any(abs(a - b) < tol for a in A) for b in B)
-
