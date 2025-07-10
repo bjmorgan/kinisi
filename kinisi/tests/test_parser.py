@@ -85,6 +85,47 @@ class TestSubsetApprox(unittest.TestCase):
         subset = np.array([1, 3, 5, 7])
         assert not parser.is_subset_approx(subset, data)
 
+class Test_is_orthorhombic(unittest.TestCase):
+    """
+    Unit tests for checking cell shapes.
+    """
+
+    def test_is_orthorhombic(self):
+        latt = np.tile([[1,0,0],
+                        [0,1,0],
+                        [0,0,1]],
+                        (3,1,1))
+        latt = sc.array(dims=['time', 'dimension1', 'dimension2'], values=latt, unit=sc.units.angstrom)
+        assert np.all(np.count_nonzero(np.isclose(latt.values.reshape(-1,9), 0), axis=-1) == 6)
+
+    def test_is_orthorhombic_close(self):
+        latt = np.tile([[1,0,0],
+                        [1*np.cos(90*(np.pi/180)), 1*np.sin(90*np.pi/180),0],
+                        [0,0,1]],
+                        (3,1,1))
+        latt = sc.array(dims=['time', 'dimension1', 'dimension2'], values=latt, unit=sc.units.angstrom)
+        assert np.all(np.count_nonzero(np.isclose(latt.values.reshape(-1,9), 0), axis=-1) == 6)
+
+    def test_is_not_orthorhombic(self):
+        latt = np.tile([[1,0,0],
+                        [1*np.cos(60*(np.pi/180)),1*np.sin(60*np.pi/180),0],
+                        [0,0,1]],
+                        (3,1,1))
+        latt = sc.array(dims=['time', 'dimension1', 'dimension2'], values=latt, unit=sc.units.angstrom)
+        assert ~np.all(np.count_nonzero(np.isclose(latt.values.reshape(-1,9), 0), axis=-1) == 6)
+    
+    def test_some_is_not_orthorhombic(self):
+        latt = np.tile([[1,0,0],
+                        [1,1,0],
+                        [0,0,1]],
+                        (3,1,1))
+        latt = np.concatenate((latt,
+                               [[[1,0,0],
+                                 [1*np.cos(60*(np.pi/180)),1*np.sin(60*np.pi/180),0],
+                                 [0,0,1]]]),
+                               axis=0)
+        latt = sc.array(dims=['time', 'dimension1', 'dimension2'], values=latt, unit=sc.units.angstrom)
+        assert ~np.all(np.count_nonzero(np.isclose(latt.values.reshape(-1,9), 0), axis=-1) == 6)
 
 # import unittest
 # import numpy as np
