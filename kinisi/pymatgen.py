@@ -55,12 +55,16 @@ class PymatgenParser(Parser):
         masses: VariableLikeType = None,
         progress: bool = True,
     ):
-        super().__init__(structures, specie, time_step, step_skip, dt, distance_unit, specie_indices, masses, dimension,
+        
+        structure, coords, latt = self.get_structure_coords_latt(structures,distance_unit,progress)
+    
+        super().__init__(structure,coords,latt, specie, time_step, step_skip, dt, specie_indices, masses, dimension,
                          progress)
 
     def get_structure_coords_latt(
             self,
             structures: list['pymatgen.core.structure.Structure'],
+            distance_unit: VariableLikeType,
             progress: bool = True) -> tuple["pymatgen.core.structure.Structure", VariableLikeType, VariableLikeType]:
         """
         Obtain the initial structure, coordinates, and lattice parameters from a list of pymatgen structures.
@@ -95,7 +99,7 @@ class PymatgenParser(Parser):
         latt_l = np.array(latt_l)
 
         coords = sc.array(dims=['time', 'atom', 'dimension'], values=coords_l, unit=sc.units.dimensionless)
-        latt = sc.array(dims=['time', 'dimension1', 'dimension2'], values=latt_l, unit=self.distance_unit)
+        latt = sc.array(dims=['time', 'dimension1', 'dimension2'], values=latt_l, unit=distance_unit)
 
         return structure, coords, latt
 

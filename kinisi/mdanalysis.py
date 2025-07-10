@@ -53,13 +53,17 @@ class MDAnalysisParser(Parser):
         masses: VariableLikeType = None,
         progress: bool = True,
     ):
+        
+        structure, coords, latt = self.get_structure_coords_latt(universe,distance_unit,progress)
+
         super().__init__(
-            universe, specie, time_step, step_skip, dt, distance_unit, specie_indices, masses, dimension, progress
+            structure, coords, latt, specie, time_step, step_skip, dt, specie_indices, masses, dimension, progress
         )
 
     def get_structure_coords_latt(
         self,
         universe: 'MDAnalysis.core.universe.Universe',
+        distance_unit: VariableLikeType,
         progress: bool = True,
     ) -> tuple['MDAnalysis.core.universe.Universe', VariableLikeType, VariableLikeType]:
         """
@@ -97,7 +101,7 @@ class MDAnalysisParser(Parser):
         latt_l = np.array(latt_l)
 
         coords = sc.array(dims=['time', 'atom', 'dimension'], values=coords_l, unit=sc.units.dimensionless)
-        latt = sc.array(dims=['time', 'dimension1', 'dimension2'], values=latt_l, unit=self.distance_unit)
+        latt = sc.array(dims=['time', 'dimension1', 'dimension2'], values=latt_l, unit=distance_unit)
 
         return structure, coords, latt
 
