@@ -216,6 +216,23 @@ class TemperatureDependent:
         """
         flatchain = {name: self.data_group[name] for name in self.parameter_names}
         return sc.DataGroup(**flatchain)
+    
+    def extrapolate(self, extrapolated_temperature: float) -> VariableLike:
+        """
+        Extrapolate the diffusion coefficient to some un-investigated value. This can also be
+        used for interpolation.
+
+        :param extrapolated_temperature: Temperature to return diffusion coefficient at.
+
+        :return: Diffusion coefficient at extrapolated temperature.
+        """
+        extrapolated_temperature = sc.to_unit(extrapolated_temperature, self.temperature.unit).value
+        if isinstance(self.data_group[self.parameter_names[0]], Samples):
+            parameters = np.array([self.data_group[name].values for name in self.parameter_names])
+            return Samples(self.function(extrapolated_temperature, *parameters), self.diffusion.unit)
+        else:
+            parameters = np.array([self.data_group[name].value for name in self.parameter_names])
+            return sc.scalar(self.function(extrapolated_temperature, *parameters), unit=self.diffusion.unit)
 
 
 def arrhenius(abscissa: VariableLike, activation_energy: VariableLike, prefactor: VariableLike) -> VariableLike:

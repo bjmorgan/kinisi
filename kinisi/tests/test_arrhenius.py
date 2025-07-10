@@ -162,6 +162,26 @@ class TestTemperatureDependent(unittest.TestCase):
         assert len(td.flatchain) == 2
         assert td.flatchain.shape == (32,)
 
+    def test_extrapolate(self):
+        """
+        Test the extrapolate function of TemperatureDependent class
+        """
+        td = arrhenius.TemperatureDependent(data, straight_line, ('m', 'c'), (sc.Unit('m/s'), sc.Unit('m')))
+        extrapolated_value = td.extrapolate(300 * sc.Unit('K'))
+        assert isinstance(extrapolated_value, sc.Variable)
+        assert extrapolated_value.unit == sc.Unit('cm^2 / s')
+
+    def test_extrapolate_mcmc(self):
+        """
+        Test the extrapolate function of TemperatureDependent class with MCMC
+        """
+        td = arrhenius.TemperatureDependent(data, straight_line, ('m', 'c'), (sc.Unit('m/s'), sc.Unit('m')))
+        td.mcmc(n_samples=10, n_burn=5, n_walkers=32)
+        extrapolated_value = td.extrapolate(300 * sc.Unit('K'))
+        assert isinstance(extrapolated_value, Samples)
+        assert extrapolated_value.unit == sc.Unit('cm^2 / s')
+        assert_almost_equal(extrapolated_value.values.shape, (32,))
+
 
 class TestArrhenius(unittest.TestCase):
     """
