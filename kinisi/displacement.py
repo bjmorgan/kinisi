@@ -35,7 +35,7 @@ def calculate_msd(p: parser.Parser, progress: bool = True) -> sc.Variable:
         disp = sc.concat(
             [p.displacements['obs', di - 1], p.displacements['obs', di:] - p.displacements['obs', :-di]], 'obs'
         )
-        n = (p.displacements.sizes['atom'] * p.dt_int['time interval', -1] / di).value
+        n = (p.displacements.sizes['atom'] * p.dt_index['time interval', -1] / di).value
         s = sc.sum(disp**2, 'dimension')
         m = sc.mean(s).value
         v = (sc.var(s, ddof=1) / n).value
