@@ -57,7 +57,7 @@ class TestSystemParticleConsoldiation(unittest.TestCase):
             testing.assert_identical(actual, expected)
         assert len(record) == 1
         assert str(record[0].message) == (
-            'Truncating 7 atoms to split evenly into 2 centres of mass.This approach '
+            'Truncating 7 atoms to split evenly into 2 centres of mass. This approach '
             + 'is inefficient, you should consider using the number of system particles '
             + 'to split this evenly.'
         )
