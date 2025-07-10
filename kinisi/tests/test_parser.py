@@ -11,18 +11,67 @@ import unittest
 
 import MDAnalysis as mda
 import numpy as np
-from numpy.testing import assert_almost_equal, assert_equal
 import scipp as sc
-from pymatgen.io.vasp import Xdatcar
-import os
+from numpy.testing import assert_almost_equal, assert_equal
 
-import kinisi
 from kinisi import parser
 
 disp = np.random.random(size=(100, 100, 3))
 indices = np.arange(0, 100, 1, dtype=int)
 time_step = 1.0 * sc.Unit('fs')
 step_skip = 1 * sc.Unit('dimensionless')
+
+class mda_universe_generator:
+    def __init__(self, coords, weights):
+        self.coords = coords.values
+        self.weights = np.tile(weights, 2)
+        self.bonds = [
+            (0, 1),
+            (0, 2),
+            (0, 3),
+            (0, 4),
+            (5, 6),
+            (5, 7),
+            (5, 8),
+            (5, 9),
+        ]
+        self.box_dimensions = [1.0, 1.0, 1.0, 90.0, 90.0, 90.0]
+        self.types = ['1'] * 10
+
+        u = mda.Universe.empty(10, 2, atom_resindex=[0, 0, 0, 0, 0, 1, 1, 1, 1, 1], trajectory=True)
+        u.add_TopologyAttr('masses')
+        u.load_new(self.coords, order='fac')
+        u.add_TopologyAttr('types')
+        u.add_TopologyAttr('bonds', self.bonds)
+        u.atoms.masses = self.weights
+        u.atoms.types = self.types
+        self.u = u
+
+    def calculate_com(self):
+        mda_com_coords = np.zeros((10, 2, 3))
+        for i, _ts in enumerate(self.u.trajectory):
+            self.u.dimensions = self.box_dimensions
+            _groups = self.u.select_atoms('type 1').fragments
+            positions = np.array([g.center_of_mass(unwrap=True) for g in _groups], dtype=np.float32)
+            mda_com_coords[i] = positions
+        return mda_com_coords
+
+
+class Test_calculate_centers_of_mass(unittest.TestCase):
+    seeds = [42, 1998, 7, 64, 11]
+    for x in seeds:
+        np.random.seed(x)
+        coords_l = np.random.rand(10, 10, 3) * 0.5
+        coords = sc.array(dims=['time', 'atom', 'dimension'], values=coords_l, unit=sc.units.dimensionless)
+        indices = sc.array(dims=['atom', 'group_of_atoms'], values=[[0, 1, 2, 3, 4], [5, 6, 7, 8, 9]])
+        weights = sc.array(dims=['group_of_atoms'], values=np.random.rand(5) * 6)
+
+        kinisi_com = parser._calculate_centers_of_mass(coords=coords, weights=weights, indices=indices).values
+
+        mda_object = mda_universe_generator(coords=coords, weights=weights)
+        mda_com_coords = mda_object.calculate_com()
+
+        assert_almost_equal(mda_com_coords, kinisi_com)
 
 
 class mda_universe_generator:
@@ -93,7 +142,6 @@ class TestSubsetApprox(unittest.TestCase):
         subset = np.array([1, 3, 5, 7])
         assert not parser.is_subset_approx(subset, data)
 
-
 class TestParser(unittest.TestCase):
     """
     Unit tests for the Parser class
@@ -116,10 +164,6 @@ class TestParser(unittest.TestCase):
         datagroup = data._to_datagroup()
         data_2 = parser.Parser._from_datagroup(datagroup)
         assert_equal(vars(data), vars(data_2))
-
-
-
-
 
 
 # import unittest

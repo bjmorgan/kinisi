@@ -105,7 +105,6 @@ class Parser:
         """
         group = self.__dict__.copy()
         if hdf5:
-            group['distance_unit'] = self.distance_unit.name
             group.pop('_slice')
         group['__class__'] = f'{self.__class__.__module__}.{self.__class__.__name__}'
         return sc.DataGroup(group)
@@ -124,9 +123,7 @@ class Parser:
         obj = klass.__new__(klass)
 
         for key, value in datagroup.items():
-            if key == 'distance_unit' and type(value) is str:
-                setattr(obj, key, sc.Unit(value))
-            elif key != '__class__':
+            if key != '__class__':
                 setattr(obj, key, value)
         if not hasattr(obj, '_slice'):
             obj._slice = DIMENSIONALITY[obj._dimension.lower()]

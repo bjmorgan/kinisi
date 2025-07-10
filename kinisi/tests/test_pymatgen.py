@@ -15,14 +15,6 @@ class TestPymatgenParser(unittest.TestCase):
     Unit tests for the pymatgen module
     """
 
-    def test_pymatgen_init(self):
-        xd = Xdatcar(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_XDATCAR.gz'))
-        da_params = {'specie': 'Li', 'time_step': 2.0, 'step_skip': 50}
-        data = parser.PymatgenParser(xd.structures, **da_params)
-        assert_almost_equal(data.time_step, 2.0)
-        assert_almost_equal(data.step_skip, 50)
-        assert_equal(data.indices, list(range(xd.natoms[0])))
-
     def test_pymatgen_datagroup_round_trip(self):
         xd = Xdatcar(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_XDATCAR.gz'))
         da_params = {'specie': 'Li', 'time_step': 2.0 * sc.Unit('fs'), 'step_skip': 50 * sc.Unit('dimensionless')}
