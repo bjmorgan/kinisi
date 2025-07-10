@@ -9,26 +9,34 @@ Tests for parser module
 
 import unittest
 
+import MDAnalysis as mda
 import numpy as np
 import scipp as sc
-from kinisi import parser
 from numpy.testing import assert_almost_equal
-import MDAnalysis as mda
+
+from kinisi import parser
+
 
 class mda_universe_generator:
-    def __init__(self,coords,weights):
+    def __init__(self, coords, weights):
         self.coords = coords.values
-        self.weights = np.tile(weights,2)
+        self.weights = np.tile(weights, 2)
         self.bonds = [
-            (0, 1), (0, 2), (0, 3), (0, 4),                 
-            (5, 6), (5, 7), (5, 8), (5, 9),
-            ]
+            (0, 1),
+            (0, 2),
+            (0, 3),
+            (0, 4),
+            (5, 6),
+            (5, 7),
+            (5, 8),
+            (5, 9),
+        ]
         self.box_dimensions = [1.0, 1.0, 1.0, 90.0, 90.0, 90.0]
-        self.types = ['1']*10
+        self.types = ['1'] * 10
 
         u = mda.Universe.empty(10, 2, atom_resindex=[0, 0, 0, 0, 0, 1, 1, 1, 1, 1], trajectory=True)
         u.add_TopologyAttr('masses')
-        u.load_new(self.coords, order = 'fac')
+        u.load_new(self.coords, order='fac')
         u.add_TopologyAttr('types')
         u.add_TopologyAttr('bonds', self.bonds)
         u.atoms.masses = self.weights
@@ -36,31 +44,31 @@ class mda_universe_generator:
         self.u = u
 
     def calculate_com(self):
-        mda_com_coords = np.zeros((10,2,3))
-        for i,ts in enumerate(self.u.trajectory):
+        mda_com_coords = np.zeros((10, 2, 3))
+        for i, _ts in enumerate(self.u.trajectory):
             self.u.dimensions = self.box_dimensions
-            atom_types = 'type 1'
             _groups = self.u.select_atoms('type 1').fragments
-            positions = np.array([g.center_of_mass(unwrap = True) for g in _groups], dtype=np.float32)
+            positions = np.array([g.center_of_mass(unwrap=True) for g in _groups], dtype=np.float32)
             mda_com_coords[i] = positions
         return mda_com_coords
 
 
 class Test_calculate_centers_of_mass(unittest.TestCase):
-    seeds = [42,1998,7,64,11]
+    seeds = [42, 1998, 7, 64, 11]
     for x in seeds:
         np.random.seed(x)
         coords_l = np.random.rand(10, 10, 3) * 0.5
         coords = sc.array(dims=['time', 'atom', 'dimension'], values=coords_l, unit=sc.units.dimensionless)
-        indices = sc.array(dims = ['atom','group_of_atoms'], values = [[0,1,2,3,4],[5,6,7,8,9]])
-        weights = sc.array(dims = ['group_of_atoms'], values = np.random.rand(5)*6)
+        indices = sc.array(dims=['atom', 'group_of_atoms'], values=[[0, 1, 2, 3, 4], [5, 6, 7, 8, 9]])
+        weights = sc.array(dims=['group_of_atoms'], values=np.random.rand(5) * 6)
 
-        kinisi_com = parser._calculate_centers_of_mass(coords = coords,weights=weights, indices = indices).values
+        kinisi_com = parser._calculate_centers_of_mass(coords=coords, weights=weights, indices=indices).values
 
-        mda_object = mda_universe_generator(coords = coords,weights=weights)
+        mda_object = mda_universe_generator(coords=coords, weights=weights)
         mda_com_coords = mda_object.calculate_com()
 
-        assert_almost_equal(mda_com_coords,kinisi_com)
+        assert_almost_equal(mda_com_coords, kinisi_com)
+
 
 class TestSubsetApprox(unittest.TestCase):
     """
