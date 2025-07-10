@@ -5,7 +5,7 @@ It is used to extract the necessary data for diffusion analysis from an MDAnalys
 
 # Copyright (c) kinisi developers.
 # Distributed under the terms of the MIT License.
-# author: Andrew R. McCluskey (arm61) and Harry Richardson (Harry-Rich).
+# author: Josh Dunn (jd15489).
 
 import numpy as np
 import scipp as sc
