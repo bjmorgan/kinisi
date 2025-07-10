@@ -34,8 +34,9 @@ DIMENSIONALITY = {
 class Parser:
     """
     The base class for object parsing.
-
-    :param snapshots: The snapshots from the trajectory given the positions of atoms.
+    :param structure: a :py:class:`pymatgen.core.structure.Structure` or a :py:class:`MDAnalysis.core.universe.Universe`
+    :param coords: a :py:mod:`scipp` array with dimensions of `time`, `atom`, and `dimension`),
+    :param lattice:  a :py:mod:`scipp` array with dimensions `time`,`dimension1`, and `dimension2`
     :param specie: Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
     :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator. Note,
         that this must be given as a :py:mod:`scipp`-type scalar. The unit used for the time_step, will be the unit
@@ -46,7 +47,6 @@ class Parser:
     :param dt: Time intervals to calculate the displacements over. Optional, defaults to a :py:mod:`scipp` array
         ranging from the smallest interval (i.e., time_step * step_skip) to the full simulation length, with
         a step size the same as the smallest interval.
-    :param distance_unit: The unit of distance used in the input structures. Optional, defaults to angstroms.
     :param specie_indices: Indices of the specie to calculate the diffusivity for. Optional, defaults to `None`.
     :param masses: Masses of the atoms in the structure. Optional, defaults to `None`.
         If used should be a 1D scipp array of dimension 'group_of_atoms'.
@@ -251,7 +251,6 @@ def get_molecules(
     :param indices: indices for the atoms in the molecules in the trajectory used in the calculation
     of the diffusion.
     :param masses: Masses associated with indices in indices.
-    :param framework_indices: Indices of framework to be used in drift correction. If set to None will return all indices that are not in indices.
 
 
     :return: Tuple containing: Tuple containing: fractional coordinates for centers and framework atoms
