@@ -57,9 +57,9 @@ class Parser:
 
     def __init__(
         self,
-        structure:VariableLikeType,
-        coords:VariableLikeType,
-        latt:VariableLikeType,
+        structure: VariableLikeType,
+        coords: VariableLikeType,
+        latt: VariableLikeType,
         specie: Union[
             'pymatgen.core.periodic_table.Element',
             'pymatgen.core.periodic_table.Specie',
@@ -77,7 +77,6 @@ class Parser:
         self.step_skip = step_skip
         self._dimension = dimension
         self.dt = dt
-        self.distance_unit = latt.unit
 
         self.dt_index = self.create_integer_dt(coords, time_step, step_skip)
 
@@ -170,9 +169,7 @@ class Parser:
             indices, drift_indices = self.get_indices(structure, specie)
         elif isinstance(specie_indices, sc.Variable):
             if len(specie_indices.dims) > 1:
-                coords, indices, drift_indices = get_molecules(
-                    structure, coords, specie_indices, masses
-                )
+                coords, indices, drift_indices = get_molecules(structure, coords, specie_indices, masses)
             else:
                 indices, drift_indices = get_framework(structure, specie_indices)
         else:
@@ -230,7 +227,7 @@ class Parser:
     @property
     def coords(self) -> VariableLikeType:
         """
-        :return:  fractional coordinates of the chosen system. 
+        :return:  fractional coordinates of the chosen system.
         """
         return self._coords
 
@@ -265,10 +262,10 @@ def get_molecules(
 
     if set(indices.dims) != {'atom', 'group_of_atoms'}:
         raise ValueError("indices must contain only 'atom' and 'group_of_atoms' as dimensions.")
-    
+
     n_molecules = indices.sizes['group_of_atoms']
 
-    for i, site in enumerate(structure):
+    for i, _site in enumerate(structure):
         if i not in indices.values:
             drift_indices.append(i)
 
