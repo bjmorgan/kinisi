@@ -28,13 +28,13 @@ class JumpDiffusionAnalyzer(Analyzer):
     
     :param trajectory: The parsed trajectory from some input file. This will be of type :py:class:`Parser`, but
         the specifics depend on the parser that is used.
-    :param msd_da: The mean-squared total displacement data, which is a :py:class:`scipp.DataArray` object.
+    :param da: The mean-squared total displacement data, which is a :py:class:`scipp.DataArray` object.
         This is calculated from the trajectory data and is used to determine the jump diffusion coefficient.
     """
 
     def __init__(self, trajectory: Parser) -> None:
         super().__init__(trajectory)
-        self.msd_da = None
+        self.da = None
 
     @classmethod
     def from_xdatcar(cls,
@@ -87,7 +87,7 @@ class JumpDiffusionAnalyzer(Analyzer):
         """
         p = super()._from_xdatcar(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit,
                                   specie_indices, masses, progress)
-        p.msd_da = calculate_mstd(p.trajectory, system_particles, progress)
+        p.da = calculate_mstd(p.trajectory, system_particles, progress)
         return p
 
     @classmethod
@@ -141,7 +141,7 @@ class JumpDiffusionAnalyzer(Analyzer):
         """
         p = super()._from_universe(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit,
                                    specie_indices, masses, progress)
-        p.msd_da = calculate_mstd(p.trajectory, system_particles, progress)
+        p.da = calculate_mstd(p.trajectory, system_particles, progress)
         return p
 
     def jump_diffusion(self,
@@ -167,7 +167,7 @@ class JumpDiffusionAnalyzer(Analyzer):
         :param progress: Whether to show the progress bar. Optional, default is :py:attr:`True`.
         :param random_state: The random state to use for the MCMC. Optional, default is :py:attr:`None`.
         """
-        self.diff = Diffusion(msd=self.msd_da)
+        self.diff = Diffusion(msd=self.da)
         self.diff._jump_diffusion(start_dt,
                                   cond_max=cond_max,
                                   fit_intercept=fit_intercept,
@@ -185,10 +185,10 @@ class JumpDiffusionAnalyzer(Analyzer):
         plotting of credible intervals.
         """
         if self.diff.intercept is not None:
-            return self.diff.gradient.values * self.msd_da.coords[
+            return self.diff.gradient.values * self.da.coords[
                 'time interval'].values[:, np.newaxis] + self.diff.intercept.values
         else:
-            return self.diff.gradient.values * self.msd_da.coords['time interval'].values[:, np.newaxis]
+            return self.diff.gradient.values * self.da.coords['time interval'].values[:, np.newaxis]
 
     @property
     def D_J(self) -> VariableLikeType:
@@ -202,7 +202,7 @@ class JumpDiffusionAnalyzer(Analyzer):
         """
         :return: The mean-squared total displacement.
         """
-        return self.msd_da.data
+        return self.da.data
 
     @property
     def flatchain(self) -> sc.DataGroup:
