@@ -64,8 +64,12 @@ class ASEParser(Parser):
         progress: bool = True,
         old_calc_disps: bool = False,
     ):
+        atoms, coords, latt = self.get_structure_coords_latt(atoms, distance_unit, progress)
+
         super().__init__(
             atoms,
+            coords,
+            latt,
             specie,
             time_step,
             step_skip,
@@ -74,8 +78,7 @@ class ASEParser(Parser):
             specie_indices,
             masses,
             dimension,
-            progress,
-            old_calc_disps,
+            progress
         )
 
     def get_structure_coords_latt(
