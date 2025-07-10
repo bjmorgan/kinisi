@@ -11,10 +11,18 @@ import unittest
 
 import MDAnalysis as mda
 import numpy as np
+from numpy.testing import assert_almost_equal, assert_equal
 import scipp as sc
-from numpy.testing import assert_almost_equal
+from pymatgen.io.vasp import Xdatcar
+import os
 
+import kinisi
 from kinisi import parser
+
+disp = np.random.random(size=(100, 100, 3))
+indices = np.arange(0, 100, 1, dtype=int)
+time_step = 1.0 * sc.Unit('fs')
+step_skip = 1 * sc.Unit('dimensionless')
 
 
 class mda_universe_generator:
@@ -84,6 +92,34 @@ class TestSubsetApprox(unittest.TestCase):
         data = np.array([1, 2, 3, 4, 5])
         subset = np.array([1, 3, 5, 7])
         assert not parser.is_subset_approx(subset, data)
+
+
+class TestParser(unittest.TestCase):
+    """
+    Unit tests for the Parser class
+    """
+
+    def test_parser_init_time_interval(self):
+        data = parser.Parser(disp, indices, time_step, step_skip)
+        assert_equal(data.time_step, time_step)
+
+    def test_parser_init_stepskip(self):
+        data = parser.Parser(disp, indices, time_step, step_skip)
+        assert_equal(data.step_skip, step_skip)
+
+    def test_parser_init_indices(self):
+        data = parser.Parser(disp, indices, time_step, step_skip)
+        assert_equal(data.indices, indices)
+
+    def test_parser_datagroup_round_trip(self):
+        data = parser.Parser(disp, indices, time_step, step_skip)
+        datagroup = data._to_datagroup()
+        data_2 = parser.Parser._from_datagroup(datagroup)
+        assert_equal(vars(data), vars(data_2))
+
+
+
+
 
 
 # import unittest
