@@ -5,8 +5,87 @@
 
 # Distributed under the terms of the MIT License
 
-# @author: Andrew R. McCluskey
+# @author: Andrew R. McCluskey & Harry Richardson
 # """
+
+import unittest
+import warnings
+import numpy as np
+import scipp as sc
+from tqdm import tqdm
+from numpy.testing import assert_almost_equal, assert_equal
+from kinisi.diffusion import minimum_eigenvalue_method, _straight_line, Diffusion
+
+
+
+
+
+
+class TestFunctions(unittest.TestCase):
+    """
+    Testing other functions.
+    """
+    def test_minimum_eigenvalue_method(self):
+        matrix = np.random.random((100, 100))
+        reconditioned_matrix = minimum_eigenvalue_method(matrix, 1)
+        assert not np.allclose(matrix, reconditioned_matrix)
+
+    def test_straight_line(self):
+        m = 3
+        x = np.array([1,2,3])
+        c = 1.3
+        result = _straight_line(x,m,c)
+        expected_result = np.array([ 4.3,  7.3, 10.3])
+        assert np.all(result == expected_result)
+
+class TestDiffusion(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.msd = sc.io.load_hdf5(filename='./inputs/example_msd.hdf5')
+        cls.RNG = np.random.RandomState(42)
+        cls.diff = Diffusion(cls.msd)
+
+
+
+    def test_bayesian_regression(self):
+
+        start_dt = 10*sc.Unit('femtosecond')
+        self.diff.bayesian_regression(start_dt = start_dt, random_state=self.RNG)
+
+        assert self.diff.gradient is not None
+        assert hasattr(self.diff.gradient, "mean")
+        assert self.diff.gradient.to_unit('cm2/s').unit == sc.Unit('cm2/s')
+        assert_almost_equal(self.diff.gradient.mean().values, 0.0034362421050160605)
+
+        assert self.diff.intercept is not None
+        assert_almost_equal(self.diff.intercept.mean().values, 1.99712023)
+        assert self.diff.intercept.to_unit('angstrom2').unit == sc.Unit('angstrom2')
+
+        assert self.diff._flatchain.shape == (3200,2)
+
+        cov = self.diff.covariance_matrix
+        assert cov.dims == ('time_interval1', 'time_interval2')
+        assert cov.shape == (140,140)
+        assert_almost_equal(cov.sum().values, 8252957.465046101)
+
+
+    def test__diffusion(self):
+        start_dt = 400*sc.Unit('femtosecond') 
+
+        self.diff._diffusion(start_dt)
+        
+        assert_almost_equal(self.diff._diffusion_coefficient.mean().values, 9.71164179e-05)
+        assert self.diff._diffusion_coefficient.to_unit('cm2/s').unit == sc.Unit('cm2/s')
+
+    def test__jump_diffusion(self):
+        start_dt = 200 * sc.Unit('femtosecond')
+
+        self.diff._jump_diffusion(start_dt)
+
+        assert_almost_equal(self.diff._jump_diffusion_coefficient.mean().values, 9.57963584e-05)
+        assert self.diff._jump_diffusion_coefficient.to_unit('cm2/s').unit == sc.Unit('cm2/s')
+
 
 # # pylint: disable=R0201
 
