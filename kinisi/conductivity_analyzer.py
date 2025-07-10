@@ -30,7 +30,7 @@ class ConductivityAnalyzer(Analyzer):
 
     def __init__(self, trajectory: Parser) -> None:
         super().__init__(trajectory)
-        self.msd_da = None
+        self.da = None
 
     @classmethod
     def from_xdatcar(cls,
@@ -86,7 +86,7 @@ class ConductivityAnalyzer(Analyzer):
         """
         p = super()._from_xdatcar(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit,
                                   species_indices, masses, progress)
-        p.msd_da = calculate_mstd(p.trajectory, system_particles, ionic_charge, progress)
+        p.da = calculate_mstd(p.trajectory, system_particles, ionic_charge, progress)
         return p
 
     def conductivity(self,
@@ -115,7 +115,7 @@ class ConductivityAnalyzer(Analyzer):
         :param progress: Whether to show the progress bar. Optional, default is :py:attr:`True`.
         :param random_state: The random state to use for the MCMC. Optional, default is :py:attr:`None`.
         """
-        self.diff = Diffusion(msd=self.msd_da)
+        self.diff = Diffusion(msd=self.da)
         self.diff._conductivity(start_dt,
                                 temperature,
                                 self.trajectory._volume,
@@ -135,10 +135,10 @@ class ConductivityAnalyzer(Analyzer):
         plotting of credible intervals.
         """
         if self.diff.intercept is not None:
-            return self.diff.gradient.values * self.msd_da.coords[
+            return self.diff.gradient.values * self.da.coords[
                 'time interval'].values[:, np.newaxis] + self.diff.intercept.values
         else:
-            return self.diff.gradient.values * self.msd_da.coords['time interval'].values[:, np.newaxis]
+            return self.diff.gradient.values * self.da.coords['time interval'].values[:, np.newaxis]
 
     @property
     def sigma(self) -> VariableLikeType:
@@ -152,7 +152,7 @@ class ConductivityAnalyzer(Analyzer):
         """
         :return: The mean-squared charge displacement.
         """
-        return self.msd_da.data
+        return self.da.data
 
     @property
     def flatchain(self) -> sc.DataGroup:
