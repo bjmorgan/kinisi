@@ -95,10 +95,13 @@ class Parser:
         self.drift_indices = drift_indices
         self._coords = coords
 
-        if old_calc_disps:
-            disp = self.old_calculate_displacements(coords, latt)
+        # Test to see if more than one element in each row of the 3 x 3 array is non-zero. 
+        orthorhombic = np.all(np.count_nonzero(latt.reshape(-1,9), axis=-1) == 3)
+
+        if orthorhombic:
+            disp = self.orthorhombic_calculate_displacements(coords, latt)
         else:
-            disp = self.calculate_displacements(coords, latt)
+            disp = self.non_orthorhombic_calculate_displacements(coords, latt)
         self._disp = disp
         drift_corrected = self.correct_drift(disp)
 
@@ -191,7 +194,7 @@ class Parser:
 
     def orthorhombic_calculate_displacements(self, coords: VariableLikeType, lattice: VariableLikeType) -> VariableLikeType:
         """
-        Calculate the absolute displacements of the atoms in the trajectory.
+        Calculate the absolute displacements of the atoms in the trajectory, when the cell is orthorhombic on all frames.
 
         :param coords: The fractional coordiates of the atoms in the trajectory. This should be a :py:mod:`scipp`
             array type object with dimensions of 'atom', 'time', and 'dimension'.
@@ -225,7 +228,7 @@ class Parser:
     
     def non_orthorhombic_calculate_displacements(self, coords: VariableLikeType, lattice: VariableLikeType) -> VariableLikeType:
         """
-        Calculate the absolute displacements of the atoms in the trajectory. This is done by finding the minimum cartesian 
+        Calculate the absolute displacements of the atoms in the trajectory, when a non-orthrhombic cell is used. This is done by finding the minimum cartesian 
             displacement vector, from its 8 periodic images. This ensures that triclinic cells are treated correctly.
         
         :param coords: The fractional coordiates of the atoms in the trajectory. This should be a :py:mod:`scipp`
