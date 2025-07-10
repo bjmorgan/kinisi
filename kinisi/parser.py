@@ -78,9 +78,7 @@ class Parser:
         dt: VariableLikeType = None,
         specie_indices: VariableLikeType = None,
         masses: VariableLikeType = None,
-        dimension: str = 'xyz',
-        progress: bool = True,
-        old_calc_disps: bool = False,
+        dimension: str = 'xyz'
     ):
         self.time_step = time_step
         self.step_skip = step_skip
