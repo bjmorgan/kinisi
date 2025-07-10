@@ -189,7 +189,7 @@ class Parser:
             raise TypeError('Unrecognized type for specie or specie_indices, specie_indices must be a sc.array')
         return coords, indices, drift_indices
 
-    def old_calculate_displacements(self, coords: VariableLikeType, lattice: VariableLikeType) -> VariableLikeType:
+    def orthorhombic_calculate_displacements(self, coords: VariableLikeType, lattice: VariableLikeType) -> VariableLikeType:
         """
         Calculate the absolute displacements of the atoms in the trajectory.
 
@@ -223,7 +223,7 @@ class Parser:
         unwrapped_diff = wrapped_diff - diff_diff
         return sc.cumsum(unwrapped_diff, 'obs')
     
-    def calculate_displacements(self, coords: VariableLikeType, lattice: VariableLikeType) -> VariableLikeType:
+    def non_orthorhombic_calculate_displacements(self, coords: VariableLikeType, lattice: VariableLikeType) -> VariableLikeType:
         """
         Calculate the absolute displacements of the atoms in the trajectory. This is done by finding the minimum cartesian 
             displacement vector, from its 8 periodic images. This ensures that triclinic cells are treated correctly.
