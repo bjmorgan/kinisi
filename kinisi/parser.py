@@ -57,7 +57,9 @@ class Parser:
 
     def __init__(
         self,
-        snapshots: Union['pymatgen.core.structure.Structure', 'MDAnalysis.core.universe.Universe'],
+        structure:VariableLikeType,
+        coords:VariableLikeType,
+        latt:VariableLikeType,
         specie: Union[
             'pymatgen.core.periodic_table.Element',
             'pymatgen.core.periodic_table.Specie',
@@ -66,7 +68,6 @@ class Parser:
         time_step: VariableLikeType,
         step_skip: VariableLikeType,
         dt: VariableLikeType = None,
-        distance_unit: sc.Unit = sc.units.angstrom,
         specie_indices: VariableLikeType = None,
         masses: VariableLikeType = None,
         dimension: str = 'xyz',
@@ -76,9 +77,7 @@ class Parser:
         self.step_skip = step_skip
         self._dimension = dimension
         self.dt = dt
-        self.distance_unit = distance_unit
-
-        structure, coords, latt = self.get_structure_coords_latt(snapshots, progress)
+        self.distance_unit = latt.unit
 
         self.dt_index = self.create_integer_dt(coords, time_step, step_skip)
 
@@ -96,7 +95,7 @@ class Parser:
         self.dimensionality = drift_corrected.sizes['dimension'] * sc.units.dimensionless
 
         self.displacements = drift_corrected['atom', indices]
-        self._volume = np.prod(latt.values[0].diagonal()) * self.distance_unit**3
+        self._volume = np.prod(latt.values[0].diagonal()) * latt.unit**3
 
     def create_integer_dt(
         self,
@@ -172,7 +171,7 @@ class Parser:
         elif isinstance(specie_indices, sc.Variable):
             if len(specie_indices.dims) > 1:
                 coords, indices, drift_indices = get_molecules(
-                    structure, coords, specie_indices, masses, self.distance_unit
+                    structure, coords, specie_indices, masses
                 )
             else:
                 indices, drift_indices = get_framework(structure, specie_indices)
@@ -245,7 +244,6 @@ def get_molecules(
     coords: VariableLikeType,
     indices: VariableLikeType,
     masses: VariableLikeType,
-    distance_unit: sc.Unit,
 ) -> tuple[np.ndarray, np.ndarray, tuple[np.ndarray, np.ndarray]]:
     """
     Determine framework and non-framework indices for an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when
