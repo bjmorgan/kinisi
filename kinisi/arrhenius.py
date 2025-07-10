@@ -216,7 +216,7 @@ class TemperatureDependent:
         """
         flatchain = {name: self.data_group[name] for name in self.parameter_names}
         return sc.DataGroup(**flatchain)
-    
+
     def extrapolate(self, extrapolated_temperature: float) -> VariableLike:
         """
         Extrapolate the diffusion coefficient to some un-investigated value. This can also be
