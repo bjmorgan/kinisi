@@ -1,6 +1,6 @@
 """
-The :py:class:`MDAnalysisParser` class is a parser for MDAnalysis universe object.
-It is used to extract the necessary data for diffusion analysis from an MDAnalysis universe.
+The :py:class:`ASEParser` class is a parser for ASE atoms object.
+It is used to extract the necessary data for diffusion analysis from ASE.
 """
 
 # Copyright (c) kinisi developers.
@@ -62,7 +62,6 @@ class ASEParser(Parser):
         specie_indices: VariableLikeType = None,
         masses: VariableLikeType = None,
         progress: bool = True,
-        old_calc_disps: bool = False,
     ):
         atoms, coords, latt = self.get_structure_coords_latt(atoms, distance_unit, progress)
 
@@ -82,7 +81,7 @@ class ASEParser(Parser):
         )
 
     def get_structure_coords_latt(
-        self, atoms: list['ase.atoms.Atoms'], sub_sample_traj: int = 1, progress: bool = True
+        self, atoms: list['ase.atoms.Atoms'], progress: bool = True
     ) -> tuple['ase.atoms.Atoms', VariableLikeType, VariableLikeType]:
         """
         Obtain the initial structure and displacement from a :py:attr:`list` of :py:class`pymatgen.core.structure.Structure`.
@@ -96,9 +95,9 @@ class ASEParser(Parser):
         coords, latt = [], []
         first = True
         if progress:
-            iterator = tqdm(atoms[::sub_sample_traj], desc='Reading Trajectory')
+            iterator = tqdm(atoms, desc='Reading Trajectory')
         else:
-            iterator = atoms[::sub_sample_traj]
+            iterator = atoms
         for struct in iterator:
             if first:
                 structure = struct
