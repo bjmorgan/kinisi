@@ -170,42 +170,6 @@ class Parser:
 
         dt_index = (self.dt / (time_step * step_skip)).astype(int)
         return dt_index
-    
-    def _to_datagroup(self, hdf5=False) -> sc.DataGroup:
-        """
-        Convert the :py:class:`Parser` object to a :py:mod: 'scipp' DataGroup.
-        :param hdf5: If `True`, incompatible classes will be converted for saving to HDF5.
-        :return: A :py:mod:`scipp` DataGroup representing the :py:class:`Parser` object.
-        """
-        group = self.__dict__.copy()
-        if hdf5:
-            group['distance_unit'] = self.distance_unit.name
-            group.pop('_slice')
-        group['__class__'] = f"{self.__class__.__module__}.{self.__class__.__name__}"
-        return sc.DataGroup(group)
-    
-    @classmethod
-    def _from_datagroup(cls, datagroup) -> 'Parser':
-        """
-        Convert a :py:mod: 'scipp' DataGroup back to a :py:class:`Parser` object.
-        :return: A :py:class:`Parser` object.
-        """
-        class_path = str(datagroup['__class__'])
-        module_name, class_name = class_path.rsplit('.', 1)
-        module = importlib.import_module(module_name)
-        klass = getattr(module, class_name)
-
-        obj = klass.__new__(klass)
-
-        for key, value in datagroup.items():
-            if key == 'distance_unit' and type(value) == str:
-                setattr(obj, key, sc.Unit(value))
-            elif key != '__class__':
-                setattr(obj, key, value)
-        if not hasattr(obj, '_slice'):
-            setattr(obj, '_slice', DIMENSIONALITY[obj._dimension.lower()])
-
-        return obj       
 
     def calculate_displacements(self, coords: VariableLikeType, lattice: VariableLikeType) -> VariableLikeType:
         """
