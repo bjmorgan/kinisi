@@ -93,12 +93,9 @@ class Parser:
 
         self.indices = indices
         self.drift_indices = drift_indices
-        self._coords = coords
+        self._coords = coords 
 
-        # Test to see if more than one element in each row of the 3 x 3 array is non-zero. 
-        orthorhombic = np.all(np.count_nonzero(latt.reshape(-1,9), axis=-1) == 3)
-
-        if orthorhombic:
+        if is_orthorhombic(latt):
             disp = self.orthorhombic_calculate_displacements(coords, latt)
         else:
             disp = self.non_orthorhombic_calculate_displacements(coords, latt)
@@ -423,3 +420,13 @@ def is_subset_approx(B: np.array, A: np.array, tol: float = 1e-9) -> bool:
     :return: True if all elements in B are approximately equal to any element in A, False otherwise.
     """
     return all(any(abs(a - b) < tol for a in A) for b in B)
+
+def is_orthorhombic(latt: VariableLikeType) -> bool:
+    """
+    Check if trajectory is always orthorhombic.
+
+    :param latt: a :py:mod:`scipp` array with dimensions `time`,`dimension1`, and `dimension2`.
+
+    :return: True if lattice vectors are orthorhombic for all trajectory frames. 
+    """
+    return np.all(np.count_nonzero(np.isclose(latt.values.reshape(-1,9), 0), axis=-1) == 6)
