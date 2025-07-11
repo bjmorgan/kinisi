@@ -54,7 +54,6 @@ class PymatgenParser(Parser):
         specie_indices: VariableLikeType = None,
         masses: VariableLikeType = None,
         progress: bool = True,
-        old_calc_disps: bool = False,
     ):
         structure, coords, latt = self.get_structure_coords_latt(structures, distance_unit, progress)
 
