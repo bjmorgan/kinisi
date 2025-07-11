@@ -86,7 +86,7 @@ class TestSubsetApprox(unittest.TestCase):
         assert not parser.is_subset_approx(subset, data)
 
 
-dg = sc.load_hdf5(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_drift.h5'))
+dg = sc.io.load_hdf5(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_drift.h5'))
 coords = dg['coords']
 latt = dg['latt']
 time_step = dg['time_step']
