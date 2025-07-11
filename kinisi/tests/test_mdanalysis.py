@@ -15,7 +15,7 @@ class TestMDAnalysisParser(unittest.TestCase):
     Unit tests for the mdanalysis module
     """
 
-    def test_mda_init():
+    def test_mdanalysis_datagroup_round_trip(self):
         xd = mda.Universe(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS.data'),
                             os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS.dcd'),
                             format='LAMMPS')
