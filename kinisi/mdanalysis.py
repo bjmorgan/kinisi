@@ -56,7 +56,7 @@ class MDAnalysisParser(Parser):
         structure, coords, latt = self.get_structure_coords_latt(universe, distance_unit, progress)
 
         super().__init__(
-            structure, coords, latt, specie, time_step, step_skip, dt, specie_indices, masses, dimension, progress
+            structure, coords, latt, specie, time_step, step_skip, dt, specie_indices, masses, dimension
         )
 
     def get_structure_coords_latt(
