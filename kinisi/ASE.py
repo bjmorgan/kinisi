@@ -60,24 +60,29 @@ class ASEParser(Parser):
         dimension: str = 'xyz',
         distance_unit: sc.Unit = sc.units.angstrom,
         specie_indices: VariableLikeType = None,
+        drift_indices: VariableLikeType = None,
         masses: VariableLikeType = None,
         progress: bool = True,
     ):
         atoms, coords, latt = self.get_structure_coords_latt(atoms, distance_unit, progress)
 
+        if specie is None and specie_indices is None:
+                raise TypeError('Must specify specie or specie_indices as scipp VariableLikeType')
+        else:
+            if specie is not None:
+                specie_indices, drift_indices = self.get_indices(atoms, specie)
+
         super().__init__(
-            atoms,
             coords,
             latt,
-            specie,
             time_step,
             step_skip,
             dt,
             distance_unit,
             specie_indices,
+            drift_indices,
             masses,
-            dimension,
-            progress
+            dimension
         )
 
     def get_structure_coords_latt(
@@ -103,7 +108,7 @@ class ASEParser(Parser):
                 structure = struct
                 first = False
             scaled_positions = struct.get_scaled_positions()
-            coords.append(np.array(scaled_positions)[:, None])
+            coords.append(np.array(scaled_positions))
             latt.append(struct.cell[:])
 
         coords.insert(0, coords[0])
@@ -131,7 +136,7 @@ class ASEParser(Parser):
         """
         indices = []
         drift_indices = []
-        if not isinstance(specie, List):
+        if not isinstance(specie, list):
             specie = [specie]
         for i, site in enumerate(structure):
             if site.symbol in specie:
