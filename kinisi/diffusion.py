@@ -8,13 +8,14 @@ Calculate the diffusion coefficient.
 
 import numpy as np
 import scipp as sc
-from scipp.constants import k
-from statsmodels.stats.correlation_tools import cov_nearest
-from scipy.linalg import pinvh
-from scipy.stats import linregress, multivariate_normal
-from scipy.optimize import minimize
 from emcee import EnsembleSampler
+from scipp.constants import k
+from scipy.linalg import pinvh
+from scipy.optimize import minimize
+from scipy.stats import linregress, multivariate_normal
+from statsmodels.stats.correlation_tools import cov_nearest
 from tqdm import tqdm
+
 from kinisi.samples import Samples
 
 
@@ -23,7 +24,7 @@ class Diffusion:
     The class for the calcualtion of the self-diffusion coefficient.
 
     :param da: A :py:class:`scipp.DataArray` object containing the relevant mean-squared displacement
-        data and number of independent samples. 
+        data and number of independent samples.
     """
 
     def __init__(self, da: sc.DataArray):
@@ -193,9 +194,11 @@ class Diffusion:
         :param kwargs: Additional keyword arguments to pass to :py:func:`bayesian_regression`.
         """
         self.bayesian_regression(start_dt=start_dt, **kwargs)
-        _conductivity_diffusion_coefficient = sc.to_unit(self.gradient / (2 * self.da.coords['dimensionality'].value),'coulomb2cm2/s')
+        _conductivity_diffusion_coefficient = sc.to_unit(
+            self.gradient / (2 * self.da.coords['dimensionality'].value), 'coulomb2cm2/s'
+        )
         conversion = 1 / (volume * k * temperature)
-        _sigma = sc.to_unit( _conductivity_diffusion_coefficient * conversion, 'mS/cm')
+        _sigma = sc.to_unit(_conductivity_diffusion_coefficient * conversion, 'mS/cm')
         self._sigma = Samples(_sigma.values, _sigma.unit)
 
     @property
@@ -273,7 +276,7 @@ class Diffusion:
 
         # Checking unit consistency for mu and covariance
         if ppd_unit**2 != self._covariance_matrix.unit:
-            raise ValueError("Units of the covariance matrix and mu do not align correctly.")
+            raise ValueError('Units of the covariance matrix and mu do not align correctly.')
 
         for i, n in iterator:
             mu = self.gradient[n] * self.da.coords['time interval'][diff_regime:] + self.intercept[n]
