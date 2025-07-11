@@ -18,6 +18,7 @@ from kinisi.parser import Parser
 from kinisi.pymatgen import PymatgenParser
 from kinisi.mdanalysis import MDAnalysisParser
 from kinisi.diffusion import Diffusion
+from kinisi.ase import ASEParser
 import importlib
 
 
@@ -181,6 +182,36 @@ class Analyzer:
                                  specie_indices=specie_indices,
                                  masses=masses,
                                  progress=progress) for f in trajectory
+            ]
+            p = u[0]
+            p.displacements = sc.concat([i.displacements for i in u], 'atom')
+            return cls(p)
+    
+    @classmethod
+    def _from_ase(cls, 
+                  trajectory: Union['ase.io.trajectory.Trajectory', List['ase.io.trajectory.Trajectory']],
+                  specie: Union[str, 'ase.Atom', None],
+                  time_step: sc.Variable,
+                  step_skip: sc.Variable,
+                  dtype: Union[str, None] = None,
+                  dt: sc.Variable = None,
+                  dimension: str = 'xyz',
+                  distance_unit: sc.Unit = sc.units.angstrom,
+                  specie_indices: sc.Variable = None,
+                  masses: sc.Variable = None,
+                  progress: bool = True) -> 'Analyzer':
+        """
+        Constructs the necessary :py:mod:`kinisi` objects for analysis from a single or a list of
+        :py:class:`ase.io.trajectory.Trajectory` objects.
+        """
+        if dtype is None:
+            p = ASEParser(trajectory, specie, time_step, step_skip, dt, dimension, distance_unit,
+                                specie_indices, masses, progress)
+            return cls(p)
+        elif dtype == 'identical':
+            u = [
+                ASEParser(f, specie, time_step, step_skip, dt, dimension, distance_unit,
+                                specie_indices, masses, progress) for f in trajectory
             ]
             p = u[0]
             p.displacements = sc.concat([i.displacements for i in u], 'atom')
