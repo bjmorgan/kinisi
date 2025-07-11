@@ -85,54 +85,45 @@ class TestSubsetApprox(unittest.TestCase):
         subset = np.array([1, 3, 5, 7])
         assert not parser.is_subset_approx(subset, data)
 
+
+dg = sc.load_hdf5(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_drift.h5'))
+coords = dg['coords']
+latt = dg['latt']
+time_step = dg['time_step']
+step_skip = dg['step_skip']
+dt = dg['dt']
+specie_indices = dg['specie_indices']
+drift_indices = dg['drift_indices']
+dimension = dg['dimension']
+disp = dg['disp']
+
 class TestParser(unittest.TestCase):
     """
     Unit tests for the Parser class
     """
 
-    def __init__(self):
-        dg = sc.load_hdf5(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_drift.h5'))
-        self.coords = dg['coords']
-        self.latt = dg['latt']
-        self.time_step = dg['time_step']
-        self.step_skip = dg['step_skip']
-        self.dt = dg['dt']
-        self.specie_indices = dg['specie_indices']
-        self.drift_indices = dg['drift_indices']
-        self.dimension = dg['dimension']
-        self.disp = dg['disp']
-
     def test_parser_init_time_interval(self):
-        data = parser.Parser(self.coords, self.latt, self.time_step, self.step_skip, self.dt, self.specie_indices, self.drift_indices, dimension=self.dimension)
-        assert_equal(data.time_step, self.time_step)
+        data = parser.Parser(coords, latt, time_step, step_skip, dt, specie_indices, drift_indices, dimension=dimension)
+        assert_equal(data.time_step, time_step)
 
     def test_parser_init_stepskip(self):
-        data = parser.Parser(self.structure, self.coords, self.latt, self.specie, self.time_step, self.step_skip)
-        assert_equal(data.step_skip, self.step_skip)
+        data = parser.Parser(coords, latt, time_step, step_skip, dt, specie_indices, drift_indices, dimension=dimension)
+        assert_equal(data.step_skip, step_skip)
     
     def test_parser_init_specie_indices(self):
-        data = parser.Parser(self.coords, self.latt, self.time_step, self.step_skip, self.dt, self.specie_indices, self.drift_indices, dimension=self.dimension)
-        assert_equal(data.specie_indices, self.specie_indices)
+        data = parser.Parser(coords, latt, time_step, step_skip, dt, specie_indices, drift_indices, dimension=dimension)
+        assert_equal(data.specie_indices, specie_indices)
     
     def test_parser_init_specie_indices(self):
-        data = parser.Parser(self.coords, self.latt, self.time_step, self.step_skip, self.dt, self.specie_indices, self.drift_indices, dimension=self.dimension)
-        assert_equal(data.drift_indices, self.drift_indices)
+        data = parser.Parser(coords, latt, time_step, step_skip, dt, specie_indices, drift_indices, dimension=dimension)
+        assert_equal(data.drift_indices, drift_indices)
 
     def test_parser_dt(self):
-        data = parser.Parser(self.structure, self.coords, self.latt, self.specie, self.time_step, self.step_skip)
+        data = parser.Parser(coords, latt, time_step, step_skip, dt, specie_indices, drift_indices, dimension=dimension)
         assert_equal(data.dt.size, 140)
 
-    # def test_correct_drift(self):
-    #     corrected = parser.Parser.correct_drift([], self.disp)
-    #     assert_equal(len(corrected), 140)
-    #     for i, d in enumerate(corrected):
-    #         assert_equal(d.shape[0], 140)
-    #         assert_equal(d.shape[1], 3)
-    
-
-
     def test_parser_datagroup_round_trip(self):
-        data = parser.Parser(self.structure, self.coords, self.latt, self.specie, self.time_step, self.step_skip)
+        data = parser.Parser(coords, latt, time_step, step_skip, dt, specie_indices, drift_indices, dimension=dimension)
         datagroup = data._to_datagroup()
         data_2 = parser.Parser._from_datagroup(datagroup)
         assert vars(data) == vars(data_2)
