@@ -23,13 +23,13 @@ class DiffusionAnalyzer(Analyzer):
     
     :param trajectory: The parsed trajectory from some input file. This will be of type :py:class:`Parser`, but
         the specifics depend on the parser that is used.
-    :param msd_da: The mean-squared displacement data, which is a :py:class:`scipp.DataArray` object.
+    :param da: The mean-squared displacement data, which is a :py:class:`scipp.DataArray` object.
         This is calculated from the trajectory data and is used to determine the diffusion coefficient.
     """
 
     def __init__(self, trajectory: Parser) -> None:
         super().__init__(trajectory)
-        self.msd_da = None
+        self.da = None
 
     @classmethod
     def from_xdatcar(
@@ -80,7 +80,7 @@ class DiffusionAnalyzer(Analyzer):
         """
         p = super()._from_xdatcar(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit,
                                   specie_indices, masses, progress)
-        p.msd_da = calculate_msd(p.trajectory, progress)
+        p.da = calculate_msd(p.trajectory, progress)
         return p
 
     @classmethod
@@ -130,7 +130,7 @@ class DiffusionAnalyzer(Analyzer):
         """
         p = super()._from_universe(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit,
                                    specie_indices, masses, progress)
-        p.msd_da = calculate_msd(p.trajectory, progress)
+        p.da = calculate_msd(p.trajectory, progress)
         return p
 
     def diffusion(self,
@@ -156,7 +156,7 @@ class DiffusionAnalyzer(Analyzer):
         :param progress: Whether to show the progress bar. Optional, default is :py:attr:`True`.
         :param random_state: The random state to use for the MCMC. Optional, default is :py:attr:`None`.
         """
-        self.diff = Diffusion(self.msd_da)
+        self.diff = Diffusion(self.da)
         self.diff._diffusion(start_dt,
                              cond_max=cond_max,
                              fit_intercept=fit_intercept,
@@ -174,10 +174,10 @@ class DiffusionAnalyzer(Analyzer):
         plotting of credible intervals.
         """
         if self.diff.intercept is not None:
-            return self.diff.gradient.values * self.msd_da.coords[
+            return self.diff.gradient.values * self.da.coords[
                 'time interval'].values[:, np.newaxis] + self.diff.intercept.values
         else:
-            return self.diff.gradient.values * self.msd_da.coords['time interval'].values[:, np.newaxis]
+            return self.diff.gradient.values * self.da.coords['time interval'].values[:, np.newaxis]
 
     @property
     def D(self) -> VariableLikeType:
@@ -191,7 +191,7 @@ class DiffusionAnalyzer(Analyzer):
         """
         :return: The mean-squared displacement.
         """
-        return self.msd_da.data
+        return self.da.data
 
     @property
     def flatchain(self) -> sc.DataGroup:

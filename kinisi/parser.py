@@ -34,8 +34,9 @@ DIMENSIONALITY = {
 class Parser:
     """
     The base class for object parsing.
-
-    :param snapshots: The snapshots from the trajectory given the positions of atoms.
+    :param structure: a :py:class:`pymatgen.core.structure.Structure` or a :py:class:`MDAnalysis.core.universe.Universe`
+    :param coords: a :py:mod:`scipp` array with dimensions of `time`, `atom`, and `dimension`),
+    :param lattice:  a :py:mod:`scipp` array with dimensions `time`,`dimension1`, and `dimension2`
     :param specie: Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
     :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator. Note,
         that this must be given as a :py:mod:`scipp`-type scalar. The unit used for the time_step, will be the unit
@@ -46,7 +47,6 @@ class Parser:
     :param dt: Time intervals to calculate the displacements over. Optional, defaults to a :py:mod:`scipp` array
         ranging from the smallest interval (i.e., time_step * step_skip) to the full simulation length, with
         a step size the same as the smallest interval.
-    :param distance_unit: The unit of distance used in the input structures. Optional, defaults to angstroms.
     :param specie_indices: Indices of the specie to calculate the diffusivity for. Optional, defaults to `None`.
     :param masses: Masses of the atoms in the structure. Optional, defaults to `None`.
         If used should be a 1D scipp array of dimension 'group_of_atoms'.
@@ -57,7 +57,9 @@ class Parser:
 
     def __init__(
         self,
-        snapshots: Union['pymatgen.core.structure.Structure', 'MDAnalysis.core.universe.Universe'],
+        structure: VariableLikeType,
+        coords: VariableLikeType,
+        latt: VariableLikeType,
         specie: Union[
             'pymatgen.core.periodic_table.Element',
             'pymatgen.core.periodic_table.Specie',
@@ -66,7 +68,6 @@ class Parser:
         time_step: VariableLikeType,
         step_skip: VariableLikeType,
         dt: VariableLikeType = None,
-        distance_unit: sc.Unit = sc.units.angstrom,
         specie_indices: VariableLikeType = None,
         masses: VariableLikeType = None,
         dimension: str = 'xyz',
@@ -76,9 +77,6 @@ class Parser:
         self.step_skip = step_skip
         self._dimension = dimension
         self.dt = dt
-        self.distance_unit = distance_unit
-
-        structure, coords, latt = self.get_structure_coords_latt(snapshots, progress)
 
         self.dt_index = self.create_integer_dt(coords, time_step, step_skip)
 
@@ -96,7 +94,7 @@ class Parser:
         self.dimensionality = drift_corrected.sizes['dimension'] * sc.units.dimensionless
 
         self.displacements = drift_corrected['atom', indices]
-        self._volume = np.prod(latt.values[0].diagonal()) * self.distance_unit**3
+        self._volume = np.prod(latt.values[0].diagonal()) * latt.unit**3
 
     def create_integer_dt(
         self,
@@ -171,9 +169,7 @@ class Parser:
             indices, drift_indices = self.get_indices(structure, specie)
         elif isinstance(specie_indices, sc.Variable):
             if len(specie_indices.dims) > 1:
-                coords, indices, drift_indices = get_molecules(
-                    structure, coords, specie_indices, masses, self.distance_unit
-                )
+                coords, indices, drift_indices = get_molecules(structure, coords, specie_indices, masses)
             else:
                 indices, drift_indices = get_framework(structure, specie_indices)
         else:
@@ -231,7 +227,7 @@ class Parser:
     @property
     def coords(self) -> VariableLikeType:
         """
-        :return:  fractional coordinates of the chosen system. 
+        :return:  fractional coordinates of the chosen system.
         """
         return self._coords
 
@@ -245,7 +241,6 @@ def get_molecules(
     coords: VariableLikeType,
     indices: VariableLikeType,
     masses: VariableLikeType,
-    distance_unit: sc.Unit,
 ) -> tuple[np.ndarray, np.ndarray, tuple[np.ndarray, np.ndarray]]:
     """
     Determine framework and non-framework indices for an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when
@@ -256,7 +251,6 @@ def get_molecules(
     :param indices: indices for the atoms in the molecules in the trajectory used in the calculation
     of the diffusion.
     :param masses: Masses associated with indices in indices.
-    :param framework_indices: Indices of framework to be used in drift correction. If set to None will return all indices that are not in indices.
 
 
     :return: Tuple containing: Tuple containing: fractional coordinates for centers and framework atoms
@@ -267,10 +261,10 @@ def get_molecules(
 
     if set(indices.dims) != {'atom', 'group_of_atoms'}:
         raise ValueError("indices must contain only 'atom' and 'group_of_atoms' as dimensions.")
-    
+
     n_molecules = indices.sizes['group_of_atoms']
 
-    for i, site in enumerate(structure):
+    for i, _site in enumerate(structure):
         if i not in indices.values:
             drift_indices.append(i)
 

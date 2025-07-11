@@ -22,12 +22,12 @@ class Diffusion:
     """
     The class for the calcualtion of the self-diffusion coefficient.
 
-    :param msd: A :py:class:`scipp.DataArray` object containing the relevant mean-squared displacement
-        data and number of independent samples.
+    :param da: A :py:class:`scipp.DataArray` object containing the relevant mean-squared displacement
+        data and number of independent samples. 
     """
 
-    def __init__(self, msd: sc.DataArray):
-        self.msd = msd
+    def __init__(self, da: sc.DataArray):
+        self.da = da
         self.gradient = None
         self.intercept = None
         self._diffusion_coefficient = None
