@@ -106,8 +106,8 @@ class Diffusion:
         self.diff_regime = np.argwhere(self.da.coords['time interval'] >= self._start_dt)[0][0]
         self._covariance_matrix = self.compute_covariance_matrix()
 
-        x_values = self.da.coords['time interval'][self.diff_regime :].values
-        y_values = self.da['time interval', self.diff_regime :].values
+        x_values = self.da.coords['time interval'][self.diff_regime:].values
+        y_values = self.da['time interval', self.diff_regime:].values
 
         _, logdet = np.linalg.slogdet(self._covariance_matrix.values)
         logdet += np.log(2 * np.pi) * y_values.size
@@ -166,7 +166,7 @@ class Diffusion:
         :param start_dt: The time at which the diffusion regime begins.
         :param kwargs: Additional keyword arguments to pass to :py:func:`bayesian_regression`.
         """
-        self.bayesian_regression(start_dt=start_dt, **kwargs)
+        self.bayesian_regression(start_dt=sc.to_unit(start_dt, self.da.coords['time interval'].unit), **kwargs)
         _diffusion_coefficient = sc.to_unit(self.gradient / (2 * self.da.coords['dimensionality'].value), 'cm2/s')
         self._diffusion_coefficient = Samples(_diffusion_coefficient.values, _diffusion_coefficient.unit)
 
@@ -265,8 +265,7 @@ class Diffusion:
         ppd = sc.zeros(
             dims=['posterior samples', 'predictive samples', 'time interval'],
             shape=[n_posterior_samples, n_predictive_samples, self.da.coords['time interval'][diff_regime:].size],
-            unit=ppd_unit,
-        )
+            unit=ppd_unit)
         samples_to_draw = list(enumerate(np.random.randint(0, self.gradient.size, size=n_posterior_samples)))
 
         if progress:
