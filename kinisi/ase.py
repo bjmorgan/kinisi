@@ -7,6 +7,7 @@ It is used to extract the necessary data for diffusion analysis from ASE.
 # Distributed under the terms of the MIT License.
 # author: Josh Dunn (jd15489).
 
+
 import numpy as np
 import scipp as sc
 from scipp.typing import VariableLikeType
@@ -66,17 +67,7 @@ class ASEParser(Parser):
         atoms, coords, latt = self.get_structure_coords_latt(atoms, distance_unit, progress)
 
         super().__init__(
-            atoms,
-            coords,
-            latt,
-            specie,
-            time_step,
-            step_skip,
-            dt,
-            specie_indices,
-            masses,
-            dimension,
-            progress
+            atoms, coords, latt, specie, time_step, step_skip, dt, specie_indices, masses, dimension, progress
         )
 
     def get_structure_coords_latt(
@@ -130,7 +121,7 @@ class ASEParser(Parser):
         """
         indices = []
         drift_indices = []
-        if not isinstance(specie, List):
+        if not isinstance(specie, list):
             specie = [specie]
         for i, site in enumerate(structure):
             if site.symbol in specie:

@@ -79,8 +79,8 @@ class Diffusion:
         self.diff_regime = np.argwhere(self.da.coords['time interval'] >= self._start_dt)[0][0]
         self._covariance_matrix = self.compute_covariance_matrix()
 
-        x_values = self.da.coords['time interval'][self.diff_regime:].values
-        y_values = self.da['time interval', self.diff_regime:].values
+        x_values = self.da.coords['time interval'][self.diff_regime :].values
+        y_values = self.da['time interval', self.diff_regime :].values
 
         _, logdet = np.linalg.slogdet(self._covariance_matrix.values)
         logdet += np.log(2 * np.pi) * y_values.size
@@ -208,15 +208,15 @@ class Diffusion:
                 value = ratio * self.da.data.variances[i]
                 cov[i, j] = value
                 cov[j, i] = np.copy(cov[i, j])
-        return sc.array(dims=['time_interval1', 'time_interval2'],
-                        values=cov_nearest(
-                            minimum_eigenvalue_method(cov[self.diff_regime:, self.diff_regime:], self._cond_max)),
-                        unit=self.da.unit**2)
+        return sc.array(
+            dims=['time_interval1', 'time_interval2'],
+            values=cov_nearest(minimum_eigenvalue_method(cov[self.diff_regime :, self.diff_regime :], self._cond_max)),
+            unit=self.da.unit**2,
+        )
 
-    def posterior_predictive(self,
-                             n_posterior_samples: int = None,
-                             n_predictive_samples: int = 256,
-                             progress: bool = True) -> sc.Variable:
+    def posterior_predictive(
+        self, n_posterior_samples: int = None, n_predictive_samples: int = 256, progress: bool = True
+    ) -> sc.Variable:
         """
         Sample the posterior predictive distribution. The shape of the resulting array will be
         `(n_posterior_samples * n_predictive_samples, start_dt)`.
@@ -238,7 +238,8 @@ class Diffusion:
         ppd = sc.zeros(
             dims=['posterior samples', 'predictive samples', 'time interval'],
             shape=[n_posterior_samples, n_predictive_samples, self.da.coords['time interval'][diff_regime:].size],
-            unit=ppd_unit)
+            unit=ppd_unit,
+        )
         samples_to_draw = list(enumerate(np.random.randint(0, self.gradient.size, size=n_posterior_samples)))
 
         if progress:
