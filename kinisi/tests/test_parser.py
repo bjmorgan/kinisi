@@ -128,7 +128,8 @@ class test_is_orthorhombic(unittest.TestCase):
         assert not parser.is_orthorhombic(latt)
 
     def test_orthorhombic_calculate_displacements(self):
-        points = [[[0.1, 0.1, 0.1]], [[0.9, 0.1, 0.1]],
+        coords = [[[0.1, 0.1, 0.1]],
+                  [[0.1, 0.1, 0.1]], [[0.9, 0.1, 0.1]],
                   [[0.1, 0.1, 0.1]], [[0.1, 0.9, 0.1]],
                   [[0.1, 0.1, 0.1]], [[0.1, 0.1, 0.9]],
                   [[0.1, 0.1, 0.1]], [[0.9, 0.9, 0.1]],
@@ -136,11 +137,24 @@ class test_is_orthorhombic(unittest.TestCase):
                   [[0.1, 0.1, 0.1]], [[0.1, 0.9, 0.9]],
                   [[0.1, 0.1, 0.1]], [[0.9, 0.9, 0.9]]]
         coords = sc.array(dims=['time','atom','dimension'],
-                          values=points,
+                          values=coords,
                           unit=sc.units.dimensionless)
         latt = np.tile([[10,0,0],[0,10,0],[0,0,10]], (coords.shape[0],1,1))
+        latt = sc.array(dims=['time','dimension1','dimension2'],
+                        values=latt,
+                        unit=sc.units.angstrom)
         disp = parser.Parser.orthorhombic_calculate_displacements(coords=coords, lattice=latt)
-        print(disp)
+        test_disp = [[[ 0. ,  0. ,  0. ]],[[-2. ,  0. ,  0. ]],
+                     [[ 2. ,  0. ,  0. ]],[[ 0. , -2. ,  0. ]],
+                     [[ 0. ,  2. ,  0. ]],[[ 0. ,  0. , -2. ]],
+                     [[ 0. ,  0. ,  2. ]],[[-2. , -2. ,  0. ]],
+                     [[ 2. ,  2. ,  0. ]],[[-2. ,  0. , -2. ]],
+                     [[ 2. ,  0. ,  2. ]],[[ 0. , -2. , -2. ]],
+                     [[ 0. ,  2. ,  2. ]],[[-2. , -2. , -2. ]]]
+        test_disp = sc.array(dims=['obs','atom','dimension'],
+                             values=np.cumsum(test_disp, axis=0),
+                             unit=sc.units.angstrom)
+        assert_almost_equal(disp.values, test_disp.values)
 
 # import unittest
 # import numpy as np

@@ -188,8 +188,9 @@ class Parser:
             raise TypeError('Unrecognized type for specie or specie_indices, specie_indices must be a sc.array')
         return coords, indices, drift_indices
 
+    @staticmethod
     def orthorhombic_calculate_displacements(
-        self, coords: VariableLikeType, lattice: VariableLikeType
+        coords: VariableLikeType, lattice: VariableLikeType
     ) -> VariableLikeType:
         """
         Calculate the absolute displacements of the atoms in the trajectory, when the cell is orthorhombic on all frames.
@@ -224,8 +225,9 @@ class Parser:
         unwrapped_diff = wrapped_diff - diff_diff
         return sc.cumsum(unwrapped_diff, 'obs')
 
+    @staticmethod
     def non_orthorhombic_calculate_displacements(
-        self, coords: VariableLikeType, lattice: VariableLikeType
+        coords: VariableLikeType, lattice: VariableLikeType
     ) -> VariableLikeType:
         """
         Calculate the absolute displacements of the atoms in the trajectory, when a non-orthrhombic cell is used. This is done by finding the minimum cartesian
