@@ -44,5 +44,5 @@ class TestAnalyzer(unittest.TestCase):
         analyzer_2 = Analyzer._from_hdf5(test_file)
         if os.path.exists(test_file):
             os.remove(test_file)
-        assert vars(analyzer) == vars(analyzer_2)
+        assert analyzer.trajectory._to_datagroup() == analyzer_2.trajectory._to_datagroup()
         assert type(analyzer) is type(analyzer_2)

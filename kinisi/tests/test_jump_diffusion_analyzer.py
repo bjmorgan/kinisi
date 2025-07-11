@@ -35,7 +35,7 @@ class TestJumpDiffusionAnalyzer(unittest.TestCase):
         test_file = os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_DiffusionAnalyzer.h5')
         analyzer = JumpDiffusionAnalyzer._from_hdf5(test_file)
         analyzer_2 = Analyzer._from_hdf5(test_file)
-        assert vars(analyzer) == vars(analyzer_2)
+        assert analyzer.trajectory._to_datagroup() == analyzer_2.trajectory._to_datagroup()
         assert type(analyzer) is type(analyzer_2)
     
     def test_round_trip_hdf5(self):
@@ -48,7 +48,7 @@ class TestJumpDiffusionAnalyzer(unittest.TestCase):
         analyzer_3 = Analyzer._from_hdf5(test_file)
         if os.path.exists(test_file):
             os.remove(test_file)
-        assert vars(analyzer) == vars(analyzer_2)
+        assert analyzer.trajectory._to_datagroup() == analyzer_2.trajectory._to_datagroup()
         assert type(analyzer) is type(analyzer_2)
-        assert vars(analyzer) == vars(analyzer_3)
+        assert analyzer.trajectory._to_datagroup() == analyzer_3.trajectory._to_datagroup()
         assert type(analyzer) is type(analyzer_3)
