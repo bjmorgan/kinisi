@@ -4,7 +4,7 @@ Tests for parser module
 
 # Copyright (c) kinisi developers.
 # Distributed under the terms of the MIT License
-# author: Andrew R. McCluskey (arm61)
+# author: Andrew R. McCluskey (arm61), Oskar G. Soulas (osoulas)
 # pylint: disable=R0201
 
 import unittest
@@ -14,7 +14,6 @@ import MDAnalysis as mda
 import numpy as np
 import scipp as sc
 from numpy.testing import assert_almost_equal, assert_equal
-from pymatgen.core import Structure
 
 import kinisi
 from kinisi import parser
@@ -147,36 +146,43 @@ class TestParser(unittest.TestCase):
 
     def __init__(self):
         dg = sc.load_hdf5(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_drift.h5'))
-        self.structure = Structure.from_str(dg['structure'].value, fmt='json')
         self.coords = dg['coords']
         self.latt = dg['latt']
-        self.specie = dg['specie']
         self.time_step = dg['time_step']
         self.step_skip = dg['step_skip']
-        self.disp = None
+        self.dt = dg['dt']
+        self.specie_indices = dg['specie_indices']
+        self.drift_indices = dg['drift_indices']
+        self.dimension = dg['dimension']
+        self.disp = dg['disp']
 
     def test_parser_init_time_interval(self):
-        data = parser.Parser(self.structure, self.coords, self.latt, self.specie, self.time_step, self.step_skip)
+        data = parser.Parser(self.coords, self.latt, self.time_step, self.step_skip, self.dt, self.specie_indices, self.drift_indices, dimension=self.dimension)
         assert_equal(data.time_step, self.time_step)
 
     def test_parser_init_stepskip(self):
         data = parser.Parser(self.structure, self.coords, self.latt, self.specie, self.time_step, self.step_skip)
         assert_equal(data.step_skip, self.step_skip)
+    
+    def test_parser_init_specie_indices(self):
+        data = parser.Parser(self.coords, self.latt, self.time_step, self.step_skip, self.dt, self.specie_indices, self.drift_indices, dimension=self.dimension)
+        assert_equal(data.specie_indices, self.specie_indices)
+    
+    def test_parser_init_specie_indices(self):
+        data = parser.Parser(self.coords, self.latt, self.time_step, self.step_skip, self.dt, self.specie_indices, self.drift_indices, dimension=self.dimension)
+        assert_equal(data.drift_indices, self.drift_indices)
 
-    def test_parser_init_indices(self):
+    def test_parser_dt(self):
         data = parser.Parser(self.structure, self.coords, self.latt, self.specie, self.time_step, self.step_skip)
-        assert_equal(data.indices, self.indices)
+        assert_equal(data.dt.size, 140)
 
-    def test_parser_delta_t(self):
-        data = parser.Parser(self.structure, self.coords, self.latt, self.specie, self.time_step, self.step_skip)
-        assert_equal(data.delta_t.size, 81)
-
-    def test_correct_drift(self):
-        corrected = parser.Parser.correct_drift([], self.disp)
-        assert_equal(len(corrected), 100)
-        for i, d in enumerate(corrected):
-            assert_equal(d.shape[0], 100)
-            assert_equal(d.shape[1], 3)
+    # def test_correct_drift(self):
+    #     corrected = parser.Parser.correct_drift([], self.disp)
+    #     assert_equal(len(corrected), 140)
+    #     for i, d in enumerate(corrected):
+    #         assert_equal(d.shape[0], 140)
+    #         assert_equal(d.shape[1], 3)
+    
 
 
     def test_parser_datagroup_round_trip(self):

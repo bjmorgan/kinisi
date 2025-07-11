@@ -5,7 +5,7 @@ Parsers for kinisi. This module is responsible for reading in input files from :
 
 # Copyright (c) kinisi developers.
 # Distributed under the terms of the MIT License.
-# author: Andrew R. McCluskey (arm61) and Harry Richardson (Harry-Rich).
+# author: Andrew R. McCluskey (arm61), Harry Richardson (Harry-Rich) and Oskar G. Soulas (osoulas).
 
 import importlib
 from typing import Union
