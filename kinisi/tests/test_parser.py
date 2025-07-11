@@ -96,7 +96,7 @@ class Test_is_orthorhombic(unittest.TestCase):
                         [0,0,1]],
                         (3,1,1))
         latt = sc.array(dims=['time', 'dimension1', 'dimension2'], values=latt, unit=sc.units.angstrom)
-        assert np.all(np.count_nonzero(np.isclose(latt.values.reshape(-1,9), 0), axis=-1) == 6)
+        assert parser.is_orthorhombic(latt)
 
     def test_is_orthorhombic_close(self):
         latt = np.tile([[1,0,0],
@@ -104,7 +104,7 @@ class Test_is_orthorhombic(unittest.TestCase):
                         [0,0,1]],
                         (3,1,1))
         latt = sc.array(dims=['time', 'dimension1', 'dimension2'], values=latt, unit=sc.units.angstrom)
-        assert np.all(np.count_nonzero(np.isclose(latt.values.reshape(-1,9), 0), axis=-1) == 6)
+        assert parser.is_orthorhombic(latt)
 
     def test_is_not_orthorhombic(self):
         latt = np.tile([[1,0,0],
@@ -112,7 +112,7 @@ class Test_is_orthorhombic(unittest.TestCase):
                         [0,0,1]],
                         (3,1,1))
         latt = sc.array(dims=['time', 'dimension1', 'dimension2'], values=latt, unit=sc.units.angstrom)
-        assert ~np.all(np.count_nonzero(np.isclose(latt.values.reshape(-1,9), 0), axis=-1) == 6)
+        assert not parser.is_orthorhombic(latt)
     
     def test_some_is_not_orthorhombic(self):
         latt = np.tile([[1,0,0],
@@ -125,7 +125,7 @@ class Test_is_orthorhombic(unittest.TestCase):
                                  [0,0,1]]]),
                                axis=0)
         latt = sc.array(dims=['time', 'dimension1', 'dimension2'], values=latt, unit=sc.units.angstrom)
-        assert ~np.all(np.count_nonzero(np.isclose(latt.values.reshape(-1,9), 0), axis=-1) == 6)
+        assert not parser.is_orthorhombic(latt)
 
 # import unittest
 # import numpy as np
