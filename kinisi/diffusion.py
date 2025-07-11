@@ -166,9 +166,9 @@ class Diffusion:
         :param kwargs: Additional keyword arguments to pass to :py:func:`bayesian_regression`.
         """
         self.bayesian_regression(start_dt=start_dt, **kwargs)
-        self._jump_diffusion_coefficient = sc.to_unit(self.gradient / (2 * self.msd.coords['dimensionality'].value),'coulomb2cm2/s')
+        _conductivity_diffusion_coefficient = sc.to_unit(self.gradient / (2 * self.msd.coords['dimensionality'].value),'coulomb2cm2/s')
         conversion = 1 / (volume * k * temperature)
-        _sigma = sc.to_unit(self.D_J * conversion, 'mS/cm')
+        _sigma = sc.to_unit( _conductivity_diffusion_coefficient * conversion, 'mS/cm')
         self._sigma = Samples(_sigma.values, _sigma.unit)
 
     @property
@@ -245,10 +245,8 @@ class Diffusion:
             iterator = samples_to_draw
 
         # Checking unit consistency for mu and covariance
-        try:
-            ppd_unit**2 == self._covariance_matrix.unit
-        except:
-            'Units of the covariance matrix and mu do not align correctly'
+        if ppd_unit**2 != self._covariance_matrix.unit:
+            raise ValueError("Units of the covariance matrix and mu do not align correctly.")
 
         for i, n in iterator:
             mu = self.gradient[n] * self.msd.coords['time interval'][diff_regime:] + self.intercept[n]
