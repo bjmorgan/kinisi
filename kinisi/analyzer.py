@@ -167,6 +167,7 @@ class Analyzer:
                                  specie_indices=specie_indices,
                                  masses=masses,
                                  progress=progress)
+            print(p)
             return cls(p)
         elif dtype == 'identical':
             u = [

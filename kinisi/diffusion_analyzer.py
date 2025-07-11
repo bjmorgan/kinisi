@@ -156,7 +156,7 @@ class DiffusionAnalyzer(Analyzer):
         :param progress: Whether to show the progress bar. Optional, default is :py:attr:`True`.
         :param random_state: The random state to use for the MCMC. Optional, default is :py:attr:`None`.
         """
-        self.diff = Diffusion(self._da)
+        self.diff = Diffusion(da=self._da)
         self.diff._diffusion(start_dt,
                              cond_max=cond_max,
                              fit_intercept=fit_intercept,
