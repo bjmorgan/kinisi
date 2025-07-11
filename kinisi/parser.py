@@ -30,13 +30,14 @@ DIMENSIONALITY = {
     b'xyz': np.s_[:],
 }
 
+# Single letter labels to be used as subscripts for dimensions of scipp arrays in einsums.
 EINSUM_DIMENSIONS = {
     'time': 't',
     'atom': 'a',
     'image': 'i',
     'row': 'r',
     'column': 'c',
-}  # Single letter labels to be used as subscripts for dimensions of scipp arrays in einsums.
+}  
 
 
 class Parser:
