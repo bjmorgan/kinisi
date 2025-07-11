@@ -7,6 +7,7 @@ It is used to extract the necessary data for diffusion analysis from ASE.
 # Distributed under the terms of the MIT License.
 # author: Josh Dunn (jd15489).
 
+
 import numpy as np
 import scipp as sc
 from scipp.typing import VariableLikeType

@@ -106,8 +106,8 @@ class Diffusion:
         self.diff_regime = np.argwhere(self.da.coords['time interval'] >= self._start_dt)[0][0]
         self._covariance_matrix = self.compute_covariance_matrix()
 
-        x_values = self.da.coords['time interval'][self.diff_regime:].values
-        y_values = self.da['time interval', self.diff_regime:].values
+        x_values = self.da.coords['time interval'][self.diff_regime :].values
+        y_values = self.da['time interval', self.diff_regime :].values
 
         _, logdet = np.linalg.slogdet(self._covariance_matrix.values)
         logdet += np.log(2 * np.pi) * y_values.size
@@ -265,7 +265,8 @@ class Diffusion:
         ppd = sc.zeros(
             dims=['posterior samples', 'predictive samples', 'time interval'],
             shape=[n_posterior_samples, n_predictive_samples, self.da.coords['time interval'][diff_regime:].size],
-            unit=ppd_unit)
+            unit=ppd_unit,
+        )
         samples_to_draw = list(enumerate(np.random.randint(0, self.gradient.size, size=n_posterior_samples)))
 
         if progress:
