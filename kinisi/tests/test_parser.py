@@ -110,13 +110,9 @@ class TestParser(unittest.TestCase):
         data = parser.Parser(coords, latt, time_step, step_skip, dt, specie_indices, drift_indices, dimension=dimension)
         assert_equal(data.step_skip, step_skip)
     
-    def test_parser_init_specie_indices(self):
+    def test_parser_init_drift_indices(self):
         data = parser.Parser(coords, latt, time_step, step_skip, dt, specie_indices, drift_indices, dimension=dimension)
-        assert_equal(data.specie_indices, specie_indices)
-    
-    def test_parser_init_specie_indices(self):
-        data = parser.Parser(coords, latt, time_step, step_skip, dt, specie_indices, drift_indices, dimension=dimension)
-        assert_equal(data.drift_indices, drift_indices)
+        assert_equal(data.drift_indices.values,drift_indices.values)
 
     def test_parser_dt(self):
         data = parser.Parser(coords, latt, time_step, step_skip, dt, specie_indices, drift_indices, dimension=dimension)
