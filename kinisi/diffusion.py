@@ -20,7 +20,7 @@ from kinisi.samples import Samples
 
 class Diffusion:
     """
-    The class for the calcualtion of the self-diffusion coefficient. 
+    The class for the calcualtion of the self-diffusion coefficient.
 
     :param da: A :py:class:`scipp.DataArray` object containing the relevant mean-squared displacement
         data and number of independent samples. 
@@ -44,19 +44,21 @@ class Diffusion:
         """
         return self._covariance_matrix
 
-    def bayesian_regression(self,
-                            start_dt: sc.Variable,
-                            cond_max: float = 1e16,
-                            fit_intercept: bool = True,
-                            n_samples: int = 1000,
-                            n_walkers: int = 32,
-                            n_burn: int = 500,
-                            n_thin: int = 10,
-                            progress: bool = True,
-                            random_state: np.random.mtrand.RandomState = None):
+    def bayesian_regression(
+        self,
+        start_dt: sc.Variable,
+        cond_max: float = 1e16,
+        fit_intercept: bool = True,
+        n_samples: int = 1000,
+        n_walkers: int = 32,
+        n_burn: int = 500,
+        n_thin: int = 10,
+        progress: bool = True,
+        random_state: np.random.mtrand.RandomState = None,
+    ):
         """
-        Perform the Bayesian regression with a linear model against the observed data. 
-        
+        Perform the Bayesian regression with a linear model against the observed data.
+
         :param start_dt: The time at which the diffusion regime begins.
         :param cond_max: The maximum condition number of the covariance matrix. Optional, default is :py:attr:`1e16`.
         :param fit_intercept: Whether to fit an intercept. Optional, default is :py:attr:`True`.
@@ -76,8 +78,8 @@ class Diffusion:
         self.diff_regime = np.argwhere(self.msd.coords['time interval'] >= self._start_dt)[0][0]
         self._covariance_matrix = self.compute_covariance_matrix()
 
-        x_values = self.msd.coords['time interval'][self.diff_regime:].values
-        y_values = self.msd['time interval', self.diff_regime:].values
+        x_values = self.msd.coords['time interval'][self.diff_regime :].values
+        y_values = self.msd['time interval', self.diff_regime :].values
 
         _, logdet = np.linalg.slogdet(self._covariance_matrix.values)
         logdet += np.log(2 * np.pi) * y_values.size
@@ -92,7 +94,7 @@ class Diffusion:
             if theta[0] < 0:
                 return -np.inf
             model = _straight_line(x_values, *theta)
-            diff = (model - y_values)
+            diff = model - y_values
             logl = -0.5 * (logdet + np.matmul(diff.T, np.matmul(inv, diff)))
             return logl
 
@@ -120,7 +122,7 @@ class Diffusion:
         # if random_state is not None:
         #     pos = max_likelihood + max_likelihood * 1e-3 * random_state.randn(n_walkers, max_likelihood.size)
         #     sampler._random = random_state
-        sampler.run_mcmc(pos, n_samples + n_burn, progress=progress, progress_kwargs={'desc': "Likelihood Sampling"})
+        sampler.run_mcmc(pos, n_samples + n_burn, progress=progress, progress_kwargs={'desc': 'Likelihood Sampling'})
         self._flatchain = sampler.get_chain(flat=True, thin=n_thin, discard=n_burn)
 
         self.gradient = Samples(self._flatchain[:, 0], unit=(self.msd.unit / self.msd.coords['time interval'].unit))
@@ -130,9 +132,9 @@ class Diffusion:
 
     def _diffusion(self, start_dt: sc.Variable, **kwargs):
         """
-        Calculation of the diffusion coefficient. 
-        Keyword arguments will be passed of the :py:func:`bayesian_regression` method. 
-        
+        Calculation of the diffusion coefficient.
+        Keyword arguments will be passed of the :py:func:`bayesian_regression` method.
+
         :param start_dt: The time at which the diffusion regime begins.
         :param kwargs: Additional keyword arguments to pass to :py:func:`bayesian_regression`.
         """
@@ -142,8 +144,8 @@ class Diffusion:
 
     def _jump_diffusion(self, start_dt: sc.Variable, **kwargs):
         """
-        Calculation of the jump diffusion coefficient. 
-        Keyword arguments will be passed of the :py:func:`bayesian_regression` method. 
+        Calculation of the jump diffusion coefficient.
+        Keyword arguments will be passed of the :py:func:`bayesian_regression` method.
 
         :param start_dt: The time at which the diffusion regime begins.
         :param kwargs: Additional keyword arguments to pass to :py:func:`bayesian_regression`.
@@ -156,7 +158,7 @@ class Diffusion:
     def _conductivity(self, start_dt: sc.Variable, temperature: sc.Variable, volume: sc.Variable, **kwargs):
         """
         Calculation of the conductivity.
-        Keyword arguments will be passed of the :py:func:`bayesian_regression` method. 
+        Keyword arguments will be passed of the :py:func:`bayesian_regression` method.
 
         :param start_dt: The time at which the diffusion regime begins.
         :param temperature: The temperature of the system.
@@ -164,9 +166,9 @@ class Diffusion:
         :param kwargs: Additional keyword arguments to pass to :py:func:`bayesian_regression`.
         """
         self.bayesian_regression(start_dt=start_dt, **kwargs)
-        self._jump_diffusion_coefficient = self.gradient / (2 * self.msd.coords['dimensionality'].value)
+        _conductivity_diffusion_coefficient = sc.to_unit(self.gradient / (2 * self.msd.coords['dimensionality'].value),'coulomb2cm2/s')
         conversion = 1 / (volume * k * temperature)
-        _sigma = sc.to_unit(self.D_J * conversion, 'mS/cm')
+        _sigma = sc.to_unit( _conductivity_diffusion_coefficient * conversion, 'mS/cm')
         self._sigma = Samples(_sigma.values, _sigma.unit)
 
     @property
@@ -193,7 +195,7 @@ class Diffusion:
     def compute_covariance_matrix(self) -> sc.Variable:
         """
         Compute the covariance matrix for the diffusion coefficient calculation.
-        
+
         :returns: A :py:mod:`scipp` object containing the covariance matrix.
         """
         cov = np.zeros((self.msd.data.variances.size, self.msd.data.variances.size))
@@ -203,26 +205,26 @@ class Diffusion:
                 value = ratio * self.msd.data.variances[i]
                 cov[i, j] = value
                 cov[j, i] = np.copy(cov[i, j])
-        return sc.array(dims=['time_interval1', 'time_interval2'],
-                        values=cov_nearest(
-                            minimum_eigenvalue_method(cov[self.diff_regime:, self.diff_regime:], self._cond_max)),
-                        unit=self.msd.unit**2)
+        return sc.array(
+            dims=['time_interval1', 'time_interval2'],
+            values=cov_nearest(minimum_eigenvalue_method(cov[self.diff_regime :, self.diff_regime :], self._cond_max)),
+            unit=self.msd.unit**2,
+        )
 
-    def posterior_predictive(self,
-                             n_posterior_samples: int = None,
-                             n_predictive_samples: int = 256,
-                             progress: bool = True) -> sc.Variable:
+    def posterior_predictive(
+        self, n_posterior_samples: int = None, n_predictive_samples: int = 256, progress: bool = True
+    ) -> sc.Variable:
         """
         Sample the posterior predictive distribution. The shape of the resulting array will be
         `(n_posterior_samples * n_predictive_samples, start_dt)`.
-        
+
         :param n_posterior_samples: Number of samples from the posterior distribution.
             Optional, default is the number of posterior samples.
         :param n_predictive_samples: Number of random samples per sample from the posterior distribution.
             Optional, default is :py:attr:`256`.
         :param progress: Show tqdm progress for sampling. Optional, default is :py:attr:`True`.
 
-        :return: Samples from the posterior predictive distribution. 
+        :return: Samples from the posterior predictive distribution.
         """
         if n_posterior_samples is None:
             n_posterior_samples = self.gradient.size
@@ -233,7 +235,8 @@ class Diffusion:
         ppd = sc.zeros(
             dims=['posterior samples', 'predictive samples', 'time interval'],
             shape=[n_posterior_samples, n_predictive_samples, self.msd.coords['time interval'][diff_regime:].size],
-            unit=ppd_unit)
+            unit=ppd_unit,
+        )
         samples_to_draw = list(enumerate(np.random.randint(0, self.gradient.size, size=n_posterior_samples)))
 
         if progress:
@@ -242,10 +245,8 @@ class Diffusion:
             iterator = samples_to_draw
 
         # Checking unit consistency for mu and covariance
-        try:
-            ppd_unit**2 == self._covariance_matrix.unit
-        except:
-            'Units of the covariance matrix and mu do not align correctly'
+        if ppd_unit**2 != self._covariance_matrix.unit:
+            raise ValueError("Units of the covariance matrix and mu do not align correctly.")
 
         for i, n in iterator:
             mu = self.gradient[n] * self.msd.coords['time interval'][diff_regime:] + self.intercept[n]
@@ -261,7 +262,7 @@ def minimum_eigenvalue_method(cov: np.ndarray, cond_max=1e16) -> np.ndarray:
     Implementation of the matrix reconditioning method known as the minimum
     eigenvalue method, as outlined in doi:10.1080/16000870.2019.1696646. This
     should produce a matrix with a condition number of :py:attr:`cond_max` based
-    on the eigenvalues and eigenvectors of the input matrix. 
+    on the eigenvalues and eigenvectors of the input matrix.
 
     :param matrix: Matrix to recondition.
     :param cond_max: Expected condition number of output matrix. Optional,
