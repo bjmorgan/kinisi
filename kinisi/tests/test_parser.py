@@ -8,18 +8,16 @@ Tests for parser module
 # pylint: disable=R0201
 
 import unittest
+import os
 
 import MDAnalysis as mda
 import numpy as np
 import scipp as sc
 from numpy.testing import assert_almost_equal, assert_equal
+from pymatgen.core import Structure
 
+import kinisi
 from kinisi import parser
-
-disp = np.random.random(size=(100, 100, 3))
-indices = np.arange(0, 100, 1, dtype=int)
-time_step = 1.0 * sc.Unit('fs')
-step_skip = 1 * sc.Unit('dimensionless')
 
 class mda_universe_generator:
     def __init__(self, coords, weights):
@@ -147,23 +145,46 @@ class TestParser(unittest.TestCase):
     Unit tests for the Parser class
     """
 
+    def __init__(self):
+        dg = sc.load_hdf5(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_drift.h5'))
+        self.structure = Structure.from_str(dg['structure'].value, fmt='json')
+        self.coords = dg['coords']
+        self.latt = dg['latt']
+        self.specie = dg['specie']
+        self.time_step = dg['time_step']
+        self.step_skip = dg['step_skip']
+        self.disp = None
+
     def test_parser_init_time_interval(self):
-        data = parser.Parser(disp, indices, time_step, step_skip)
-        assert_equal(data.time_step, time_step)
+        data = parser.Parser(self.structure, self.coords, self.latt, self.specie, self.time_step, self.step_skip)
+        assert_equal(data.time_step, self.time_step)
 
     def test_parser_init_stepskip(self):
-        data = parser.Parser(disp, indices, time_step, step_skip)
-        assert_equal(data.step_skip, step_skip)
+        data = parser.Parser(self.structure, self.coords, self.latt, self.specie, self.time_step, self.step_skip)
+        assert_equal(data.step_skip, self.step_skip)
 
     def test_parser_init_indices(self):
-        data = parser.Parser(disp, indices, time_step, step_skip)
-        assert_equal(data.indices, indices)
+        data = parser.Parser(self.structure, self.coords, self.latt, self.specie, self.time_step, self.step_skip)
+        assert_equal(data.indices, self.indices)
+
+    def test_parser_delta_t(self):
+        data = parser.Parser(self.structure, self.coords, self.latt, self.specie, self.time_step, self.step_skip)
+        assert_equal(data.delta_t.size, 81)
+
+    def test_correct_drift(self):
+        corrected = parser.Parser.correct_drift([], self.disp)
+        assert_equal(len(corrected), 100)
+        for i, d in enumerate(corrected):
+            assert_equal(d.shape[0], 100)
+            assert_equal(d.shape[1], 3)
+
 
     def test_parser_datagroup_round_trip(self):
-        data = parser.Parser(disp, indices, time_step, step_skip)
+        data = parser.Parser(self.structure, self.coords, self.latt, self.specie, self.time_step, self.step_skip)
         datagroup = data._to_datagroup()
         data_2 = parser.Parser._from_datagroup(datagroup)
-        assert_equal(vars(data), vars(data_2))
+        assert vars(data) == vars(data_2)
+        assert type(data) is type(data_2)
 
 
 # import unittest
