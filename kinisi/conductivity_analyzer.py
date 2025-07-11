@@ -115,7 +115,7 @@ class ConductivityAnalyzer(Analyzer):
         :param progress: Whether to show the progress bar. Optional, default is :py:attr:`True`.
         :param random_state: The random state to use for the MCMC. Optional, default is :py:attr:`None`.
         """
-        self.diff = Diffusion(msd=self._da)
+        self.diff = Diffusion(da=self._da)
         self.diff._conductivity(start_dt,
                                 temperature,
                                 self.trajectory._volume,

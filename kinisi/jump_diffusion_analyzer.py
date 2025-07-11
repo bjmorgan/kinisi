@@ -87,7 +87,7 @@ class JumpDiffusionAnalyzer(Analyzer):
         """
         p = super()._from_xdatcar(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit,
                                   specie_indices, masses, progress)
-        p._da = calculate_mstd(p.trajectory, system_particles, progress)
+        p._da = calculate_mstd(p.trajectory, system_particles, None, progress)
         return p
 
     @classmethod
@@ -141,7 +141,7 @@ class JumpDiffusionAnalyzer(Analyzer):
         """
         p = super()._from_universe(trajectory, specie, time_step, step_skip, dtype, dt, dimension, distance_unit,
                                    specie_indices, masses, progress)
-        p._da = calculate_mstd(p.trajectory, system_particles, progress)
+        p._da = calculate_mstd(p.trajectory, system_particles, None, progress)
         return p
 
     def jump_diffusion(self,
@@ -167,7 +167,7 @@ class JumpDiffusionAnalyzer(Analyzer):
         :param progress: Whether to show the progress bar. Optional, default is :py:attr:`True`.
         :param random_state: The random state to use for the MCMC. Optional, default is :py:attr:`None`.
         """
-        self.diff = Diffusion(msd=self._da)
+        self.diff = Diffusion(da=self._da)
         self.diff._jump_diffusion(start_dt,
                                   cond_max=cond_max,
                                   fit_intercept=fit_intercept,
