@@ -73,11 +73,11 @@ class Diffusion:
         self._start_dt = start_dt
         self._cond_max = cond_max
 
-        self.diff_regime = np.argwhere(self.msd.coords['time interval'] >= self._start_dt)[0][0]
+        self.diff_regime = np.argwhere(self.da.coords['time interval'] >= self._start_dt)[0][0]
         self._covariance_matrix = self.compute_covariance_matrix()
 
-        x_values = self.msd.coords['time interval'][self.diff_regime:].values
-        y_values = self.msd['time interval', self.diff_regime:].values
+        x_values = self.da.coords['time interval'][self.diff_regime:].values
+        y_values = self.da['time interval', self.diff_regime:].values
 
         _, logdet = np.linalg.slogdet(self._covariance_matrix.values)
         logdet += np.log(2 * np.pi) * y_values.size
@@ -123,10 +123,10 @@ class Diffusion:
         sampler.run_mcmc(pos, n_samples + n_burn, progress=progress, progress_kwargs={'desc': "Likelihood Sampling"})
         self._flatchain = sampler.get_chain(flat=True, thin=n_thin, discard=n_burn)
 
-        self.gradient = Samples(self._flatchain[:, 0], unit=(self.msd.unit / self.msd.coords['time interval'].unit))
+        self.gradient = Samples(self._flatchain[:, 0], unit=(self.da.unit / self.da.coords['time interval'].unit))
 
         if fit_intercept:
-            self.intercept = Samples(self._flatchain[:, 1], unit=self.msd.unit)
+            self.intercept = Samples(self._flatchain[:, 1], unit=self.da.unit)
 
     def _diffusion(self, start_dt: sc.Variable, **kwargs):
         """
@@ -136,8 +136,8 @@ class Diffusion:
         :param start_dt: The time at which the diffusion regime begins.
         :param kwargs: Additional keyword arguments to pass to :py:func:`bayesian_regression`.
         """
-        self.bayesian_regression(start_dt=start_dt, **kwargs)
-        _diffusion_coefficient = sc.to_unit(self.gradient / (2 * self.msd.coords['dimensionality'].value), 'cm2/s')
+        self.bayesian_regression(start_dt=sc.to_unit(start_dt, self.da.coords['time interval'].unit), **kwargs)
+        _diffusion_coefficient = sc.to_unit(self.gradient / (2 * self.da.coords['dimensionality'].value), 'cm2/s')
         self._diffusion_coefficient = Samples(_diffusion_coefficient.values, _diffusion_coefficient.unit)
 
     def _jump_diffusion(self, start_dt: sc.Variable, **kwargs):
@@ -150,7 +150,7 @@ class Diffusion:
         """
 
         self.bayesian_regression(start_dt=start_dt, **kwargs)
-        _jump_diffusion_coefficient = sc.to_unit(self.gradient / (2 * self.msd.coords['dimensionality'].value), 'cm2/s')
+        _jump_diffusion_coefficient = sc.to_unit(self.gradient / (2 * self.da.coords['dimensionality'].value), 'cm2/s')
         self._jump_diffusion_coefficient = Samples(_jump_diffusion_coefficient.values, _jump_diffusion_coefficient.unit)
 
     def _conductivity(self, start_dt: sc.Variable, temperature: sc.Variable, volume: sc.Variable, **kwargs):
@@ -164,7 +164,7 @@ class Diffusion:
         :param kwargs: Additional keyword arguments to pass to :py:func:`bayesian_regression`.
         """
         self.bayesian_regression(start_dt=start_dt, **kwargs)
-        self._jump_diffusion_coefficient = self.gradient / (2 * self.msd.coords['dimensionality'].value)
+        self._jump_diffusion_coefficient = self.gradient / (2 * self.da.coords['dimensionality'].value)
         conversion = 1 / (volume * k * temperature)
         _sigma = sc.to_unit(self.D_J * conversion, 'mS/cm')
         self._sigma = Samples(_sigma.values, _sigma.unit)
@@ -196,17 +196,17 @@ class Diffusion:
         
         :returns: A :py:mod:`scipp` object containing the covariance matrix.
         """
-        cov = np.zeros((self.msd.data.variances.size, self.msd.data.variances.size))
-        for i in range(0, self.msd.data.variances.size):
-            for j in range(i, self.msd.data.variances.size):
-                ratio = self.msd.coords['n_samples'].values[i] / self.msd.coords['n_samples'].values[j]
-                value = ratio * self.msd.data.variances[i]
+        cov = np.zeros((self.da.data.variances.size, self.da.data.variances.size))
+        for i in range(0, self.da.data.variances.size):
+            for j in range(i, self.da.data.variances.size):
+                ratio = self.da.coords['n_samples'].values[i] / self.da.coords['n_samples'].values[j]
+                value = ratio * self.da.data.variances[i]
                 cov[i, j] = value
                 cov[j, i] = np.copy(cov[i, j])
         return sc.array(dims=['time_interval1', 'time_interval2'],
                         values=cov_nearest(
                             minimum_eigenvalue_method(cov[self.diff_regime:, self.diff_regime:], self._cond_max)),
-                        unit=self.msd.unit**2)
+                        unit=self.da.unit**2)
 
     def posterior_predictive(self,
                              n_posterior_samples: int = None,
@@ -227,12 +227,12 @@ class Diffusion:
         if n_posterior_samples is None:
             n_posterior_samples = self.gradient.size
 
-        ppd_unit = self.gradient.unit * self.msd.coords['time interval'].unit + self.intercept.unit
+        ppd_unit = self.gradient.unit * self.da.coords['time interval'].unit + self.intercept.unit
 
-        diff_regime = np.argwhere(self.msd.coords['time interval'] >= self._start_dt)[0][0]
+        diff_regime = np.argwhere(self.da.coords['time interval'] >= self._start_dt)[0][0]
         ppd = sc.zeros(
             dims=['posterior samples', 'predictive samples', 'time interval'],
-            shape=[n_posterior_samples, n_predictive_samples, self.msd.coords['time interval'][diff_regime:].size],
+            shape=[n_posterior_samples, n_predictive_samples, self.da.coords['time interval'][diff_regime:].size],
             unit=ppd_unit)
         samples_to_draw = list(enumerate(np.random.randint(0, self.gradient.size, size=n_posterior_samples)))
 
@@ -248,7 +248,7 @@ class Diffusion:
             'Units of the covariance matrix and mu do not align correctly'
 
         for i, n in iterator:
-            mu = self.gradient[n] * self.msd.coords['time interval'][diff_regime:] + self.intercept[n]
+            mu = self.gradient[n] * self.da.coords['time interval'][diff_regime:] + self.intercept[n]
             mv = multivariate_normal(mean=mu.values, cov=self._covariance_matrix.values, allow_singular=True)
             ppd.values[i] = mv.rvs(n_predictive_samples)
 
