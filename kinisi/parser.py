@@ -58,21 +58,15 @@ class Parser:
 
     def __init__(
         self,
-        structure: VariableLikeType,
         coords: VariableLikeType,
         latt: VariableLikeType,
-        specie: Union[
-            'pymatgen.core.periodic_table.Element',
-            'pymatgen.core.periodic_table.Specie',
-            'str',
-        ],
         time_step: VariableLikeType,
         step_skip: VariableLikeType,
         dt: VariableLikeType = None,
         specie_indices: VariableLikeType = None,
+        drift_indices: VariableLikeType = None,
         masses: VariableLikeType = None,
         dimension: str = 'xyz',
-        progress: bool = True,
     ):
         self.time_step = time_step
         self.step_skip = step_skip
@@ -81,7 +75,13 @@ class Parser:
 
         self.dt_index = self.create_integer_dt(coords, time_step, step_skip)
 
-        coords, indices, drift_indices = self.generate_indices(structure, specie_indices, coords, specie, masses)
+        if not isinstance(specie_indices, sc.Variable):
+            raise TypeError('Unrecognized type for specie_indices, specie_indices must be a scipp VariableLikeType')
+        else:
+            if len(specie_indices.dims) == 1:
+                indices = specie_indices
+            else:
+                coords, indices, drift_indices = get_molecules(coords, specie_indices, masses)
 
         self.indices = indices
         self.drift_indices = drift_indices
@@ -205,7 +205,7 @@ class Parser:
         if not hasattr(obj, '_slice'):
             setattr(obj, '_slice', DIMENSIONALITY[obj._dimension.lower()])
 
-        return obj
+        return obj       
 
     def calculate_displacements(self, coords: VariableLikeType, lattice: VariableLikeType) -> VariableLikeType:
         """
@@ -264,20 +264,14 @@ class Parser:
 
 
 def get_molecules(
-    structure: Union[
-        'ase.atoms.Atoms',
-        'pymatgen.core.structure.Structure',
-        'MDAnalysis.universe.Universe',
-    ],
     coords: VariableLikeType,
     indices: VariableLikeType,
     masses: VariableLikeType,
 ) -> tuple[np.ndarray, np.ndarray, tuple[np.ndarray, np.ndarray]]:
     """
     Determine framework and non-framework indices for an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when
-    specie_indices are provided and contain multiple molecules. Warning: This function changes the structure without changing the object.
+    specie_indices are provided and contain multiple molecules. Warning: This function changes the coords without renaming the object.
 
-    :param structure: Initial structure.
     :param coords: fractional coordinates for all atoms.
     :param indices: indices for the atoms in the molecules in the trajectory used in the calculation
     of the diffusion.
@@ -295,7 +289,7 @@ def get_molecules(
 
     n_molecules = indices.sizes['group_of_atoms']
 
-    for i, _site in enumerate(structure):
+    for i in range(coords.sizes['atom']):
         if i not in indices.values:
             drift_indices.append(i)
 
@@ -323,38 +317,6 @@ def get_molecules(
     )
 
     return new_coords, new_indices, new_drift_indices
-
-
-def get_framework(
-    structure: Union[
-        'ase.atoms.Atoms',
-        'pymatgen.core.structure.Structure',
-        'MDAnalysis.universe.Universe',
-    ],
-    indices: VariableLikeType,
-) -> tuple[np.ndarray, np.ndarray]:
-    """
-    Determine the framework indices from an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when indices are provided
-
-    :param structure: Initial structure.
-    :param indices: Indices for the atoms in the trajectory used in the calculation of the
-        diffusion.
-    :param framework_indices: Indices of framework to be used in drift correction. If set to None will return all indices that are not in indices.
-
-    :return: Tuple containing: indices for the atoms in the trajectory used in the calculation of the
-        diffusion and indices of framework atoms.
-    """
-
-    drift_indices = []
-
-    for i, _site in enumerate(structure):
-        if i not in indices:
-            drift_indices.append(i)
-
-    drift_indices = sc.Variable(dims=['atom'], values=drift_indices)
-
-    return indices, drift_indices
-
 
 def _calculate_centers_of_mass(
     coords: VariableLikeType,
