@@ -127,6 +127,21 @@ class test_is_orthorhombic(unittest.TestCase):
         latt = sc.array(dims=['time', 'dimension1', 'dimension2'], values=latt, unit=sc.units.angstrom)
         assert not parser.is_orthorhombic(latt)
 
+    def test_orthorhombic_calculate_displacements(self):
+        points = [[[0.1, 0.1, 0.1]], [[0.9, 0.1, 0.1]],
+                  [[0.1, 0.1, 0.1]], [[0.1, 0.9, 0.1]],
+                  [[0.1, 0.1, 0.1]], [[0.1, 0.1, 0.9]],
+                  [[0.1, 0.1, 0.1]], [[0.9, 0.9, 0.1]],
+                  [[0.1, 0.1, 0.1]], [[0.9, 0.1, 0.9]],
+                  [[0.1, 0.1, 0.1]], [[0.1, 0.9, 0.9]],
+                  [[0.1, 0.1, 0.1]], [[0.9, 0.9, 0.9]]]
+        coords = sc.array(dims=['time','atom','dimension'],
+                          values=points,
+                          unit=sc.units.dimensionless)
+        latt = np.tile([[10,0,0],[0,10,0],[0,0,10]], (coords.shape[0],1,1))
+        disp = parser.Parser.orthorhombic_calculate_displacements(coords=coords, lattice=latt)
+        print(disp)
+
 # import unittest
 # import numpy as np
 # import MDAnalysis as mda
