@@ -10,6 +10,8 @@
 
 import unittest
 import pytest
+import os
+import kinisi
 
 import numpy as np
 import scipp as sc
@@ -43,9 +45,9 @@ class TestDiffusion(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.msd = sc.io.load_hdf5(filename='./inputs/example_msd.hdf5')
+        cls.msd_load = sc.io.load_hdf5(filename=os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_msd.hdf5'))
         cls.RNG = np.random.RandomState(42)
-        cls.diff = Diffusion(cls.msd)
+        cls.diff = Diffusion(da=cls.msd_load)
 
     def test_bayesian_regression(self):
         start_dt = 10 * sc.Unit('femtosecond')
@@ -81,8 +83,8 @@ class TestDiffusion(unittest.TestCase):
         assert self.diff.D_J.to_unit('cm2/s').unit == sc.Unit('cm2/s')
 
     def test__conductivity(self):
-        diff_cond = Diffusion(msd=self.msd)
-        diff_cond.msd = diff_cond.msd * sc.scalar(1.0, unit=sc.Unit('coulomb2'))
+        diff_cond = Diffusion(da=self.msd_load)
+        diff_cond.da = diff_cond.da * sc.scalar(1.0, unit=sc.Unit('coulomb2'))
         start_dt = 300 * sc.Unit('femtosecond')
         temp = 320 * sc.Unit('kelvin')
         volume = 300 * sc.Unit('angstrom3')
@@ -103,7 +105,7 @@ class TestDiffusion(unittest.TestCase):
         assert isinstance(cov, sc.Variable)
         assert cov.dims == ('time_interval1', 'time_interval2')
         assert cov.shape[0] == cov.shape[1]
-        assert cov.unit == self.msd.unit**2
+        assert cov.unit == self.msd_load.unit**2
 
         cov_array = cov.values
         assert np.allclose(cov_array, cov_array.T, atol=1e-10), 'Covariance matrix is not symmetric'
@@ -126,12 +128,12 @@ class TestDiffusion(unittest.TestCase):
         custom_samp2 = self.diff.posterior_predictive(n_posterior_samples=1, n_predictive_samples=400,progress=False)
         assert custom_samp.dims == ('samples', 'time interval')
 
-        diff_exc = Diffusion(msd=self.msd)
-        diff_exc.msd = diff_exc.msd * sc.scalar(1.0, unit=sc.Unit('watts'))
+        diff_exc = Diffusion(da=self.msd_load)
+        diff_exc.da = diff_exc.da * sc.scalar(1.0, unit=sc.Unit('watts'))
 
     
     def test_posterior_predictive_error(self):
-        diff_exc = Diffusion(msd=self.msd)
+        diff_exc = Diffusion(da=self.msd_load)
         start_dt = 400 * sc.Unit('femtosecond')
         diff_exc._diffusion(start_dt)
         diff_exc._covariance_matrix = diff_exc._covariance_matrix * sc.scalar(1.0, unit=sc.Unit('angstrom6'))
