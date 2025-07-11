@@ -21,7 +21,7 @@ class TestASEParser(unittest.TestCase):
     Unit tests for the pymatgen module
     """
 
-    def test_ase_datagroup_round_trip():
+    def test_ase_datagroup_round_trip(self):
         traj = Trajectory(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_ase.traj'))
         da_params = {'specie': 'Li', 'time_step': 1e-3 * sc.Unit('fs'), 'step_skip': 1 * sc.Unit('dimensionless')}
         data = ASEParser(traj, **da_params)
