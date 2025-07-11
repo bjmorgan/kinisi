@@ -85,7 +85,7 @@ class TestSubsetApprox(unittest.TestCase):
         subset = np.array([1, 3, 5, 7])
         assert not parser.is_subset_approx(subset, data)
 
-class Test_is_orthorhombic(unittest.TestCase):
+class test_is_orthorhombic(unittest.TestCase):
     """
     Unit tests for checking cell shapes.
     """
