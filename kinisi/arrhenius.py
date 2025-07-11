@@ -57,7 +57,6 @@ class TemperatureDependent:
         self.parameter_names = parameter_names
         self.parameter_units = parameter_units
         print(bounds)
-        print(self.parameter_names)
         if bounds is not None and len(bounds) != len(self.parameter_names):
             raise ValueError(
                 f'Bounds must be a tuple of length {len(self.parameter_names)}, got {len(bounds)} instead.'
