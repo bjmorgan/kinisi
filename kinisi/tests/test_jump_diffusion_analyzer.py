@@ -1,5 +1,5 @@
 """
-Tests for the diffusion_analyzer module
+Tests for the jump_diffusion_analyzer module
 """
 
 # Copyright (c) kinisi developers.
@@ -14,17 +14,17 @@ from pymatgen.io.vasp import Xdatcar
 
 import kinisi
 from kinisi.analyzer import Analyzer
-from kinisi.diffusion_analyzer import DiffusionAnalyzer
+from kinisi.jump_diffusion_analyzer import JumpDiffusionAnalyzer
 
-class TestDiffusionAnalyzer(unittest.TestCase):
+class TestJumpDiffusionAnalyzer(unittest.TestCase):
     """
-    Tests for the DiffusionAnalyzer class.
+    Tests for the JumpDiffusionAnalyzer class.
     """
 
     def test_to_hdf5(cls):
         xd = Xdatcar(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_XDATCAR.gz'))
         da_params = {'specie': 'Li', 'time_step': 2.0 * sc.Unit('fs'), 'step_skip': 50 * sc.Unit('dimensionless')}
-        analyzer = DiffusionAnalyzer._from_xdatcar(xd, **da_params)
+        analyzer = JumpDiffusionAnalyzer._from_xdatcar(xd, **da_params)
         test_file = 'test_save.h5'
         analyzer._to_hdf5(test_file)
         file_exists = os.path.exists(test_file)
@@ -33,7 +33,7 @@ class TestDiffusionAnalyzer(unittest.TestCase):
     
     def test_load_hdf(cls):
         test_file = os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_DiffusionAnalyzer.h5')
-        analyzer = DiffusionAnalyzer._from_hdf5(test_file)
+        analyzer = JumpDiffusionAnalyzer._from_hdf5(test_file)
         analyzer_2 = Analyzer._from_hdf5(test_file)
         assert vars(analyzer) == vars(analyzer_2)
         assert type(analyzer) is type(analyzer_2)
@@ -41,10 +41,10 @@ class TestDiffusionAnalyzer(unittest.TestCase):
     def test_round_trip_hdf5(self):
         xd = Xdatcar(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_XDATCAR.gz'))
         da_params = {'specie': 'Li', 'time_step': 2.0 * sc.Unit('fs'), 'step_skip': 50 * sc.Unit('dimensionless')}
-        analyzer = DiffusionAnalyzer._from_xdatcar(xd, **da_params)
+        analyzer = JumpDiffusionAnalyzer._from_xdatcar(xd, **da_params)
         test_file = 'test_save.h5'
         analyzer._to_hdf5(test_file)
-        analyzer_2 = DiffusionAnalyzer._from_hdf5(test_file)
+        analyzer_2 = JumpDiffusionAnalyzer._from_hdf5(test_file)
         analyzer_3 = Analyzer._from_hdf5(test_file)
         if os.path.exists(test_file):
             os.remove(test_file)

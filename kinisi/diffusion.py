@@ -4,7 +4,7 @@ Calculate the diffusion coefficient.
 
 # Copyright (c) kinisi developers.
 # Distributed under the terms of the MIT License.
-# author: Andrew R. McCluskey (arm61)
+# author: Andrew R. McCluskey (arm61) and Oskar G. Soulas (osoulas)
 
 import numpy as np
 import scipp as sc

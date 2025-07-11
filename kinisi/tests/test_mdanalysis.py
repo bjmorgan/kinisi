@@ -1,10 +1,16 @@
-import unittest
+"""
+Tests for the mdanalysis module
+"""
 
-import numpy as np
-from numpy.testing import assert_almost_equal, assert_equal
+# Copyright (c) kinisi developers.
+# Distributed under the terms of the MIT License.
+# author: Oskar G. Soulas (osoulas)
+
+import unittest
+import os
+
 import scipp as sc
 import MDAnalysis as mda
-import os
 
 import kinisi
 from kinisi import parser

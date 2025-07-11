@@ -1,12 +1,20 @@
+"""
+Tests for the ase module
+"""
+
+# Copyright (c) kinisi developers.
+# Distributed under the terms of the MIT License.
+# author: Oskar G. Soulas (osoulas)
+
+import os
 import unittest
 
 import scipp as sc
 from ase.io import Trajectory
-import os
 
 import kinisi
 from kinisi import parser
-from kinisi.ASE import ASEParser
+from kinisi.ase import ASEParser
 
 class TestASEParser(unittest.TestCase):
     """

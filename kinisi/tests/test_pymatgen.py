@@ -1,8 +1,16 @@
+"""
+Tests for the pymatgen module
+"""
+
+# Copyright (c) kinisi developers.
+# Distributed under the terms of the MIT License.
+# author: Oskar G. Soulas (osoulas)
+
 import unittest
+import os
 
 import scipp as sc
 from pymatgen.io.vasp import Xdatcar
-import os
 
 import kinisi
 from kinisi import parser
