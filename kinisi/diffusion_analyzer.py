@@ -231,6 +231,8 @@ class DiffusionAnalyzer(Analyzer):
         n_thin: int = 10,
         progress: bool = True,
         random_state: np.random.mtrand.RandomState = None,
+        model: bool = False,
+        mem: bool = False
     ) -> None:
         """
         Calculate the diffusion coefficient using the mean-squared displacement data.
@@ -258,6 +260,8 @@ class DiffusionAnalyzer(Analyzer):
             n_thin=n_thin,
             progress=progress,
             random_state=random_state,
+            model=model,
+            mem=mem
         )
 
     @property
