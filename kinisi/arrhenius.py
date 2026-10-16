@@ -18,9 +18,9 @@ import scipp as sc
 from scipp.constants import N_A, R
 from scipp.typing import VariableLike
 
+from kinisi import __version__
 from kinisi.fitting import FittingBase
 from kinisi.samples import Samples
-from kinisi import __version__
 
 from .due import Doi, due
 
