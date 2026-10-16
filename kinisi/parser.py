@@ -195,13 +195,13 @@ class Parser:
         dt_index = (self.dt / (time_step * step_skip)).astype(int)
         return dt_index
 
+    @staticmethod
     @due.dcite(
         Doi('10.1021/acs.jctc.3c00308'),
         path='kinisi.parser.Parser.orthorhombic_calculate_displacements',
         description='Uses the TOR scheme to find the unwrapped displacements of the atoms in the trajectory.',
         version=__version__,
     )
-    @staticmethod
     def orthorhombic_calculate_displacements(coords: VariableLikeType, lattice: VariableLikeType) -> VariableLikeType:
         """
         Calculate the absolute displacements of the atoms in the trajectory, when the cell is orthorhombic on all frames.

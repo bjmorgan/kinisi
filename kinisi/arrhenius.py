@@ -20,6 +20,9 @@ from scipp.typing import VariableLike
 
 from kinisi.fitting import FittingBase
 from kinisi.samples import Samples
+from kinisi import __version__
+
+from .due import Doi, due
 
 R_eV = sc.to_unit(R / N_A, 'eV/K')
 
@@ -38,6 +41,12 @@ class TemperatureDependent(FittingBase):
         +/- 50 percent of the best fit values.
     """
 
+    @due.dcite(
+        Doi('10.1103/nxgq-lmp6'),
+        path='kinisi.arrhenius.TemperatureDependent',
+        description='Enables MCMC and nested sampling of temperature-dependent behaviour.',
+        version=__version__,
+    )
     def __init__(
         self,
         diffusion,
