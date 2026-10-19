@@ -18,18 +18,11 @@ jobs:
           python -m pip install -U pip
           python -m pip install ".[docs]"
 
-      - name: Execute the notebooks
+      - name: Make Docs
         run: |
-          jupytext --to ipynb --execute docs/tutorials/*.py
-
+          cd docs && make html
+          
       - uses: actions/upload-artifact@v2
         with:
-          name: notebooks-for-${{ github.sha }}
-          path: docs/tutorials
-
-      - name: Trigger RTDs build
-        uses: dfm/rtds-action@v1
-        with:
-          webhook_url: ${{ secrets.RTDS_WEBHOOK_URL }}
-          webhook_token: ${{ secrets.RTDS_WEBHOOK_TOKEN }}
-          commit_ref: ${{ github.ref }}
+          name: docs-for-${{ github.sha }}
+          path: docs/_build 
