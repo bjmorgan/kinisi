@@ -1,5 +1,5 @@
 name: Docs
-on: [push, release]
+on: [push, release, pull_request]
 
 jobs:
   notebooks:
