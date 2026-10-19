@@ -18,6 +18,9 @@ jobs:
           python -m pip install -U pip
           python -m pip install ".[docs]"
 
+      - name: Install pandoc
+        uses: pandoc/actions/setup@v1
+        
       - name: Make Docs
         run: |
           cd docs && make html
