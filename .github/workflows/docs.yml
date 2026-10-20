@@ -1,5 +1,5 @@
 name: Docs
-on: [push, release, pull_request]
+on: [push, release]
 
 jobs:
   notebooks:
@@ -29,3 +29,9 @@ jobs:
         with:
           name: docs-for-${{ github.sha }}
           path: docs/build 
+
+      - uses: readthedocs/upload-action@v1
+        with:
+          token: ${{ secrets.READTHEDOCS_TOKEN }}
+          project-slug: kinisit
+          html: build/html
