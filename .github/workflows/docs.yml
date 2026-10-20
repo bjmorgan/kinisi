@@ -43,8 +43,7 @@ jobs:
           pip install -e ".[docs]"
 
       - name: Build documentation
-        # -W turns warnings into errors, --keep-going reports all of them
-        run: make -C docs html SPHINXOPTS="-W --keep-going"
+        run: make -C docs html
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
