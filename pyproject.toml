@@ -68,7 +68,8 @@ docs = [
     'pydata_sphinx_theme',
     'myst_parser',
     'tidynamics',
-    'duecredit'
+    'duecredit',
+    'citeproc-py-styles'
 ]
 
 [project.urls]
