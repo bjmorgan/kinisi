@@ -69,7 +69,7 @@ docs = [
     'myst_parser',
     'tidynamics',
     'duecredit',
-    'citeproc-py-styles'
+    'citeproc-py<0.7'
 ]
 
 [project.urls]

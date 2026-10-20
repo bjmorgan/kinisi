@@ -43,7 +43,10 @@ jobs:
           pip install -e ".[docs]"
 
       - name: Build documentation
-        run: make -C docs html
+        run: |
+          cd docs
+          make html
+          ls 
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
