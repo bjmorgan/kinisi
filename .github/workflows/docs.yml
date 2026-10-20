@@ -1,37 +1,68 @@
 name: Docs
-on: [push, release]
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Least-privilege permissions needed by the Pages deployment
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment; don't cancel a run that's mid-deploy
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
-  notebooks:
-    name: "Build the notebooks for the docs"
+  build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - name: Check out repository
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.12
-
-      - name: Install dependencies
-        run: |
-          python -m pip install -U pip
-          python -m pip install ".[docs]"
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
 
       - name: Install pandoc
-        uses: pandoc/actions/setup@v1
-        
-      - name: Make Docs
+        # Required by nbsphinx to convert notebook markdown cells
         run: |
-          cd docs && make html
-          
-      - uses: actions/upload-artifact@v7
-        with:
-          name: docs-for-${{ github.sha }}
-          path: docs/build 
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends pandoc
 
-      - uses: readthedocs/upload-action@v1
+      - name: Install package and docs dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[docs]"
+
+      - name: Build documentation
+        # -W turns warnings into errors, --keep-going reports all of them
+        run: make -C docs html SPHINXOPTS="-W --keep-going"
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload built docs as a Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          token: ${{ secrets.READTHEDOCS_TOKEN }}
-          project-slug: kinisit
-          html: build/html
+          path: docs/build/html
+
+  deploy:
+    needs: build
+    # Only publish from the default branch; PRs just build as a check
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
