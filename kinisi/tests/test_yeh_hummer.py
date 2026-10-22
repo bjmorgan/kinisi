@@ -112,8 +112,10 @@ class TestYehHummer:
         yh = YehHummer(td, temperature=sc.scalar(298, unit='K'), priors=priors)
 
         # Check that fitted values are within priors
-        assert priors[0].a <= yh.D_infinite.value <= (priors[0].b + priors[0].a)
-        assert priors[1].a <= yh.shear_viscosity.value <= (priors[1].b + priors[1].a)
+        D_low, D_high = priors[0].support()
+        slope_low, slope_high = priors[1].support()
+        assert D_low <= yh.D_infinite.value <= D_high
+        assert slope_low <= yh.data_group['slope'].value <= slope_high
 
     def test_yeh_hummer_properties(self):
         """Test YehHummer property accessors."""
