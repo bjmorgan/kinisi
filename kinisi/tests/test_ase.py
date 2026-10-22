@@ -54,3 +54,12 @@ class TestASEParser(unittest.TestCase):
         da = calculate_msd(p, progress=False)['da']
         expected = [np.mean(np.sum((positions[d:] - positions[:-d]) ** 2, axis=-1)) for d in range(1, n_frames)]
         np.testing.assert_allclose(da.values, expected[: da.sizes['time interval']])
+
+    def test_specie_as_list(self):
+        traj = Trajectory(TEST_FILE_PATH / 'example_ase.traj')
+        params = {'time_step': 1e-3 * sc.Unit('fs'), 'step_skip': 1 * sc.Unit('dimensionless'), 'progress': False}
+        from_str = ASEParser(traj, specie='Li', **params)
+        from_list = ASEParser(traj, specie=['Li'], **params)
+        assert from_list.indices.values.tolist() == from_str.indices.values.tolist()
+        assert from_list.drift_indices.values.tolist() == from_str.drift_indices.values.tolist()
+

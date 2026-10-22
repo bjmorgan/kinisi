@@ -8,6 +8,7 @@ Tests for the analyzer module
 
 import os
 import unittest
+from unittest import mock
 
 import MDAnalysis as mda
 import scipp as sc
@@ -102,6 +103,15 @@ class TestAnalyzer(unittest.TestCase):
         a = Analyzer._from_ase([traj, traj], **dc_params, dtype='consecutive')
         assert a.trajectory.displacements.dims == ('obs', 'particle', 'dimension')
         assert a.trajectory.displacements.shape == (200 * 2 - 1, 180, 3)
+
+    def test_consecutive_ase_passes_masses_and_progress(self):
+        masses = sc.array(dims=['atoms in particle'], values=[1.0, 2.0])
+        with mock.patch('kinisi.analyzer.ASEParser') as parser:
+            Analyzer._from_ase([[1], [2]], **dc_params, dtype='consecutive', masses=masses, progress=False)
+        kwargs = parser.call_args.kwargs
+        assert kwargs['masses'] is masses
+        assert kwargs['progress'] is False
+        assert kwargs.get('drift_indices') is None
 
     def test_list_bad_input(self):
         with self.assertRaises(ValueError):
