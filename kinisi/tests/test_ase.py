@@ -41,3 +41,11 @@ class TestASEParser(unittest.TestCase):
         )
         structure = np.zeros(1500)
         ASEParser.get_drift_indices('', structure, specie_indices)
+
+    def test_specie_as_list(self):
+        traj = Trajectory(TEST_FILE_PATH / 'example_ase.traj')
+        params = {'time_step': 1e-3 * sc.Unit('fs'), 'step_skip': 1 * sc.Unit('dimensionless'), 'progress': False}
+        from_str = ASEParser(traj, specie='Li', **params)
+        from_list = ASEParser(traj, specie=['Li'], **params)
+        assert from_list.indices.values.tolist() == from_str.indices.values.tolist()
+        assert from_list.drift_indices.values.tolist() == from_str.drift_indices.values.tolist()
