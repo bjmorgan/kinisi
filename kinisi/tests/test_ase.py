@@ -62,4 +62,3 @@ class TestASEParser(unittest.TestCase):
         from_list = ASEParser(traj, specie=['Li'], **params)
         assert from_list.indices.values.tolist() == from_str.indices.values.tolist()
         assert from_list.drift_indices.values.tolist() == from_str.drift_indices.values.tolist()
-
