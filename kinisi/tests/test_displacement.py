@@ -173,6 +173,12 @@ class TestCalculateMstd(unittest.TestCase):
         Test the calculation of the mean-squared displacement with some ionic charge.
         """
         result = displacement.calculate_mstd(PARSER, ionic_charge=2 * sc.Unit('elementary_charge'), progress=True)
+        per_ion = displacement.calculate_mstd(
+            PARSER,
+            ionic_charge=sc.array(dims=['particle'], values=[2.0, 2.0], unit='elementary_charge'),
+            progress=False,
+        )
+        testing.assert_allclose(per_ion['da'], result['da'])
         expected = sc.DataArray(
             data=sc.Variable(
                 dims=['time interval'],
@@ -186,3 +192,15 @@ class TestCalculateMstd(unittest.TestCase):
             },
         )
         testing.assert_allclose(result['da'], expected)
+
+
+def test_calculate_mstd_mixed_ionic_charge():
+    """
+    Charges of opposite sign must be applied to each ion before the displacements are summed.
+    """
+    charges = sc.array(dims=['particle'], values=[1.0, -1.0], unit='elementary_charge')
+    result = displacement.calculate_mstd(PARSER, ionic_charge=charges, progress=False)
+    signs = sc.array(dims=['particle'], values=[1.0, -1.0])
+    flipped = LimitedParser(displacements * signs, dt, time_step, step_skip)
+    expected = displacement.calculate_mstd(flipped, ionic_charge=1 * sc.Unit('elementary_charge'), progress=False)
+    testing.assert_allclose(result['da'], expected['da'])
