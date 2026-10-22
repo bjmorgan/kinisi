@@ -192,7 +192,7 @@ class Parser:
             dt_index = sc.arange(start=1, stop=coords.sizes['time'], step=1, dim='time interval')
             self.dt = dt_index * time_step * step_skip
 
-        dt_index = (self.dt / (time_step * step_skip)).astype(int)
+        dt_index = sc.round(self.dt / (time_step * step_skip)).astype(int)
         return dt_index
 
     @staticmethod
