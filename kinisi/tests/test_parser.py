@@ -240,6 +240,24 @@ class TestParser(unittest.TestCase):
         data = parser.Parser(coords, latt, time_step, step_skip, dt, specie_indices, drift_indices, dimension=dimension)
         assert_equal(data.dt.size, 140)
 
+    def test_parser_dt_index_inexact_float(self):
+        # 0.3 / 0.1 == 2.9999999999999996, which must give an index of 3, not 2.
+        rng = np.random.default_rng(0)
+        n_frames = 30
+        test_coords = sc.array(dims=['time', 'particle', 'dimension'], values=rng.random((n_frames, 2, 3)))
+        test_latt = sc.array(
+            dims=['time', 'dimension1', 'dimension2'], values=np.tile(np.eye(3) * 10, (n_frames, 1, 1)), unit='angstrom'
+        )
+        data = parser.Parser(
+            test_coords,
+            test_latt,
+            sc.scalar(0.1, unit='ps'),
+            sc.scalar(1),
+            sc.array(dims=['time interval'], values=[0.3, 0.7, 2.3], unit='ps'),
+            sc.array(dims=['particle'], values=[0]),
+        )
+        assert_equal(data.dt_index.values, [3, 7, 23])
+
     def test_parser_one_dimension(self):
         data = parser.Parser(coords, latt, time_step, step_skip, dt, specie_indices, drift_indices, dimension='x')
         assert_equal(data.displacements.sizes['dimension'], 1)
