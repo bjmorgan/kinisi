@@ -391,7 +391,7 @@ def minimum_eigenvalue_method(cov: np.ndarray, cond_max=1e16) -> np.ndarray:
     eigenvalues, eigenvectors = np.linalg.eigh(cov)
     T = eigenvalues.max() / cond_max
     new_eigenvalues = np.maximum(eigenvalues, T)
-    new_cov = eigenvectors @ np.diag(new_eigenvalues) @ eigenvectors.T
+    new_cov = np.real(eigenvectors @ np.diag(new_eigenvalues) @ eigenvectors.T)
     return new_cov
 
 
