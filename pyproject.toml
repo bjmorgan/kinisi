@@ -73,7 +73,7 @@ docs = [
 ]
 
 [project.urls]
-homepage = 'https://github.com/bjmorgan/kinisi'
+homepage = 'https://github.com/kinisi-dev/kinisi'
 documentation = 'https://kinisi.rtfd.io'
 
 [tool.hatch.build]

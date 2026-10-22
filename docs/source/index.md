@@ -7,7 +7,7 @@
 `kinisi` is an open-source Python package that can accurately estimate diffusion processes in atomic and molecular systems and determine an accurate estimate of the uncertainty in these processes.
 
 This is achieved by modelling the diffusion process as a [multivariate normal distribution](https://en.wikipedia.org/wiki/Multivariate_normal_distribution), based on that for a random walker. 
-This ensures and accurate estimation of the diffusion coefficient and it's uncertainty.
+This gives an accurate estimate of the diffusion coefficient and its uncertainty.
 More information about the approach `kinisi` uses can be found in the [methodology article](https://doi.org/10.1021/acs.jctc.4c01249), which is also introduced in this [poster](./_static/poster.pdf).
 
 ```{image} ./_static/example.png
@@ -18,12 +18,12 @@ More information about the approach `kinisi` uses can be found in the [methodolo
 <center>
 <small>
 An example of the output from <code>kinisi</code>; showing the determined mean-squared displacements (solid line),<br>
-the estimated Einstein diffusion relationship (blue regions representing descreasing credible intervals).
+the estimated Einstein diffusion relationship (blue regions representing decreasing credible intervals).
 </small>
 </center>
 <br>
 
-`kinisi` is built using the `scipp` library, we recommend [familiarising yourself](https://scipp.github.io/getting-started/index.html) with some of the `scipp` data structures if you want to start doing more complex things with `kinisi`. 
+`kinisi` is built using the `scipp` library; we recommend [familiarising yourself](https://scipp.github.io/getting-started/index.html) with some of the `scipp` data structures if you want to start doing more complex things with `kinisi`. 
 `kinisi` can handle simulation trajectories from many common molecular dynamics packages; if your trajectory can be read by [MDAnalysis](https://userguide.mdanalysis.org/stable/reading_and_writing.html), [ASE](https://wiki.fysik.dtu.dk/ase/ase/io/io.html), or [pymatgen](https://pymatgen.org), then you can use `kinisi`.
 The Markov chain Monte Carlo algorithm uses [the `emcee` package](https://emcee.readthedocs.io/en/stable/).
 Examples of some of the analyses `kinisi` can perform are shown in the [notebooks](./notebooks).

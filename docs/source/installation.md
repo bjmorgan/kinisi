@@ -2,7 +2,7 @@
 
 ## Release
 
-The [latest release](https://github.com/bjmorgan/kinisi/releases/latest) of `kinisi` can be installed from [PyPI](https://pypi.org/project/kinisi/) with `pip`:
+The [latest release](https://github.com/kinisi-dev/kinisi/releases/latest) of `kinisi` can be installed from [PyPI](https://pypi.org/project/kinisi/) with `pip`:
 
 ```console
 $ pip install kinisi
@@ -16,7 +16,7 @@ $ conda install -c conda-forge kinisi
 
 ## Bleeding-edge
 
-Alternatively, the latest development build can be installed  [GitHub](https://github.com/kinisi-dev/kinisi), which can be installed directly from GitHub with `pip`:
+Alternatively, the latest development build can be installed directly from [GitHub](https://github.com/kinisi-dev/kinisi) with `pip`:
 
 ```console
 $ pip install git+https://github.com/kinisi-dev/kinisi.git
@@ -26,7 +26,7 @@ Note, that if you already have `kinisi` on your system, you may need to run `pip
 
 ## Development 
 
-If you are interesting in modifying the `kinisi` code, you should clone the git repository and install `kinisi` with the `dev` option in editable mode. 
+If you are interested in modifying the `kinisi` code, you should clone the git repository and install `kinisi` with the `dev` option in editable mode. 
 
 ```console
 $ git clone https://github.com/kinisi-dev/kinisi.git
