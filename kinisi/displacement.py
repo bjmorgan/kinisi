@@ -15,15 +15,16 @@ from tqdm import tqdm
 from kinisi import parser
 
 
-def calculate_msd(p: parser.Parser, progress: bool = True) -> sc.Variable:
+def calculate_msd(p: parser.Parser, progress: bool = True) -> sc.DataGroup:
     """
     Calculate the mean-squared displacement.
 
-    :param p: The parser object containing the the relevant simulation trajectory data.
+    :param p: The parser object containing the relevant simulation trajectory data.
     :param progress: Whether to show the progress bar. Optional, default is :py:attr:`True`.
 
-    :return: A :py:class:`scipp.DataArray` object containing the relevant mean-squared displacement
-        data and number of independent samples.
+    :return: A :py:class:`scipp.DataGroup` with two entries: `da`, a :py:class:`scipp.DataArray` of the
+        mean-squared displacement (with variances) and `time interval` and `n_samples` coordinates, and
+        `dimensionality`, the number of dimensions the displacements were found along.
     """
     msd = []
     msd_var = []
@@ -56,22 +57,23 @@ def calculate_msd(p: parser.Parser, progress: bool = True) -> sc.Variable:
 
 def calculate_mstd(
     p: parser.Parser, system_particles: int = 1, ionic_charge: sc.Variable = None, progress: bool = True
-) -> sc.Variable:
+) -> sc.DataGroup:
     """
     Calculate the mean-squared total displacement, i.e., the displacement of the centre-of-mass of all particles.
 
-    :param p: The parser object containing the the relevant simulation trajectory data.
+    :param p: The parser object containing the relevant simulation trajectory data.
     :param system_particles: The number of system particles to average over. Note that the constitution of the
         system particles are defined in index order, i.e., two system particles will involve splitting the
         particles down the middle into each. Optional, defaults to :py:attr:`1`.
     :param ionic_charge: The ionic charge of the species of interest. This should be either a :py:mod:`scipp`
-        scalar if all of the ions have the same charge or an array of the charge for each indiviudal ion.
+        scalar if all of the ions have the same charge or an array of the charge for each individual ion.
         Optional, defaults to :py:attr:`None`, which means that the mean-squared total displacement is
-        computed.
+        computed rather than the mean-squared charge displacement.
     :param progress: Whether to show the progress bar. Optional, default is :py:attr:`True`.
 
-    :return: A :py:class:`scipp.DataArray` object containing the relevant mean-squared total displacement
-        data and number of independent samples.
+    :return: A :py:class:`scipp.DataGroup` with two entries: `da`, a :py:class:`scipp.DataArray` of the
+        mean-squared total (or charge) displacement (with variances) and `time interval` and `n_samples`
+        coordinates, and `dimensionality`, the number of dimensions the displacements were found along.
     """
     mstd = []
     mstd_var = []

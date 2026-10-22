@@ -104,17 +104,16 @@ class Analyzer:
 
         :param trajectory: The :py:class:`pymatgen.io.vasp.outputs.Xdatcar` or list of these that should be parsed.
         :param specie: Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
-        :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator. Note,
-            that this must be given as a :py:mod:`scipp`-type scalar. The unit used for the time_step, will be the unit
-            that is use for the time interval values.
-        :param step_skip: Sampling freqency of the simulation trajectory, i.e., how many time steps exist between the
+        :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator.
+            This must be given as a :py:mod:`scipp`-type scalar, and its unit is used for the time interval values.
+        :param step_skip: Sampling frequency of the simulation trajectory, i.e., how many time steps exist between the
             output of the positions in the trajectory. Similar to the :py:attr:`time_step`, this parameter must be
             a :py:mod:`scipp` scalar. The units for this scalar should be dimensionless.
         :param dtype: If :py:attr:`trajectory` is a :py:class:`pymatgen.io.vasp.outputs.Xdatcar` object, this should
             be :py:attr:`None`. However, if a list of :py:class:`pymatgen.io.vasp.outputs.Xdatcar` objects is passed,
             then it is necessary to identify if these constitute a series of :py:attr:`consecutive` trajectories or
             a series of :py:attr:`identical` starting points with different random seeds, in which case the `dtype`
-            should be either :py:attr:`consecutive` or :py:attr:`identical`.:
+            should be either :py:attr:`consecutive` or :py:attr:`identical`.
         :param dt: Time intervals to calculate the displacements over. Optional, defaults to a :py:mod:`scipp` array
             ranging from the smallest interval (i.e., time_step * step_skip) to the full simulation length, with
             a step size the same as the smallest interval.
@@ -307,13 +306,18 @@ class Analyzer:
         self, n_posterior_samples: int = None, n_predictive_samples: int = 256, progress: bool = True
     ):
         """
-        Sample  the posterior predictive distribution. The shape of the resulting array will be
-        `(n_posterior_samples * n_predictive_samples, start_dt)`.
+        Sample the posterior predictive distribution of the mean-squared displacement in the diffusive regime.
+        This requires that the relevant fit (e.g., :py:func:`diffusion`) has been run.
 
-        :params posterior_predictive_params: Parameters for the :py:func:`diffusion.posterior_predictive` method.
-            See the appropriate documentation for more guidence on this dictionary.
+        :param n_posterior_samples: Number of samples to draw from the posterior distribution. Optional,
+            defaults to the number of posterior samples available.
+        :param n_predictive_samples: Number of random samples to draw for each posterior sample. Optional,
+            defaults to :py:attr:`256`.
+        :param progress: Whether to show the progress bar. Optional, defaults to :py:attr:`True`.
 
-        :return: Samples from the posterior predictive distribution.
+        :return: Samples from the posterior predictive distribution, as a :py:mod:`scipp` array with
+            dimensions of `samples` (of length `n_posterior_samples * n_predictive_samples`) and `time interval`
+            (the time intervals from `start_dt` onwards).
         """
         return self.diff.posterior_predictive(n_posterior_samples, n_predictive_samples, progress)
 

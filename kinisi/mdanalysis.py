@@ -17,16 +17,14 @@ from kinisi.parser import Parser
 
 class MDAnalysisParser(Parser):
     """
-    Parser for MDAnalysis structures.
+    Parser for an :py:class:`MDAnalysis.core.universe.Universe`.
 
-    Takes an MDAnalysis.Universe object as an input.
-
-    :param universe: MDanalysis universe object to be parsed
-    :param specie: Specie to calculate diffusivity for as a String, list of strings, or scipp.Variable of strings.
-    :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator. Note,
-        that this must be given as a :py:mod:`scipp`-type scalar. The unit used for the time_step, will be the unit
-        that is use for the time interval values.
-    :param step_skip: Sampling freqency of the simulation trajectory, i.e., how many time steps exist between the
+    :param universe: MDAnalysis universe to be parsed.
+    :param specie: Specie to calculate diffusivity for as a String, list of strings, or :py:mod:`scipp` array of
+        strings, e.g. :py:attr:`'Li'`. Either this or :py:attr:`specie_indices` must be given, not both.
+    :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator.
+        This must be given as a :py:mod:`scipp`-type scalar, and its unit is used for the time interval values.
+    :param step_skip: Sampling frequency of the simulation trajectory, i.e., how many time steps exist between the
         output of the positions in the trajectory. Similar to the :py:attr:`time_step`, this parameter must be
         a :py:mod:`scipp` scalar. The units for this scalar should be dimensionless.
     :param dt: Time intervals to calculate the displacements over. Optional, defaults to a :py:mod:`scipp` array
@@ -35,8 +33,14 @@ class MDAnalysisParser(Parser):
     :param dimension: Dimension/s to find the displacement along, this should be some subset of `'xyz'` indicating
         the axes of interest. Optional, defaults to `'xyz'`.
     :param distance_unit: The unit of distance used in the input structures. Optional, defaults to angstroms.
-    :param sub_sample_atoms: Subsample the atoms in the trajectory. Optional, defaults to 1.
-    :param sub_sample_traj: Subsample the trajectory. Optional, defaults to 1.
+    :param specie_indices: Indices of the atoms to calculate the diffusivity for, as a :py:mod:`scipp` array.
+        A 1D array with dimension `particle` selects individual atoms. A 2D array with dimensions `particle` and
+        `atoms in particle` groups atoms into molecules, and the centre of mass of each molecule is used.
+        Optional, defaults to `None`, in which case :py:attr:`specie` is used.
+    :param drift_indices: Indices of the atoms used for drift correction, as a :py:mod:`scipp` array. Optional,
+        defaults to all atoms that are not being analysed.
+    :param masses: Masses used to weight the centre of mass of each molecule, as a :py:mod:`scipp` array with
+        dimension `atoms in particle`. Optional, defaults to `None`, in which case all atoms are weighted equally.
     :param progress: Whether to show a progress bar when reading in the structures. Optional, defaults to `True`.
     """
 
@@ -81,14 +85,13 @@ class MDAnalysisParser(Parser):
         """
         Obtain the initial structure, coordinates, and lattice parameters from an MDAnalysis.Universe object.
 
-        :param universe: MDanalysis universe object.
+        :param universe: MDAnalysis universe object.
+        :param distance_unit: The unit of distance used in the input structures.
         :param progress: Whether to show a progress bar when reading in the structures.
-        :param sub_sample_atoms: Subsample the atoms in the trajectory. Optional, defaults to 1.
-        :param sub_sample_traj: Subsample the trajectory. Optional, defaults to 1.
 
         :returns: A tuple of:  the initial structure (as
             a :py:class:`MDAnalysis.core.universe.Universe.atoms`), coordinates (as
-            a :py:mod:`scipp` array with dimensions of `time`, `atom`, and `dimension`),
+            a :py:mod:`scipp` array with dimensions of `time`, `particle`, and `dimension`),
             and lattice parameters (as a :py:mod:`scipp` array with dimensions `time`,
             `dimension1`, and `dimension2`).
         """

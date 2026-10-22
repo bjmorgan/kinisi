@@ -47,26 +47,32 @@ EINSUM_DIMENSIONS = {
 
 class Parser:
     """
-    The base class for object parsing.
-    :param structure: a :py:class:`pymatgen.core.structure.Structure` or a :py:class:`MDAnalysis.core.universe.Universe`
-    :param coords: a :py:mod:`scipp` array with dimensions of `time`, `atom`, and `dimension`),
-    :param lattice:  a :py:mod:`scipp` array with dimensions `time`,`dimension1`, and `dimension2`
-    :param specie: Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
-    :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator. Note,
-        that this must be given as a :py:mod:`scipp`-type scalar. The unit used for the time_step, will be the unit
-        that is use for the time interval values.
-    :param step_skip: Sampling freqency of the simulation trajectory, i.e., how many time steps exist between the
+    The base class for object parsing. This is not normally used directly; the format-specific
+    parsers (:py:class:`kinisi.ase.ASEParser`, :py:class:`kinisi.mdanalysis.MDAnalysisParser` and
+    :py:class:`kinisi.pymatgen.PymatgenParser`) read a trajectory and pass the result to this class.
+
+    :param coords: Fractional coordinates of all atoms, as a :py:mod:`scipp` array with dimensions of
+        `time`, `particle`, and `dimension`.
+    :param latt: Lattice matrices for each frame, as a :py:mod:`scipp` array with dimensions of `time`,
+        `dimension1`, and `dimension2` and a unit of length.
+    :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator.
+        This must be given as a :py:mod:`scipp`-type scalar, and its unit is used for the time interval values.
+    :param step_skip: Sampling frequency of the simulation trajectory, i.e., how many time steps exist between the
         output of the positions in the trajectory. Similar to the :py:attr:`time_step`, this parameter must be
         a :py:mod:`scipp` scalar. The units for this scalar should be dimensionless.
     :param dt: Time intervals to calculate the displacements over. Optional, defaults to a :py:mod:`scipp` array
         ranging from the smallest interval (i.e., time_step * step_skip) to the full simulation length, with
         a step size the same as the smallest interval.
-    :param specie_indices: Indices of the specie to calculate the diffusivity for. Optional, defaults to `None`.
-    :param masses: Masses of the atoms in the structure. Optional, defaults to `None`.
-        If used should be a 1D scipp array of dimension 'atoms in particle'.
+    :param specie_indices: Indices of the atoms to calculate the diffusivity for, as a :py:mod:`scipp` array.
+        A 1D array with dimension `particle` selects individual atoms. A 2D array with dimensions `particle` and
+        `atoms in particle` groups atoms into molecules, and the centre of mass of each molecule is used.
+    :param drift_indices: Indices of the atoms used for drift correction (typically the framework). Optional,
+        defaults to all atoms that are not in :py:attr:`specie_indices`.
+    :param masses: Masses used to weight the centre of mass of each molecule. Optional, defaults to `None`,
+        in which case all atoms are weighted equally. If used, this should be a 1D :py:mod:`scipp` array with
+        dimension `atoms in particle`.
     :param dimension: Dimension/s to find the displacement along, this should be some subset of `'xyz'` indicating
         the axes of interest. Optional, defaults to `'xyz'`.
-    :param progress: Whether to show a progress bar when reading in the structures. Optional, defaults to `True`.
     """
 
     def __init__(
@@ -122,7 +128,7 @@ class Parser:
 
     def _to_datagroup(self, hdf5=True) -> sc.DataGroup:
         """
-        Convert the :py:class:`Parser` object to a :py:mod: 'scipp' DataGroup.
+        Convert the :py:class:`Parser` object to a :py:mod:`scipp` DataGroup.
         :param hdf5: If `True`, incompatible classes will be converted for saving to HDF5.
         :return: A :py:mod:`scipp` DataGroup representing the :py:class:`Parser` object.
         """
@@ -135,7 +141,7 @@ class Parser:
     @classmethod
     def _from_datagroup(cls, datagroup) -> 'Parser':
         """
-        Convert a :py:mod: 'scipp' DataGroup back to a :py:class:`Parser` object.
+        Convert a :py:mod:`scipp` DataGroup back to a :py:class:`Parser` object.
         :return: A :py:class:`Parser` object.
         """
         class_path = str(datagroup['__class__'])
@@ -164,12 +170,11 @@ class Parser:
         Also checks that the time intervals provided in the dt parameter are a valid subset of the simulation time
         intervals.
 
-        :param coords: The fractional coordiates of the atoms in the trajectory. This should be a :py:mod:`scipp`
+        :param coords: The fractional coordinates of the atoms in the trajectory. This should be a :py:mod:`scipp`
             array type object with dimensions of 'particle', 'time', and 'dimension'.
-        :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator. Note,
-            that this must be given as a :py:mod:`scipp`-type scalar. The unit used for the time_step, will be the unit
-            that is use for the time interval values.
-        :param step_skip: Sampling freqency of the simulation trajectory, i.e., how many time steps exist between the
+        :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator.
+            This must be given as a :py:mod:`scipp`-type scalar, and its unit is used for the time interval values.
+        :param step_skip: Sampling frequency of the simulation trajectory, i.e., how many time steps exist between the
             output of the positions in the trajectory. Similar to the :py:attr:`time_step`, this parameter must be
             a :py:mod:`scipp` scalar. The units for this scalar should be dimensionless.
 
@@ -206,7 +211,7 @@ class Parser:
         """
         Calculate the absolute displacements of the atoms in the trajectory, when the cell is orthorhombic on all frames.
 
-        :param coords: The fractional coordiates of the atoms in the trajectory. This should be a :py:mod:`scipp`
+        :param coords: The fractional coordinates of the atoms in the trajectory. This should be a :py:mod:`scipp`
             array type object with dimensions of 'particle', 'time', and 'dimension'.
         :param lattice: A series of matrices that describe the lattice in each step in the trajectory.
             A :py:mod:`scipp` array with dimensions of 'time', 'dimension1', and 'dimension2'.
@@ -241,11 +246,11 @@ class Parser:
         coords: VariableLikeType, lattice: VariableLikeType
     ) -> VariableLikeType:
         """
-        Calculate the absolute displacements of the atoms in the trajectory, when a non-orthrhombic cell is used.
+        Calculate the absolute displacements of the atoms in the trajectory, when a non-orthorhombic cell is used.
             This is done by finding the minimum cartesian displacement vector, from its 8 periodic images. This
             ensures that triclinic cells are treated correctly.
 
-        :param coords: The fractional coordiates of the atoms in the trajectory. This should be a :py:mod:`scipp`
+        :param coords: The fractional coordinates of the atoms in the trajectory. This should be a :py:mod:`scipp`
             array type object with dimensions of 'particle', 'time', and 'dimension'.
         :param lattice: A series of matrices that describe the lattice in each step in the trajectory.
             A :py:mod:`scipp` array with dimensions of 'time', 'row', and 'column'.
@@ -276,7 +281,7 @@ class Parser:
         Perform drift correction, such that the displacement is calculated normalised to any framework drift.
 
         :param disp: Displacements for all atoms in the simulation. A :py:mod:`scipp` array with dimensions
-            of `obs`, `atom` and `dimension`.
+            of `obs`, `particle` and `dimension`.
 
         :return: Displacements corrected to account for drift of a framework.
         """
@@ -350,7 +355,7 @@ def get_molecules(
     :param masses: Masses associated with indices in indices.
 
 
-    :return: Tuple containing: Tuple containing: fractional coordinates for centers and framework atoms
+    :return: Tuple containing: fractional coordinates for centers and framework atoms
     and Tuple containing: indices for centers used in the calculation
     of the diffusion and indices of framework atoms.
     """

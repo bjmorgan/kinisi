@@ -27,7 +27,7 @@ from .due import Doi, due
 
 class Diffusion:
     """
-    The class for the calcualtion of the self-diffusion coefficient.
+    The class for the calculation of the self-diffusion coefficient.
 
     :param dg: A :py:class:`scipp.DataGroup` object containing the relevant mean-squared displacement
         data and number of independent samples.
@@ -45,7 +45,7 @@ class Diffusion:
 
     def _to_datagroup(self) -> sc.DataGroup:
         """
-        Convert the :py:class:`Diffusion` object to a :py:mod: 'scipp' DataGroup.
+        Convert the :py:class:`Diffusion` object to a :py:mod:`scipp` DataGroup.
         :return: A :py:mod:`scipp` DataGroup representing the :py:class:`Diffusion` object.
         """
         group = self.__dict__.copy()
@@ -59,7 +59,7 @@ class Diffusion:
     @classmethod
     def _from_datagroup(cls, datagroup) -> 'Diffusion':
         """
-        Convert a :py:mod: 'scipp' DataGroup back to a :py:class:`Diffusion` object.
+        Convert a :py:mod:`scipp` DataGroup back to a :py:class:`Diffusion` object.
         :return: A :py:class:`Diffusion` object.
         """
         obj = cls.__new__(cls)
@@ -349,8 +349,9 @@ class Diffusion:
         self, n_posterior_samples: int = None, n_predictive_samples: int = 256, progress: bool = True
     ) -> sc.Variable:
         """
-        Sample the posterior predictive distribution. The shape of the resulting array will be
-        `(n_posterior_samples * n_predictive_samples, start_dt)`.
+        Sample the posterior predictive distribution of the mean-squared displacement in the diffusive regime.
+        The result has dimensions of `samples` (of length `n_posterior_samples * n_predictive_samples`) and
+        `time interval` (the time intervals from `start_dt` onwards).
 
         :param n_posterior_samples: Number of samples from the posterior distribution.
             Optional, default is the number of posterior samples.

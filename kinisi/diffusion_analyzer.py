@@ -1,6 +1,6 @@
 """
-The :py:class:`kinisi.analyze.DiffusionAnalyser` class enable the evaluation of tracer mean-squared
-displacment and the self-diffusion coefficient.
+The :py:class:`kinisi.analyze.DiffusionAnalyzer` class enables the evaluation of tracer mean-squared
+displacement and the self-diffusion coefficient.
 """
 
 # Copyright (c) kinisi developers.
@@ -54,17 +54,16 @@ class DiffusionAnalyzer(Analyzer):
 
         :param trajectory: The :py:class:`pymatgen.io.vasp.outputs.Xdatcar` or list of these that should be parsed.
         :param specie: Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
-        :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator. Note,
-            that this must be given as a :py:mod:`scipp`-type scalar. The unit used for the time_step, will be the unit
-            that is use for the time interval values.
-        :param step_skip: Sampling freqency of the simulation trajectory, i.e., how many time steps exist between the
+        :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator.
+            This must be given as a :py:mod:`scipp`-type scalar, and its unit is used for the time interval values.
+        :param step_skip: Sampling frequency of the simulation trajectory, i.e., how many time steps exist between the
             output of the positions in the trajectory. Similar to the :py:attr:`time_step`, this parameter must be
             a :py:mod:`scipp` scalar. The units for this scalar should be dimensionless.
         :param dtype: If :py:attr:`trajectory` is a :py:class:`pymatgen.io.vasp.outputs.Xdatcar` object, this should
             be :py:attr:`None`. However, if a list of :py:class:`pymatgen.io.vasp.outputs.Xdatcar` objects is passed,
             then it is necessary to identify if these constitute a series of :py:attr:`consecutive` trajectories or
             a series of :py:attr:`identical` starting points with different random seeds, in which case the `dtype`
-            should be either :py:attr:`consecutive` or :py:attr:`identical`.:
+            should be either :py:attr:`consecutive` or :py:attr:`identical`.
         :param dt: Time intervals to calculate the displacements over. Optional, defaults to a :py:mod:`scipp` array
             ranging from the smallest interval (i.e., time_step * step_skip) to the full simulation length, with
             a step size the same as the smallest interval.
@@ -72,10 +71,11 @@ class DiffusionAnalyzer(Analyzer):
             the axes of interest. Optional, defaults to `'xyz'`.
         :param distance_unit: The unit of distance in the simulation input. This should be a :py:mod:`scipp` unit and
             defaults to :py:attr:`sc.units.angstrom`.
-        :param specie_indices: The indices of the species to compute the centre of mass of. Optional, defaults to
-            :py:attr:`None`, which means that all species are considered.
-        :param masses: The masses of the species to calculate the diffusion for. Optional, defaults
-            to :py:attr:`None`, which means that the masses are not considered.
+        :param specie_indices: Indices of the atoms to analyse, as a :py:mod:`scipp` array. A 2D array with dimensions
+            `particle` and `atoms in particle` groups atoms into molecules, and the centre of mass of each is used.
+            Optional, defaults to :py:attr:`None`, in which case :py:attr:`specie` is used.
+        :param masses: Masses used to weight the centre of mass of each molecule. Optional, defaults to
+            :py:attr:`None`, in which case all atoms are weighted equally.
         :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
 
         :returns: The :py:class:`DiffusionAnalyzer` object with the mean-squared displacement calculated.
@@ -117,17 +117,14 @@ class DiffusionAnalyzer(Analyzer):
 
         :param trajectory: The :py:class:`pymatgen.io.vasp.outputs.Xdatcar` or list of these that should be parsed.
         :param specie: Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
-        :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator. Note,
-            that this must be given as a :py:mod:`scipp`-type scalar. The unit used for the time_step, will be the unit
-            that is use for the time interval values.
-        :param step_skip: Sampling freqency of the simulation trajectory, i.e., how many time steps exist between the
+        :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator.
+            This must be given as a :py:mod:`scipp`-type scalar, and its unit is used for the time interval values.
+        :param step_skip: Sampling frequency of the simulation trajectory, i.e., how many time steps exist between the
             output of the positions in the trajectory. Similar to the :py:attr:`time_step`, this parameter must be
             a :py:mod:`scipp` scalar. The units for this scalar should be dimensionless.
-        :param dtype: If :py:attr:`trajectory` is a :py:class:`pymatgen.io.vasp.outputs.Xdatcar` object, this should
-            be :py:attr:`None`. However, if a list of :py:class:`pymatgen.io.vasp.outputs.Xdatcar` objects is passed,
-            then it is necessary to identify if these constitute a series of :py:attr:`consecutive` trajectories or
-            a series of :py:attr:`identical` starting points with different random seeds, in which case the `dtype`
-            should be either :py:attr:`consecutive` or :py:attr:`identical`.:
+        :param dtype: If :py:attr:`trajectory` is a single universe, this should be :py:attr:`None`. If a list of
+            universes is passed, these must be a series of :py:attr:`identical` starting points with different random
+            seeds, and the `dtype` should be :py:attr:`identical`.
         :param dt: Time intervals to calculate the displacements over. Optional, defaults to a :py:mod:`scipp` array
             ranging from the smallest interval (i.e., time_step * step_skip) to the full simulation length, with
             a step size the same as the smallest interval.
@@ -135,10 +132,11 @@ class DiffusionAnalyzer(Analyzer):
             the axes of interest. Optional, defaults to `'xyz'`.
         :param distance_unit: The unit of distance in the simulation input. This should be a :py:mod:`scipp` unit and
             defaults to :py:attr:`sc.units.angstrom`.
-        :param specie_indices: The indices of the species to compute the centre of mass of. Optional, defaults to
-            :py:attr:`None`, which means that all species are considered.
-        :param masses: The masses of the species to calculate the diffusion for. Optional, defaults
-            to :py:attr:`None`, which means that the masses are not considered.
+        :param specie_indices: Indices of the atoms to analyse, as a :py:mod:`scipp` array. A 2D array with dimensions
+            `particle` and `atoms in particle` groups atoms into molecules, and the centre of mass of each is used.
+            Optional, defaults to :py:attr:`None`, in which case :py:attr:`specie` is used.
+        :param masses: Masses used to weight the centre of mass of each molecule. Optional, defaults to
+            :py:attr:`None`, in which case all atoms are weighted equally.
         :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
 
         :returns: The :py:class:`DiffusionAnalyzer` object with the mean-squared displacement calculated.
@@ -180,8 +178,8 @@ class DiffusionAnalyzer(Analyzer):
         :param trajectory: The ASE trajectory or list of ASE trajectories to parse.
         :param specie: Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
         :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator.
-            Note, that this must be given as a :py:mod:`scipp`-type scalar. The unit used for the time_step, will be
-            the unit that is use for the time interval values.
+            This must be given as a :py:mod:`scipp`-type scalar, and its unit is used for the time interval
+            values.
         :param step_skip: Sampling frequency of the simulation trajectory, i.e., how many time steps exist between the
             output of the positions in the trajectory. Similar to the :py:attr:`time_step`, this parameter must be
             a :py:mod:`scipp` scalar. The units for this scalar should be dimensionless.
@@ -196,10 +194,11 @@ class DiffusionAnalyzer(Analyzer):
             the axes of interest. Optional, defaults to `'xyz'`.
         :param distance_unit: The unit of distance in the simulation input. This should be a :py:mod:`scipp` unit and
             defaults to :py:attr:`sc.units.angstrom`.
-        :param specie_indices: The indices of the species to compute the centre of mass of. Optional, defaults to
-            :py:attr:`None`, which means that all species are considered.
-        :param masses: The masses of the species to calculate the diffusion for. Optional, defaults
-            to :py:attr:`None`, which means that the masses are not considered.
+        :param specie_indices: Indices of the atoms to analyse, as a :py:mod:`scipp` array. A 2D array with dimensions
+            `particle` and `atoms in particle` groups atoms into molecules, and the centre of mass of each is used.
+            Optional, defaults to :py:attr:`None`, in which case :py:attr:`specie` is used.
+        :param masses: Masses used to weight the centre of mass of each molecule. Optional, defaults to
+            :py:attr:`None`, in which case all atoms are weighted equally.
         :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
         :returns: The :py:class:`DiffusionAnalyzer` object with the mean-squared displacement calculated.
         """
