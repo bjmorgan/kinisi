@@ -72,18 +72,13 @@ class FittingBase:
 
         # Set default priors if not provided
         if self.priors is None:
-            bounds = tuple(
-                [
-                    (
-                        self.data_group[p].value * 0.5 * self.data_group[p].unit,
-                        self.data_group[p].value * 1.5 * self.data_group[p].unit,
-                    )
-                    for p in self.parameter_names
-                ]
-            )
+            # sorted so that the bounds are in order when the best fit value is negative
+            bounds = [
+                sorted((self.data_group[p].value * 0.5, self.data_group[p].value * 1.5)) for p in self.parameter_names
+            ]
 
             # Set up priors for nested sampling
-            self.priors = [uniform(b[0].value, b[1].value - b[0].value) for b in bounds]
+            self.priors = [uniform(b[0], b[1] - b[0]) for b in bounds]
 
     def __repr__(self):
         """String representation."""
