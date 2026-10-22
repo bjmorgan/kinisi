@@ -130,7 +130,7 @@ class Diffusion:
         self._cond_max = cond_max
         self._recondition = recondition
 
-        self.diff_regime = np.argwhere(self.dg['da'].coords['time interval'] >= self._start_dt)[0][0]
+        self.diff_regime = self._diff_regime_index()
         self._covariance_matrix = self.compute_covariance_matrix()
 
         x_values = self.dg['da'].coords['time interval'][self.diff_regime :].values
@@ -179,6 +179,23 @@ class Diffusion:
 
         if check_consistency:
             self._check_consistency(warn_threshold)
+
+    def _diff_regime_index(self) -> int:
+        """
+        Find the index of the first time interval in the diffusive regime.
+
+        :raises ValueError: If :py:attr:`start_dt` is later than the longest time interval.
+
+        :return: The index of the first time interval that is at least :py:attr:`start_dt`.
+        """
+        time_interval = self.dg['da'].coords['time interval']
+        indices = np.argwhere(time_interval >= self._start_dt)
+        if indices.size == 0:
+            raise ValueError(
+                f'start_dt ({self._start_dt.value} {self._start_dt.unit}) is later than the longest time interval '
+                f'({time_interval.max().value} {time_interval.unit}).'
+            )
+        return indices[0][0]
 
     def _check_consistency(self, warn_threshold: float = 0.7):
         """
@@ -291,9 +308,9 @@ class Diffusion:
     @property
     def sigma(self) -> sc.Variable:
         """
-        :return: The conductivity as a :py:mod:`scipp` object.
+        :return: The conductivity as a :py:mod:`scipp` object, or :py:attr:`None` if it has not been calculated.
         """
-        return self._sigma
+        return getattr(self, '_sigma', None)
 
     def compute_covariance_matrix(self) -> sc.Variable:
         """
@@ -343,7 +360,7 @@ class Diffusion:
 
         ppd_unit = self.gradient.unit * self.dg['da'].coords['time interval'].unit + self.intercept.unit
 
-        diff_regime = np.argwhere(self.dg['da'].coords['time interval'] >= self._start_dt)[0][0]
+        diff_regime = self._diff_regime_index()
         ppd = sc.zeros(
             dims=['posterior samples', 'predictive samples', 'time interval'],
             shape=[n_posterior_samples, n_predictive_samples, self.dg['da'].coords['time interval'][diff_regime:].size],

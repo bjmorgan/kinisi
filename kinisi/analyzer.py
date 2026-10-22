@@ -353,22 +353,3 @@ def _flatten_list(this_list: list) -> list:
     :return: Flattened list
     """
     return [item for sublist in this_list for item in sublist]
-
-
-def _stack_trajectories(u: sc.Variable) -> list[np.ndarray]:
-    """
-    If more than one trajectory is given, then they are stacked to give the appearance that there are
-    additional atoms in the trajectory.
-
-    :param u: Results from the parsing of each trajectory.
-
-    :return: The stacked displacement list.
-    """
-    joint_disp_3d = []
-    for i in range(len(u[0].disp_3d)):
-        disp = np.zeros((u[0].disp_3d[i].shape[0] * len(u), u[0].disp_3d[i].shape[1], u[0].disp_3d[i].shape[2]))
-        disp[: u[0].disp_3d[i].shape[0]] = u[0].disp_3d[i]
-        for j in range(1, len(u)):
-            disp[u[0].disp_3d[i].shape[0] * j : u[0].disp_3d[i].shape[0] * (j + 1)] = u[j].disp_3d[i]
-        joint_disp_3d.append(disp)
-    return joint_disp_3d
