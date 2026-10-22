@@ -1,5 +1,5 @@
-kinisi\.diffusion
-=================
+kinisi\.displacement
+====================
 
 .. automodule:: kinisi.displacement
     :members:

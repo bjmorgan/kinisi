@@ -24,7 +24,7 @@ authors:
 date-released: 2024-02-12
 license: MIT
 message: "If you use this software, please cite it using these metadata."
-repository-code: "https://github.com/bjmorgan/kinisi"
+repository-code: "https://github.com/kinisi-dev/kinisi"
 title: "kinisi: Bayesian analysis of mass transport from molecular dynamics simulations"
 version: "1.0.0"
 preferred-citation:

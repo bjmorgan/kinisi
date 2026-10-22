@@ -21,19 +21,19 @@
     > the `pyproject.toml` hence, when you run `pip install '.[docs]'` you might get different package 
     > versions and due to the stochastic nature of the sampling in `kinisi`, this leads to *slightly* 
     > different values in the results. `kinisi` allows a `random_state` to be passed to many methods, 
-    > however, this will only ensure reproducibility when the same enviroment is present. Consider using 
+    > however, this will only ensure reproducibility when the same environment is present. Consider using 
     > pinned versions in a conda/mamba environment if you want to enable *true* reproducibility.
     
 - How are trajectories unwrapped?
 
     > When calculating displacements, `kinisi` aims to find the minimum displacement between trajectory steps.
-    > This can be done for orthorhombic cells with a simple heuristic: if the diplacement is greater than one half
+    > This can be done for orthorhombic cells with a simple heuristic: if the displacement is greater than one half
     > the simulation cell length, `kinisi` wraps that displacement.
     > For the case of non-orthorhombic simulation cells, the displacements to all periodic images are calculated 
     > and the minimum used. This scheme assumes that no particle moves more than one cell between steps.
     > Therefore, it requires that enough simulation data is provided to `kinisi`,
     > in other words, that there is a small enough time skip between trajectory steps. 
-    > A small enchancement is made to these methods, in order to account for changes in cell volume during 
+    > A small enhancement is made to these methods, in order to account for changes in cell volume during 
     > NPT simulations. This enhancement is the 
     > [TOR scheme, developed by Bullerjahn and co-workers](https://pubs.acs.org/doi/10.1021/acs.jctc.3c00308).
     > If you use `kinisi` for an NPT simulation, please cite their work.

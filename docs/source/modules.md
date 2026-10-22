@@ -40,6 +40,16 @@ maxdepth: 2
 displacement
 ```
 
+## `fitting`
+
+```{toctree}
+---
+maxdepth: 2
+---
+
+fitting
+```
+
 ## `parser`
 
 ```{toctree}
@@ -48,4 +58,24 @@ maxdepth: 2
 ---
 
 parser
+```
+
+## `samples`
+
+```{toctree}
+---
+maxdepth: 2
+---
+
+samples
+```
+
+## `yeh_hummer`
+
+```{toctree}
+---
+maxdepth: 2
+---
+
+yeh_hummer_api
 ```

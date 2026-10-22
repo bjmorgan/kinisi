@@ -1,5 +1,5 @@
-kinisi\.parser
-==============
+kinisi\.samples
+===============
 
 .. automodule:: kinisi.samples
     :members:
