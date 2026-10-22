@@ -74,6 +74,15 @@ class TestDiffusion(unittest.TestCase):
         assert cov.dims == ('time_interval1', 'time_interval2')
         assert cov.shape == (140, 140)
 
+    def test_bayesian_regression_without_intercept(self):
+        diff = Diffusion(dg=self.msd_load)
+        diff.bayesian_regression(start_dt=10 * sc.Unit('femtosecond'), fit_intercept=False, n_samples=100, n_burn=50)
+
+        assert diff.intercept is None
+        assert diff._flatchain.shape[1] == 1
+        ppd = diff.posterior_predictive(n_posterior_samples=2, n_predictive_samples=3, progress=False)
+        assert ppd.sizes['samples'] == 6
+
     def test__diffusion(self):
         start_dt = 400 * sc.Unit('femtosecond')
         self.diff._diffusion(start_dt)
