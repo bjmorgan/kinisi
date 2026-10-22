@@ -160,7 +160,10 @@ class Diffusion:
         if slope < 0:
             slope = 1e-20
 
-        max_likelihood = np.array([slope, intercept])
+        if fit_intercept:
+            max_likelihood = np.array([slope, intercept])
+        else:
+            max_likelihood = np.array([slope])
 
         pos = max_likelihood + max_likelihood * 1e-3 * np.random.randn(n_walkers, max_likelihood.size)
         sampler = EnsembleSampler(*pos.shape, log_likelihood)
@@ -176,6 +179,8 @@ class Diffusion:
 
         if fit_intercept:
             self.intercept = Samples(self._flatchain[:, 1], unit=self.dg['da'].unit)
+        else:
+            self.intercept = None
 
         if check_consistency:
             self._check_consistency(warn_threshold)
@@ -341,7 +346,7 @@ class Diffusion:
         if n_posterior_samples is None:
             n_posterior_samples = self.gradient.size
 
-        ppd_unit = self.gradient.unit * self.dg['da'].coords['time interval'].unit + self.intercept.unit
+        ppd_unit = self.gradient.unit * self.dg['da'].coords['time interval'].unit
 
         diff_regime = np.argwhere(self.dg['da'].coords['time interval'] >= self._start_dt)[0][0]
         ppd = sc.zeros(
@@ -361,7 +366,9 @@ class Diffusion:
             raise ValueError('Units of the covariance matrix and mu do not align correctly.')
 
         for i, n in iterator:
-            mu = self.gradient[n] * self.dg['da'].coords['time interval'][diff_regime:] + self.intercept[n]
+            mu = self.gradient[n] * self.dg['da'].coords['time interval'][diff_regime:]
+            if self.intercept is not None:
+                mu += self.intercept[n]
             mv = multivariate_normal(mean=mu.values, cov=self._covariance_matrix.values, allow_singular=True)
             ppd.values[i] = mv.rvs(n_predictive_samples)
 
