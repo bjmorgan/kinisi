@@ -204,6 +204,6 @@ intersphinx_mapping = {
     'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
     'MDAnalysis': ('https://www.mdanalysis.org/docs/', None),
     'pymatgen': ('https://pymatgen.org/', None),
-    'ase': ('https://wiki.fysik.dtu.dk/ase/', None),
+    "ase": ("https://docs.ase-lib.org/", None),
     'scipp': ('https://scipp.github.io/', None),
 }
