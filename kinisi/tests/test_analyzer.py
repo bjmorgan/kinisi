@@ -67,42 +67,42 @@ class TestAnalyzer(unittest.TestCase):
     def test_xdatcar_pmg(self):
         a = Analyzer._from_xdatcar(xd, **da_params)
         assert a.trajectory.displacements.dims == ('obs', 'particle', 'dimension')
-        assert a.trajectory.displacements.shape == (140, 192, 3)
+        assert a.trajectory.displacements.shape == (139, 192, 3)
 
     def test_identical_xdatcar_pmg(self):
         a = Analyzer._from_xdatcar([xd, xd], **da_params, dtype='identical')
         assert a.trajectory.displacements.dims == ('obs', 'particle', 'dimension')
-        assert a.trajectory.displacements.shape == (140, 192 * 2, 3)
+        assert a.trajectory.displacements.shape == (139, 192 * 2, 3)
 
     def test_consecutive_xdatcar_pmg(self):
         a = Analyzer._from_xdatcar([xd, xd], **da_params, dtype='consecutive')
         assert a.trajectory.displacements.dims == ('obs', 'particle', 'dimension')
-        assert a.trajectory.displacements.shape == (140 * 2, 192, 3)
+        assert a.trajectory.displacements.shape == (140 * 2 - 1, 192, 3)
 
     def test_mdauniverse(self):
         a = Analyzer._from_universe(md, **db_params)
         assert a.trajectory.displacements.dims == ('obs', 'particle', 'dimension')
-        assert a.trajectory.displacements.shape == (200, 204, 3)
+        assert a.trajectory.displacements.shape == (199, 204, 3)
 
     def test_identical_mdauniverse(self):
         a = Analyzer._from_universe([md, md], **db_params, dtype='identical')
         assert a.trajectory.displacements.dims == ('obs', 'particle', 'dimension')
-        assert a.trajectory.displacements.shape == (200, 204 * 2, 3)
+        assert a.trajectory.displacements.shape == (199, 204 * 2, 3)
 
     def test_ase(self):
         a = Analyzer._from_ase(traj, **dc_params)
         assert a.trajectory.displacements.dims == ('obs', 'particle', 'dimension')
-        assert a.trajectory.displacements.shape == (200, 180, 3)
+        assert a.trajectory.displacements.shape == (199, 180, 3)
 
     def test_identical_ase(self):
         a = Analyzer._from_ase([traj, traj], **dc_params, dtype='identical')
         assert a.trajectory.displacements.dims == ('obs', 'particle', 'dimension')
-        assert a.trajectory.displacements.shape == (200, 180 * 2, 3)
+        assert a.trajectory.displacements.shape == (199, 180 * 2, 3)
 
     def test_consecutive_ase(self):
         a = Analyzer._from_ase([traj, traj], **dc_params, dtype='consecutive')
         assert a.trajectory.displacements.dims == ('obs', 'particle', 'dimension')
-        assert a.trajectory.displacements.shape == (200 * 2, 180, 3)
+        assert a.trajectory.displacements.shape == (200 * 2 - 1, 180, 3)
 
     def test_consecutive_ase_passes_masses_and_progress(self):
         masses = sc.array(dims=['atoms in particle'], values=[1.0, 2.0])

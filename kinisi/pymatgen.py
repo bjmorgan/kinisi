@@ -119,8 +119,6 @@ class PymatgenParser(Parser):
             coords_l.append(np.array(struct.frac_coords))
             latt_l.append(np.array(struct.lattice.matrix))
 
-        coords_l.insert(0, coords_l[0])
-        latt_l.insert(0, latt_l[0])
         coords_l = np.array(coords_l)
         latt_l = np.array(latt_l)
 
