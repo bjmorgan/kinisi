@@ -49,9 +49,11 @@ class YehHummer(FittingBase):
     then slope is converted to viscosity for output.
 
     :param diffusion: sc.DataArray with diffusion coefficients and box_length coordinate
-    :param temperature: Temperature (will be extracted from coords if not provided)
-    :param priors: Optional priors for [D_0, viscosity] parameters using scipy.stats objects,
-        where viscosity has units Pa*s.
+    :param temperature: Temperature of the simulations, as a scipp scalar.
+    :param priors: Optional priors for the [D_0, slope] parameters as frozen scipy.stats distributions,
+        where slope = (k_B * T * xi) / (6 * pi * eta) and both are in the units of the data, i.e., D_0 in the
+        diffusion unit and slope in the diffusion unit multiplied by the box_length unit. Defaults to
+        D_0 uniform on [0.8, 2.0] * max(D) and slope uniform on the range given by viscosities of 1e-5 to 1e-1 Pa*s.
     """
 
     def __init__(self, diffusion, temperature: sc.Variable, priors=None):
@@ -74,7 +76,8 @@ class YehHummer(FittingBase):
         # Compute priors: use provided or defaults
         if priors is None:
             D_max = np.max(diffusion.values)
-            D_prior = uniform(D_max * 0.8, D_max * 1.2)
+            # scipy's uniform takes (loc, scale), so this is the range [0.8, 2.0] * D_max
+            D_prior = uniform(loc=D_max * 0.8, scale=D_max * 1.2)
             visc_lower, visc_upper = 1e-5 * sc.Unit('Pa*s'), 1e-1 * sc.Unit('Pa*s')
 
             # Higher viscosity = lower slope, so bounds are inverted
