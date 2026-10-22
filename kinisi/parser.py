@@ -344,20 +344,19 @@ def get_molecules(
     coords: VariableLikeType,
     indices: VariableLikeType,
     masses: VariableLikeType,
-) -> tuple[np.ndarray, np.ndarray, tuple[np.ndarray, np.ndarray]]:
+) -> tuple[VariableLikeType, VariableLikeType, VariableLikeType]:
     """
-    Determine framework and non-framework indices for an :py:mod:`ase` or :py:mod:`pymatgen` or :py:mod:`MDAnalysis` compatible file when
-    specie_indices are provided and contain multiple molecules. Warning: This function changes the coords without renaming the object.
+    Replace the atoms in each molecule with the molecule's centre of mass, for use when :py:attr:`specie_indices`
+    groups atoms into molecules. The atoms that are not in any molecule are kept, after the centres of mass, and
+    are used for drift correction.
 
-    :param coords: fractional coordinates for all atoms.
-    :param indices: indices for the atoms in the molecules in the trajectory used in the calculation
-    of the diffusion.
-    :param masses: Masses associated with indices in indices.
+    :param coords: Fractional coordinates for all atoms, with dimensions of `time`, `particle`, and `dimension`.
+    :param indices: Indices of the atoms in each molecule, with dimensions of `particle` and `atoms in particle`.
+    :param masses: Masses used to weight the centre of mass, with dimension `atoms in particle`. If `None`, all
+        atoms are weighted equally.
 
-
-    :return: Tuple containing: fractional coordinates for centers and framework atoms
-    and Tuple containing: indices for centers used in the calculation
-    of the diffusion and indices of framework atoms.
+    :return: Tuple containing: the new fractional coordinates (centres of mass followed by the remaining atoms),
+        the indices of the centres of mass, and the indices of the remaining atoms (used for drift correction).
     """
     drift_indices = []
 

@@ -288,7 +288,7 @@ class ConductivityAnalyzer(Analyzer):
     def distributions(self) -> np.array:
         """
         :return: A distribution of samples for the linear relationship that can be used for easy
-        plotting of credible intervals.
+            plotting of credible intervals.
         """
         if self.diff.intercept is not None:
             return (

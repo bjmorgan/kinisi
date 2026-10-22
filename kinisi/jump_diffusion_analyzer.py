@@ -125,7 +125,7 @@ class JumpDiffusionAnalyzer(Analyzer):
         Constructs the necessary :py:mod:`kinisi` objects for analysis from a
         :py:class:`MDAnalysis.core.universe.Universe` object.
 
-                :param trajectory: The :py:class:`pymatgen.io.vasp.outputs.Xdatcar` or list of these that should be parsed.
+        :param trajectory: The :py:class:`MDAnalysis.core.universe.Universe` or list of these that should be parsed.
         :param specie: Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
         :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator.
             This must be given as a :py:mod:`scipp`-type scalar, and its unit is used for the time interval values.
@@ -278,7 +278,7 @@ class JumpDiffusionAnalyzer(Analyzer):
     def distributions(self) -> np.array:
         """
         :return: A distribution of samples for the linear relationship that can be used for easy
-        plotting of credible intervals.
+            plotting of credible intervals.
         """
         if self.diff.intercept is not None:
             return (
