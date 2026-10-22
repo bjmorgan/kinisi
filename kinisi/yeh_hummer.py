@@ -53,7 +53,7 @@ class YehHummer(FittingBase):
     :param priors: Optional priors for the [D_0, slope] parameters as frozen scipy.stats distributions,
         where slope = (k_B * T * xi) / (6 * pi * eta) and both are in the units of the data, i.e., D_0 in the
         diffusion unit and slope in the diffusion unit multiplied by the box_length unit. Defaults to
-        D_0 uniform on [0.8, 2.0] * max(D) and slope uniform on the range given by viscosities of 1e-5 to 1e-1 Pa*s.
+        D_0 uniform on [0.8, 1.2] * max(D) and slope uniform on the range given by viscosities of 1e-5 to 1e-1 Pa*s.
     """
 
     def __init__(self, diffusion, temperature: sc.Variable, priors=None):
