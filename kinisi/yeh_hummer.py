@@ -77,7 +77,7 @@ class YehHummer(FittingBase):
         if priors is None:
             D_max = np.max(diffusion.values)
             # scipy's uniform takes (loc, scale), so this is the range [0.8, 2.0] * D_max
-            D_prior = uniform(loc=D_max * 0.8, scale=D_max * 1.2)
+            D_prior = uniform(loc=D_max * 0.8, scale=D_max * 0.4)
             visc_lower, visc_upper = 1e-5 * sc.Unit('Pa*s'), 1e-1 * sc.Unit('Pa*s')
 
             # Higher viscosity = lower slope, so bounds are inverted
