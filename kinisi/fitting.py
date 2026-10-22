@@ -203,6 +203,7 @@ class FittingBase:
         n_walkers: int = 32,
         n_burn: int = 500,
         n_thin: int = 10,
+        progress: bool = True,
     ) -> None:
         """
         Perform MCMC sampling of the model parameters.
@@ -212,6 +213,7 @@ class FittingBase:
         :param n_walkers: Number of MCMC walkers. Optional, defaults to 32.
         :param n_burn: Number of burn-in samples. Optional, defaults to 500.
         :param n_thin: Thinning factor. Optional, defaults to 10.
+        :param progress: Whether to show the progress bar. Optional, defaults to True.
         """
         if x0 is not None:
             if len(x0) != len(self.parameter_names):
@@ -228,7 +230,7 @@ class FittingBase:
         nwalkers, ndim = pos.shape
 
         sampler = EnsembleSampler(nwalkers, ndim, self.log_posterior)
-        sampler.run_mcmc(pos, n_samples + n_burn, progress=True, progress_kwargs={'desc': 'MCMC Sampling'})
+        sampler.run_mcmc(pos, n_samples + n_burn, progress=progress, progress_kwargs={'desc': 'MCMC Sampling'})
         flatchain = sampler.get_chain(discard=n_burn, thin=n_thin, flat=True)
         for i, name in enumerate(self.parameter_names):
             self.data_group[name] = Samples(flatchain[:, i], unit=self.parameter_units[i])

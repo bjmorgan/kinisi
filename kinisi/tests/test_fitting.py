@@ -9,6 +9,7 @@ Tests for fitting module
 # pylint: disable=R0201
 
 import unittest
+from unittest import mock
 
 import numpy as np
 import pytest
@@ -154,6 +155,16 @@ class TestFittingBase(unittest.TestCase):
         assert isinstance(td.data_group['c'], Samples)
         assert td.data_group['m'].shape == (32,)
         assert td.data_group['c'].shape == (32,)
+
+    def test_mcmc_no_progress(self):
+        """
+        Test that the MCMC progress bar can be turned off
+        """
+        td = fitting.FittingBase(data, straight_line, ('m', 'c'), (sc.Unit('m/s'), sc.Unit('m')))
+        with mock.patch('kinisi.fitting.EnsembleSampler') as sampler:
+            sampler.return_value.get_chain.return_value = np.zeros((10, 2))
+            td.mcmc(n_samples=10, n_burn=5, n_walkers=32, progress=False)
+        assert sampler.return_value.run_mcmc.call_args.kwargs['progress'] is False
 
     def test_mcmc_x0(self):
         """

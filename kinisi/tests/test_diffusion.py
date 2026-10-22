@@ -74,6 +74,12 @@ class TestDiffusion(unittest.TestCase):
         assert cov.dims == ('time_interval1', 'time_interval2')
         assert cov.shape == (140, 140)
 
+    def test_start_dt_beyond_data(self):
+        diff = Diffusion(dg=self.msd_load)
+        assert diff.sigma is None
+        with pytest.raises(ValueError, match='later than the longest time interval'):
+            diff.bayesian_regression(start_dt=1e9 * sc.Unit('femtosecond'))
+
     def test_bayesian_regression_without_intercept(self):
         diff = Diffusion(dg=self.msd_load)
         diff.bayesian_regression(start_dt=10 * sc.Unit('femtosecond'), fit_intercept=False, n_samples=100, n_burn=50)
