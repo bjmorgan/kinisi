@@ -406,18 +406,16 @@ def minimum_eigenvalue_method(cov: np.ndarray, cond_max=1e16) -> np.ndarray:
     should produce a matrix with a condition number of :py:attr:`cond_max` based
     on the eigenvalues and eigenvectors of the input matrix.
 
-    :param matrix: Matrix to recondition.
+    :param cov: Symmetric matrix to recondition.
     :param cond_max: Expected condition number of output matrix. Optional,
         default is :py:attr:`1e16`.
 
     :return: Reconditioned matrix.
     """
-    eigenthings = np.linalg.eig(cov)
-    eigenvalues = eigenthings.eigenvalues
-    new_eigenvalues = np.copy(eigenvalues)
-    T = eigenvalues[0] / cond_max
-    new_eigenvalues[np.where(new_eigenvalues < T)] = T
-    new_cov = np.real(eigenthings.eigenvectors @ np.diag(new_eigenvalues) @ eigenthings.eigenvectors.T)
+    eigenvalues, eigenvectors = np.linalg.eigh(cov)
+    T = eigenvalues.max() / cond_max
+    new_eigenvalues = np.maximum(eigenvalues, T)
+    new_cov = np.real(eigenvectors @ np.diag(new_eigenvalues) @ eigenvectors.T)
     return new_cov
 
 

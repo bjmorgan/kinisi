@@ -30,6 +30,12 @@ class TestFunctions(unittest.TestCase):
         reconditioned_matrix = minimum_eigenvalue_method(matrix, 1)
         assert not np.allclose(matrix, reconditioned_matrix)
 
+    def test_minimum_eigenvalue_method_condition_number(self):
+        # The largest eigenvalue is not the first, so the threshold must use the maximum.
+        matrix = np.diag([1.0, 1e-20, 10.0])
+        reconditioned_matrix = minimum_eigenvalue_method(matrix, 1e3)
+        assert np.allclose(np.linalg.eigvalsh(reconditioned_matrix), [1e-2, 1.0, 10.0])
+
     def test_straight_line(self):
         m = 3
         x = np.array([1, 2, 3])
