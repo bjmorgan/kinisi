@@ -32,7 +32,7 @@ class TemperatureDependent(FittingBase):
     A class for temperature-dependent relationships. This class enables MCMC sampling of the
     temperature-dependent relationships and estimation of the Bayesian evidence.
 
-    :param diffusion: Diffusion coefficient sc.DataFrame with a temperature coordinate and variances.
+    :param diffusion: Diffusion coefficient sc.DataArray with a temperature coordinate and variances.
     :param function: A callable function that describes the relationship between temperature and diffusion.
     :param parameter_names: A tuple of parameter names for the function.
     :param parameter_units: A tuple of sc.Unit objects corresponding to the parameter names.
@@ -103,7 +103,7 @@ class Arrhenius(TemperatureDependent):
     """
     Evaluate the data with a standard Arrhenius relationship.
 
-    :param diffusion: Diffusion coefficient sc.DataFrame with a temperature coordinate and variances.
+    :param diffusion: Diffusion coefficient sc.DataArray with a temperature coordinate and variances.
     :param priors: Optional prior probability distributions for the parameters of the function.
         Defaults to None, in which case a uniform distribution is defined with limits of
         +/- 50 percent of the max likelihood values.
@@ -122,7 +122,7 @@ class Arrhenius(TemperatureDependent):
     @property
     def activation_energy(self) -> VariableLike | Samples:
         """
-        :return: Activated energy distribution in electronvolt.
+        :return: Activation energy distribution in electronvolt.
         """
         return self.data_group['activation_energy']
 
@@ -154,7 +154,7 @@ class VogelFulcherTammann(TemperatureDependent):
     """
     Evaluate the data with a Vogel-Fulcher-Tammann relationship.
 
-    :param diffusion: Diffusion coefficient sc.DataFrame with a temperature coordinate and variances.
+    :param diffusion: Diffusion coefficient sc.DataArray with a temperature coordinate and variances.
     :param priors: Optional prior probability distributions for the parameters of the function.
         Defaults to None, in which case a uniform distribution is defined with limits of
         +/- 50 percent of the max likelihood values.
@@ -173,7 +173,7 @@ class VogelFulcherTammann(TemperatureDependent):
     @property
     def activation_energy(self) -> VariableLike | Samples:
         """
-        :return: Activated energy distribution in electronvolt.
+        :return: Activation energy distribution in electronvolt.
         """
         return self.data_group['activation_energy']
 
@@ -204,9 +204,10 @@ def piecewise_smooth_equation(
     Evaluate the data with two Arrhenius regions following a piecewise equation smoothed with a sigmoid function.
 
     :param abscissa: The temperature data.
-    :param activation_energy_high: The high-temperature activation energy value.
     :param activation_energy_low: The low-temperature activation energy value.
-    :param prefactor: The prefactor value.
+    :param activation_energy_high: The high-temperature activation energy value.
+    :param preexponential_factor: The diffusion coefficient at the transition temperature, T0. Note, this is not
+        the Arrhenius preexponential factor, as the exponent is relative to 1/T0 rather than zero.
     :param T0: Phase transition temperature.
     :param width: width of the sigmoid transition.
 
@@ -223,7 +224,7 @@ class PiecewiseSmoothArrhenius(TemperatureDependent):
     """
     Evaluate the data with two Arrhenius regions following a piecewise relationship smoothed with a sigmoid function.
 
-    :param diffusion: Diffusion coefficient sc.DataFrame with a temperature coordinate and variances.
+    :param diffusion: Diffusion coefficient sc.DataArray with a temperature coordinate and variances.
     :param priors: Optional prior probability distributions for the parameters of the function.
         Defaults to None, in which case a uniform distribution is defined with limits of
         +/- 50 percent of the best fit values.
@@ -262,7 +263,7 @@ class PiecewiseSmoothArrhenius(TemperatureDependent):
     @property
     def preexponential_factor(self) -> VariableLike | Samples:
         """
-        :return: Preexponential factor.
+        :return: Diffusion coefficient at the transition temperature, T0.
         """
         return self.data_group['preexponential_factor']
 
@@ -292,9 +293,10 @@ def piecewise_equation(
     Evaluate the data with two Arrhenius regions following a piecewise equation.
 
     :param abscissa: The temperature data.
-    :param activation_energy_high: The high-temperature activation energy value.
     :param activation_energy_low: The low-temperature activation energy value.
-    :param prefactor: The prefactor value.
+    :param activation_energy_high: The high-temperature activation energy value.
+    :param preexponential_factor: The diffusion coefficient at the transition temperature, T0. Note, this is not
+        the Arrhenius preexponential factor, as the exponent is relative to 1/T0 rather than zero.
     :param T0: Phase transition temperature.
 
     :return: The diffusion coefficient data.
@@ -310,7 +312,7 @@ class PiecewiseArrhenius(TemperatureDependent):
     """
     Evaluate the data with two Arrhenius regions following a piecewise relationship.
 
-    :param diffusion: Diffusion coefficient sc.DataFrame with a temperature coordinate and variances.
+    :param diffusion: Diffusion coefficient sc.DataArray with a temperature coordinate and variances.
     :param priors: Optional prior probability distributions for the parameters of the function.
         Defaults to None, in which case a uniform distribution is defined with limits of
         +/- 50 percent of the best fit values.
@@ -348,7 +350,7 @@ class PiecewiseArrhenius(TemperatureDependent):
     @property
     def preexponential_factor(self) -> VariableLike | Samples:
         """
-        :return: Preexponential factor.
+        :return: Diffusion coefficient at the transition temperature, T0.
         """
         return self.data_group['preexponential_factor']
 

@@ -20,37 +20,31 @@ from .due import Doi, due
 
 class ASEParser(Parser):
     """
-    A parser for ASE Atoms objects
+    Parser for a trajectory of :py:class:`ase.atoms.Atoms` objects, such as an :py:class:`ase.io.trajectory.Trajectory`.
 
-    :param atoms: Atoms ordered in sequence of run.
-    :param specie: symbol to calculate diffusivity for as a String, list of strings, or scipp.Variable of strings.
-    :param time_step: Time step, in picoseconds, between steps in trajectory.
-    :param step_skip: Sampling frequency of the trajectory (time_step is multiplied by this number to get the real
-        time between output from the simulation file).
-    :param sub_sample_traj: Multiple of the :py:attr:`time_step` to sub sample at. Optional, defaults
-        to :py:attr:`1` where all timesteps are used.
-    :param min_dt: Minimum time interval to be evaluated, in the simulation units. Optional, defaults to the
-        produce of :py:attr:`time_step` and :py:attr:`step_skip`.
-    :param max_dt: Maximum time interval to be evaluated, in the simulation units. Optional, defaults to the
-        length of the simulation.
-    :param n_steps: Number of steps to be used in the time interval function. Optional, defaults to :py:attr:`100`
-        unless this is fewer than the total number of steps in the trajectory when it defaults to this number.
-    :param spacing: The spacing of the steps that define the time interval, can be either :py:attr:`'linear'` or
-        :py:attr:`'logarithmic'`. If :py:attr:`'logarithmic'` the number of steps will be less than or equal
-        to that in the :py:attr:`n_steps` argument, such that all values are unique. Optional, defaults to
-        :py:attr:`linear`.
-    :param sampling: The ways that the time-windows are sampled. The options are :py:attr:`'single-origin'`
-        or :py:attr:`'multi-origin'` with the former resulting in only one observation per atom per
-        time-window and the latter giving the maximum number of origins without sampling overlapping
-        trajectories. Optional, defaults to :py:attr:`'multi-origin'`.
-    :param memory_limit: Upper limit in the amount of computer memory that the displacements can occupy in
-        gigabytes (GB). Optional, defaults to :py:attr:`8.`.
-    :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
-    :param specie_indices: Optional, list of indices to calculate diffusivity for as a list of indices. Specie
-        must be set to None for this to function. Molecules can be specificed as a list of lists of indices.
-        The inner lists must all be on the same length.
-    :param masses: Optional, list of masses associated with the indices in specie_indices. Must be same shape as specie_indices.
-    :param framework_indices: Optional, list of framework indices to be used to correct framework drift. If an empty list is passed no drift correction will be performed.
+    :param atoms: Atoms objects ordered in sequence of run.
+    :param specie: Specie to calculate diffusivity for as a String, list of strings, or :py:mod:`scipp` array of
+        strings, e.g. :py:attr:`'Li'`. Either this or :py:attr:`specie_indices` must be given, not both.
+    :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator.
+        This must be given as a :py:mod:`scipp`-type scalar, and its unit is used for the time interval values.
+    :param step_skip: Sampling frequency of the simulation trajectory, i.e., how many time steps exist between the
+        output of the positions in the trajectory. Similar to the :py:attr:`time_step`, this parameter must be
+        a :py:mod:`scipp` scalar. The units for this scalar should be dimensionless.
+    :param dt: Time intervals to calculate the displacements over. Optional, defaults to a :py:mod:`scipp` array
+        ranging from the smallest interval (i.e., time_step * step_skip) to the full simulation length, with
+        a step size the same as the smallest interval.
+    :param dimension: Dimension/s to find the displacement along, this should be some subset of `'xyz'` indicating
+        the axes of interest. Optional, defaults to `'xyz'`.
+    :param distance_unit: The unit of distance used in the input structures. Optional, defaults to angstroms.
+    :param specie_indices: Indices of the atoms to calculate the diffusivity for, as a :py:mod:`scipp` array.
+        A 1D array with dimension `particle` selects individual atoms. A 2D array with dimensions `particle` and
+        `atoms in particle` groups atoms into molecules, and the centre of mass of each molecule is used.
+        Optional, defaults to `None`, in which case :py:attr:`specie` is used.
+    :param drift_indices: Indices of the atoms used for drift correction, as a :py:mod:`scipp` array. Optional,
+        defaults to all atoms that are not being analysed.
+    :param masses: Masses used to weight the centre of mass of each molecule, as a :py:mod:`scipp` array with
+        dimension `atoms in particle`. Optional, defaults to `None`, in which case all atoms are weighted equally.
+    :param progress: Whether to show a progress bar when reading in the structures. Optional, defaults to `True`.
     """
 
     @due.dcite(
@@ -95,10 +89,11 @@ class ASEParser(Parser):
         self, atoms: list['ase.atoms.Atoms'], distance_unit: sc.Unit, progress: bool = True
     ) -> tuple['ase.atoms.Atoms', VariableLikeType, VariableLikeType]:
         """
-        Obtain the initial structure and displacement from a :py:attr:`list` of :py:class`pymatgen.core.structure.Structure`.
+        Obtain the initial structure, fractional coordinates, and lattice matrices from a list of
+        :py:class:`ase.atoms.Atoms` objects.
 
-        :param structures: Structures ordered in sequence of run.
-        :param sub_sample_traj: Multiple of the :py:attr:`time_step` to sub sample at. Optional, default is :py:attr:`1`.
+        :param atoms: Atoms objects ordered in sequence of run.
+        :param distance_unit: The unit of distance used in the input structures.
         :param progress: Print progress bars to screen. Optional, defaults to :py:attr:`True`.
 
         :return: Tuple containing: initial structure, fractional coordinates for all atoms, and lattice descriptions.
@@ -135,7 +130,6 @@ class ASEParser(Parser):
 
         :param structure: Initial structure.
         :param specie: Specie to calculate diffusivity for as a String, list of strings, or scipp.Variable of strings.
-        :param framework_indices: Indices of framework to be used in drift correction. If set to None will return all indices that are not in indices.
 
         :returns: Tuple containing: indices for the atoms in the trajectory used in the calculation of the diffusion
             and indices of framework atoms.

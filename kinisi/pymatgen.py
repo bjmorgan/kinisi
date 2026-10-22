@@ -20,16 +20,14 @@ from .due import Doi, due
 
 class PymatgenParser(Parser):
     """
-    Parser for pymatgen structures.
-
-    This takes a list of pymatgen structures as an input.
+    Parser for a list of :py:class:`pymatgen.core.structure.Structure` objects.
 
     :param structures: Structures ordered in sequence of run.
-    :param specie: Specie to calculate diffusivity for as a String, list of strings, or scipp.Variable of strings.
-    :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator. Note,
-        that this must be given as a :py:mod:`scipp`-type scalar. The unit used for the time_step, will be the unit
-        that is use for the time interval values.
-    :param step_skip: Sampling freqency of the simulation trajectory, i.e., how many time steps exist between the
+    :param specie: Specie to calculate diffusivity for as a String, list of strings, or :py:mod:`scipp` array of
+        strings, e.g. :py:attr:`'Li'`. Either this or :py:attr:`specie_indices` must be given, not both.
+    :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator.
+        This must be given as a :py:mod:`scipp`-type scalar, and its unit is used for the time interval values.
+    :param step_skip: Sampling frequency of the simulation trajectory, i.e., how many time steps exist between the
         output of the positions in the trajectory. Similar to the :py:attr:`time_step`, this parameter must be
         a :py:mod:`scipp` scalar. The units for this scalar should be dimensionless.
     :param dt: Time intervals to calculate the displacements over. Optional, defaults to a :py:mod:`scipp` array
@@ -38,8 +36,14 @@ class PymatgenParser(Parser):
     :param dimension: Dimension/s to find the displacement along, this should be some subset of `'xyz'` indicating
         the axes of interest. Optional, defaults to `'xyz'`.
     :param distance_unit: The unit of distance used in the input structures. Optional, defaults to angstroms.
-    :param specie_indices: Indices of the specie to calculate the diffusivity for. Optional, defaults to `None`.
-    :param masses: Masses of the atoms in the structure. Optional, defaults to `None`.
+    :param specie_indices: Indices of the atoms to calculate the diffusivity for, as a :py:mod:`scipp` array.
+        A 1D array with dimension `particle` selects individual atoms. A 2D array with dimensions `particle` and
+        `atoms in particle` groups atoms into molecules, and the centre of mass of each molecule is used.
+        Optional, defaults to `None`, in which case :py:attr:`specie` is used.
+    :param drift_indices: Indices of the atoms used for drift correction, as a :py:mod:`scipp` array. Optional,
+        defaults to all atoms that are not being analysed.
+    :param masses: Masses used to weight the centre of mass of each molecule, as a :py:mod:`scipp` array with
+        dimension `atoms in particle`. Optional, defaults to `None`, in which case all atoms are weighted equally.
     :param progress: Whether to show a progress bar when reading in the structures. Optional, defaults to `True`.
     """
 
@@ -91,11 +95,12 @@ class PymatgenParser(Parser):
         Obtain the initial structure, coordinates, and lattice parameters from a list of pymatgen structures.
 
         :param structures: Structures ordered in sequence of run.
+        :param distance_unit: The unit of distance used in the input structures.
         :param progress: Whether to show a progress bar when reading in the structures.
 
         :returns: A tuple of the initial structure (as
             a :py:class:`pymatgen.core.structure.Structure`), coordinates (as
-            a :py:mod:`scipp` array with dimensions of `time`, `atom`, and `dimension`),
+            a :py:mod:`scipp` array with dimensions of `time`, `particle`, and `dimension`),
             and lattice parameters (as a :py:mod:`scipp` array with dimensions `time`,
             `dimension1`, and `dimension2`).
         """
