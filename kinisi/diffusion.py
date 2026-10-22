@@ -126,7 +126,7 @@ class Diffusion:
         if random_state is not None:
             np.random.seed(random_state.get_state()[1][1])
 
-        self._start_dt = start_dt
+        self._start_dt = sc.to_unit(start_dt, self.dg['da'].coords['time interval'].unit)
         self._cond_max = cond_max
         self._recondition = recondition
 
@@ -235,7 +235,7 @@ class Diffusion:
         :param start_dt: The time at which the diffusion regime begins.
         :param kwargs: Additional keyword arguments to pass to :py:func:`bayesian_regression`.
         """
-        self.bayesian_regression(start_dt=sc.to_unit(start_dt, self.dg['da'].coords['time interval'].unit), **kwargs)
+        self.bayesian_regression(start_dt=start_dt, **kwargs)
         _diffusion_coefficient = sc.to_unit(self.gradient / (2 * self.dg['dimensionality'].value), 'cm2/s')
         self._diffusion_coefficient = Samples(_diffusion_coefficient.values, _diffusion_coefficient.unit)
 

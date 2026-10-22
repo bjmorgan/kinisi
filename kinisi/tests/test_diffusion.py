@@ -101,6 +101,13 @@ class TestDiffusion(unittest.TestCase):
         assert diff_cond._sigma.to_unit('S/m').unit == 'S/m'
         assert diff_cond.sigma.to_unit('S/m').unit == 'S/m'
 
+    def test_start_dt_unit_conversion(self):
+        diff = Diffusion(dg=self.msd_load)
+        diff._jump_diffusion(0.2 * sc.Unit('ps'), n_samples=100, n_burn=50, progress=False)
+        assert diff._start_dt.unit == self.msd_load['da'].coords['time interval'].unit
+        expected = np.argwhere(self.msd_load['da'].coords['time interval'] >= 200 * sc.Unit('fs'))[0][0]
+        assert diff.diff_regime == expected
+
     def test_compute_covariance_matrix(self):
         start_dt = 200 * sc.Unit('femtosecond')
         self.diff.bayesian_regression(start_dt=start_dt)
