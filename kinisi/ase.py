@@ -117,9 +117,6 @@ class ASEParser(Parser):
             coords.append(np.array(scaled_positions))
             latt.append(struct.cell[:])
 
-        coords.insert(0, coords[0])
-        latt.insert(0, latt[0])
-
         coords = sc.array(dims=['time', 'particle', 'dimension'], values=coords, unit=sc.units.dimensionless)
         latt = sc.array(dims=['time', 'dimension1', 'dimension2'], values=latt, unit=distance_unit)
 

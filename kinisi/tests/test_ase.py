@@ -10,10 +10,12 @@ import unittest
 
 import numpy as np
 import scipp as sc
+from ase import Atoms
 from ase.io import Trajectory
 
 from kinisi import parser
 from kinisi.ase import ASEParser
+from kinisi.displacement import calculate_msd
 from kinisi.tests import TEST_FILE_PATH
 
 
@@ -41,3 +43,14 @@ class TestASEParser(unittest.TestCase):
         )
         structure = np.zeros(1500)
         ASEParser.get_drift_indices('', structure, specie_indices)
+
+    def test_msd_matches_brute_force(self):
+        rng = np.random.default_rng(0)
+        n_frames = 8
+        positions = np.cumsum(rng.normal(scale=0.1, size=(n_frames, 2, 3)), axis=0) + 2
+        frames = [Atoms('Li2O', positions=np.vstack([p, [[5, 5, 5]]]), cell=[10, 10, 10], pbc=True) for p in positions]
+        p = ASEParser(frames, 'Li', sc.scalar(1.0, unit='ps'), sc.scalar(1), progress=False)
+        assert p.dt_index.values.tolist() == list(range(1, n_frames))
+        da = calculate_msd(p, progress=False)['da']
+        expected = [np.mean(np.sum((positions[d:] - positions[:-d]) ** 2, axis=-1)) for d in range(1, n_frames)]
+        np.testing.assert_allclose(da.values, expected[: da.sizes['time interval']])
