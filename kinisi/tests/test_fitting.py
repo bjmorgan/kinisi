@@ -57,6 +57,17 @@ class TestFittingBase(unittest.TestCase):
         assert isinstance(td.priors[0], rv_frozen)
         assert isinstance(td.priors[1], rv_frozen)
 
+    def test_init_default_priors_negative_value(self):
+        """
+        Test that the default priors are valid when a best fit value is negative
+        """
+        negative = sc.DataArray(data=-D, coords={'temperature': temp})
+        td = fitting.FittingBase(negative, straight_line, ('m', 'c'), (sc.Unit('m/s'), sc.Unit('m')))
+        m = td.data_group['m'].value
+        assert m < 0
+        assert_almost_equal(td.priors[0].support(), (1.5 * m, 0.5 * m))
+        assert np.isfinite(td.log_prior((m, td.data_group['c'].value)))
+
     def test_init_priors(self):
         """
         Test the initialisation of FittingBase class with priors

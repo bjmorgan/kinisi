@@ -192,7 +192,7 @@ class Parser:
             dt_index = sc.arange(start=1, stop=coords.sizes['time'], step=1, dim='time interval')
             self.dt = dt_index * time_step * step_skip
 
-        dt_index = (self.dt / (time_step * step_skip)).astype(int)
+        dt_index = sc.round(self.dt / (time_step * step_skip)).astype(int)
         return dt_index
 
     @staticmethod
@@ -301,9 +301,17 @@ class Parser:
                 )
             case (str() | list() | sc.Variable(), sc.Variable(), _):
                 raise TypeError('Must only specify specie or specie_indices.')
-            case (str() | sc.Variable(), None, None):  # Automatic specie_indices, with automatic drift correction
+            case (
+                str() | list() | sc.Variable(),
+                None,
+                None,
+            ):  # Automatic specie_indices, with automatic drift correction
                 specie_indices, drift_indices = self.get_indices(structure, specie)
-            case (str() | sc.Variable(), None, sc.Variable()):  # Automatic specie_indices, with manual drift correction
+            case (
+                str() | list() | sc.Variable(),
+                None,
+                sc.Variable(),
+            ):  # Automatic specie_indices, with manual drift correction
                 specie_indices, _ = self.get_indices(structure, specie)
             case (None, sc.Variable(), None):  # Manual specie_indices, with automatic drift correction
                 drift_indices = self.get_drift_indices(structure, specie_indices)
