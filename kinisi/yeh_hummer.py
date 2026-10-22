@@ -19,11 +19,20 @@ from kinisi import __version__
 from kinisi.fitting import FittingBase
 from kinisi.samples import Samples
 
-from .due import Doi, due
+from .due import BibTeX, due
 
 
 @due.dcite(
-    Doi('10.1021/jp0477147'),
+    BibTeX("""@article{yeh2004system,
+      author = {Yeh, In-Chul and Hummer, Gerhard},
+      title = {System-Size Dependence of Diffusion Coefficients and Viscosities from Molecular Dynamics Simulations with Periodic Boundary Conditions},
+      journal = {The Journal of Physical Chemistry B},
+      volume = {108},
+      number = {40},
+      pages = {15873--15879},
+      year = {2004},
+      doi = {10.1021/jp0477147}
+    }"""),
     path='kinisi.yeh_hummer.YehHummer',
     description='Yeh-Hummer finite-size correction.',
     version=__version__,
